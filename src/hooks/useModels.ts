@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Model, LocalModel } from '../types';
-import { MODELS } from '../services/models/modelRegistry';
+import { MODELS } from '../services/models/model-registry';
 import * as ModelStorage from '../services/storage/ModelStorage';
 import { info } from '../services/logging';
 
@@ -9,7 +9,7 @@ export const useModels = () => {
   const [downloadedModels, setDownloadedModels] = useState<LocalModel[]>([]);
   const [activeModel, setActiveModel] = useState<LocalModel | null>(null);
   const [downloadingModelId, setDownloadingModelId] = useState<string | null>(null);
-  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [downloadProgress, setDownloadProgress] = useState<Record<string, number>>({});
 
   useEffect(() => {
     try {
@@ -34,27 +34,21 @@ export const useModels = () => {
     async (model: Model): Promise<boolean> => {
       try {
         setDownloadingModelId(model.id);
-        setDownloadProgress(0);
+        setDownloadProgress(prev => ({ ...prev, [model.id]: 0 }));
 
         // Transformers.js downloads models automatically from HuggingFace
-        // when they are loaded. This tracks that process in localStorage.
+        // when they are loaded. We just register the model as "downloaded"
+        // since the actual download happens transparently when loadModel is called.
+        
+        // For better UX, we'll simulate a quick progress to indicate registration
+        // This is not a real download progress, just a visual feedback
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setDownloadProgress(prev => ({ ...prev, [model.id]: 100 }));
 
-        // Estimate model size based on parameter count
-        const modelSizeEstimates: Record<string, number> = {
-          '1.1B': 2.5e9,   // ~2.5 GB
-          '2.7B': 5e9,     // ~5 GB
-          '7B': 10e9,      // ~10 GB
-        };
-
-        const estSize = Object.entries(modelSizeEstimates).find(([key]) =>
-          model.modelSize.includes(key)
-        )?.[1] ?? 5e9;
-
-        // Simulate gradual download progress
-        for (let i = 0; i <= 90; i += 10) {
-          await new Promise(resolve => setTimeout(resolve, 300));
-          setDownloadProgress(i);
-        }
+        // Estimate model size based on fileSizeMB or modelSize
+        const estSize = model.fileSizeMB 
+          ? model.fileSizeMB * 1024 * 1024 
+          : getEstimatedSizeFromModelSize(model.modelSize);
 
         const localModel: LocalModel = {
           id: model.id,
@@ -65,36 +59,57 @@ export const useModels = () => {
         };
 
         ModelStorage.saveModel(localModel);
-        setDownloadedModels([...downloadedModels, localModel]);
+        setDownloadedModels(prev => [...prev, localModel]);
 
-        setDownloadProgress(100);
         await new Promise(resolve => setTimeout(resolve, 300));
 
         setDownloadingModelId(null);
-        setDownloadProgress(0);
+        setDownloadProgress(prev => {
+          const newProgress = { ...prev };
+          delete newProgress[model.id];
+          return newProgress;
+        });
 
         info(`✓ Model ${model.name} registered`);
         return true;
       } catch (error) {
         console.error('Model registration failed:', error);
         setDownloadingModelId(null);
-        setDownloadProgress(0);
+        setDownloadProgress(prev => {
+          const newProgress = { ...prev };
+          delete newProgress[model.id];
+          return newProgress;
+        });
         return false;
       }
     },
     [downloadedModels]
   );
 
+  // Helper function to estimate model size from modelSize string
+  const getEstimatedSizeFromModelSize = (modelSize: string): number => {
+    const sizeMap: Record<string, number> = {
+      '82M': 120 * 1024 * 1024,    // ~120MB
+      '124M': 500 * 1024 * 1024,   // ~500MB
+      '0.5B': 350 * 1024 * 1024,   // ~350MB
+      '1.1B': 637 * 1024 * 1024,   // ~637MB
+      '1.8B': 1200 * 1024 * 1024,  // ~1.2GB
+      '2.7B': 1400 * 1024 * 1024,  // ~1.4GB
+      '7B': 10000 * 1024 * 1024,   // ~10GB
+    };
+    return sizeMap[modelSize] || 500 * 1024 * 1024; // Default 500MB
+  };
+
   const deleteModel = useCallback(
     (modelId: string) => {
       ModelStorage.deleteModel(modelId);
-      setDownloadedModels(downloadedModels.filter(m => m.id !== modelId));
+      setDownloadedModels(prev => prev.filter(m => m.id !== modelId));
 
       if (activeModel?.id === modelId) {
         setActiveModel(null);
       }
     },
-    [downloadedModels, activeModel]
+    [activeModel]
   );
 
   const selectModel = useCallback(
@@ -105,17 +120,21 @@ export const useModels = () => {
       if (!model) {
         const modelInfo = availableModels.find(m => m.id === modelId);
         if (modelInfo) {
+          const estSize = modelInfo.fileSizeMB 
+            ? modelInfo.fileSizeMB * 1024 * 1024 
+            : getEstimatedSizeFromModelSize(modelInfo.modelSize);
+          
           model = {
             id: modelId,
             name: modelInfo.name,
             path: modelInfo.downloadUrl,
-            size: (modelInfo.fileSizeMB ?? 1000) * 1024 * 1024, // Convert MB to bytes, default 1000MB
+            size: estSize,
             downloadedAt: Date.now(),
           };
           // Save to storage so it's marked as downloaded
           ModelStorage.saveModel(model);
           // Update local state
-          setDownloadedModels([...downloadedModels, model]);
+          setDownloadedModels(prev => [...prev, model]);
         }
       }
 

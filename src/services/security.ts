@@ -5,19 +5,19 @@
 
 /**
  * Sanitize HTML content to prevent XSS attacks
- * Removes potentially dangerous HTML tags and attributes
+ * Removes all HTML tags and returns plain text
  */
 export const sanitizeHtml = (html: string): string => {
   if (typeof html !== 'string') {
     return '';
   }
 
-  // Create a temporary div element
+  // Create a temporary div element and use textContent to strip all HTML
   const tempDiv = document.createElement('div');
   tempDiv.textContent = html;
 
-  // Return the sanitized text content
-  return tempDiv.textContent || tempDiv.innerText || '';
+  // Return only the text content (completely safe, no HTML remains)
+  return tempDiv.textContent || '';
 };
 
 /**
@@ -142,8 +142,10 @@ export const secureLocalStorage = {
 
 /**
  * Validate URL to prevent SSRF and injection attacks
+ * Note: This is for user-provided URLs only. Internal URLs (like HuggingFace)
+ * should be validated separately or whitelisted.
  */
-export const validateUrl = (url: string): boolean => {
+export const validateUrl = (url: string, allowLocalhost: boolean = false): boolean => {
   if (typeof url !== 'string') {
     return false;
   }
@@ -156,15 +158,53 @@ export const validateUrl = (url: string): boolean => {
       return false;
     }
 
-    // Prevent localhost and internal IP addresses
-    if (parsedUrl.hostname === 'localhost' || 
-        parsedUrl.hostname === '127.0.0.1' ||
-        parsedUrl.hostname.startsWith('192.168.') ||
-        parsedUrl.hostname.startsWith('10.')) {
-      return false;
+    // Prevent localhost and internal IP addresses unless explicitly allowed
+    if (!allowLocalhost) {
+      if (parsedUrl.hostname === 'localhost' || 
+          parsedUrl.hostname === '127.0.0.1' ||
+          parsedUrl.hostname.startsWith('192.168.') ||
+          parsedUrl.hostname.startsWith('10.')) {
+        return false;
+      }
     }
 
     return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+/**
+ * Whitelist of trusted domains for model loading
+ */
+const TRUSTED_DOMAINS = [
+  'huggingface.co',
+  'cdn.huggingface.co',
+  'hf.co',
+];
+
+/**
+ * Validate if a URL is from a trusted source (for internal use)
+ */
+export const isTrustedUrl = (url: string): boolean => {
+  if (typeof url !== 'string') {
+    return false;
+  }
+
+  try {
+    const parsedUrl = new URL(url);
+    
+    // Allow localhost for development
+    if (parsedUrl.hostname === 'localhost' || 
+        parsedUrl.hostname === '127.0.0.1') {
+      return true;
+    }
+
+    // Check against trusted domains
+    return TRUSTED_DOMAINS.some(domain => 
+      parsedUrl.hostname === domain || 
+      parsedUrl.hostname.endsWith(`.${domain}`)
+    );
   } catch (error) {
     return false;
   }

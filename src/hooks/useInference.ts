@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { InferenceOptions, InferenceResult } from '../types';
-import * as InferenceEngine from '../services/inference/InferenceEngine';
+import * as InferenceEngine from '../services/inference/inference-engine';
 
 
 export const useInference = () => {
