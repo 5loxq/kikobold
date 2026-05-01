@@ -1,0 +1,30 @@
+{
+  "name": "webgpu-local-llm",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "download-models": "node scripts/download-models.js"
+  },
+  "dependencies": {
+    "@mlc-ai/web-llm": "^0.2.81",
+    "@xenova/transformers": "^2.6.0",
+    "i18next": "^23.7.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-i18next": "^13.5.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.38",
+    "@types/react-dom": "^18.2.16",
+    "@vitejs/plugin-react": "^4.1.0",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.0"
+  }
+}
