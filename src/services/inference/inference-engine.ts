@@ -1,7 +1,8 @@
-import { InferenceOptions, InferenceResult } from '../../types';
+import { InferenceOptions, InferenceResult, ModelConfig } from '../../types';
 import { pipeline, TextGenerationPipeline, env } from '@xenova/transformers';
 import { log, warn } from '../logging';
 import { checkWebGPUSupport } from '../security';
+import { MODEL_CONFIGS, getModelConfig } from '../models/model-registry';
 
 // Allow loading ONNX models from HuggingFace (cached in browser after first load)
 env.allowRemoteModels = true;
@@ -17,33 +18,9 @@ function isPipelineResult(result: any): result is { generated_text: string } {
   return result && typeof result === 'object' && 'generated_text' in result;
 }
 
-// Model configurations - using Xenova ONNX models (compatible with Transformers.js)
-export const MODEL_CONFIG: Record<string, { name: string; modelPath: string; type: 'chat' | 'base' }> = {
-  'qwen-0.5b': {
-    name: 'Qwen1.5 0.5B Chat',
-    modelPath: 'Xenova/Qwen1.5-0.5B-Chat',
-    type: 'chat',
-  },
-  'gpt2': {
-    name: 'GPT-2',
-    modelPath: 'Xenova/gpt2',
-    type: 'base',
-  },
-  'qwen-1.8b': {
-    name: 'Qwen1.5 1.8B Chat',
-    modelPath: 'Xenova/Qwen1.5-1.8B-Chat',
-    type: 'chat',
-  },
-  'distilgpt2': {
-    name: 'DistilGPT2',
-    modelPath: 'Xenova/distilgpt2',
-    type: 'base',
-  },
-};
-
 // Format prompt based on model type
 const formatPrompt = (modelId: string, userPrompt: string, systemPrompt?: string, language: string = 'en'): string => {
-  const config = MODEL_CONFIG[modelId];
+  const config = getModelConfig(modelId);
   if (!config) return userPrompt;
 
   // Add language instruction to system prompt
@@ -79,7 +56,7 @@ const extractResponse = (modelId: string, generatedText: string, fullPrompt: str
   }
 
   // Remove ChatML end tokens for Qwen models
-  const config = MODEL_CONFIG[modelId];
+  const config = getModelConfig(modelId);
   if (config?.type === 'chat') {
     const endIdx = responseText.indexOf('<|im_end|>');
     if (endIdx !== -1) responseText = responseText.substring(0, endIdx).trim();
@@ -163,7 +140,7 @@ export const loadModel = async (modelId: string): Promise<void> => {
 
   try {
     isLoading = true;
-    const config = MODEL_CONFIG[modelId];
+    const config = getModelConfig(modelId);
     
     if (!config) {
       throw new Error(`Unknown model ID: ${modelId}`);
@@ -173,7 +150,7 @@ export const loadModel = async (modelId: string): Promise<void> => {
     if (!config.name || !config.modelPath || !config.type) {
       throw new Error(`Invalid model configuration for ${modelId}`);
     }
-    
+
     if (config.type !== 'chat' && config.type !== 'base') {
       throw new Error(`Invalid model type: ${config.type} for ${modelId}`);
     }
@@ -372,3 +349,8 @@ export const getCurrentModelId = (): string | null => {
 export const getWebGPUAvailable = (): boolean | null => {
   return webgpuAvailable;
 };
+
+// Export MODEL_CONFIGS for backward compatibility
+export { MODEL_CONFIGS, getModelConfig } from '../models/model-registry';
+// ModelConfig is exported from types, not re-exported here to avoid circular dependencies
+export type { ModelConfig } from '../../types';

@@ -12,12 +12,13 @@ export const useChat = () => {
     const initDB = async () => {
       try {
         await ChatStorage.initChatDB();
+        await loadChats();
       } catch (error) {
         console.error('Failed to initialize chat database:', error instanceof Error ? error : new Error(String(error)));
       }
     };
     initDB();
-  }, []);
+  }, [loadChats]);
 
   const loadChats = useCallback(async () => {
     try {

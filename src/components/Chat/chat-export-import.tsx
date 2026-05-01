@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Chat } from '../../types';
-import * as ChatExport from '../../services/storage/ChatExportImport';
+import * as ChatExport from '../../services/storage/chat-export-import';
 
 interface ChatExportImportProps {
   chat: Chat | null;
