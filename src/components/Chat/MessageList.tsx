@@ -1,7 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Message } from '../../types';
-import { sanitizeHtml } from '../../services/security';
 
 interface MessageListProps {
   messages: Message[];
@@ -32,7 +31,7 @@ export const MessageList: React.FC<MessageListProps> = React.memo(({ messages, i
               }`}
             >
               <p className="whitespace-pre-wrap break-words text-sm">
-                {sanitizeHtml(message.content)}
+                {message.content}
               </p>
               <p className={`text-xs mt-1 ${
                 message.role === 'user' ? 'text-blue-100' : 'text-gray-500'

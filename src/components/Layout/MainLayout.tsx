@@ -26,14 +26,7 @@ export const MainLayout: FC = () => {
   const { loadModel, generate, isModelLoaded, isLoading, webgpuAvailable, loadingProgress } = useInference();
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Wait a moment for chat DB to initialize before loading
-    const timer = setTimeout(() => {
-      loadChats();
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [loadChats]);
+  // Chat DB initialization and loading is now handled in useChat hook
 
   const handleNewChat = async () => {
     try {
@@ -124,7 +117,7 @@ export const MainLayout: FC = () => {
 
     const utterance = new SpeechSynthesisUtterance(text);
     // Use current i18n language instead of hardcoded de-DE
-    utterance.lang = t('lang') === 'de' ? 'de-DE' : 'en-US';
+    utterance.lang = i18n.language === 'de' ? 'de-DE' : 'en-US';
     utterance.rate = 0.9;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
