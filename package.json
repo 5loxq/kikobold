@@ -10,7 +10,6 @@
     "download-models": "node scripts/download-models.js"
   },
   "dependencies": {
-    "@mlc-ai/web-llm": "^0.2.81",
     "@xenova/transformers": "^2.6.0",
     "i18next": "^23.7.0",
     "react": "^18.2.0",

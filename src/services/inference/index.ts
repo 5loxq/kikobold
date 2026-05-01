@@ -10,6 +10,8 @@ export {
   getWebGPUAvailable,
   MODEL_CONFIGS,
   getModelConfig,
+  clearModelCache,
+  getCachedModelIds,
 } from './inference-engine';
 
 // Re-export ModelConfig from types

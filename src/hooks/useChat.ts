@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Chat, Message } from '../types';
+import { Chat, Message, UseChatReturn } from '../types';
 import * as ChatStorage from '../services/storage/ChatStorage';
 
 
-export const useChat = () => {
+export const useChat = (): UseChatReturn => {
   const [chat, setChat] = useState<Chat | null>(null);
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(false);

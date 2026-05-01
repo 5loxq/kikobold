@@ -79,3 +79,11 @@ export interface InferenceResult {
   tokens: number;
   duration: number;
 }
+
+// Re-export hook types
+export type {
+  UseInferenceReturn,
+  UseModelsReturn,
+  UseChatReturn,
+  UseProfilesReturn,
+} from './hooks';
