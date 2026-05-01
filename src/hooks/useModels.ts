@@ -1,10 +1,10 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Model, LocalModel } from '../types';
+import { Model, LocalModel, UseModelsReturn } from '../types';
 import { MODELS } from '../services/models/model-registry';
 import * as ModelStorage from '../services/storage/ModelStorage';
 import { info } from '../services/logging';
 
-export const useModels = () => {
+export const useModels = (): UseModelsReturn => {
   const [availableModels] = useState<Model[]>(MODELS);
   const [downloadedModels, setDownloadedModels] = useState<LocalModel[]>([]);
   const [activeModel, setActiveModel] = useState<LocalModel | null>(null);
