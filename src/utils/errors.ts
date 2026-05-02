@@ -2,6 +2,11 @@
  * Centralized error handling for the application
  */
 
+// ErrorOptions type for browser compatibility
+interface ErrorOptions {
+  cause?: unknown;
+}
+
 /**
  * Custom error class for application-specific errors
  */
@@ -16,7 +21,7 @@ export class AppError extends Error {
     details?: unknown,
     options?: ErrorOptions
   ) {
-    super(message, options);
+    super(message);
     this.name = 'AppError';
     this.code = code;
     this.details = details;
@@ -25,6 +30,11 @@ export class AppError extends Error {
     // Maintain proper stack trace for where our error was thrown (only available on V8)
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, AppError);
+    }
+    
+    // Set cause if provided
+    if (options?.cause) {
+      this.cause = options.cause;
     }
   }
 
