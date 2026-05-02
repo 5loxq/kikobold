@@ -38,8 +38,19 @@ export const sanitizeHtml = (html: string): string => {
 };
 
 /**
- * Validate and sanitize user input
- * Removes potentially harmful characters and scripts
+ * Lightweight sanitization for real-time input (preserves ALL spaces)
+ * Only removes HTML tags to prevent XSS in real-time typing
+ */
+export const sanitizeInputLight = (input: string): string => {
+  if (typeof input !== 'string') {
+    return '';
+  }
+  // Only remove HTML tags - preserve everything else including spaces
+  return input.replace(/<[^>]*>/g, '');
+};
+
+/**
+ * Full sanitization for storage (removes dangerous content)
  * Preserves ALL normal spaces between words - only removes dangerous content
  */
 export const sanitizeInput = (input: string): string => {

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { error, log } from '../../services/logging';
-import { sanitizeInput } from '../../services/security';
+import { sanitizeInputLight } from '../../services/security';
 
 interface InputBoxProps {
   onSendMessage: (message: string) => void;
@@ -183,14 +183,15 @@ export const InputBox: React.FC<InputBoxProps> = ({
 
   const handleInput = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const rawInput = e.target.value;
-    // Sanitize input to prevent XSS
-    const sanitizedInput = sanitizeInput(rawInput);
+    // Use lightweight sanitization for real-time input to preserve all spaces
+    // Only removes HTML tags to prevent XSS
+    const sanitizedInput = sanitizeInputLight(rawInput);
     setInput(sanitizedInput);
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = Math.min(
         textareaRef.current.scrollHeight,
-        120
+        150
       ) + 'px';
     }
   }, []);
