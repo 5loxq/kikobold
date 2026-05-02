@@ -18,6 +18,9 @@ const MessageBubble: React.FC<{
     [message.timestamp]
   );
 
+  // Use useMemo for the content to prevent re-renders when content hasn't changed
+  const content = React.useMemo(() => message.content, [message.content]);
+
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div
@@ -28,7 +31,7 @@ const MessageBubble: React.FC<{
         }`}
       >
         <p className="whitespace-pre-wrap break-words text-sm">
-          {message.content}
+          {content}
         </p>
         <p className={`text-xs mt-1 ${
           isUser ? 'text-blue-100' : 'text-gray-500'
@@ -37,6 +40,14 @@ const MessageBubble: React.FC<{
         </p>
       </div>
     </div>
+  );
+}, (prevProps, nextProps) => {
+  // Custom comparison function for better performance
+  return (
+    prevProps.message.id === nextProps.message.id &&
+    prevProps.message.content === nextProps.message.content &&
+    prevProps.message.timestamp === nextProps.message.timestamp &&
+    prevProps.message.role === nextProps.message.role
   );
 });
 
