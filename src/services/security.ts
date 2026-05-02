@@ -3,6 +3,23 @@
  * Provides input sanitization, validation, and security checks
  */
 
+// XSS dangerous patterns
+const XSS_PATTERNS = [
+  /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+  /javascript:/gi,
+  /on\w+\s*=/gi,
+  /data:/gi,
+  /vbscript:/gi,
+  /expression\s*\(/gi,
+  /<iframe\b[^>]*>/gi,
+  /<object\b[^>]*>/gi,
+  /<embed\b[^>]*>/gi,
+  /<svg\b[^>]*>/gi,
+];
+
+// Control characters and dangerous Unicode
+const DANGEROUS_CHARS = /[\x00-\x1F\x7F-\x9F\u2028\u2029]/g;
+
 /**
  * Sanitize HTML content to prevent XSS attacks
  * Removes all HTML tags and returns plain text
@@ -29,39 +46,171 @@ export const sanitizeInput = (input: string): string => {
     return '';
   }
 
+  let sanitized = input;
+
+  // Remove all XSS patterns
+  XSS_PATTERNS.forEach(pattern => {
+    sanitized = sanitized.replace(pattern, '');
+  });
+
   // Remove HTML tags
-  let sanitized = input.replace(/<[^>]*>/g, '');
+  sanitized = sanitized.replace(/<[^>]*>/g, '');
 
-  // Remove script-like content
-  sanitized = sanitized.replace(/javascript:/gi, '');
-  sanitized = sanitized.replace(/on\w+\s*=/gi, '');
+  // Remove dangerous characters
+  sanitized = sanitized.replace(DANGEROUS_CHARS, '');
 
-  // Remove potentially dangerous characters
-  sanitized = sanitized.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+  // Normalize whitespace
+  sanitized = sanitized.replace(/\s+/g, ' ').trim();
 
   return sanitized;
 };
 
 /**
- * Validate file uploads for security
- * Checks file type, size, and content
+ * Sanitize text for safe display (allows basic formatting but removes dangerous content)
  */
-export const validateFileUpload = (file: File, maxSizeMB: number = 5): boolean => {
+export const sanitizeForDisplay = (text: string): string => {
+  if (typeof text !== 'string') {
+    return '';
+  }
+
+  // First apply full sanitization
+  let sanitized = sanitizeInput(text);
+
+  // Then allow safe line breaks and basic formatting
+  sanitized = sanitized
+    .replace(/\n/g, '<br/>')
+    .replace(/\*/g, '<strong>')
+    .replace(/\*/g, '</strong>')
+    .replace(/_([^_]+)_/g, '<em>$1</em>');
+
+  return sanitized;
+};
+
+/**
+ * Allowed file types and their MIME types
+ */
+const ALLOWED_FILE_TYPES: Record<string, string[]> = {
+  '.json': ['application/json', 'text/plain'],
+  '.txt': ['text/plain'],
+  '.md': ['text/markdown', 'text/plain'],
+};
+
+/**
+ * Maximum file sizes by type (in MB)
+ */
+const MAX_FILE_SIZES: Record<string, number> = {
+  '.json': 10,  // 10MB for JSON files
+  '.txt': 1,   // 1MB for text files
+  '.md': 2,    // 2MB for markdown files
+  'default': 5, // 5MB default
+};
+
+/**
+ * Dangerous file extensions to block
+ */
+const DANGEROUS_EXTENSIONS = [
+  '.js', '.jsx', '.ts', '.tsx', '.html', '.htm', '.php', '.py',
+  '.sh', '.bat', '.cmd', '.ps1', '.vbs', '.exe', '.dll', '.so',
+  '.jar', '.class', '.war', '.ear', '.msi', '.com', '.pif',
+  '.application', '.gadget', '.msu', '.msp', '.mst', '.cpl'
+];
+
+/**
+ * Validate file uploads for security
+ * Checks file type, size, extension, and content
+ */
+export const validateFileUpload = (
+  file: File, 
+  maxSizeMB: number = 5,
+  allowedExtensions: string[] = ['.json']
+): { valid: boolean; error?: string } => {
   if (!(file instanceof File)) {
-    return false;
+    return { valid: false, error: 'Invalid file object' };
+  }
+
+  // Check file name for dangerous patterns
+  const fileName = file.name.toLowerCase();
+  
+  // Block files with dangerous extensions
+  for (const ext of DANGEROUS_EXTENSIONS) {
+    if (fileName.endsWith(ext)) {
+      return { valid: false, error: `Dangerous file extension: ${ext}` };
+    }
+  }
+
+  // Check if file extension is allowed
+  const fileExtension = fileName.slice(fileName.lastIndexOf('.'));
+  if (allowedExtensions.length > 0 && !allowedExtensions.includes(fileExtension)) {
+    return { valid: false, error: `File extension not allowed: ${fileExtension}` };
   }
 
   // Check file size
-  if (file.size > maxSizeMB * 1024 * 1024) {
-    return false;
+  const maxSize = MAX_FILE_SIZES[fileExtension] || maxSizeMB;
+  if (file.size > maxSize * 1024 * 1024) {
+    return { valid: false, error: `File too large. Maximum size: ${maxSize}MB` };
   }
 
-  // Check file type for JSON imports
-  if (file.name.endsWith('.json')) {
-    return file.type === 'application/json' || file.name.endsWith('.json');
+  // Check file type for known extensions
+  if (fileExtension in ALLOWED_FILE_TYPES) {
+    const allowedTypes = ALLOWED_FILE_TYPES[fileExtension];
+    if (!allowedTypes.includes(file.type)) {
+      // Some browsers may not set the correct MIME type, so we also check by extension
+      if (!fileName.endsWith(fileExtension)) {
+        return { valid: false, error: `Invalid file type for extension: ${fileExtension}` };
+      }
+    }
   }
 
-  return true;
+  // Additional check: prevent files with multiple extensions
+  if (fileName.split('.').length > 2) {
+    const parts = fileName.split('.');
+    const lastPart = parts[parts.length - 1];
+    
+    // Check if the last part is a dangerous extension
+    for (const ext of DANGEROUS_EXTENSIONS) {
+      if (lastPart === ext.replace('.', '')) {
+        return { valid: false, error: 'Dangerous file extension detected' };
+      }
+    }
+  }
+
+  return { valid: true };
+};
+
+/**
+ * Validate file content for JSON files
+ */
+export const validateJsonContent = (content: string): { valid: boolean; error?: string } => {
+  if (typeof content !== 'string' || content.trim().length === 0) {
+    return { valid: false, error: 'Empty content' };
+  }
+
+  try {
+    // Check for suspicious content
+    const suspiciousPatterns = [
+      /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/i,
+      /javascript:/i,
+      /on\w+\s*=/i,
+      /eval\s*\(/i,
+      /new\s+Function\s*\(/i,
+      /document\.write\s*\(/i,
+      /innerHTML\s*=/i,
+      /require\s*\(/i,
+      /import\s+.*\s+from\s+/i,
+    ];
+
+    for (const pattern of suspiciousPatterns) {
+      if (pattern.test(content)) {
+        return { valid: false, error: 'Suspicious content detected' };
+      }
+    }
+
+    // Try to parse as JSON
+    JSON.parse(content);
+    return { valid: true };
+  } catch (error) {
+    return { valid: false, error: `Invalid JSON: ${error instanceof Error ? error.message : 'Unknown error'}` };
+  }
 };
 
 /**
@@ -141,6 +290,22 @@ export const secureLocalStorage = {
 };
 
 /**
+ * Internal IP address patterns to block for SSRF prevention
+ */
+const INTERNAL_IP_PATTERNS = [
+  /^localhost$/i,
+  /^127\.\d+\.\d+\.\d+$/,
+  /^10\.\d+\.\d+\.\d+$/,
+  /^192\.168\.\d+\.\d+$/,
+  /^172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+$/,
+  /^169\.254\.\d+\.\d+$/,
+  /^\[::1\]$/,
+  /^::1$/,
+  /^fe80:/i,
+  /^link-local$/i,
+];
+
+/**
  * Validate URL to prevent SSRF and injection attacks
  * Note: This is for user-provided URLs only. Internal URLs (like HuggingFace)
  * should be validated separately or whitelisted.
@@ -150,8 +315,14 @@ export const validateUrl = (url: string, allowLocalhost: boolean = false): boole
     return false;
   }
 
+  // Trim and check for empty string
+  const trimmedUrl = url.trim();
+  if (trimmedUrl.length === 0) {
+    return false;
+  }
+
   try {
-    const parsedUrl = new URL(url);
+    const parsedUrl = new URL(trimmedUrl);
     
     // Only allow HTTP/HTTPS protocols
     if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
@@ -160,12 +331,27 @@ export const validateUrl = (url: string, allowLocalhost: boolean = false): boole
 
     // Prevent localhost and internal IP addresses unless explicitly allowed
     if (!allowLocalhost) {
-      if (parsedUrl.hostname === 'localhost' || 
-          parsedUrl.hostname === '127.0.0.1' ||
-          parsedUrl.hostname.startsWith('192.168.') ||
-          parsedUrl.hostname.startsWith('10.')) {
-        return false;
+      const hostname = parsedUrl.hostname.toLowerCase();
+      
+      // Check against internal IP patterns
+      for (const pattern of INTERNAL_IP_PATTERNS) {
+        if (pattern.test(hostname)) {
+          return false;
+        }
       }
+    }
+
+    // Additional security checks
+    if (parsedUrl.username || parsedUrl.password) {
+      // URLs with credentials are not allowed
+      return false;
+    }
+
+    // Check for suspicious query parameters
+    if (parsedUrl.search.includes('redirect=') || 
+        parsedUrl.search.includes('callback=') ||
+        parsedUrl.search.includes('next=')) {
+      return false;
     }
 
     return true;
@@ -181,6 +367,9 @@ const TRUSTED_DOMAINS = [
   'huggingface.co',
   'cdn.huggingface.co',
   'hf.co',
+  'github.com',
+  'raw.githubusercontent.com',
+  'modelscope.cn',
 ];
 
 /**
@@ -191,8 +380,13 @@ export const isTrustedUrl = (url: string): boolean => {
     return false;
   }
 
+  const trimmedUrl = url.trim();
+  if (trimmedUrl.length === 0) {
+    return false;
+  }
+
   try {
-    const parsedUrl = new URL(url);
+    const parsedUrl = new URL(trimmedUrl);
     
     // Allow localhost for development
     if (parsedUrl.hostname === 'localhost' || 
@@ -201,11 +395,43 @@ export const isTrustedUrl = (url: string): boolean => {
     }
 
     // Check against trusted domains
+    const hostname = parsedUrl.hostname.toLowerCase();
     return TRUSTED_DOMAINS.some(domain => 
-      parsedUrl.hostname === domain || 
-      parsedUrl.hostname.endsWith(`.${domain}`)
+      hostname === domain || 
+      hostname.endsWith(`.${domain}`)
     );
   } catch (error) {
     return false;
   }
+};
+
+/**
+ * Validate model path for security
+ * Only allows paths from trusted sources or specific patterns
+ */
+export const validateModelPath = (path: string): boolean => {
+  if (typeof path !== 'string') {
+    return false;
+  }
+
+  const trimmedPath = path.trim();
+  if (trimmedPath.length === 0) {
+    return false;
+  }
+
+  // Allow HuggingFace model paths
+  if (trimmedPath.startsWith('Xenova/') || 
+      trimmedPath.includes('huggingface.co/') ||
+      trimmedPath.startsWith('huggingface:')) {
+    return true;
+  }
+
+  // Allow local paths (for development)
+  if (trimmedPath.startsWith('/models/') || 
+      trimmedPath.startsWith('./models/')) {
+    return true;
+  }
+
+  // Validate as URL
+  return isTrustedUrl(trimmedPath) || validateUrl(trimmedPath, true);
 };
