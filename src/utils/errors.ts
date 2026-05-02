@@ -2,11 +2,6 @@
  * Centralized error handling for the application
  */
 
-// ErrorOptions type for browser compatibility
-interface ErrorOptions {
-  cause?: unknown;
-}
-
 /**
  * Custom error class for application-specific errors
  */
@@ -14,27 +9,24 @@ export class AppError extends Error {
   public readonly code: string;
   public readonly details?: unknown;
   public readonly timestamp: number;
+  public cause?: unknown;
 
   constructor(
     message: string,
     code: string = 'GENERIC_ERROR',
     details?: unknown,
-    options?: ErrorOptions
+    cause?: unknown
   ) {
     super(message);
     this.name = 'AppError';
     this.code = code;
     this.details = details;
     this.timestamp = Date.now();
+    this.cause = cause;
     
     // Maintain proper stack trace for where our error was thrown (only available on V8)
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, AppError);
-    }
-    
-    // Set cause if provided
-    if (options?.cause) {
-      this.cause = options.cause;
     }
   }
 
@@ -61,7 +53,7 @@ export class AppError extends Error {
       error !== null &&
       'name' in error &&
       'code' in error &&
-      (error as Record<string, unknown>).name === 'AppError'
+      (error as { name: string }).name === 'AppError'
     );
   }
 }
