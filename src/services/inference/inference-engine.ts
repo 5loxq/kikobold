@@ -2,7 +2,7 @@ import { InferenceOptions, InferenceResult } from '../../types';
 import { pipeline, TextGenerationPipeline, env } from '@xenova/transformers';
 import { log, warn } from '../logging';
 import { checkWebGPUSupport, validateModelPath } from '../security';
-import { getModelConfig } from '../models/model-registry';
+import { MODEL_CONFIGS, getModelConfig } from '../models/model-registry';
 import { createError, ErrorCodes } from '../../utils/errors';
 
 // Allow loading ONNX models from HuggingFace (cached in browser after first load)
@@ -524,5 +524,9 @@ export const getWebGPUAvailable = (): boolean | null => {
   return webgpuAvailable;
 };
 
-// Export cache management functions
-export { clearModelCache, getCachedModelIds };
+// Export MODEL_CONFIGS and getModelConfig for backward compatibility
+export { MODEL_CONFIGS, getModelConfig };
+// Export ModelConfig type
+export type { ModelConfig } from '../../types';
+
+
