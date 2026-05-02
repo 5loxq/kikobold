@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Profile } from '../types';
+import { Profile, UseProfilesReturn } from '../types';
 import * as ProfileStorage from '../services/storage/ProfileStorage';
 
 
-export const useProfiles = () => {
+export const useProfiles = (): UseProfilesReturn => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [activeProfile, setActiveProfile] = useState<Profile | null>(null);
 
