@@ -1,10 +1,15 @@
-import { InferenceOptions, InferenceResult } from '../../types';
+import { InferenceOptions, InferenceResult, ModelConfig } from '../../types';
 import { pipeline, TextGenerationPipeline, env } from '@xenova/transformers';
 import { log, warn } from '../logging';
 import { checkWebGPUSupport } from '../security';
+import { MODEL_CONFIGS, getModelConfig } from '../models/model-registry';
+import { createError, ErrorCodes } from '../../utils/errors';
 
 // Allow loading ONNX models from HuggingFace (cached in browser after first load)
 env.allowRemoteModels = true;
+
+// Model cache to prevent reloading the same model multiple times
+const modelCache: Map<string, TextGenerationPipeline> = new Map();
 
 let currentModelId: string | null = null;
 let currentPipeline: TextGenerationPipeline | null = null;
@@ -17,33 +22,9 @@ function isPipelineResult(result: any): result is { generated_text: string } {
   return result && typeof result === 'object' && 'generated_text' in result;
 }
 
-// Model configurations - using Xenova ONNX models (compatible with Transformers.js)
-export const MODEL_CONFIG: Record<string, { name: string; modelPath: string; type: 'chat' | 'base' }> = {
-  'qwen-0.5b': {
-    name: 'Qwen1.5 0.5B Chat',
-    modelPath: 'Xenova/Qwen1.5-0.5B-Chat',
-    type: 'chat',
-  },
-  'gpt2': {
-    name: 'GPT-2',
-    modelPath: 'Xenova/gpt2',
-    type: 'base',
-  },
-  'qwen-1.8b': {
-    name: 'Qwen1.5 1.8B Chat',
-    modelPath: 'Xenova/Qwen1.5-1.8B-Chat',
-    type: 'chat',
-  },
-  'distilgpt2': {
-    name: 'DistilGPT2',
-    modelPath: 'Xenova/distilgpt2',
-    type: 'base',
-  },
-};
-
 // Format prompt based on model type
 const formatPrompt = (modelId: string, userPrompt: string, systemPrompt?: string, language: string = 'en'): string => {
-  const config = MODEL_CONFIG[modelId];
+  const config = getModelConfig(modelId);
   if (!config) return userPrompt;
 
   // Add language instruction to system prompt
@@ -79,7 +60,7 @@ const extractResponse = (modelId: string, generatedText: string, fullPrompt: str
   }
 
   // Remove ChatML end tokens for Qwen models
-  const config = MODEL_CONFIG[modelId];
+  const config = getModelConfig(modelId);
   if (config?.type === 'chat') {
     const endIdx = responseText.indexOf('<|im_end|>');
     if (endIdx !== -1) responseText = responseText.substring(0, endIdx).trim();
@@ -157,25 +138,51 @@ export const loadModel = async (modelId: string): Promise<void> => {
     return; // Model already loaded
   }
 
+  // Check if model is in cache
+  if (modelCache.has(modelId)) {
+    log(`Loading model ${modelId} from cache`);
+    
+    // Clean up current model if different
+    if (currentModelId && currentModelId !== modelId) {
+      await unloadModel();
+    }
+    
+    currentPipeline = modelCache.get(modelId)!;
+    currentModelId = modelId;
+    return;
+  }
+
   if (isLoading) {
-    throw new Error('Another model is already loading');
+    throw createError(
+      'Another model is already loading',
+      ErrorCodes.MODEL_LOAD_FAILED,
+      { currentModelId }
+    );
   }
 
   try {
     isLoading = true;
-    const config = MODEL_CONFIG[modelId];
+    const config = getModelConfig(modelId);
     
     if (!config) {
-      throw new Error(`Unknown model ID: ${modelId}`);
+      throw createError(`Unknown model ID: ${modelId}`, ErrorCodes.MODEL_NOT_FOUND, { modelId });
     }
     
     // Validate model configuration
     if (!config.name || !config.modelPath || !config.type) {
-      throw new Error(`Invalid model configuration for ${modelId}`);
+      throw createError(
+        `Invalid model configuration for ${modelId}`,
+        ErrorCodes.VALIDATION_ERROR,
+        { modelId, config }
+      );
     }
-    
+
     if (config.type !== 'chat' && config.type !== 'base') {
-      throw new Error(`Invalid model type: ${config.type} for ${modelId}`);
+      throw createError(
+        `Invalid model type: ${config.type} for ${modelId}`,
+        ErrorCodes.VALIDATION_ERROR,
+        { modelId, type: config.type }
+      );
     }
 
     log(`Loading model: ${modelId} (${config.name}) from ${config.modelPath}...`);
@@ -200,18 +207,30 @@ export const loadModel = async (modelId: string): Promise<void> => {
     });
 
     if (!generator) {
-      throw new Error('Failed to create pipeline');
+      throw createError(
+        'Failed to create pipeline',
+        ErrorCodes.MODEL_LOAD_FAILED,
+        { modelId, modelPath: config.modelPath }
+      );
     }
 
+    // Cache the model
+    modelCache.set(modelId, generator as TextGenerationPipeline);
+    
     currentPipeline = generator as TextGenerationPipeline;
     currentModelId = modelId;
 
-    log(`✓ Model ${modelId} loaded successfully`);
+    log(`✓ Model ${modelId} loaded successfully and cached`);
   } catch (error) {
     console.error('Failed to load model:', error instanceof Error ? error : new Error(String(error)));
     currentModelId = null;
     currentPipeline = null;
-    throw error instanceof Error ? error : new Error('Unknown error occurred while loading model');
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw createError(
+      `Failed to load model: ${errorMessage}`,
+      ErrorCodes.MODEL_LOAD_FAILED,
+      { modelId, error: error }
+    );
   } finally {
     isLoading = false;
   }
@@ -222,33 +241,61 @@ export const generate = async (
   options: InferenceOptions
 ): Promise<InferenceResult> => {
   if (!currentPipeline || !currentModelId) {
-    throw new Error('No model loaded. Please load a model first.');
+    throw createError(
+      'No model loaded. Please load a model first.',
+      ErrorCodes.MODEL_NOT_FOUND,
+      { currentModelId }
+    );
   }
 
   // Validate input
   if (typeof prompt !== 'string' || prompt.trim().length === 0) {
-    throw new Error('Prompt must be a non-empty string');
+    throw createError(
+      'Prompt must be a non-empty string',
+      ErrorCodes.VALIDATION_ERROR,
+      { prompt }
+    );
   }
 
   if (!options || typeof options !== 'object') {
-    throw new Error('Options must be an object');
+    throw createError(
+      'Options must be an object',
+      ErrorCodes.VALIDATION_ERROR,
+      { options }
+    );
   }
 
   // Validate options
   if (options.temperature < 0 || options.temperature > 2) {
-    throw new Error('Temperature must be between 0 and 2');
+    throw createError(
+      'Temperature must be between 0 and 2',
+      ErrorCodes.VALIDATION_ERROR,
+      { temperature: options.temperature }
+    );
   }
 
   if (options.topP < 0 || options.topP > 1) {
-    throw new Error('TopP must be between 0 and 1');
+    throw createError(
+      'TopP must be between 0 and 1',
+      ErrorCodes.VALIDATION_ERROR,
+      { topP: options.topP }
+    );
   }
 
   if (options.maxTokens < 1 || options.maxTokens > 1024) {
-    throw new Error('MaxTokens must be between 1 and 1024');
+    throw createError(
+      'MaxTokens must be between 1 and 1024',
+      ErrorCodes.VALIDATION_ERROR,
+      { maxTokens: options.maxTokens }
+    );
   }
 
   if (options.systemPrompt && typeof options.systemPrompt !== 'string') {
-    throw new Error('System prompt must be a string');
+    throw createError(
+      'System prompt must be a string',
+      ErrorCodes.VALIDATION_ERROR,
+      { systemPrompt: options.systemPrompt }
+    );
   }
 
   const startTime = performance.now();
@@ -317,17 +364,17 @@ export const generate = async (
     };
   } catch (error) {
     console.error('Inference error:', error instanceof Error ? error : new Error(String(error)));
-    throw new Error(
-      `Failed to generate response: ${
-        error instanceof Error ? error.message : String(error)
-      }`
+    throw createError(
+      `Failed to generate response: ${error instanceof Error ? error.message : String(error)}`,
+      ErrorCodes.MODEL_INFERENCE_FAILED,
+      { error, modelId: currentModelId }
     );
   }
 };
 
 export const unloadModel = (): void => {
   // Clean up resources
-  if (currentPipeline) {
+  if (currentPipeline && currentModelId) {
     try {
       // Check if pipeline has a dispose method
       if (typeof (currentPipeline as any).dispose === 'function') {
@@ -348,9 +395,48 @@ export const unloadModel = (): void => {
     }
   }
   
+  // Remove from cache if current model is cached
+  if (currentModelId && modelCache.has(currentModelId)) {
+    modelCache.delete(currentModelId);
+  }
+  
   currentModelId = null;
   currentPipeline = null;
   log('Model unloaded and resources cleaned up');
+};
+
+/**
+ * Clear all cached models to free up memory
+ */
+export const clearModelCache = (): void => {
+  // Clean up all cached models
+  for (const [modelId, pipeline] of modelCache) {
+    try {
+      if (typeof (pipeline as any).dispose === 'function') {
+        (pipeline as any).dispose();
+      }
+    } catch (error) {
+      warn(`Error cleaning up cached model ${modelId}:`, error);
+    }
+  }
+  
+  modelCache.clear();
+  cleanupFunctions = [];
+  
+  // Also unload current model if any
+  if (currentModelId) {
+    currentModelId = null;
+    currentPipeline = null;
+  }
+  
+  log('All model caches cleared');
+};
+
+/**
+ * Get list of cached model IDs
+ */
+export const getCachedModelIds = (): string[] => {
+  return Array.from(modelCache.keys());
 };
 
 /**
@@ -372,3 +458,11 @@ export const getCurrentModelId = (): string | null => {
 export const getWebGPUAvailable = (): boolean | null => {
   return webgpuAvailable;
 };
+
+// Export MODEL_CONFIGS for backward compatibility
+export { MODEL_CONFIGS, getModelConfig } from '../models/model-registry';
+// ModelConfig is exported from types, not re-exported here to avoid circular dependencies
+export type { ModelConfig } from '../../types';
+
+// Export cache management functions
+export { clearModelCache, getCachedModelIds };

@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Chat, Profile, LocalModel } from '../../types';
 import { MessageList } from './MessageList';
 import { InputBox } from './InputBox';
-import { ChatExportImport } from './ChatExportImport';
-import { MODELS } from '../../services/models/modelRegistry';
+import { ChatExportImport } from './chat-export-import';
+import { MODELS } from '../../services/models/model-registry';
 
 interface ChatWindowProps {
   chat: Chat | null;

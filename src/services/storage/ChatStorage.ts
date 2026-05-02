@@ -1,5 +1,6 @@
 import { Chat, Message } from '../../types';
 import { warn } from '../logging';
+import { sanitizeInput } from '../security';
 
 const DB_NAME = 'LocalLLMDB';
 const STORE_NAME = 'chats';
@@ -73,16 +74,28 @@ export const saveChat = async (chat: Chat): Promise<void> => {
     throw new Error('Invalid chat object');
   }
 
-  // Validate all messages
-  if (chat.messages.some(message => !validateMessage(message))) {
-    throw new Error('Invalid message in chat');
-  }
+  // Validate all messages and sanitize content
+  const sanitizedMessages = chat.messages.map(message => {
+    if (!validateMessage(message)) {
+      throw new Error('Invalid message in chat');
+    }
+    // Sanitize message content before saving
+    return {
+      ...message,
+      content: sanitizeInput(message.content),
+    };
+  });
+
+  const sanitizedChat = {
+    ...chat,
+    messages: sanitizedMessages,
+  };
 
   return new Promise((resolve, reject) => {
     try {
       const transaction = db!.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
-      const request = store.put(chat);
+      const request = store.put(sanitizedChat);
 
       request.onerror = () => {
         console.error('Failed to save chat:', request.error);
@@ -191,14 +204,25 @@ export const updateChatMessages = async (chatId: string, messages: Message[]): P
     throw new Error('Invalid chat ID');
   }
 
-  if (!Array.isArray(messages) || messages.some(message => !validateMessage(message))) {
+  if (!Array.isArray(messages)) {
     throw new Error('Invalid messages array');
   }
+
+  // Validate and sanitize messages
+  const sanitizedMessages = messages.map(message => {
+    if (!validateMessage(message)) {
+      throw new Error('Invalid message in array');
+    }
+    return {
+      ...message,
+      content: sanitizeInput(message.content),
+    };
+  });
 
   const chat = await getChat(chatId);
   if (!chat) throw new Error('Chat not found');
 
-  chat.messages = messages;
+  chat.messages = sanitizedMessages;
   chat.updatedAt = Date.now();
   await saveChat(chat);
 };

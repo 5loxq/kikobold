@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
-import { InferenceOptions, InferenceResult } from '../types';
-import * as InferenceEngine from '../services/inference/InferenceEngine';
+import { InferenceOptions, InferenceResult, UseInferenceReturn } from '../types';
+import * as InferenceEngine from '../services/inference/inference-engine';
 
 
-export const useInference = () => {
+export const useInference = (): UseInferenceReturn => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isModelLoaded, setIsModelLoaded] = useState(false);
