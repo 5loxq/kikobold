@@ -7,15 +7,26 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Build output
 node_modules
 dist
 dist-ssr
 *.local
+build
 
-# Editor directories and files
+# Cache directories
+.cache
+.vite-cache
+.node-cache
+
+# IDE
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
 .idea
+*.swp
+*.swo
+*~
 .DS_Store
 *.suo
 *.ntvs*
@@ -23,7 +34,26 @@ dist-ssr
 *.sln
 *.sw?
 
+# OS
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+
 # Environment
 .env
 .env.local
 .env.*.local
+.env.development
+.env.test
+.env.production
+
+# Coverage
+coverage
+.nyc_output
+
+# Test
+.coverage
+
+# Security
+npm-audit.json
