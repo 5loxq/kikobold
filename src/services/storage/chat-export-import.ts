@@ -114,9 +114,9 @@ export const importChats = (file: File): Promise<Chat[]> => {
         }
 
         // Validate each chat and its messages
-        const validChats = data.chats.filter(chat => {
+        const validChats = data.chats.filter((chat: unknown) => {
           if (!validateChat(chat)) {
-            warn(`Invalid chat skipped during import: ${chat.id || 'unknown'}`);
+            warn(`Invalid chat skipped during import: ${(chat as Chat).id || 'unknown'}`);
             return false;
           }
           

@@ -134,7 +134,7 @@ export const useModels = (): UseModelsReturn => {
           // Save to storage so it's marked as downloaded
           ModelStorage.saveModel(model);
           // Update local state
-          setDownloadedModels(prev => [...prev, model]);
+          setDownloadedModels(prev => [...prev, model].filter(Boolean) as LocalModel[]);
         }
       }
 

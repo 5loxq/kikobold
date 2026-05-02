@@ -11,7 +11,7 @@ interface InputBoxProps {
 
 // Type definition for SpeechRecognition API
 interface SpeechRecognitionType {
-  new (): SpeechRecognition;
+  new (): typeof SpeechRecognition;
   continuous: boolean;
   interimResults: boolean;
   maxAlternatives: number;
