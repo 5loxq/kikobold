@@ -369,13 +369,52 @@ webgui/
 | Category | Technology | Version |
 |----------|------------|---------|
 | **Frontend** | React | 18.2.0 |
-| **Language** | TypeScript | 5.2.2 |
-| **Bundler** | Vite | 5.0.0 |
-| **Styling** | Tailwind CSS | 3.3.0 |
-| **Inference** | Transformers.js | 2.6.0 |
+| **Language** | TypeScript | 5.3.3 |
+| **Bundler** | Vite | 5.1.4 |
+| **Styling** | Tailwind CSS | 3.4.1 |
+| **Inference** | Transformers.js | 2.17.0 |
 | **WebGPU** | @mlc-ai/web-llm | 0.2.81 |
 | **Storage** | IndexedDB | Native |
-| **i18n** | i18next | 23.7.0 |
+| **i18n** | i18next | 23.11.2 |
+| **Linting** | ESLint | 8.57.0 |
+
+## 🔒 Security Features
+
+This application implements comprehensive security measures:
+
+### ✅ Input Sanitization
+- All user inputs are sanitized to prevent XSS attacks
+- HTML tags and script content are removed from inputs
+- Dangerous patterns (javascript:, on* events, etc.) are blocked
+
+### ✅ URL Validation
+- Strict URL validation with SSRF prevention
+- Blocked internal IP addresses and localhost (unless explicitly allowed)
+- Trusted domain whitelist for model loading
+- Suspicious query parameters are rejected
+
+### ✅ File Upload Security
+- File type and extension validation
+- Maximum file size limits
+- Dangerous file extensions blocked (.js, .exe, .php, etc.)
+- JSON content validation for imports
+- Suspicious content patterns detected
+
+### ✅ WebGPU Security
+- COOP/COEP headers configured
+- X-Content-Type-Options: nosniff
+- X-Frame-Options: DENY
+- Referrer-Policy: strict-origin-when-cross-origin
+
+### ✅ Model Loading Security
+- Model paths validated against trusted sources
+- Only HuggingFace and local paths allowed
+- Suspicious model configurations rejected
+
+### ✅ Storage Security
+- Secure localStorage operations with validation
+- IndexedDB error handling
+- Data sanitization before storage
 
 ---
 
