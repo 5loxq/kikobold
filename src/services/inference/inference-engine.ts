@@ -87,29 +87,48 @@ const formatPrompt = (modelId: string, userPrompt: string, systemPrompt?: string
 
 // Extract response and clean up model-specific tokens
 const extractResponse = (modelId: string, generatedText: string, fullPrompt: string): string => {
-  const promptIndex = generatedText.indexOf(fullPrompt);
+  const config = getModelConfig(modelId);
   let responseText = '';
 
-  if (promptIndex !== -1) {
-    responseText = generatedText.substring(promptIndex + fullPrompt.length).trim();
-  } else {
-    responseText = generatedText.trim();
-  }
-
-  // Remove ChatML end tokens for Qwen models
-  const config = getModelConfig(modelId);
   if (config?.type === 'chat') {
+    // For Qwen/ChatML models: extract text after the assistant token
+    // The prompt ends with "<|im_start|>assistant\n" and we want everything after that
+    const assistantStart = '<|im_start|>assistant\n';
+    const assistantIndex = generatedText.indexOf(assistantStart);
+    
+    if (assistantIndex !== -1) {
+      responseText = generatedText.substring(assistantIndex + assistantStart.length);
+    } else {
+      // Fallback: try to find the user prompt and take everything after it
+      const userPromptIndex = generatedText.indexOf(fullPrompt);
+      if (userPromptIndex !== -1) {
+        responseText = generatedText.substring(userPromptIndex + fullPrompt.length);
+      } else {
+        responseText = generatedText;
+      }
+    }
+    
+    // Remove ChatML end tokens
     const endIdx = responseText.indexOf('<|im_end|>');
     if (endIdx !== -1) responseText = responseText.substring(0, endIdx).trim();
-  }
+    
+    // Remove any remaining special tokens
+    responseText = responseText.replace(/<\|[^|]+\|>/g, '').trim();
+  } else {
+    // For base models
+    const promptIndex = generatedText.indexOf(fullPrompt);
+    if (promptIndex !== -1) {
+      responseText = generatedText.substring(promptIndex + fullPrompt.length).trim();
+    } else {
+      responseText = generatedText.trim();
+    }
 
-  // Remove any remaining special tokens
-  responseText = responseText.replace(/<\|[^|]+\|>/g, '').trim();
-
-  // For base models, stop at the next "Q:" to avoid rambling
-  if (config?.type === 'base') {
+    // For base models, stop at the next "Q:" to avoid rambling
     const nextQ = responseText.indexOf('\nQ:');
     if (nextQ !== -1) responseText = responseText.substring(0, nextQ).trim();
+    
+    // Remove any remaining special tokens
+    responseText = responseText.replace(/<\|[^|]+\|>/g, '').trim();
   }
 
   return responseText;
