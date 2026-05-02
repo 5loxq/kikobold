@@ -87,17 +87,18 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-white">
+    <div className="flex-1 flex flex-col bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* WebGPU Warning */}
       {webgpuAvailable === false && (
-        <div className="bg-red-50 border-b border-red-200 px-4 py-2">
-          <p className="text-red-700 text-sm font-medium">
-            ⚠️ {t('chat.webgpuNotSupported')} - {t('chat.webgpuRequiredBrowsers')}
+        <div className="bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-200 px-4 py-3 shadow-sm">
+          <p className="text-red-700 text-sm font-medium flex items-center gap-2">
+            <span className="text-lg">⚠️</span>
+            {t('chat.webgpuNotSupported')} - {t('chat.webgpuRequiredBrowsers')}
           </p>
         </div>
       )}
       {/* Header */}
-      <div className="border-b border-gray-200 p-4 bg-gray-50">
+      <div className="border-b border-gray-100 p-4 bg-white/80 backdrop-blur-sm">
         <div className="flex items-center justify-between mb-4">
           <div className="flex-1">
             {isEditingTitle ? (
@@ -116,7 +117,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                       setIsEditingTitle(false);
                     }
                   }}
-                  className="flex-1 px-3 py-1 border border-gray-300 rounded text-lg font-bold"
+                  className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
                   autoFocus
                 />
                 <button
@@ -126,13 +127,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                       setIsEditingTitle(false);
                     }
                   }}
-                  className="text-green-600 hover:text-green-700 font-bold text-sm"
+                  className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                 >
                   ✓
                 </button>
                 <button
                   onClick={() => setIsEditingTitle(false)}
-                  className="text-gray-600 hover:text-gray-700 font-bold text-sm"
+                  className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
                 >
                   ✕
                 </button>
@@ -145,7 +146,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                     setEditedTitle(chat.title);
                     setIsEditingTitle(true);
                   }}
-                  className="text-gray-500 hover:text-gray-700 text-sm"
+                  className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors text-sm"
                   title="Rename chat"
                 >
                   ✏️
@@ -158,7 +159,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 <select
                   value={activeProfile.id}
                   onChange={(e) => onSelectProfile && onSelectProfile(e.target.value)}
-                  className="px-2 py-1 border border-gray-300 rounded text-sm text-gray-700 bg-white"
+                  className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
                 >
                   {profiles.map((profile) => (
                     <option key={profile.id} value={profile.id}>
@@ -170,14 +171,14 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             )}
           </div>
           {error && (
-            <div className="text-red-600 text-sm bg-red-50 px-4 py-2 rounded">
+            <div className="text-red-600 text-sm bg-red-50 px-4 py-2 rounded-lg shadow-sm border border-red-100">
               {error}
             </div>
           )}
         </div>
 
         {/* Model Selector */}
-        <div className="flex gap-4 items-center flex-wrap">
+        <div className="flex gap-4 items-center flex-wrap mt-4">
           <label className="text-sm font-medium text-gray-700">{t('chat.selectModel')}:</label>
           <select
             value={selectedModelId}
@@ -186,14 +187,14 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               onSelectModel(e.target.value);
             }}
             disabled={isLoading}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:bg-gray-100"
+            className="px-4 py-2 border border-gray-200 rounded-lg text-sm disabled:bg-gray-100 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm"
           >
             <option value="">{t('chat.selectModel')}...</option>
             {MODELS.map((model) => {
               const isDownloaded = isModelDownloaded?.(model.id) ?? false;
               return (
                 <option key={model.id} value={model.id}>
-                  {isDownloaded ? '✓' : '📥'} {model.name} ({model.modelSize})
+                  {isDownloaded ? '✅' : '📥'} {model.name} ({model.modelSize})
                 </option>
               );
             })}
@@ -203,28 +204,32 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             <>
               {isLoading && (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-blue-600 font-medium">⟳ {t('chat.loading')}</span>
-                  <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <span className="text-sm text-blue-600 font-medium">🌀 {t('chat.loading')}</span>
+                  <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden shadow-inner">
                     <div
-                      className="h-full bg-blue-600 transition-all"
+                      className="h-full bg-gradient-to-r from-blue-600 to-blue-500 transition-all duration-300"
                       style={{ width: `${loadingProgress}%` }}
                     ></div>
                   </div>
-                  <span className="text-xs text-blue-600">{loadingProgress}%</span>
+                  <span className="text-xs text-blue-600 font-medium">{loadingProgress}%</span>
                 </div>
               )}
               {isModelLoaded && !isLoading && (
-                <span className="text-sm text-green-600 font-medium">✓ {t('chat.modelLoaded')}</span>
+                <span className="text-sm text-green-600 font-medium flex items-center gap-1">
+                  ✅ {t('chat.modelLoaded')}
+                </span>
               )}
               {error && !isLoading && (
-                <span className="text-sm text-red-600 font-medium">❌ {t('chat.loadingError')}</span>
+                <span className="text-sm text-red-600 font-medium flex items-center gap-1">
+                  ❌ {t('chat.loadingError')}
+                </span>
               )}
             </>
           )}
         </div>
 
         {/* Export/Import Section */}
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
           <ChatExportImport
             chat={chat}
             allChats={chats}

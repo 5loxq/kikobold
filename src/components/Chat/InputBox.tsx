@@ -205,48 +205,65 @@ export const InputBox: React.FC<InputBoxProps> = ({
   }, [isLoading, isModelLoaded]);
 
   return (
-    <div className="border-t border-gray-200 p-4 bg-white">
+    <div className="border-t border-gray-100 p-4 bg-gradient-to-br from-gray-50 to-white">
       {!isModelLoaded && (
-        <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
-          ⚠️ {t('chat.modelLoading')}
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800 shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">⚠️</span>
+            <span className="font-medium">{t('chat.modelLoading')}</span>
+          </div>
         </div>
       )}
 
-      <div className="flex gap-3">
-        <textarea
-          ref={textareaRef}
-          value={input}
-          onChange={handleInput}
-          onKeyDown={handleKeyDown}
-          placeholder={isModelLoaded ? t('chat.placeholder') : t('chat.selectModel')}
-          disabled={isLoading || !isModelLoaded}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-          rows={1}
-          style={{ minHeight: '40px', maxHeight: '120px' }}
-        />
+      <div className="flex gap-3 items-end">
+        <div className="flex-1 relative">
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={handleInput}
+            onKeyDown={handleKeyDown}
+            placeholder={isModelLoaded ? t('chat.placeholder') : t('chat.selectModel')}
+            disabled={isLoading || !isModelLoaded}
+            className="w-full px-5 py-3 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md"
+            rows={1}
+            style={{ minHeight: '50px', maxHeight: '150px' }}
+          />
+        </div>
 
-        {/* Voice Input Button */}
+        {/* Voice Input Button - Modern Design */}
         <button
           onClick={isListening ? stopListening : startListening}
           disabled={isVoiceDisabled}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+          className={`px-4 py-3 rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow-md ${
             isListening
               ? 'bg-red-600 text-white hover:bg-red-700 animate-pulse'
-              : 'bg-gray-600 text-white hover:bg-gray-700'
-          }`}
+              : 'bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:from-gray-700 hover:to-gray-800'
+          } ${isVoiceDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
           title={t('chat.voiceInputTooltip')}
           aria-label={t('chat.voiceInputTooltip')}
         >
-          {isListening ? '⏹️' : '🎤'}
+          {isListening ? '🛑' : '🎙️'}
         </button>
 
+        {/* Send Button - Modern Design */}
         <button
           onClick={handleSend}
           disabled={isSendDisabled}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors font-medium"
+          className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow-md ${
+            isSendDisabled
+              ? 'bg-blue-300 text-white cursor-not-allowed'
+              : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 transform hover:scale-105 active:scale-95'
+          }`}
           aria-label={t('chat.send')}
         >
-          {isLoading ? '...' : t('chat.send')}
+          {isLoading ? (
+            <span className="flex items-center gap-2">
+              <span className="animate-spin text-xs">🌀</span>
+              {t('chat.sending')}
+            </span>
+          ) : (
+            '➤'
+          )}
         </button>
       </div>
     </div>

@@ -14,7 +14,7 @@ const MessageBubble: React.FC<{
 }> = React.memo(({ message }) => {
   const isUser = message.role === 'user';
   const timeStr = React.useMemo(
-    () => new Date(message.timestamp).toLocaleTimeString(),
+    () => new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     [message.timestamp]
   );
 
@@ -22,18 +22,18 @@ const MessageBubble: React.FC<{
   const content = React.useMemo(() => message.content, [message.content]);
 
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-2`}>
       <div
-        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+        className={`max-w-xs lg:max-w-2xl px-5 py-3 rounded-2xl shadow-sm ${
           isUser
-            ? 'bg-blue-600 text-white rounded-br-none'
-            : 'bg-gray-200 text-gray-800 rounded-bl-none'
+            ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-br-2xl'
+            : 'bg-white text-gray-800 rounded-bl-2xl border border-gray-100'
         }`}
       >
-        <p className="whitespace-pre-wrap break-words text-sm">
+        <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
           {content}
         </p>
-        <p className={`text-xs mt-1 ${
+        <p className={`text-xs mt-2 opacity-70 ${
           isUser ? 'text-blue-100' : 'text-gray-500'
         }`}>
           {timeStr}
@@ -86,10 +86,12 @@ export const MessageList: React.FC<MessageListProps> = React.memo(
     const { t } = useTranslation();
 
     return (
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-3 max-h-[calc(100vh-300px)]">
         {messages.length === 0 ? (
-          <div className="text-center text-gray-500 py-8">
-            <p>{t('chat.noMessagesYet')}</p>
+          <div className="text-center text-gray-400 py-12">
+            <div className="text-4xl mb-4">💬</div>
+            <p className="text-lg font-medium">{t('chat.noMessagesYet')}</p>
+            <p className="text-sm mt-2 text-gray-500">{t('chat.startConversation')}</p>
           </div>
         ) : (
           messages.map((message) => (
@@ -99,11 +101,11 @@ export const MessageList: React.FC<MessageListProps> = React.memo(
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg rounded-bl-none">
-              <div className="flex gap-1">
-                <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+            <div className="bg-white text-gray-800 px-5 py-3 rounded-2xl rounded-bl-2xl border border-gray-100 shadow-sm">
+              <div className="flex gap-1.5">
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></div>
               </div>
             </div>
           </div>

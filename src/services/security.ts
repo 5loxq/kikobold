@@ -40,6 +40,7 @@ export const sanitizeHtml = (html: string): string => {
 /**
  * Validate and sanitize user input
  * Removes potentially harmful characters and scripts
+ * Preserves normal spaces while removing dangerous content
  */
 export const sanitizeInput = (input: string): string => {
   if (typeof input !== 'string') {
@@ -59,8 +60,11 @@ export const sanitizeInput = (input: string): string => {
   // Remove dangerous characters
   sanitized = sanitized.replace(DANGEROUS_CHARS, '');
 
-  // Normalize whitespace
-  sanitized = sanitized.replace(/\s+/g, ' ').trim();
+  // Normalize whitespace: replace multiple consecutive spaces/newlines with single space
+  // but preserve normal spaces between words
+  sanitized = sanitized.replace(/[\t\n\r]+/g, ' '); // Replace tabs and newlines with space
+  sanitized = sanitized.replace(/  +/g, ' '); // Replace multiple spaces with single space
+  sanitized = sanitized.trim(); // Trim leading/trailing spaces
 
   return sanitized;
 };
