@@ -9,7 +9,55 @@ interface InputBoxProps {
   isModelLoaded: boolean;
 }
 
-const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+// Type definition for SpeechRecognition API
+interface SpeechRecognitionType {
+  new (): SpeechRecognition;
+  continuous: boolean;
+  interimResults: boolean;
+  maxAlternatives: number;
+  lang: string;
+  onstart: () => void;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onerror: (event: SpeechRecognitionErrorEvent) => void;
+  onend: () => void;
+  start: () => void;
+  stop: () => void;
+}
+
+interface SpeechRecognitionEvent {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionResultList {
+  length: number;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+  [0]: SpeechRecognitionAlternative;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+}
+
+interface SpeechRecognitionErrorEvent {
+  error: string | Error;
+}
+
+// Get SpeechRecognition API with proper typing
+const getSpeechRecognition = (): SpeechRecognitionType | null => {
+  if ('SpeechRecognition' in window) {
+    return (window as any).SpeechRecognition as SpeechRecognitionType;
+  }
+  if ('webkitSpeechRecognition' in window) {
+    return (window as any).webkitSpeechRecognition as SpeechRecognitionType;
+  }
+  return null;
+};
+
+const SpeechRecognition = getSpeechRecognition();
 
 export const InputBox: React.FC<InputBoxProps> = ({
   onSendMessage,
@@ -68,7 +116,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
         log('Speech recognition started');
       };
 
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
         let transcript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
           transcript += event.results[i][0].transcript;
@@ -85,10 +133,11 @@ export const InputBox: React.FC<InputBoxProps> = ({
         }
       };
 
-      recognition.onerror = (event: any) => {
-        error('Speech recognition error:', event.error instanceof Error ? event.error : new Error(String(event.error)));
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+        const errorMsg = event.error instanceof Error ? event.error.message : String(event.error);
+        error('Speech recognition error:', event.error);
         setIsListening(false);
-        alert(`${t('chat.micError')}: ${event.error}`);
+        alert(`${t('chat.micError')}: ${errorMsg}`);
       };
 
       recognition.onend = () => {

@@ -43,6 +43,20 @@ export interface Model {
   localPath?: string; // path to local model file (e.g., "/models/tinyllama.gguf")
 }
 
+// Model configuration for inference engine
+export interface ModelConfig {
+  id: string;
+  name: string;
+  modelPath: string;
+  type: 'chat' | 'base';
+  description: string;
+  modelSize: string;
+  fileSizeMB?: number;
+  quantized: boolean;
+  recommended: boolean;
+  contextLength: number;
+}
+
 export interface LocalModel {
   id: string;
   name: string;
@@ -65,3 +79,11 @@ export interface InferenceResult {
   tokens: number;
   duration: number;
 }
+
+// Re-export hook types
+export type {
+  UseInferenceReturn,
+  UseModelsReturn,
+  UseChatReturn,
+  UseProfilesReturn,
+} from './hooks';
