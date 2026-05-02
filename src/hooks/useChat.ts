@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Chat, Message } from '../types';
+import { Chat, Message, UseChatReturn } from '../types';
 import * as ChatStorage from '../services/storage/ChatStorage';
 
 
-export const useChat = () => {
+export const useChat = (): UseChatReturn => {
   const [chat, setChat] = useState<Chat | null>(null);
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(false);
@@ -12,12 +12,13 @@ export const useChat = () => {
     const initDB = async () => {
       try {
         await ChatStorage.initChatDB();
+        await loadChats();
       } catch (error) {
         console.error('Failed to initialize chat database:', error instanceof Error ? error : new Error(String(error)));
       }
     };
     initDB();
-  }, []);
+  }, [loadChats]);
 
   const loadChats = useCallback(async () => {
     try {
