@@ -1,7 +1,7 @@
 import { InferenceOptions, InferenceResult, ModelConfig } from '../../types';
 import { pipeline, TextGenerationPipeline, env } from '@xenova/transformers';
 import { log, warn } from '../logging';
-import { checkWebGPUSupport } from '../security';
+import { checkWebGPUSupport, validateModelPath } from '../security';
 import { MODEL_CONFIGS, getModelConfig } from '../models/model-registry';
 import { createError, ErrorCodes } from '../../utils/errors';
 
@@ -9,13 +9,50 @@ import { createError, ErrorCodes } from '../../utils/errors';
 env.allowRemoteModels = true;
 
 // Model cache to prevent reloading the same model multiple times
-const modelCache: Map<string, TextGenerationPipeline> = new Map();
+// Using LRU cache with max size to prevent memory issues
+const MAX_CACHE_SIZE = 2; // Maximum number of models to cache
+const modelCache: Map<string, { pipeline: TextGenerationPipeline; timestamp: number }> = new Map();
 
 let currentModelId: string | null = null;
 let currentPipeline: TextGenerationPipeline | null = null;
 let isLoading = false;
 let webgpuAvailable: boolean | null = null;
 let cleanupFunctions: (() => void)[] = [];
+
+// Cache cleanup interval (5 minutes)
+const CACHE_CLEANUP_INTERVAL = 5 * 60 * 1000;
+
+// Start cache cleanup timer
+setInterval(() => {
+  cleanupOldCacheEntries();
+}, CACHE_CLEANUP_INTERVAL);
+
+/**
+ * Clean up old cache entries based on LRU policy
+ */
+function cleanupOldCacheEntries(): void {
+  if (modelCache.size <= MAX_CACHE_SIZE) return;
+  
+  // Get all entries sorted by timestamp
+  const entries = Array.from(modelCache.entries())
+    .sort((a, b) => a[1].timestamp - b[1].timestamp);
+  
+  // Remove oldest entries to get back to max size
+  while (modelCache.size > MAX_CACHE_SIZE) {
+    const oldestEntry = entries.shift();
+    if (oldestEntry) {
+      try {
+        // Clean up the pipeline if it has a dispose method
+        if (typeof (oldestEntry[1].pipeline as any).dispose === 'function') {
+          (oldestEntry[1].pipeline as any).dispose();
+        }
+        modelCache.delete(oldestEntry[0]);
+      } catch (error) {
+        warn(`Error cleaning up cached model ${oldestEntry[0]}:`, error);
+      }
+    }
+  }
+}
 
 // Type guard for pipeline results
 function isPipelineResult(result: any): result is { generated_text: string } {
@@ -147,7 +184,12 @@ export const loadModel = async (modelId: string): Promise<void> => {
       await unloadModel();
     }
     
-    currentPipeline = modelCache.get(modelId)!;
+    // Update timestamp for LRU cache
+    const cached = modelCache.get(modelId)!;
+    cached.timestamp = Date.now();
+    modelCache.set(modelId, cached);
+    
+    currentPipeline = cached.pipeline;
     currentModelId = modelId;
     return;
   }
@@ -185,6 +227,15 @@ export const loadModel = async (modelId: string): Promise<void> => {
       );
     }
 
+    // Validate model path for security
+    if (!validateModelPath(config.modelPath)) {
+      throw createError(
+        `Model path is not from a trusted source: ${config.modelPath}`,
+        ErrorCodes.SECURITY_ERROR,
+        { modelId, modelPath: config.modelPath }
+      );
+    }
+
     log(`Loading model: ${modelId} (${config.name}) from ${config.modelPath}...`);
 
     // Create pipeline for text generation with ONNX model
@@ -214,8 +265,11 @@ export const loadModel = async (modelId: string): Promise<void> => {
       );
     }
 
-    // Cache the model
-    modelCache.set(modelId, generator as TextGenerationPipeline);
+    // Cache the model with timestamp for LRU management
+    modelCache.set(modelId, { 
+      pipeline: generator as TextGenerationPipeline, 
+      timestamp: Date.now() 
+    });
     
     currentPipeline = generator as TextGenerationPipeline;
     currentModelId = modelId;
@@ -410,10 +464,10 @@ export const unloadModel = (): void => {
  */
 export const clearModelCache = (): void => {
   // Clean up all cached models
-  for (const [modelId, pipeline] of modelCache) {
+  for (const [modelId, cached] of modelCache) {
     try {
-      if (typeof (pipeline as any).dispose === 'function') {
-        (pipeline as any).dispose();
+      if (typeof (cached.pipeline as any).dispose === 'function') {
+        (cached.pipeline as any).dispose();
       }
     } catch (error) {
       warn(`Error cleaning up cached model ${modelId}:`, error);
@@ -437,6 +491,17 @@ export const clearModelCache = (): void => {
  */
 export const getCachedModelIds = (): string[] => {
   return Array.from(modelCache.keys());
+};
+
+/**
+ * Get cache statistics
+ */
+export const getCacheStats = (): { size: number; maxSize: number; entries: string[] } => {
+  return {
+    size: modelCache.size,
+    maxSize: MAX_CACHE_SIZE,
+    entries: Array.from(modelCache.keys()),
+  };
 };
 
 /**
