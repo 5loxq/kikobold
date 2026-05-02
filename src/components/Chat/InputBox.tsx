@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { error, log } from '../../services/logging';
 import { sanitizeInput } from '../../services/security';
@@ -192,6 +192,15 @@ export const InputBox: React.FC<InputBoxProps> = ({
     }
   }, []);
 
+  // Memoize disabled states to prevent unnecessary re-renders
+  const isSendDisabled = useMemo(() => {
+    return isLoading || !isModelLoaded || !input.trim();
+  }, [isLoading, isModelLoaded, input]);
+
+  const isVoiceDisabled = useMemo(() => {
+    return isLoading || !isModelLoaded;
+  }, [isLoading, isModelLoaded]);
+
   return (
     <div className="border-t border-gray-200 p-4 bg-white">
       {!isModelLoaded && (
@@ -216,21 +225,23 @@ export const InputBox: React.FC<InputBoxProps> = ({
         {/* Voice Input Button */}
         <button
           onClick={isListening ? stopListening : startListening}
-          disabled={isLoading || !isModelLoaded}
+          disabled={isVoiceDisabled}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
             isListening
               ? 'bg-red-600 text-white hover:bg-red-700 animate-pulse'
               : 'bg-gray-600 text-white hover:bg-gray-700'
           }`}
           title={t('chat.voiceInputTooltip')}
+          aria-label={t('chat.voiceInputTooltip')}
         >
           {isListening ? '⏹️' : '🎤'}
         </button>
 
         <button
           onClick={handleSend}
-          disabled={isLoading || !isModelLoaded || !input.trim()}
+          disabled={isSendDisabled}
           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors font-medium"
+          aria-label={t('chat.send')}
         >
           {isLoading ? '...' : t('chat.send')}
         </button>

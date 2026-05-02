@@ -1,6 +1,6 @@
 import { Chat } from '../../types';
 import { info, warn } from '../logging';
-import { validateFileUpload } from '../security';
+import { validateFileUpload, validateJsonContent } from '../security';
 
 export interface ExportedChat {
   version: string;
@@ -72,8 +72,9 @@ export const exportChats = (chats: Chat[]): void => {
 export const importChats = (file: File): Promise<Chat[]> => {
   return new Promise((resolve, reject) => {
     // Validate file input using security utilities
-    if (!validateFileUpload(file, 10)) { // 10MB max size
-      reject(new Error('Invalid file: too large or wrong type'));
+    const fileValidation = validateFileUpload(file, 10, ['.json']); // 10MB max size, only .json
+    if (!fileValidation.valid) {
+      reject(new Error(`Invalid file: ${fileValidation.error || 'too large or wrong type'}`));
       return;
     }
 
@@ -92,6 +93,13 @@ export const importChats = (file: File): Promise<Chat[]> => {
           return;
         }
 
+        // Validate JSON content for security
+        const contentValidation = validateJsonContent(content);
+        if (!contentValidation.valid) {
+          reject(new Error(`Invalid content: ${contentValidation.error || 'Unknown error'}`));
+          return;
+        }
+
         const data: ExportedChat = JSON.parse(content);
 
         // Validate format
@@ -100,9 +108,15 @@ export const importChats = (file: File): Promise<Chat[]> => {
           return;
         }
 
+        // Validate version
+        if (data.version !== '1.0') {
+          warn(`Import file version ${data.version} may not be fully compatible`);
+        }
+
         // Validate each chat and its messages
         const validChats = data.chats.filter(chat => {
           if (!validateChat(chat)) {
+            warn(`Invalid chat skipped during import: ${chat.id || 'unknown'}`);
             return false;
           }
           
