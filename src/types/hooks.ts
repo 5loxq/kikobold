@@ -2,7 +2,7 @@
  * Type definitions for custom React hooks
  */
 
-import { InferenceOptions, InferenceResult, Chat, Message, Profile, Model, LocalModel } from '.';
+import { InferenceOptions, InferenceResult, Chat, Profile, Model, LocalModel } from '.';
 
 // useInference hook return type
 export interface UseInferenceReturn {

@@ -8,6 +8,17 @@ export const useChat = (): UseChatReturn => {
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const loadChats = useCallback(async () => {
+    try {
+      const allChats = await ChatStorage.getAllChats();
+      if (Array.isArray(allChats)) {
+        setChats(allChats.sort((a, b) => b.updatedAt - a.updatedAt));
+      }
+    } catch (error) {
+      console.error('Failed to load chats:', error instanceof Error ? error : new Error(String(error)));
+    }
+  }, []);
+
   useEffect(() => {
     const initDB = async () => {
       try {
@@ -19,17 +30,6 @@ export const useChat = (): UseChatReturn => {
     };
     initDB();
   }, [loadChats]);
-
-  const loadChats = useCallback(async () => {
-    try {
-      const allChats = await ChatStorage.getAllChats();
-      if (Array.isArray(allChats)) {
-        setChats(allChats.sort((a, b) => b.updatedAt - a.updatedAt));
-      }
-    } catch (error) {
-      console.error('Failed to load chats:', error instanceof Error ? error : new Error(String(error)));
-    }
-  }, []);
 
   const loadChat = useCallback(async (id: string) => {
     try {
