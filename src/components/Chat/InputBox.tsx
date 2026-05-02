@@ -103,6 +103,9 @@ export const InputBox: React.FC<InputBoxProps> = ({
       }
 
       const recognition = new SpeechRecognition();
+      if (!recognition) {
+        throw new Error('Failed to create SpeechRecognition instance');
+      }
       recognition.continuous = true; // Changed to true for better user experience
       recognition.interimResults = true; // Show interim results
       recognition.maxAlternatives = 1;
