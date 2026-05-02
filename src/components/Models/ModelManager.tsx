@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LocalModel, Model } from '../../types';
-import { MODELS } from '../../services/models/modelRegistry';
+import { MODELS } from '../../services/models/model-registry';
 import { ModelCard } from './ModelCard';
 import { info } from '../../services/logging';
 
