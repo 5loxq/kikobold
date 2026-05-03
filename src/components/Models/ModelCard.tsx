@@ -7,7 +7,9 @@ interface ModelCardProps {
   isDownloaded: boolean;
   isDownloading: boolean;
   downloadProgress: number; // 0-100
+  downloadStatus?: string;
   onDownload: () => void;
+  onCancel?: () => void;
 }
 
 export const ModelCard: React.FC<ModelCardProps> = ({
@@ -15,9 +17,15 @@ export const ModelCard: React.FC<ModelCardProps> = ({
   isDownloaded,
   isDownloading,
   downloadProgress,
+  downloadStatus,
   onDownload,
+  onCancel,
 }) => {
   const { t } = useTranslation();
+  
+  // Determine if we should show cancel button
+  const showCancel = isDownloading && onCancel && downloadProgress < 100;
+  
   return (
     <div className="border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow bg-white">
       <div className="flex items-start justify-between mb-2">
@@ -42,7 +50,7 @@ export const ModelCard: React.FC<ModelCardProps> = ({
         {model.quantized && <p>{t('models.quantized')}</p>}
       </div>
 
-      {/* Progress Bar */}
+      {/* Progress Bar with Status */}
       {isDownloading && (
         <div className="mb-3">
           <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
@@ -51,40 +59,52 @@ export const ModelCard: React.FC<ModelCardProps> = ({
               style={{ width: `${downloadProgress}%` }}
             />
           </div>
+          {downloadStatus && (
+            <p className="text-xs text-blue-600 mt-1 text-center font-medium truncate">
+              {downloadStatus}
+            </p>
+          )}
           <p className="text-xs text-blue-600 mt-1 text-center font-medium">
             {downloadProgress}%
           </p>
         </div>
       )}
 
-      <button
-        onClick={onDownload}
-        disabled={isDownloading || isDownloaded}
-        className={`w-full px-3 py-2 rounded font-medium text-sm transition-colors flex items-center justify-center gap-2 ${
-          isDownloaded
-            ? 'bg-green-100 text-green-700 cursor-default'
-            : isDownloading
-            ? 'bg-blue-100 text-blue-700 cursor-wait'
-            : 'bg-blue-600 text-white hover:bg-blue-700'
-        }`}
-      >
-        {isDownloaded ? (
-          <>
-            <span>✓</span>
-            <span>{t('models.downloadedStatus')}</span>
-          </>
-        ) : isDownloading ? (
-          <>
+      {/* Download/Status Button */}
+      {isDownloaded ? (
+        <button
+          disabled
+          className="w-full px-3 py-2 rounded font-medium text-sm transition-colors flex items-center justify-center gap-2 bg-green-100 text-green-700 cursor-default"
+        >
+          <span>✓</span>
+          <span>{t('models.downloadedStatus')}</span>
+        </button>
+      ) : isDownloading ? (
+        <div className="flex gap-2">
+          <button
+            onClick={onCancel}
+            className="flex-1 px-3 py-2 rounded font-medium text-sm transition-colors flex items-center justify-center gap-2 bg-red-100 text-red-700 hover:bg-red-200"
+          >
+            <span>✕</span>
+            <span>{t('models.cancel')}</span>
+          </button>
+          <button
+            disabled
+            className="flex-1 px-3 py-2 rounded font-medium text-sm transition-colors flex items-center justify-center gap-2 bg-blue-100 text-blue-700 cursor-wait"
+          >
             <span className="animate-spin">⟳</span>
             <span>{t('models.downloading')}</span>
-          </>
-        ) : (
-          <>
-            <span>⬇️</span>
-            <span>{t('models.download')}</span>
-          </>
-        )}
-      </button>
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={onDownload}
+          className="w-full px-3 py-2 rounded font-medium text-sm transition-colors flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700"
+        >
+          <span>⬇️</span>
+          <span>{t('models.download')}</span>
+        </button>
+      )}
     </div>
   );
 };
