@@ -1,14 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LocalModel, Model } from '../../types';
 import { MODELS } from '../../services/models/model-registry';
 import { ModelCard } from './ModelCard';
-import { info } from '../../services/logging';
+import { info, error } from '../../services/logging';
+import {
+    downloadModel,
+    getDownloadProgress,
+    cancelDownload,
+    hasActiveDownloads,
+    getAllDownloadStates,
+    type DownloadProgress,
+} from '../../services/storage/ModelStorage';
 
 interface ModelManagerProps {
   downloadedModels: LocalModel[];
   activeModel: LocalModel | null;
-  onDownloadModel: (model: Model) => Promise<boolean>;
   onDeleteModel: (modelId: string) => void;
   onSelectModel: (modelId: string) => void;
 }
@@ -16,47 +23,71 @@ interface ModelManagerProps {
 export const ModelManager: React.FC<ModelManagerProps> = ({
   downloadedModels,
   activeModel,
-  onDownloadModel,
   onDeleteModel,
   onSelectModel,
 }) => {
   const { t } = useTranslation();
   const [downloading, setDownloading] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<Record<string, number>>({});
+  const [downloadStatus, setDownloadStatus] = useState<Record<string, string>>({});
+
+  // Sync download progress from storage
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const states = getAllDownloadStates();
+      const newProgress: Record<string, number> = {};
+      const newStatus: Record<string, string> = {};
+      
+      states.forEach((state, modelId) => {
+        newProgress[modelId] = state.progress;
+        newStatus[modelId] = state.status === 'error' ? state.error || 'Error' :
+                            state.status === 'cancelled' ? 'Cancelled' :
+                            state.status === 'completed' ? 'Complete' :
+                            state.status === 'paused' ? 'Paused' : 'Downloading...';
+      });
+      
+      setDownloadProgress(newProgress);
+      setDownloadStatus(newStatus);
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleDownload = async (model: Model) => {
     setDownloading(model.id);
     setDownloadProgress(prev => ({ ...prev, [model.id]: 0 }));
-
-    // Simulate progress updates
-    let progress = 0;
-    const progressInterval = setInterval(() => {
-      progress += Math.random() * 30;
-      if (progress > 90) progress = 90;
-      setDownloadProgress(prev => ({ ...prev, [model.id]: Math.floor(progress) }));
-    }, 500);
+    setDownloadStatus(prev => ({ ...prev, [model.id]: 'Starting...' }));
 
     try {
-      const success = await onDownloadModel(model);
-      clearInterval(progressInterval);
-
-      if (success) {
-        setDownloadProgress(prev => ({ ...prev, [model.id]: 100 }));
-        info(`${model.name} downloaded successfully`);
-        setTimeout(() => {
-          setDownloading(null);
-          setDownloadProgress(prev => ({ ...prev, [model.id]: 0 }));
-        }, 1000);
-      } else {
-        setDownloading(null);
-        setDownloadProgress(prev => ({ ...prev, [model.id]: 0 }));
-      }
+      await downloadModel(
+        model,
+        (progress: DownloadProgress) => {
+          setDownloadProgress(prev => ({ ...prev, [progress.modelId]: progress.percent }));
+          setDownloadStatus(prev => ({ ...prev, [progress.modelId]: progress.status }));
+        },
+        (localModel) => {
+          info(`${model.name} downloaded successfully`);
+          // Model will be added to downloadedModels via parent component
+        },
+        (err) => {
+          error(`Download failed for ${model.name}: ${err.message}`);
+          setDownloadStatus(prev => ({ ...prev, [model.id]: `Error: ${err.message}` }));
+        }
+      );
     } catch (error) {
-      clearInterval(progressInterval);
-      setDownloading(null);
-      setDownloadProgress(prev => ({ ...prev, [model.id]: 0 }));
-      console.error('Download failed:', error instanceof Error ? error : new Error(String(error)));
+      const err = error instanceof Error ? error : new Error(String(error));
+      error(`Download failed for ${model.name}: ${err.message}`);
+      setDownloadStatus(prev => ({ ...prev, [model.id]: `Error: ${err.message}` }));
+    } finally {
+      setTimeout(() => {
+        setDownloading(null);
+      }, 1000);
     }
+  };
+
+  const handleCancelDownload = (modelId: string) => {
+    cancelDownload(modelId);
+    setDownloading(null);
   };
 
   return (
@@ -126,7 +157,9 @@ export const ModelManager: React.FC<ModelManagerProps> = ({
                 isDownloaded={downloadedModels.some(m => m.id === model.id)}
                 isDownloading={downloading === model.id}
                 downloadProgress={downloadProgress[model.id] || 0}
+                downloadStatus={downloadStatus[model.id]}
                 onDownload={() => handleDownload(model)}
+                onCancel={() => handleCancelDownload(model.id)}
               />
             ))}
           </div>

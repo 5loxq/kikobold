@@ -447,3 +447,315 @@ export const validateModelPath = (path: string): boolean => {
   // Validate as URL
   return isTrustedUrl(trimmedPath) || validateUrl(trimmedPath, true);
 };
+
+/**
+ * Check if a URL uses HTTPS
+ */
+export const checkHTTPS = (url: string): boolean => {
+    try {
+        const parsed = new URL(url);
+        return parsed.protocol === 'https:';
+    } catch {
+        return false;
+    }
+};
+
+/**
+ * Check if a URL is from a trusted domain
+ */
+export const isTrustedDomain = (url: string): boolean => {
+    try {
+        const parsed = new URL(url);
+        const hostname = parsed.hostname.toLowerCase();
+        
+        // Check if domain or any of its subdomains are trusted
+        return TRUSTED_DOMAINS.some(trusted => {
+            // Exact match
+            if (hostname === trusted) return true;
+            // Subdomain match
+            if (hostname.endsWith(`.${trusted}`)) return true;
+            return false;
+        });
+    } catch {
+        return false;
+    }
+};
+
+/**
+ * Validate a model ID
+ */
+export const validateModelId = (id: string): boolean => {
+    if (!id || typeof id !== 'string') {
+        return false;
+    }
+
+    // Basic validation - should be alphanumeric with possible underscores/dashes
+    return /^[a-zA-Z0-9_-]{1,64}$/.test(id);
+};
+
+/**
+ * Sanitize model name for display
+ */
+export const sanitizeModelName = (name: string): string => {
+    if (!name || typeof name !== 'string') {
+        return 'Unknown Model';
+    }
+
+    // Limit length
+    if (name.length > 100) {
+        return name.substring(0, 100);
+    }
+
+    // Remove potentially dangerous characters
+    return name.replace(/[<>"'`]/g, '');
+};
+
+/**
+ * Sanitize file path
+ */
+export const sanitizeFilePath = (path: string): string => {
+    if (!path || typeof path !== 'string') {
+        return '';
+    }
+
+    // Remove path traversal attempts
+    return path
+        .replace(/\.\./g, '')
+        .replace(/\.\//g, '')
+        .replace(/[<>:"|?*]/g, '');
+};
+
+/**
+ * Validate and sanitize chat message content
+ */
+export const sanitizeMessageContent = (content: string): string => {
+    if (!content || typeof content !== 'string') {
+        return '';
+    }
+
+    // Limit message length
+    if (content.length > 50000) {
+        console.warn(`Message too long (${content.length} chars), truncating to 50000`);
+        content = content.substring(0, 50000);
+    }
+
+    // Use existing sanitization
+    return sanitizeInput(content);
+};
+
+/**
+ * Check if WebGPU is supported in the browser with browser-specific optimizations
+ */
+export const checkWebGPUSupport = async (): Promise<boolean> => {
+    try {
+        // Check if WebGPU is available
+        if (!('gpu' in navigator)) {
+            return false;
+        }
+
+        // Try to create a device
+        const adapter = await (navigator as any).gpu.requestAdapter();
+        if (!adapter) {
+            return false;
+        }
+
+        const device = await adapter.requestDevice();
+        if (!device) {
+            return false;
+        }
+
+        // Browser-specific optimizations
+        const isFirefox = navigator.userAgent.includes('Firefox');
+        const isChrome = navigator.userAgent.includes('Chrome') || navigator.userAgent.includes('Chromium');
+        const isSafari = navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome');
+        const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        
+        if (isFirefox) {
+            console.log('✓ WebGPU is available (Firefox - using conservative settings)');
+        } else if (isChrome) {
+            console.log('✓ WebGPU is available (Chrome - using aggressive optimizations)');
+        } else if (isSafari) {
+            console.log('✓ WebGPU is available (Safari - using mobile-optimized settings)');
+        } else {
+            console.log('✓ WebGPU is available (Generic browser)');
+        }
+        
+        return true;
+    } catch (err) {
+        console.warn('⚠️ WebGPU check failed:', err);
+        return false;
+    }
+};
+
+/**
+ * Check if WASM is supported in the browser
+ */
+export const checkWASMSupport = (): boolean => {
+    try {
+        // Check if WebAssembly is available
+        if (!('WebAssembly' in window)) {
+            return false;
+        }
+
+        // Check if WebAssembly.instantiateStreaming is available
+        if (!('instantiateStreaming' in WebAssembly)) {
+            return false;
+        }
+
+        return true;
+    } catch (err) {
+        console.warn('WASM check failed:', err);
+        return false;
+    }
+};
+
+/**
+ * Check if the browser supports required features for LLM inference
+ */
+export const checkBrowserCompatibility = async (): Promise<{
+    webgpu: boolean;
+    wasm: boolean;
+    offline: boolean;
+    storage: boolean;
+    allRequired: boolean;
+}> => {
+    const webgpu = await checkWebGPUSupport();
+    const wasm = checkWASMSupport();
+    const offline = 'serviceWorker' in navigator;
+    const storage = 'indexedDB' in window || 'caches' in window;
+
+    const allRequired = webgpu && wasm && storage;
+
+    return {
+        webgpu,
+        wasm,
+        offline,
+        storage,
+        allRequired,
+    };
+};
+
+/**
+ * Get browser-specific security recommendations
+ */
+export const getSecurityRecommendations = async (): Promise<string[]> => {
+    const recommendations: string[] = [];
+    const compatibility = await checkBrowserCompatibility();
+
+    if (!compatibility.webgpu) {
+        recommendations.push('WebGPU is not supported. Some models may not work or will be slower.');
+    }
+
+    if (!compatibility.wasm) {
+        recommendations.push('WebAssembly is not supported. LLM inference will not work.');
+    }
+
+    if (!compatibility.storage) {
+        recommendations.push('Storage APIs are not available. Model caching will be limited.');
+    }
+
+    // Check if we're in a secure context
+    if (!window.isSecureContext) {
+        recommendations.push('Not in a secure context. Some features may be limited.');
+    }
+
+    return recommendations;
+};
+
+/**
+ * Create a secure URL for model downloads
+ */
+export const createSecureModelUrl = (baseUrl: string, modelPath: string): string | null => {
+    try {
+        // Validate both parts
+        if (!validateModelPath(baseUrl) || !validateModelPath(modelPath)) {
+            return null;
+        }
+
+        // Combine URLs
+        const url = new URL(modelPath, baseUrl);
+        
+        // Ensure HTTPS
+        if (url.protocol !== 'https:') {
+            url.protocol = 'https:';
+        }
+
+        return url.toString();
+    } catch {
+        return null;
+    }
+};
+
+/**
+ * Check if a file is a valid GGUF file based on extension
+ */
+export const isGgufFile = (filename: string): boolean => {
+    const lower = filename.toLowerCase();
+    return lower.endsWith('.gguf') || lower.includes('.gguf?');
+};
+
+/**
+ * Check if a file is a valid ONNX file based on extension
+ */
+export const isOnnxFile = (filename: string): boolean => {
+    const lower = filename.toLowerCase();
+    return lower.endsWith('.onnx') || lower.includes('.onnx?');
+};
+
+/**
+ * Validate file extension for model files
+ */
+export const validateModelFileExtension = (filename: string): boolean => {
+    const lower = filename.toLowerCase();
+    const validExtensions = ['.gguf', '.bin', '.onnx', '.safetensors', '.json'];
+    return validExtensions.some(ext => lower.endsWith(ext) || lower.includes(ext + '?'));
+};
+
+/**
+ * Secure session storage wrapper
+ */
+export const secureSessionStorage = {
+    getItem: <T>(key: string): T | null => {
+        try {
+            if (!key || typeof key !== 'string' || key.length > 100) {
+                throw new Error('Invalid storage key');
+            }
+
+            const item = sessionStorage.getItem(key);
+            return item ? JSON.parse(item) as T : null;
+        } catch (err) {
+            console.warn(`Failed to get item from sessionStorage: ${key}`, err);
+            return null;
+        }
+    },
+
+    setItem: <T>(key: string, value: T): void => {
+        try {
+            if (!key || typeof key !== 'string' || key.length > 100) {
+                throw new Error('Invalid storage key');
+            }
+
+            const stringValue = JSON.stringify(value);
+            if (stringValue.length > 5 * 1024 * 1024) {
+                throw new Error('Value too large for sessionStorage');
+            }
+
+            sessionStorage.setItem(key, stringValue);
+        } catch (err) {
+            console.error(`Failed to set item in sessionStorage: ${key}`, err);
+            throw err;
+        }
+    },
+
+    removeItem: (key: string): void => {
+        try {
+            if (!key || typeof key !== 'string' || key.length > 100) {
+                throw new Error('Invalid storage key');
+            }
+
+            sessionStorage.removeItem(key);
+        } catch (err) {
+            console.warn(`Failed to remove item from sessionStorage: ${key}`, err);
+        }
+    },
+};

@@ -1,9 +1,23 @@
 import { LocalModel } from '../../types';
-import { warn } from '../logging';
+import { warn, log } from '../logging';
 import { secureLocalStorage } from '../security';
+import {
+    downloadModel as enhancedDownloadModel,
+    deleteCachedModel,
+    getCachedModel,
+    isModelCached,
+    initModelCache,
+    type DownloadOptions,
+    type DownloadProgress,
+} from '../models/model-downloader';
 
 const MODEL_STORAGE_KEY = 'llm_downloaded_models';
 const ACTIVE_MODEL_KEY = 'llm_active_model';
+
+// Initialize model cache on module load
+initModelCache().catch(err => {
+    warn('Failed to initialize model cache:', err);
+});
 
 // Validate local model object
 function validateLocalModel(model: any): model is LocalModel {
@@ -136,4 +150,84 @@ export const getTotalDownloadedSizeInGB = (): number => {
     console.error('Failed to calculate total downloaded size in GB:', error);
     return 0;
   }
+};
+
+/**
+ * Enhanced download function with progress tracking and resume support
+ * Uses the new model-downloader service
+ */
+export const downloadModel = async (
+    model: Model,
+    onProgress?: (progress: DownloadProgress) => void,
+    onComplete?: (localModel: LocalModel) => void,
+    onError?: (error: Error) => void
+): Promise<LocalModel | null> => {
+    try {
+        // Check if already cached
+        const cached = await getCachedModel(model.id);
+        if (cached) {
+            log(`✓ Model ${model.id} already cached`);
+            onComplete?.(cached);
+            return cached;
+        }
+
+        // Use enhanced downloader
+        const localModel = await enhancedDownloadModel({
+            model,
+            onProgress: (progress) => {
+                onProgress?.(progress);
+            },
+            onComplete: (downloadedModel) => {
+                // Also save to localStorage for backward compatibility
+                saveModel(downloadedModel);
+                onComplete?.(downloadedModel);
+            },
+            onError: (err, modelId) => {
+                onError?.(err);
+            },
+            maxRetries: 3,
+        });
+
+        return localModel;
+    } catch (error) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        onError?.(err);
+        throw err;
+    }
+};
+
+/**
+ * Check if a model is cached (either in Cache API or IndexedDB)
+ */
+export const checkModelCached = async (modelId: string, url?: string): Promise<boolean> => {
+    if (!url) {
+        const model = getDownloadedModels().find(m => m.id === modelId);
+        return !!model;
+    }
+    return isModelCached(modelId, url);
+};
+
+/**
+ * Get cached model from either Cache API or localStorage
+ */
+export const getModelFromCache = async (modelId: string): Promise<LocalModel | undefined> => {
+    // Try Cache API first
+    const cached = await getCachedModel(modelId);
+    if (cached) return cached;
+
+    // Fallback to localStorage
+    return getModel(modelId);
+};
+
+/**
+ * Delete model from all cache locations
+ */
+export const deleteModelFromAllCaches = async (modelId: string): Promise<void> => {
+    // Delete from Cache API
+    await deleteCachedModel(modelId);
+    
+    // Delete from localStorage
+    deleteModel(modelId);
+    
+    log(`✓ Model ${modelId} deleted from all caches`);
 };
