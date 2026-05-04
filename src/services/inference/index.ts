@@ -1,4 +1,9 @@
 // Inference service exports
+// Export the new enhanced inference engine
+export * from './llm-inference-engine';
+export * from './llm-types';
+
+// Export the old inference engine for backward compatibility
 export {
   checkWebGPUAvailable,
   loadModel,
@@ -12,6 +17,7 @@ export {
   getModelConfig,
   clearModelCache,
   getCachedModelIds,
+  getCacheStats,
 } from './inference-engine';
 
 // Re-export ModelConfig from types

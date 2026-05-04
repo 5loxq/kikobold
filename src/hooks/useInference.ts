@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { InferenceOptions, InferenceResult, UseInferenceReturn } from '../types';
 import * as InferenceEngine from '../services/inference/inference-engine';
+import { createInferenceBackend, type GenerateChatRequest, type GenerateEvent, type GenerateSummary } from '../services/inference/llm-inference-engine';
 
 
 export const useInference = (): UseInferenceReturn => {
@@ -9,6 +10,8 @@ export const useInference = (): UseInferenceReturn => {
   const [isModelLoaded, setIsModelLoaded] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [webgpuAvailable, setWebgpuAvailable] = useState<boolean | null>(null);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [currentStreamText, setCurrentStreamText] = useState('');
 
   useEffect(() => {
     const checkWebGPU = async () => {
@@ -61,6 +64,7 @@ export const useInference = (): UseInferenceReturn => {
   const unloadModel = useCallback(() => {
     InferenceEngine.unloadModel();
     setIsModelLoaded(false);
+    setCurrentStreamText('');
   }, []);
 
   const generate = useCallback(
@@ -98,12 +102,126 @@ export const useInference = (): UseInferenceReturn => {
     []
   );
 
+  // New streaming method inspired by ente-io
+  const generateStream = useCallback(
+    async (
+      prompt: string,
+      options: InferenceOptions,
+      onText?: (text: string) => void,
+      onComplete?: (result: InferenceResult) => void,
+      onError?: (error: string) => void
+    ): Promise<void> => {
+      if (!InferenceEngine.isModelLoaded()) {
+        const errorMsg = 'No model loaded';
+        setError(errorMsg);
+        onError?.(errorMsg);
+        return;
+      }
+
+      // Validate input
+      if (typeof prompt !== 'string' || prompt.trim().length === 0) {
+        const errorMsg = 'Prompt must be a non-empty string';
+        setError(errorMsg);
+        onError?.(errorMsg);
+        return;
+      }
+
+      if (!options || typeof options !== 'object') {
+        const errorMsg = 'Options must be an object';
+        setError(errorMsg);
+        onError?.(errorMsg);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        setIsStreaming(true);
+        setCurrentStreamText('');
+        setError(null);
+
+        // Use the new backend for streaming
+        const backend = createInferenceBackend();
+        await backend.initBackend();
+
+        const messages = [
+          { role: 'user' as const, content: prompt }
+        ];
+        
+        if (options.systemPrompt) {
+          messages.unshift({ role: 'system' as const, content: options.systemPrompt });
+        }
+
+        const request: GenerateChatRequest = {
+          messages,
+          maxTokens: options.maxTokens,
+          temperature: options.temperature,
+          topP: options.topP,
+          topK: options.topK,
+          repeatPenalty: options.repeatPenalty,
+          frequencyPenalty: options.frequencyPenalty,
+          presencePenalty: options.presencePenalty,
+          addAssistant: true,
+        };
+
+        let fullText = '';
+        let startTime = Date.now();
+
+        await backend.generateChatStream(request, (event: GenerateEvent) => {
+          switch (event.type) {
+            case 'text':
+              fullText += event.text;
+              setCurrentStreamText(fullText);
+              onText?.(event.text);
+              break;
+            case 'done':
+              const duration = Date.now() - startTime;
+              const tokenCount = Math.ceil(fullText.split(/\s+/).length * 1.3);
+              const result: InferenceResult = {
+                text: fullText,
+                tokens: tokenCount,
+                duration,
+              };
+              setCurrentStreamText(fullText);
+              onComplete?.(result);
+              break;
+            case 'error':
+              setError(event.message);
+              onError?.(event.message);
+              break;
+          }
+        });
+
+      } catch (err) {
+        console.error('Streaming generation error:', err instanceof Error ? err : new Error(String(err)));
+        const errorMessage = err instanceof Error ? err.message : 'Streaming inference failed';
+        setError(errorMessage);
+        onError?.(errorMessage);
+      } finally {
+        setIsLoading(false);
+        setIsStreaming(false);
+      }
+    },
+    []
+  );
+
+  // Cancel current streaming operation
+  const cancelStream = useCallback(() => {
+    // This would be implemented with the backend's cancel method
+    // For now, we'll just reset the streaming state
+    setIsStreaming(false);
+    setCurrentStreamText('');
+  }, []);
+
   return {
     loadModel,
     unloadModel,
     generate,
+    generateStream,
+    cancelStream,
     isLoading,
     isModelLoaded,
+    isStreaming,
+    currentStreamText,
     loadingProgress,
     error,
     webgpuAvailable,
