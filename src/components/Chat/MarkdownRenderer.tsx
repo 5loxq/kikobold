@@ -17,8 +17,6 @@
 
 import React, { useMemo, useCallback, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'prism-react-renderer';
-import { Copy01Icon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
 
 // Supported programming languages for syntax highlighting
 const SUPPORTED_LANGUAGES = [
@@ -402,7 +400,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language, value, isDarkMode, maxH
           className="flex items-center gap-1 px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           title="Copy code"
         >
-          <HugeiconsIcon icon={Copy01Icon} size={14} />
+          <span className="text-sm">📋</span>
           {copied ? 'Copied!' : 'Copy'}
         </button>
       </div>

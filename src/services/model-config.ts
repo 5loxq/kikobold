@@ -8,7 +8,8 @@
  * - Model search and filtering
  */
 
-import { Model, ModelSettings, ModelMetadata } from '../types/ensu-types';
+import { Model, Profile, LocalModel } from '../types';
+import { ModelSettings, ModelMetadata } from '../types/ensu-types';
 import { MODELS } from './models/model-registry';
 import { secureLocalStorage } from './security';
 
@@ -549,17 +550,19 @@ export const getRecommendedModels = (useCase: string): Model[] => {
  */
 export const getModelsForDevice = (): Model[] => {
   // Check if we're on a mobile device
-  const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  
-  if (isMobile) {
-    // For mobile, recommend smaller models
-    return filterModels(MODELS, {
-      maxSizeMB: 5000, // 5GB max for mobile
-      recommendedOnly: false,
-    });
+  if (typeof navigator !== 'undefined') {
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // For mobile, recommend smaller models
+      return filterModels(MODELS, {
+        maxSizeMB: 5000, // 5GB max for mobile
+        recommendedOnly: false,
+      });
+    }
   }
   
-  // For desktop, return all models but sort by recommended first
+  // For desktop or if navigator is not available, return all models but sort by recommended first
   return sortModels(MODELS, 'recommended', 'desc');
 };
 
