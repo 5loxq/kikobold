@@ -1,17 +1,20 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Message } from '../../types';
+import MarkdownRenderer from './MarkdownRenderer';
 
 interface MessageListProps {
   messages: Message[];
   isLoading: boolean;
   messagesEndRef?: React.RefObject<HTMLDivElement>;
+  isDarkMode?: boolean;
 }
 
 // Memoized message component to prevent re-renders
 const MessageBubble: React.FC<{
   message: Message;
-}> = React.memo(({ message }) => {
+  isDarkMode?: boolean;
+}> = React.memo(({ message, isDarkMode }) => {
   const isUser = message.role === 'user';
   const timeStr = React.useMemo(
     () => new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -30,9 +33,13 @@ const MessageBubble: React.FC<{
             : 'bg-white text-gray-800 rounded-bl-2xl border border-gray-100'
         }`}
       >
-        <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
-          {content}
-        </p>
+        <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+          <MarkdownRenderer 
+            content={content} 
+            isDarkMode={isDarkMode}
+            className="markdown-message"
+          />
+        </div>
         <p className={`text-xs mt-2 opacity-70 ${
           isUser ? 'text-blue-100' : 'text-gray-500'
         }`}>
@@ -47,7 +54,8 @@ const MessageBubble: React.FC<{
     prevProps.message.id === nextProps.message.id &&
     prevProps.message.content === nextProps.message.content &&
     prevProps.message.timestamp === nextProps.message.timestamp &&
-    prevProps.message.role === nextProps.message.role
+    prevProps.message.role === nextProps.message.role &&
+    prevProps.isDarkMode === nextProps.isDarkMode
   );
 });
 
@@ -82,7 +90,7 @@ function areMessagesEqual(
 }
 
 export const MessageList: React.FC<MessageListProps> = React.memo(
-  ({ messages, isLoading, messagesEndRef }) => {
+  ({ messages, isLoading, messagesEndRef, isDarkMode }) => {
     const { t } = useTranslation();
 
     return (
@@ -96,14 +104,16 @@ export const MessageList: React.FC<MessageListProps> = React.memo(
         ) : (
           messages.map((message) => (
             <div key={message.id} className="animate-fade-in">
-              <MessageBubble message={message} />
+              <MessageBubble message={message} isDarkMode={isDarkMode} />
             </div>
           ))
         )}
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-white text-gray-800 px-5 py-3 rounded-2xl rounded-bl-2xl border border-gray-100 shadow-sm">
+            <div className={`px-5 py-3 rounded-2xl rounded-bl-2xl border shadow-sm ${
+              isDarkMode ? 'bg-gray-800 text-gray-200 border-gray-700' : 'bg-white text-gray-800 border-gray-100'
+            }`}>
               <div className="flex gap-1.5 items-center">
                 <div className="flex gap-1.5">
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-typing-bounce" style={{ animationDelay: '0s' }}></div>

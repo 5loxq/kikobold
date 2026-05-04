@@ -5,6 +5,7 @@ import { MessageList } from './MessageList';
 import { InputBox } from './InputBox';
 import { ChatExportImport } from './chat-export-import';
 import { MODELS } from '../../services/models/model-registry';
+import { isDarkMode as checkDarkMode } from '../../services/theme';
 
 interface ChatWindowProps {
   chat: Chat | null;
@@ -239,7 +240,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       </div>
 
       {/* Messages Area */}
-      <MessageList messages={chat.messages} isLoading={isLoading} messagesEndRef={messagesEndRef} />
+      <MessageList messages={chat.messages} isLoading={isLoading} messagesEndRef={messagesEndRef} isDarkMode={checkDarkMode()} />
 
       {/* Input Area */}
       <InputBox
