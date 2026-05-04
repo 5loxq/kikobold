@@ -6,7 +6,7 @@
 import { pipeline, TextGenerationPipeline, env } from '@xenova/transformers';
 import { log, warn, error } from '../logging';
 import { checkWebGPUSupport, validateModelPath } from '../security';
-import { MODEL_CONFIGS, getModelConfig } from '../models/model-registry';
+import { getModelConfig } from '../models/model-registry';
 import { createError, ErrorCodes } from '../../utils/errors';
 import type {
     LlmMessage,
@@ -17,7 +17,6 @@ import type {
     InferenceBackend,
     LoadModelParams,
     ContextParams,
-    WasmProgressCallback,
 } from './llm-types';
 
 // Constants
@@ -25,7 +24,6 @@ const MAX_CACHE_SIZE = 2; // Maximum number of models to cache
 const CACHE_CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
 const DEFAULT_CONTEXT_SIZE = 2048;
 const DEFAULT_MAX_TOKENS = 512;
-const MIN_GGUF_BYTES = 1024 * 1024; // 1MB
 
 // Model cache to prevent reloading the same model multiple times
 const modelCache: Map<string, { 
@@ -208,22 +206,7 @@ const extractResponse = (modelId: string, generatedText: string, fullPrompt: str
     return responseText;
 };
 
-// Check if a file is a valid GGUF file (for future compatibility)
-const isGgufHeader = (bytes: Uint8Array) =>
-    bytes.length >= 4 &&
-    bytes[0] === 0x47 &&
-    bytes[1] === 0x47 &&
-    bytes[2] === 0x55 &&
-    bytes[3] === 0x46;
 
-// Parse content range header to get total size
-const parseContentRangeTotal = (header: string | null) => {
-    if (!header) return undefined;
-    const match = header.match(/\/(\d+)/);
-    if (!match) return undefined;
-    const total = Number(match[1]);
-    return Number.isFinite(total) ? total : undefined;
-};
 
 // Main inference backend implementation
 class WebGPUInferenceBackend implements InferenceBackend {
@@ -294,7 +277,6 @@ class WebGPUInferenceBackend implements InferenceBackend {
                         log(`Loading progress: ${progress}%`);
                     }
                 },
-                dtype: webgpuAvailable ? 'float16' : 'float32',
             });
 
             if (!generator) {
@@ -405,7 +387,6 @@ class WebGPUInferenceBackend implements InferenceBackend {
                 repetition_penalty: request.repeatPenalty ?? 1.1,
                 num_beams: 1,
                 ...sampling,
-                abortSignal: controller.signal,
             });
 
             // Handle the result
@@ -515,7 +496,7 @@ class WebGPUInferenceBackend implements InferenceBackend {
 
     async applyChatTemplate(
         messages: LlmMessage[],
-        templateOverride?: string,
+        _templateOverride?: string,
     ): Promise<string> {
         if (!currentModelId) {
             throw new Error("Model must be loaded first.");
@@ -532,22 +513,22 @@ class WebGPUInferenceBackend implements InferenceBackend {
         const sampling: Record<string, unknown> = {};
 
         if (request.temperature !== undefined && request.temperature !== null) {
-            sampling.temp = request.temperature;
+            sampling["temp"] = request.temperature;
         }
         if (request.topP !== undefined && request.topP !== null) {
-            sampling.top_p = request.topP;
+            sampling["top_p"] = request.topP;
         }
         if (request.topK !== undefined && request.topK !== null) {
-            sampling.top_k = request.topK;
+            sampling["top_k"] = request.topK;
         }
         if (request.repeatPenalty !== undefined && request.repeatPenalty !== null) {
-            sampling.repetition_penalty = request.repeatPenalty;
+            sampling["repetition_penalty"] = request.repeatPenalty;
         }
         if (request.frequencyPenalty !== undefined && request.frequencyPenalty !== null) {
-            sampling.penalty_freq = request.frequencyPenalty;
+            sampling["penalty_freq"] = request.frequencyPenalty;
         }
         if (request.presencePenalty !== undefined && request.presencePenalty !== null) {
-            sampling.penalty_present = request.presencePenalty;
+            sampling["penalty_present"] = request.presencePenalty;
         }
 
         return sampling;
@@ -557,6 +538,18 @@ class WebGPUInferenceBackend implements InferenceBackend {
 // Factory function to create inference backend
 export const createInferenceBackend = (): InferenceBackend => {
     return new WebGPUInferenceBackend();
+};
+
+// Export types for use in other modules
+export type {
+    LlmMessage,
+    GenerateChatRequest,
+    GenerateEvent,
+    GenerateSummary,
+    BackendType,
+    InferenceBackend,
+    LoadModelParams,
+    ContextParams,
 };
 
 // Backward compatibility exports
