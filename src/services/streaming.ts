@@ -9,9 +9,8 @@
  */
 
 import { InferenceOptions, InferenceResult } from '../types';
-import { StreamingOptions, CancelablePromise, InferenceStreamResult } from '../types/ensu-types';
-import { createAppError, ErrorCode, isRetryableError } from '../utils/errors';
-import { withRetry } from '../utils/errors';
+import { StreamingOptions, CancelablePromise } from '../types/ensu-types';
+import { createAppError, ErrorCode, isRetryableError, withRetry } from '../utils/errors';
 
 // ============================================================================
 // Types
