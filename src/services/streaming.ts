@@ -10,10 +10,10 @@
  * Inspired by ente-io/ensu streaming implementation
  */
 
-import { InferenceOptions, InferenceResult } from '../types';
+import { InferenceOptions } from '../types';
 import { StreamingOptions, CancelablePromise } from '../types/ensu-types';
-import { createAppError, ErrorCode, isRetryableError, withRetry } from '../utils/errors';
-import { createInferenceBackend, type GenerateChatRequest, type GenerateEvent, type GenerateSummary } from './inference/llm-inference-engine';
+import { createAppError, ErrorCodes, isRetryableError } from '../utils/errors';
+import { createInferenceBackend, type LlmMessage, type GenerateChatRequest, type GenerateEvent } from './inference/llm-inference-engine';
 
 // ============================================================================
 // Types
@@ -205,7 +205,7 @@ export const streamMessage = (
     } catch (error) {
       const appError = createAppError(
         error instanceof Error ? error.message : 'Streaming failed',
-        ErrorCode.INFERENCE_FAILED,
+        ErrorCodes.INFERENCE_FAILED,
         { prompt, options: inferenceOptions },
         isRetryableError(error)
       );
@@ -238,12 +238,12 @@ export const streamWithLLMBackend = (
       await backend.initBackend();
 
       // Convert to GenerateChatRequest format
-      const messages = [
-        { role: 'user' as const, content: prompt }
+      const messages: LlmMessage[] = [
+        { role: 'user', content: prompt }
       ];
       
       if (inferenceOptions.systemPrompt) {
-        messages.unshift({ role: 'system' as const, content: inferenceOptions.systemPrompt });
+        messages.unshift({ role: 'system', content: inferenceOptions.systemPrompt });
       }
 
       const request: GenerateChatRequest = {
@@ -584,7 +584,7 @@ const emitStreamEvent = (event: {
   token?: string;
   fullText?: string;
   progress?: StreamProgress;
-  error?: Error;
+  error?: Error | null;
 }): void => {
   streamEventListeners.forEach(listener => {
     try {

@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { InferenceOptions, InferenceResult, UseInferenceReturn } from '../types';
 import * as InferenceEngine from '../services/inference/inference-engine';
-import { createInferenceBackend, type GenerateChatRequest, type GenerateEvent, type GenerateSummary } from '../services/inference/llm-inference-engine';
+import { createInferenceBackend, type LlmMessage, type GenerateChatRequest, type GenerateEvent } from '../services/inference/llm-inference-engine';
 
 
 export const useInference = (): UseInferenceReturn => {
@@ -143,12 +143,12 @@ export const useInference = (): UseInferenceReturn => {
         const backend = createInferenceBackend();
         await backend.initBackend();
 
-        const messages = [
-          { role: 'user' as const, content: prompt }
+        const messages: LlmMessage[] = [
+          { role: 'user', content: prompt }
         ];
         
         if (options.systemPrompt) {
-          messages.unshift({ role: 'system' as const, content: options.systemPrompt });
+          messages.unshift({ role: 'system', content: options.systemPrompt });
         }
 
         const request: GenerateChatRequest = {
