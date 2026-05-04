@@ -15,177 +15,7 @@ import { StreamingOptions, CancelablePromise } from '../types/ensu-types';
 import { createAppError, ErrorCode, isRetryableError, withRetry } from '../utils/errors';
 import { createInferenceBackend, type GenerateChatRequest, type GenerateEvent, type GenerateSummary } from './inference/llm-inference-engine';
 
-// Export all functions
 // ============================================================================
-
-export default {
-  streamMessage,
-  streamWithRetry,
-  streamWithEvents,
-  cancelStream,
-  isStreaming,
-  getCurrentStreamText,
-  getTokenCount,
-  getDurationMs,
-  getStreamError,
-  clearStreamState,
-  getStreamProgress,
-  useStreaming,
-  addStreamEventListener,
-  removeStreamEventListener,
-};
-=======
-// ============================================================================
-// New Streaming Implementation using LLM Backend
-// ============================================================================
-
-/**
- * Stream using the new LLM inference backend
- * This provides real streaming with the actual inference engine
- */
-export const streamWithLLMBackend = (
-  prompt: string,
-  inferenceOptions: InferenceOptions,
-  streamingOptions: StreamingOptions
-): CancelablePromise<string> => {
-  let isCanceled = false;
-  let fullText = '';
-  let startTime = Date.now();
-  let tokenCount = 0;
-
-  const promise = new Promise<string>(async (resolve, reject) => {
-    try {
-      const backend = createInferenceBackend();
-      await backend.initBackend();
-
-      // Convert to GenerateChatRequest format
-      const messages = [
-        { role: 'user' as const, content: prompt }
-      ];
-      
-      if (inferenceOptions.systemPrompt) {
-        messages.unshift({ role: 'system' as const, content: inferenceOptions.systemPrompt });
-      }
-
-      const request: GenerateChatRequest = {
-        messages,
-        maxTokens: inferenceOptions.maxTokens,
-        temperature: inferenceOptions.temperature,
-        topP: inferenceOptions.topP,
-        topK: inferenceOptions.topK,
-        repeatPenalty: inferenceOptions.repeatPenalty,
-        frequencyPenalty: inferenceOptions.frequencyPenalty,
-        presencePenalty: inferenceOptions.presencePenalty,
-        seed: inferenceOptions.seed,
-        stopSequences: inferenceOptions.stopSequences,
-        addAssistant: true,
-      };
-
-      await backend.generateChatStream(request, (event: GenerateEvent) => {
-        if (isCanceled) return;
-
-        switch (event.type) {
-          case 'text':
-            fullText += event.text;
-            tokenCount++;
-            
-            // Update state
-            streamState = {
-              isStreaming: true,
-              currentText: fullText,
-              tokenCount,
-              durationMs: Date.now() - startTime,
-              error: null,
-              controller: streamState.controller,
-            };
-            
-            streamingOptions.callback?.(event.text, fullText);
-            emitStreamEvent({ type: 'token', token: event.text, fullText });
-            emitStreamEvent({ type: 'progress', progress: getStreamProgress() });
-            break;
-
-          case 'done':
-            streamState = {
-              isStreaming: false,
-              currentText: fullText,
-              tokenCount,
-              durationMs: Date.now() - startTime,
-              error: null,
-              controller: null,
-            };
-            
-            emitStreamEvent({ type: 'complete', fullText });
-            streamingOptions.onComplete?.(fullText);
-            resolve(fullText);
-            break;
-
-          case 'error':
-            streamState = {
-              isStreaming: false,
-              currentText: fullText,
-              tokenCount,
-              durationMs: Date.now() - startTime,
-              error: new Error(event.message),
-              controller: null,
-            };
-            
-            emitStreamEvent({ type: 'error', error: new Error(event.message) });
-            streamingOptions.onError?.(event.message);
-            reject(new Error(event.message));
-            break;
-        }
-      });
-
-    } catch (err) {
-      if (!isCanceled) {
-        const errorMessage = err instanceof Error ? err.message : 'Streaming failed';
-        streamState = {
-          isStreaming: false,
-          currentText: fullText,
-          tokenCount,
-          durationMs: Date.now() - startTime,
-          error: err instanceof Error ? err : new Error(errorMessage),
-          controller: null,
-        };
-        
-        emitStreamEvent({ type: 'error', error: streamState.error });
-        streamingOptions.onError?.(errorMessage);
-        reject(new Error(errorMessage));
-      }
-    }
-  }) as CancelablePromise<string>;
-
-  promise.cancel = () => {
-    isCanceled = true;
-    cancelStream();
-  };
-
-  promise.isCanceled = false;
-
-  return promise;
-};
-
-// ============================================================================
-// Export all functions
-// ============================================================================
-
-export default {
-  streamMessage,
-  streamWithRetry,
-  streamWithEvents,
-  streamWithLLMBackend,
-  cancelStream,
-  isStreaming,
-  getCurrentStreamText,
-  getTokenCount,
-  getDurationMs,
-  getStreamError,
-  clearStreamState,
-  getStreamProgress,
-  useStreaming,
-  addStreamEventListener,
-  removeStreamEventListener,
-};============================================================================
 // Types
 // ============================================================================
 
@@ -385,6 +215,132 @@ export const streamMessage = (
     }
   });
   
+  return promise;
+};
+
+/**
+ * Stream using the new LLM inference backend
+ * This provides real streaming with the actual inference engine
+ */
+export const streamWithLLMBackend = (
+  prompt: string,
+  inferenceOptions: InferenceOptions,
+  streamingOptions: StreamingOptions
+): CancelablePromise<string> => {
+  let isCanceled = false;
+  let fullText = '';
+  let startTime = Date.now();
+  let tokenCount = 0;
+
+  const promise = new Promise<string>(async (resolve, reject) => {
+    try {
+      const backend = createInferenceBackend();
+      await backend.initBackend();
+
+      // Convert to GenerateChatRequest format
+      const messages = [
+        { role: 'user' as const, content: prompt }
+      ];
+      
+      if (inferenceOptions.systemPrompt) {
+        messages.unshift({ role: 'system' as const, content: inferenceOptions.systemPrompt });
+      }
+
+      const request: GenerateChatRequest = {
+        messages,
+        maxTokens: inferenceOptions.maxTokens,
+        temperature: inferenceOptions.temperature,
+        topP: inferenceOptions.topP,
+        topK: inferenceOptions.topK,
+        repeatPenalty: inferenceOptions.repeatPenalty,
+        frequencyPenalty: inferenceOptions.frequencyPenalty,
+        presencePenalty: inferenceOptions.presencePenalty,
+        seed: inferenceOptions.seed,
+        stopSequences: inferenceOptions.stopSequences,
+        addAssistant: true,
+      };
+
+      await backend.generateChatStream(request, (event: GenerateEvent) => {
+        if (isCanceled) return;
+
+        switch (event.type) {
+          case 'text':
+            fullText += event.text;
+            tokenCount++;
+            
+            // Update state
+            streamState = {
+              isStreaming: true,
+              currentText: fullText,
+              tokenCount,
+              durationMs: Date.now() - startTime,
+              error: null,
+              controller: streamState.controller,
+            };
+            
+            streamingOptions.callback?.(event.text, fullText);
+            emitStreamEvent({ type: 'token', token: event.text, fullText });
+            emitStreamEvent({ type: 'progress', progress: getStreamProgress() });
+            break;
+
+          case 'done':
+            streamState = {
+              isStreaming: false,
+              currentText: fullText,
+              tokenCount,
+              durationMs: Date.now() - startTime,
+              error: null,
+              controller: null,
+            };
+            
+            emitStreamEvent({ type: 'complete', fullText });
+            streamingOptions.onComplete?.(fullText);
+            resolve(fullText);
+            break;
+
+          case 'error':
+            streamState = {
+              isStreaming: false,
+              currentText: fullText,
+              tokenCount,
+              durationMs: Date.now() - startTime,
+              error: new Error(event.message),
+              controller: null,
+            };
+            
+            emitStreamEvent({ type: 'error', error: new Error(event.message) });
+            streamingOptions.onError?.(event.message);
+            reject(new Error(event.message));
+            break;
+        }
+      });
+
+    } catch (err) {
+      if (!isCanceled) {
+        const errorMessage = err instanceof Error ? err.message : 'Streaming failed';
+        streamState = {
+          isStreaming: false,
+          currentText: fullText,
+          tokenCount,
+          durationMs: Date.now() - startTime,
+          error: err instanceof Error ? err : new Error(errorMessage),
+          controller: null,
+        };
+        
+        emitStreamEvent({ type: 'error', error: streamState.error });
+        streamingOptions.onError?.(errorMessage);
+        reject(new Error(errorMessage));
+      }
+    }
+  }) as CancelablePromise<string>;
+
+  promise.cancel = () => {
+    isCanceled = true;
+    cancelStream();
+  };
+
+  promise.isCanceled = false;
+
   return promise;
 };
 
@@ -689,6 +645,7 @@ export default {
   streamMessage,
   streamWithRetry,
   streamWithEvents,
+  streamWithLLMBackend,
   cancelStream,
   isStreaming,
   getCurrentStreamText,
