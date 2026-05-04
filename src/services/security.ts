@@ -247,25 +247,6 @@ export const validateUserId = (id: string): boolean => {
 };
 
 /**
- * Check if WebGPU is available with proper feature detection
- * Includes fallback checks for different browser implementations
- */
-export const checkWebGPUSupport = async (): Promise<boolean> => {
-  try {
-    // Check for WebGPU support
-    if (!('gpu' in navigator)) {
-      return false;
-    }
-
-    // Request adapter to verify actual support
-    const adapter = await (navigator as any).gpu.requestAdapter();
-    return !!adapter;
-  } catch (error) {
-    return false;
-  }
-};
-
-/**
  * Secure localStorage operations
  * Adds validation and error handling
  */
