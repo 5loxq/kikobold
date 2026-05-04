@@ -10,19 +10,9 @@ export {
     checkForUpdates,
     skipWaiting,
     cleanupCaches,
-    cacheModel,
-    registerPushNotifications,
-    unregisterPushNotifications,
-    showNotification,
-    registerBackgroundSync,
     getIsOffline,
     onOfflineStateChange,
-    onUpdateAvailable,
     getServiceWorkerRegistration,
     isServiceWorkerSupported,
-    isPushSupported,
-    isBackgroundSyncSupported,
     initOfflineSupport,
 } from './sw-registration';
-
-export type { ServiceWorkerRegistration };
