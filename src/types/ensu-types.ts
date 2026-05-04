@@ -2,7 +2,8 @@
  * Enhanced types for Ensu-inspired features
  */
 
-import { Chat, Message, Model, Profile, LocalModel } from './index';
+// Re-export basic types for convenience
+export type { Chat, Message, Model, Profile, LocalModel } from './index';
 
 // ============================================================================
 // Conversation Management Types
