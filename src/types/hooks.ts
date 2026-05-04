@@ -9,8 +9,18 @@ export interface UseInferenceReturn {
   loadModel: (modelId: string) => Promise<void>;
   unloadModel: () => void;
   generate: (prompt: string, options: InferenceOptions) => Promise<InferenceResult | null>;
+  generateStream: (
+    prompt: string,
+    options: InferenceOptions,
+    onText?: (text: string) => void,
+    onComplete?: (result: InferenceResult) => void,
+    onError?: (error: string) => void
+  ) => Promise<void>;
+  cancelStream: () => void;
   isLoading: boolean;
   isModelLoaded: boolean;
+  isStreaming: boolean;
+  currentStreamText: string;
   loadingProgress: number;
   error: string | null;
   webgpuAvailable: boolean | null;
