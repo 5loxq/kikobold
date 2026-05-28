@@ -3,12 +3,14 @@
  * Provides input sanitization, validation, and security checks
  */
 
-// Trusted domains for model downloads
+// Whitelist of trusted domains for model loading
 const TRUSTED_DOMAINS = [
-    'huggingface.co',
-    'github.com',
-    'cdn.jsdelivr.net',
-    'raw.githubusercontent.com',
+  'huggingface.co',
+  'cdn.huggingface.co',
+  'hf.co',
+  'github.com',
+  'raw.githubusercontent.com',
+  'modelscope.cn',
 ];
 
 // XSS dangerous patterns
@@ -362,18 +364,6 @@ export const validateUrl = (url: string, allowLocalhost: boolean = false): boole
 };
 
 /**
- * Whitelist of trusted domains for model loading
- */
-const TRUSTED_DOMAINS = [
-  'huggingface.co',
-  'cdn.huggingface.co',
-  'hf.co',
-  'github.com',
-  'raw.githubusercontent.com',
-  'modelscope.cn',
-];
-
-/**
  * Validate if a URL is from a trusted source (for internal use)
  */
 export const isTrustedUrl = (url: string): boolean => {
@@ -511,68 +501,6 @@ export const formatBytes = (bytes: number): string => {
     );
     const value = bytes / Math.pow(1024, idx);
     return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[idx]}`;
-};
-
-/**
- * Check if a URL uses HTTPS
- */
-export const checkHTTPS = (url: string): boolean => {
-    try {
-        const parsed = new URL(url);
-        return parsed.protocol === 'https:';
-    } catch {
-        return false;
-    }
-};
-
-/**
- * Check if a URL is from a trusted domain
- */
-export const isTrustedDomain = (url: string): boolean => {
-    try {
-        const parsed = new URL(url);
-        const hostname = parsed.hostname.toLowerCase();
-        
-        // Check if domain or any of its subdomains are trusted
-        return TRUSTED_DOMAINS.some(trusted => {
-            // Exact match
-            if (hostname === trusted) return true;
-            // Subdomain match
-            if (hostname.endsWith(`.${trusted}`)) return true;
-            return false;
-        });
-    } catch {
-        return false;
-    }
-};
-
-/**
- * Validate a model ID
- */
-export const validateModelId = (id: string): boolean => {
-    if (!id || typeof id !== 'string') {
-        return false;
-    }
-
-    // Basic validation - should be alphanumeric with possible underscores/dashes
-    return /^[a-zA-Z0-9_-]{1,64}$/.test(id);
-};
-
-/**
- * Sanitize model name for display
- */
-export const sanitizeModelName = (name: string): string => {
-    if (!name || typeof name !== 'string') {
-        return 'Unknown Model';
-    }
-
-    // Limit length
-    if (name.length > 100) {
-        return name.substring(0, 100);
-    }
-
-    // Remove potentially dangerous characters
-    return name.replace(/[<>"'`]/g, '');
 };
 
 /**
