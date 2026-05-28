@@ -631,6 +631,108 @@ export const getModelsForDevice = (): Model[] => {
   return sortModels(MODELS, 'recommended', 'desc');
 };
 
+/**
+ * Get models recommended for the current system based on hardware capabilities
+ * @param systemInfo - Optional system information for more accurate recommendations
+ * @returns {Array<{model: Model, reason: string}>} Recommended models with reasons
+ */
+export const getSystemRecommendedModels = (
+  systemInfo?: Partial<{
+    hardware?: {
+      memory?: { totalMB?: number };
+      gpu?: { available: boolean };
+    };
+    browser?: { name: string };
+  }>
+): Array<{ model: Model; reason: string }> => {
+  const recommendations: Array<{ model: Model; reason: string }> = [];
+  
+  // Check if we have system info
+  const hasGPU = systemInfo?.hardware?.gpu?.available;
+  const totalMemoryMB = systemInfo?.hardware?.memory?.totalMB || 0;
+  const browserName = systemInfo?.browser?.name;
+  
+  // Always recommend small models for compatibility
+  const smallModels = ['qwen-0.5b', 'gpt-2', 'distilgpt2'];
+  smallModels.forEach(modelId => {
+    const model = MODELS.find(m => m.id === modelId);
+    if (model) {
+      recommendations.push({
+        model,
+        reason: 'Small size, works on all devices',
+      });
+    }
+  });
+  
+  // If we have GPU support, recommend larger models
+  if (hasGPU) {
+    const gpuModels = ['phi-2', 'qwen-1.8b'];
+    gpuModels.forEach(modelId => {
+      const model = MODELS.find(m => m.id === modelId);
+      if (model) {
+        recommendations.push({
+          model,
+          reason: 'GPU acceleration available, can handle larger models',
+        });
+      }
+    });
+  }
+  
+  // If we have enough memory, recommend even larger models
+  if (totalMemoryMB >= 16000) { // 16GB+
+    const largeModels = ['neural-chat-7b', 'mistral-7b', 'llama-2-7b'];
+    largeModels.forEach(modelId => {
+      const model = MODELS.find(m => m.id === modelId);
+      if (model) {
+        recommendations.push({
+          model,
+          reason: 'High memory available, can handle large models',
+        });
+      }
+    });
+  } else if (totalMemoryMB >= 8000) { // 8GB+
+    const mediumModels = ['phi-2', 'qwen-1.8b'];
+    mediumModels.forEach(modelId => {
+      const model = MODELS.find(m => m.id === modelId);
+      if (model && !recommendations.some(r => r.model.id === modelId)) {
+        recommendations.push({
+          model,
+          reason: 'Good memory available, can handle medium models',
+        });
+      }
+    });
+  }
+  
+  // Browser-specific recommendations
+  if (browserName === 'Firefox') {
+    // Firefox has good WebGPU support
+    const firefoxModels = ['qwen-0.5b', 'phi-2'];
+    firefoxModels.forEach(modelId => {
+      const model = MODELS.find(m => m.id === modelId);
+      if (model && !recommendations.some(r => r.model.id === modelId)) {
+        recommendations.push({
+          model,
+          reason: 'Optimized for Firefox WebGPU implementation',
+        });
+      }
+    });
+  }
+  
+  // Remove duplicates and sort by model size
+  const uniqueRecommendations = recommendations.filter(
+    (rec, index, self) => index === self.findIndex(r => r.model.id === rec.model.id)
+  );
+  
+  // Sort by model size (smallest first)
+  uniqueRecommendations.sort((a, b) => {
+    const sizeA = a.model.fileSizeMB || 0;
+    const sizeB = b.model.fileSizeMB || 0;
+    return sizeA - sizeB;
+  });
+  
+  return uniqueRecommendations;
+};
+
 // ============================================================================
 // Helper Functions
 // ============================================================================
@@ -726,6 +828,7 @@ export default {
   getRecommendedModels,
   getCommunityRecommendations,
   getModelsForDevice,
+  getSystemRecommendedModels,
   
   // Utilities
   formatParameterCount,
