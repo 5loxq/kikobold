@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Model } from '../../types';
+import { StarRating } from './ModelRating';
 
 interface ModelCardProps {
   model: Model;
@@ -41,6 +42,11 @@ export const ModelCard: React.FC<ModelCardProps> = ({
         <p>{t('models.downloadSize')}: {model.fileSizeMB ? `${(model.fileSizeMB / 1024).toFixed(2)} GB` : 'N/A'}</p>
         <p>{t('models.contextLength')}: {model.contextLength} tokens</p>
         {model.quantized && <p>{t('models.quantized')}</p>}
+      </div>
+
+      {/* Rating */}
+      <div className="mb-3">
+        <StarRating modelId={model.id} size="small" />
       </div>
 
       {/* Progress Bar */}

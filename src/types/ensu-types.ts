@@ -75,6 +75,45 @@ export interface ModelMetadata {
 }
 
 // ============================================================================
+// Model Rating Types
+// ============================================================================
+
+export interface ModelRating {
+  modelId: string;
+  rating: number; // 1-5 stars
+  ratedAt: number;
+}
+
+export interface ModelRatingSummary {
+  modelId: string;
+  rating: number;
+  modelName: string;
+}
+
+export interface RatingStatistics {
+  averageRating: number | null;
+  totalRatings: number;
+  ratingDistribution: Record<number, number>; // {1: count, 2: count, ...}
+}
+
+// ============================================================================
+// Community Feature Types
+// ============================================================================
+
+export interface CommunityRecommendation {
+  useCase: string;
+  description: string;
+  recommendedModelIds: string[];
+}
+
+export interface CommunitySettings {
+  enableRecommendations: boolean;
+  enableRatings: boolean;
+  enableTags: boolean;
+  shareRatingsWithCommunity: boolean; // Future feature
+}
+
+// ============================================================================
 // Inference Types
 // ============================================================================
 

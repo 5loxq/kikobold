@@ -58,7 +58,19 @@
     "recommended": "Empfohlen",
     "quantized": "✓ Quantisiert (schneller)",
     "noModelsDownloaded": "Noch keine Modelle heruntergeladen",
-    "downloadModel": "Modell herunterladen"
+    "downloadModel": "Modell herunterladen",
+    "rating": "Bewertung: {{rating}} Sterne",
+    "notRated": "Noch nicht bewertet",
+    "rate": "Mit {{rating}} Sternen bewerten",
+    "rated": "Mit {{rating}} Sternen bewertet",
+    "ratingStatistics": "Bewertungsstatistik",
+    "averageRating": "Durchschnittliche Bewertung",
+    "totalRatings": "Gesamtbewertungen",
+    "ratingDistribution": "Bewertungsverteilung",
+    "topRated": "Am besten bewertet",
+    "noRatedModelsYet": "Noch keine bewerteten Modelle",
+    "noRatingsYet": "Noch keine Bewertungen",
+    "communityRecommendations": "Community-Empfehlungen"
   },
   "profiles": {
     "activeProfile": "Aktives Profil",
