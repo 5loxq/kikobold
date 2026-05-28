@@ -12,8 +12,92 @@
 
 import { InferenceOptions } from '../types';
 import { StreamingOptions, CancelablePromise } from '../types/ensu-types';
-import { createAppError, ErrorCodes, isRetryableError } from '../utils/errors';
+import { createAppError, ErrorCodes, isRetryableError, getUserMessage, classifyError } from '../utils/errors';
 import { createInferenceBackend, type LlmMessage, type GenerateChatRequest, type GenerateEvent } from './inference/llm-inference-engine';
+import { error as logError, warn as logWarn } from './logging';
+
+// ============================================================================
+// Streaming Error Types
+// ============================================================================
+
+export enum StreamingErrorCode {
+  STREAM_CANCELED = 'STREAM_CANCELED',
+  STREAM_TIMEOUT = 'STREAM_TIMEOUT',
+  STREAM_ERROR = 'STREAM_ERROR',
+  MODEL_NOT_LOADED = 'MODEL_NOT_LOADED',
+  INVALID_PROMPT = 'INVALID_PROMPT',
+  TOKEN_LIMIT_EXCEEDED = 'TOKEN_LIMIT_EXCEEDED',
+  MEMORY_LIMIT_EXCEEDED = 'MEMORY_LIMIT_EXCEEDED',
+  GPU_ERROR = 'GPU_ERROR',
+  BACKEND_ERROR = 'BACKEND_ERROR',
+}
+
+// User-friendly messages for streaming errors
+const STREAMING_ERROR_MESSAGES: Record<StreamingErrorCode, string> = {
+  [StreamingErrorCode.STREAM_CANCELED]: 'Stream was canceled by user',
+  [StreamingErrorCode.STREAM_TIMEOUT]: 'Stream timed out. Please try again.',
+  [StreamingErrorCode.STREAM_ERROR]: 'An error occurred during streaming. Please try again.',
+  [StreamingErrorCode.MODEL_NOT_LOADED]: 'No model is loaded. Please select and load a model first.',
+  [StreamingErrorCode.INVALID_PROMPT]: 'Invalid prompt. Please check your input.',
+  [StreamingErrorCode.TOKEN_LIMIT_EXCEEDED]: 'Token limit exceeded. Please reduce your prompt length or model settings.',
+  [StreamingErrorCode.MEMORY_LIMIT_EXCEEDED]: 'Memory limit exceeded. Please use a smaller model or reduce settings.',
+  [StreamingErrorCode.GPU_ERROR]: 'GPU error occurred. Falling back to CPU mode.',
+  [StreamingErrorCode.BACKEND_ERROR]: 'Inference backend error. Please try again.',
+};
+
+/**
+ * Create a streaming-specific error
+ */
+export const createStreamingError = (
+  message: string,
+  code: StreamingErrorCode,
+  cause?: Error,
+  context?: Record<string, unknown>
+): Error & { code: StreamingErrorCode; userMessage: string } => {
+  const error = new Error(message) as Error & {
+    code: StreamingErrorCode;
+    userMessage: string;
+    cause?: Error;
+    context?: Record<string, unknown>;
+  };
+  
+  error.code = code;
+  error.userMessage = STREAMING_ERROR_MESSAGES[code] || message;
+  error.cause = cause;
+  error.context = context;
+  
+  // Log the error
+  logError(`[StreamingError:${code}] ${message}`, { cause, context });
+  
+  return error;
+};
+
+/**
+ * Get user-friendly message from streaming error
+ */
+export const getStreamingErrorMessage = (error: unknown): string => {
+  if (error instanceof Error && 'userMessage' in error) {
+    return (error as { userMessage: string }).userMessage;
+  }
+  
+  if (error instanceof Error && 'code' in error) {
+    const code = (error as { code: StreamingErrorCode }).code;
+    return STREAMING_ERROR_MESSAGES[code] || error.message;
+  }
+  
+  return getUserMessage(error);
+};
+
+/**
+ * Check if error is a streaming error
+ */
+export const isStreamingError = (error: unknown): error is Error & { code: StreamingErrorCode } => {
+  return (
+    error instanceof Error &&
+    'code' in error &&
+    Object.values(StreamingErrorCode).includes((error as { code: string }).code as StreamingErrorCode)
+  );
+};
 
 // ============================================================================
 // Types
@@ -657,4 +741,17 @@ export default {
   useStreaming,
   addStreamEventListener,
   removeStreamEventListener,
+  // Error handling
+  StreamingErrorCode,
+  createStreamingError,
+  getStreamingErrorMessage,
+  isStreamingError,
+};
+
+// Named exports for TypeScript
+export {
+  StreamingErrorCode,
+  createStreamingError,
+  getStreamingErrorMessage,
+  isStreamingError,
 };
