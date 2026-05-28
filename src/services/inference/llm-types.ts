@@ -145,19 +145,4 @@ export interface InferenceOptions {
     };
 }
 
-// Re-export all types for easier importing
-export type {
-    LlmRole,
-    LlmMessage,
-    ModelInfo,
-    ModelSettings,
-    DownloadProgress,
-    GenerateSummary,
-    GenerateEvent,
-    GenerateChatRequest,
-    BackendType,
-    InferenceBackend,
-    LoadModelParams,
-    ContextParams,
-    WasmProgressCallback,
-};
+
