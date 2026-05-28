@@ -42,7 +42,7 @@ export enum ErrorCodes {
 }
 
 // User-friendly error messages for each error code
-const ERROR_MESSAGES: Record<ErrorCodes, string> = {
+const ERROR_MESSAGES: Record<string, string> = {
     [ErrorCodes.NETWORK_ERROR]: 'Network error. Please check your internet connection.',
     [ErrorCodes.TIMEOUT]: 'Request timed out. Please try again.',
     [ErrorCodes.CONNECTION_FAILED]: 'Failed to connect to the server. Please try again.',
@@ -115,7 +115,7 @@ export class AppError extends Error {
     };
     this.timestamp = this.context.timestamp;
     this.isRetryable = isRetryable;
-    this.userMessage = ERROR_MESSAGES[code] || ERROR_MESSAGES[ErrorCodes.UNKNOWN_ERROR];
+    this.userMessage = ERROR_MESSAGES[code] || ERROR_MESSAGES[ErrorCodes.UNKNOWN_ERROR as string];
     this.cause = cause;
     
     // Maintain proper stack trace for where our error was thrown (only available on V8)
@@ -153,52 +153,9 @@ export class AppError extends Error {
 }
 
 /**
- * Error codes for different types of errors
- */
-export const ErrorCodes = {
-  // General errors
-  GENERIC_ERROR: 'GENERIC_ERROR',
-  VALIDATION_ERROR: 'VALIDATION_ERROR',
-  NOT_FOUND: 'NOT_FOUND',
-  
-  // Model errors
-  MODEL_LOAD_FAILED: 'MODEL_LOAD_FAILED',
-  MODEL_NOT_FOUND: 'MODEL_NOT_FOUND',
-  MODEL_ALREADY_LOADED: 'MODEL_ALREADY_LOADED',
-  MODEL_INFERENCE_FAILED: 'MODEL_INFERENCE_FAILED',
-  
-  // Storage errors
-  STORAGE_ERROR: 'STORAGE_ERROR',
-  STORAGE_NOT_INITIALIZED: 'STORAGE_NOT_INITIALIZED',
-  STORAGE_QUOTA_EXCEEDED: 'STORAGE_QUOTA_EXCEEDED',
-  
-  // WebGPU errors
-  WEBGPU_NOT_SUPPORTED: 'WEBGPU_NOT_SUPPORTED',
-  WEBGPU_INIT_FAILED: 'WEBGPU_INIT_FAILED',
-  
-  // Voice errors
-  VOICE_RECOGNITION_FAILED: 'VOICE_RECOGNITION_FAILED',
-  VOICE_SYNTHESIS_FAILED: 'VOICE_SYNTHESIS_FAILED',
-  MICROPHONE_PERMISSION_DENIED: 'MICROPHONE_PERMISSION_DENIED',
-  
-  // Network errors
-  NETWORK_ERROR: 'NETWORK_ERROR',
-  DOWNLOAD_FAILED: 'DOWNLOAD_FAILED',
-  
-  // Security errors
-  SECURITY_ERROR: 'SECURITY_ERROR',
-  INVALID_INPUT: 'INVALID_INPUT',
-  XSS_DETECTED: 'XSS_DETECTED',
-  SSRF_DETECTED: 'SSRF_DETECTED',
-  INVALID_MODEL_PATH: 'INVALID_MODEL_PATH',
-  UNTRUSTED_SOURCE: 'UNTRUSTED_SOURCE',
-  FILE_VALIDATION_FAILED: 'FILE_VALIDATION_FAILED',
-} as const;
-
-/**
  * Type for error codes
  */
-export type ErrorCode = typeof ErrorCodes[keyof typeof ErrorCodes];
+export type ErrorCode = ErrorCodes;
 
 /**
  * Context for error logging

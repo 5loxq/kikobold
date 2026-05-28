@@ -3,7 +3,7 @@
  */
 
 // Re-export basic types for convenience
-export type { Chat, Message, Model, Profile, LocalModel } from './index';
+export type { Chat, Message, Model, Profile, LocalModel, InferenceOptions } from './index';
 
 // ============================================================================
 // Conversation Management Types
