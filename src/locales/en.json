@@ -58,7 +58,19 @@
     "recommended": "Recommended",
     "quantized": "✓ Quantized (faster)",
     "noModelsDownloaded": "No models downloaded yet",
-    "downloadModel": "Download Model"
+    "downloadModel": "Download Model",
+    "rating": "Rating: {{rating}} stars",
+    "notRated": "Not rated yet",
+    "rate": "Rate with {{rating}} stars",
+    "rated": "Rated with {{rating}} stars",
+    "ratingStatistics": "Rating Statistics",
+    "averageRating": "Average Rating",
+    "totalRatings": "Total Ratings",
+    "ratingDistribution": "Rating Distribution",
+    "topRated": "Top Rated",
+    "noRatedModelsYet": "No rated models yet",
+    "noRatingsYet": "No ratings yet",
+    "communityRecommendations": "Community Recommendations"
   },
   "profiles": {
     "activeProfile": "Active Profile",
