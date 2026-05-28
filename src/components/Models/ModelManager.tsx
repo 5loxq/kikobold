@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { LocalModel, Model } from '../../types';
 import { MODELS } from '../../services/models/model-registry';
 import { ModelCard } from './ModelCard';
+import { CommunityRecommendations, RatingStatistics } from './ModelRating';
 import { info } from '../../services/logging';
 import {
     downloadModel,
@@ -71,6 +72,16 @@ export const ModelManager: React.FC<ModelManagerProps> = ({
         <p className="text-gray-600 mb-8">
           {t('models.downloadModel')}
         </p>
+
+        {/* Community Recommendations */}
+        <div className="mb-8">
+          <CommunityRecommendations />
+        </div>
+
+        {/* Rating Statistics */}
+        <div className="mb-8">
+          <RatingStatistics />
+        </div>
 
         {/* Downloaded Models Section */}
         {downloadedModels.length > 0 && (

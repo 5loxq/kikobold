@@ -59,6 +59,7 @@ export const initModelConfigService = async (): Promise<void> => {
   loadModelSettings();
   loadModelMetadata();
   loadFavoriteModels();
+  loadModelRatings();
 
   initialized = true;
 };
@@ -546,6 +547,70 @@ export const getRecommendedModels = (useCase: string): Model[] => {
 };
 
 /**
+ * Get community recommendations with descriptions
+ * @returns {Array<{useCase: string, description: string, models: Model[]}>} Community recommendations
+ */
+export const getCommunityRecommendations = (): Array<{
+  useCase: string;
+  description: string;
+  models: Model[];
+}> => {
+  const recommendations = [
+    {
+      useCase: 'general',
+      description: 'All-purpose models for everyday conversations and Q&A',
+      modelIds: ['qwen-0.5b', 'phi-2', 'tinyllama-1.1b'],
+    },
+    {
+      useCase: 'coding',
+      description: 'Models optimized for code generation, explanation, and debugging',
+      modelIds: ['code-llama-7b', 'phi-2', 'qwen-1.8b'],
+    },
+    {
+      useCase: 'creative',
+      description: 'Models for creative writing, storytelling, and brainstorming',
+      modelIds: ['qwen-1.8b', 'neural-chat-7b', 'mistral-7b'],
+    },
+    {
+      useCase: 'analysis',
+      description: 'Models for data analysis, reasoning, and complex tasks',
+      modelIds: ['mistral-7b', 'neural-chat-7b'],
+    },
+    {
+      useCase: 'small',
+      description: 'Lightweight models for devices with limited resources',
+      modelIds: ['qwen-0.5b', 'gpt-2', 'distilgpt2'],
+    },
+    {
+      useCase: 'medium',
+      description: 'Balanced models offering good performance and quality',
+      modelIds: ['phi-2', 'qwen-1.8b'],
+    },
+    {
+      useCase: 'large',
+      description: 'Powerful models for complex tasks (require more resources)',
+      modelIds: ['neural-chat-7b', 'mistral-7b', 'llama-2-7b'],
+    },
+    {
+      useCase: 'beginner',
+      description: 'Easy-to-use models for getting started with AI',
+      modelIds: ['qwen-0.5b', 'gpt-2', 'tinyllama-1.1b'],
+    },
+    {
+      useCase: 'expert',
+      description: 'Advanced models for experienced users',
+      modelIds: ['mistral-7b', 'neural-chat-7b', 'llama-2-7b'],
+    },
+  ];
+
+  return recommendations.map(rec => ({
+    useCase: rec.useCase,
+    description: rec.description,
+    models: MODELS.filter(model => rec.modelIds.includes(model.id)),
+  }));
+};
+
+/**
  * Get models suitable for the current device
  */
 export const getModelsForDevice = (): Model[] => {
@@ -659,9 +724,176 @@ export default {
   
   // Recommendations
   getRecommendedModels,
+  getCommunityRecommendations,
   getModelsForDevice,
   
   // Utilities
   formatParameterCount,
   formatFileSize,
+  
+  // Ratings
+  rateModel,
+  getModelRating,
+  removeModelRating,
+  getAllModelRatings,
+  getAverageRating,
+  getRatingStatistics,
+  getTopRatedModels,
+};
+
+// ============================================================================
+// Model Ratings System
+// ============================================================================
+
+/**
+ * Load model ratings from storage
+ */
+const loadModelRatings = (): void => {
+  try {
+    const saved = secureLocalStorage.getItem(MODEL_RATINGS_KEY);
+    if (saved) {
+      modelRatingsCache = JSON.parse(saved);
+    }
+  } catch {
+    modelRatingsCache = {};
+  }
+};
+
+/**
+ * Save model ratings to storage
+ */
+const saveModelRatings = (): void => {
+  try {
+    secureLocalStorage.setItem(MODEL_RATINGS_KEY, JSON.stringify(modelRatingsCache));
+  } catch (error) {
+    console.error('Failed to save model ratings:', error);
+  }
+};
+
+/**
+ * Rate a model (1-5 stars)
+ * @param modelId - The ID of the model to rate
+ * @param rating - The rating (1-5)
+ * @throws {Error} If rating is invalid
+ */
+export const rateModel = (modelId: string, rating: number): void => {
+  // Validate model ID
+  if (!modelId || typeof modelId !== 'string') {
+    throw new Error('Invalid model ID');
+  }
+  
+  // Validate rating
+  if (typeof rating !== 'number' || rating < MIN_RATING || rating > MAX_RATING) {
+    throw new Error(`Rating must be between ${MIN_RATING} and ${MAX_RATING}`);
+  }
+  
+  // Check if model exists
+  if (!MODELS.some(m => m.id === modelId)) {
+    throw new Error(`Model '${modelId}' not found`);
+  }
+  
+  // Update rating
+  modelRatingsCache[modelId] = rating;
+  saveModelRatings();
+};
+
+/**
+ * Get the rating for a specific model
+ * @param modelId - The ID of the model
+ * @returns {number | null} The rating (1-5) or null if not rated
+ */
+export const getModelRating = (modelId: string): number | null => {
+  if (!modelId || typeof modelId !== 'string') {
+    return null;
+  }
+  return modelRatingsCache[modelId] || null;
+};
+
+/**
+ * Remove a rating for a model
+ * @param modelId - The ID of the model
+ */
+export const removeModelRating = (modelId: string): void => {
+  if (!modelId || typeof modelId !== 'string') {
+    return;
+  }
+  delete modelRatingsCache[modelId];
+  saveModelRatings();
+};
+
+/**
+ * Get all model ratings
+ * @returns {Record<string, number>} All model ratings
+ */
+export const getAllModelRatings = (): Record<string, number> => {
+  return { ...modelRatingsCache };
+};
+
+/**
+ * Get the average rating across all rated models
+ * @returns {number | null} Average rating or null if no ratings
+ */
+export const getAverageRating = (): number | null => {
+  const ratings = Object.values(modelRatingsCache);
+  if (ratings.length === 0) {
+    return null;
+  }
+  const sum = ratings.reduce((acc, rating) => acc + rating, 0);
+  return sum / ratings.length;
+};
+
+/**
+ * Get rating statistics
+ * @returns {RatingStatistics} Statistics about all ratings
+ */
+export const getRatingStatistics = (): {
+  averageRating: number | null;
+  totalRatings: number;
+  ratingDistribution: Record<number, number>;
+} => {
+  const ratings = Object.values(modelRatingsCache);
+  const totalRatings = ratings.length;
+  
+  if (totalRatings === 0) {
+    return {
+      averageRating: null,
+      totalRatings: 0,
+      ratingDistribution: {},
+    };
+  }
+  
+  // Calculate average
+  const sum = ratings.reduce((acc, rating) => acc + rating, 0);
+  const averageRating = sum / totalRatings;
+  
+  // Calculate distribution
+  const ratingDistribution: Record<number, number> = {};
+  for (let i = MIN_RATING; i <= MAX_RATING; i++) {
+    ratingDistribution[i] = ratings.filter(r => r === i).length;
+  }
+  
+  return {
+    averageRating,
+    totalRatings,
+    ratingDistribution,
+  };
+};
+
+/**
+ * Get models sorted by rating (highest first)
+ * @param limit - Maximum number of models to return
+ * @returns {Array<{model: Model, rating: number}>} Top rated models with their ratings
+ */
+export const getTopRatedModels = (limit: number = 5): Array<{model: Model, rating: number}> => {
+  const ratedModels = Object.entries(modelRatingsCache)
+    .map(([modelId, rating]) => {
+      const model = MODELS.find(m => m.id === modelId);
+      return model ? { model, rating } : null;
+    })
+    .filter(Boolean) as Array<{model: Model, rating: number}>;
+  
+  // Sort by rating (descending), then by model name
+  ratedModels.sort((a, b) => b.rating - a.rating || a.model.name.localeCompare(b.model.name));
+  
+  return ratedModels.slice(0, limit);
 };
