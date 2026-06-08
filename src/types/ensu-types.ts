@@ -81,7 +81,9 @@ export interface ModelMetadata {
 export interface ModelRating {
   modelId: string;
   rating: number; // 1-5 stars
-  ratedAt: number;
+  comment?: string;
+  userId: string;
+  timestamp: number;
 }
 
 export interface ModelRatingSummary {
@@ -279,67 +281,6 @@ export interface SecuritySettings {
 }
 
 // ============================================================================
-// Error Handling Types
-// ============================================================================
-
-export enum ErrorCode {
-  // Network errors
-  NETWORK_ERROR = 'NETWORK_ERROR',
-  TIMEOUT = 'TIMEOUT',
-  OFFLINE = 'OFFLINE',
-  
-  // Model errors
-  MODEL_NOT_FOUND = 'MODEL_NOT_FOUND',
-  MODEL_LOAD_FAILED = 'MODEL_LOAD_FAILED',
-  MODEL_TOO_LARGE = 'MODEL_TOO_LARGE',
-  MODEL_INVALID = 'MODEL_INVALID',
-  MODEL_DOWNLOAD_FAILED = 'MODEL_DOWNLOAD_FAILED',
-  
-  // Inference errors
-  INFERENCE_FAILED = 'INFERENCE_FAILED',
-  INFERENCE_TIMEOUT = 'INFERENCE_TIMEOUT',
-  INFERENCE_CANCELED = 'INFERENCE_CANCELED',
-  GPU_UNAVAILABLE = 'GPU_UNAVAILABLE',
-  OUT_OF_MEMORY = 'OUT_OF_MEMORY',
-  
-  // Storage errors
-  STORAGE_ERROR = 'STORAGE_ERROR',
-  STORAGE_FULL = 'STORAGE_FULL',
-  STORAGE_QUOTA_EXCEEDED = 'STORAGE_QUOTA_EXCEEDED',
-  
-  // Security errors
-  SECURITY_ERROR = 'SECURITY_ERROR',
-  INVALID_INPUT = 'INVALID_INPUT',
-  XSS_DETECTED = 'XSS_DETECTED',
-  UNTRUSTED_SOURCE = 'UNTRUSTED_SOURCE',
-  
-  // Chat errors
-  CHAT_NOT_FOUND = 'CHAT_NOT_FOUND',
-  CHAT_EXPORT_FAILED = 'CHAT_EXPORT_FAILED',
-  CHAT_IMPORT_FAILED = 'CHAT_IMPORT_FAILED',
-  
-  // General errors
-  UNKNOWN_ERROR = 'UNKNOWN_ERROR',
-  NOT_IMPLEMENTED = 'NOT_IMPLEMENTED',
-  UNSUPPORTED_BROWSER = 'UNSUPPORTED_BROWSER',
-}
-
-export interface AppError extends Error {
-  code: ErrorCode;
-  context?: Record<string, unknown>;
-  userMessage: string;
-  isRetryable: boolean;
-  timestamp: number;
-  stack?: string;
-}
-
-export interface ErrorAction {
-  type: 'retry' | 'refresh' | 'clear_cache' | 'restart' | 'report' | 'ignore';
-  label: string;
-  description: string;
-}
-
-// ============================================================================
 // Community Features Types
 // ============================================================================
 
@@ -356,13 +297,6 @@ export interface ModelRecommendation {
   useCase: string; // e.g., "coding", "creative writing", "analysis"
   reason: string;
   priority: number; // 1-10
-}
-
-export interface CommunitySettings {
-  showRecommendations: boolean;
-  showRatings: boolean;
-  allowUserRatings: boolean;
-  syncWithCommunity: boolean;
 }
 
 // ============================================================================
