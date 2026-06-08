@@ -10,6 +10,7 @@
 
 import { Model, Profile, LocalModel } from '../types';
 import { ModelSettings, ModelMetadata } from '../types/ensu-types';
+export type { ModelRatingSummary } from '../types/ensu-types';
 import { MODELS } from './models/model-registry';
 import { secureLocalStorage } from './security';
 
