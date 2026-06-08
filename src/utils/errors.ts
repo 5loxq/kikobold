@@ -158,18 +158,6 @@ export class AppError extends Error {
 export type ErrorCode = ErrorCodes;
 
 /**
- * Context for error logging
- */
-export interface ErrorContext {
-  component?: string;
-  function?: string;
-  modelId?: string;
-  profileId?: string;
-  chatId?: string;
-  [key: string]: unknown;
-}
-
-/**
  * Central error handler
  */
 export class ErrorHandler {
@@ -337,7 +325,7 @@ export function validationError(message: string, details?: Record<string, unknow
 export function notFoundError(resourceType: string, id: string): AppError {
   return new AppError(
     `${resourceType} with id '${id}' not found`,
-    ErrorCodes.NOT_FOUND,
+    ErrorCodes.MODEL_NOT_FOUND,
     { resourceType, id }
   );
 }
