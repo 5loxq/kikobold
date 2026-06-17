@@ -752,3 +752,51 @@ export const secureSessionStorage = {
         }
     },
 };
+
+// ============================================================================
+// System Information
+// ============================================================================
+
+/**
+ * Memory information interface
+ */
+export interface MemoryInfo {
+    totalMB: number;
+    availableMB: number;
+    usedMB: number;
+}
+
+/**
+ * Get system memory information
+ */
+export const getSystemMemoryInfo = (): MemoryInfo => {
+    if (typeof navigator !== 'undefined' && navigator.deviceMemory) {
+        // Chrome/Edge provide deviceMemory in GB
+        const totalGB = navigator.deviceMemory;
+        const totalMB = totalGB * 1024;
+        
+        // Estimate available memory (rough approximation)
+        // In browsers, we can't get exact available memory, so we estimate based on total
+        const availableMB = totalMB * 0.7; // Assume 70% available for safety
+        const usedMB = totalMB - availableMB;
+        
+        return { totalMB, availableMB, usedMB };
+    }
+    
+    // Fallback: use performance.memory if available (Chrome)
+    if (typeof performance !== 'undefined' && (performance as any).memory) {
+        const mem = (performance as any).memory;
+        return {
+            totalMB: mem.jsHeapSizeLimit ? Math.round(mem.jsHeapSizeLimit / (1024 * 1024)) : 4096,
+            availableMB: mem.jsHeapSizeLimit ? Math.round((mem.jsHeapSizeLimit - mem.usedJSHeapSize) / (1024 * 1024)) : 2048,
+            usedMB: mem.usedJSHeapSize ? Math.round(mem.usedJSHeapSize / (1024 * 1024)) : 512,
+        };
+    }
+    
+    // Default fallback values
+    return {
+        totalMB: 4096,   // 4GB default
+        availableMB: 2048, // 2GB available
+        usedMB: 1024,     // 1GB used
+    };
+};

@@ -22,6 +22,16 @@ export default defineConfig({
       interval: 1000,
     },
   },
+  worker: {
+    // Configure Vite to build workers with proper format
+    format: 'es',
+    rollupOptions: {
+      output: {
+        // Ensure worker files are properly chunked
+        inlineDynamicImports: false,
+      },
+    },
+  },
   build: {
     // Optimize bundle size
     minify: 'esbuild',

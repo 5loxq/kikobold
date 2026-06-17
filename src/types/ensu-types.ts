@@ -280,24 +280,7 @@ export interface SecuritySettings {
   };
 }
 
-// ============================================================================
-// Community Features Types
-// ============================================================================
 
-export interface ModelRating {
-  modelId: string;
-  rating: number; // 1-5 stars
-  comment?: string;
-  userId: string;
-  timestamp: number;
-}
-
-export interface ModelRecommendation {
-  modelId: string;
-  useCase: string; // e.g., "coding", "creative writing", "analysis"
-  reason: string;
-  priority: number; // 1-10
-}
 
 // ============================================================================
 // Notification Types

@@ -12,17 +12,16 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
     generateText,
-    streamText,
     getInferenceEngine,
     generateTextWithRetry,
     InferenceEngineConfig,
     GenerateResult,
     MemoryManager,
-    PerformanceMetricsCollector,
     PERFORMANCE_CONFIG,
+    memoryManager,
 } from '../services/inference';
-import { InferenceOptions, Model, LocalModel } from '../types';
-import { createError, ErrorCodes, AppError, handleErrorSilent } from '../utils/errors';
+import { InferenceOptions } from '../types';
+import { handleErrorSilent } from '../utils/errors';
 import { log, warn } from '../services/logging';
 
 // ============================================================================
@@ -33,7 +32,6 @@ export interface UseEnhancedInferenceOptions {
     modelId: string;
     defaultOptions?: Partial<InferenceOptions>;
     engineConfig?: InferenceEngineConfig;
-    enableStreaming?: boolean;
     autoRetry?: boolean;
     retryOptions?: {
         maxRetries: number;
@@ -106,7 +104,6 @@ export const useEnhancedInference = (
         modelId,
         defaultOptions = {},
         engineConfig = {},
-        enableStreaming = true,
         autoRetry = true,
         retryOptions = { maxRetries: 3, delay: 1000 },
     } = options;
@@ -196,9 +193,9 @@ export const useEnhancedInference = (
             };
 
             // Use retry wrapper if enabled
-            const generateFn = autoRetry ? generateTextWithRetry : generateText;
-            
-            const result = await generateFn(modelId, prompt, mergedOptions, retryOptions);
+            const result = autoRetry 
+                ? await generateTextWithRetry(modelId, prompt, mergedOptions, retryOptions)
+                : await generateText(modelId, prompt, mergedOptions);
             
             setResult(result.text);
             setTokensGenerated(result.tokens);
@@ -244,6 +241,7 @@ export const useEnhancedInference = (
                 ...options,
             };
 
+            const { streamText } = await import('../services/inference');
             const stream = streamText(modelId, prompt, mergedOptions);
             
             for await (const token of stream) {
@@ -600,11 +598,5 @@ export const useModelPreloader = (options: {
 // ============================================================================
 // Exports
 // ============================================================================
-
-export type {
-    UseEnhancedInferenceOptions,
-    InferenceState,
-    EnhancedInferenceReturn,
-};
 
 export default useEnhancedInference;
