@@ -295,11 +295,25 @@ const generateStream = async (
         });
 
         let fullText = '';
+        let isCancelled = false;
+        
+        // Listen for cancel messages
+        self.addEventListener('message', (event: MessageEvent) => {
+            const msg: WorkerMessage = event.data;
+            if (msg.type === 'CANCEL' && msg.messageId === messageId) {
+                isCancelled = true;
+                generator.cancel?.();
+            }
+        });
         
         for await (const output of generator.generate({
             input_ids: inputIds,
             stream: true,
         })) {
+            if (isCancelled) {
+                break;
+            }
+            
             const decoded = tokenizer.decode([output.token]);
             fullText += decoded;
             
@@ -313,16 +327,18 @@ const generateStream = async (
                 messageId,
             } as WorkerResult);
         }
-
-        postMessage({
-            type: 'RESULT',
-            data: {
-                text: fullText,
-                tokens: Math.ceil(fullText.length / 4),
+        
+        if (!isCancelled) {
+            postMessage({
+                type: 'RESULT',
+                data: {
+                    text: fullText,
+                    tokens: Math.ceil(fullText.length / 4),
+                    messageId,
+                },
                 messageId,
-            },
-            messageId,
-        } as WorkerResult);
+            } as WorkerResult);
+        }
     } catch (err) {
         postMessage({
             type: 'ERROR',
