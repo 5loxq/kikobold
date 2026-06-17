@@ -27,9 +27,6 @@ export {
     detectSystemCapabilities,
     getSystemCapabilities,
     applyAdaptiveConfiguration,
-    memoryManager,
-    metricsCollector,
-    modelPreloader,
     PERFORMANCE_CONFIG,
     
     // Types
@@ -37,11 +34,18 @@ export {
     GenerateResult,
     ModelLoadResult,
     InferenceEngineConfig,
+} from './unified-inference-engine';
+
+// Re-export types from unified-inference-engine
+export type {
     MemoryManager,
     TokenStreamOptimizer,
     ModelPreloader,
     PerformanceMetricsCollector,
 } from './unified-inference-engine';
+
+// Re-export instances from performance-optimizer
+export { memoryManager, metricsCollector, modelPreloader } from './performance-optimizer';
 
 // Re-export from performance optimizer for convenience
 export type { PerformanceMetrics } from './performance-optimizer';

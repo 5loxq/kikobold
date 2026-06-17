@@ -5,11 +5,10 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { useInferencePerformance } from '../../hooks/useEnhancedInference';
 import { metricsCollector, memoryManager, PERFORMANCE_CONFIG } from '../../services/inference';
 import { formatFileSize } from '../../services/model-config';
 
-interface PerformanceMonitorProps {
+export interface PerformanceMonitorProps {
     className?: string;
     showMemory?: boolean;
     showTokens?: boolean;
@@ -194,7 +193,7 @@ const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
                             </div>
                             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                                 <div
-                                    className={`bg-gradient-to-r from-blue-500 to-${getMemoryColor().split('-')[1]}-500 h-2 rounded-full`}
+                                    className={`bg-gradient-to-r from-blue-500 to-${getMemoryColor().split('-')[1] === 'red' ? 'red' : getMemoryColor().split('-')[1] === 'yellow' ? 'yellow' : 'green'}-500 h-2 rounded-full`}
                                     style={{ width: `${Math.min(memory.usagePercent * 100, 100)}%` }}
                                 />
                             </div>

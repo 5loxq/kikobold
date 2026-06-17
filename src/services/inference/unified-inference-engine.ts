@@ -664,10 +664,17 @@ export class UnifiedInferenceEngine {
     }
 
     /**
-     * Generate text with streaming
+     * Generate text with streaming and backpressure support
      */
-    async *generateStream(request: GenerateRequest): AsyncGenerator<string> {
+    async *generateStream(
+        request: GenerateRequest,
+        backpressureConfig: {
+            maxQueueSize?: number;
+            minIntervalMs?: number;
+        } = {}
+    ): AsyncGenerator<string> {
         const startTime = Date.now();
+        const { maxQueueSize = 10, minIntervalMs = 0 } = backpressureConfig;
         
         try {
             const pipeline = this.state.currentPipeline;
@@ -708,6 +715,8 @@ export class UnifiedInferenceEngine {
 
             let fullText = '';
             let tokenCount = 0;
+            let lastTokenTime = 0;
+            const tokenQueue: string[] = [];
 
             for await (const output of generator.generate({
                 input_ids: inputIds,
@@ -720,15 +729,35 @@ export class UnifiedInferenceEngine {
                 const token = output.token;
                 const decoded = tokenizer.decode([output.token]);
                 
-                fullText += decoded;
-                tokenCount++;
+                // Apply backpressure: limit queue size and minimum interval
+                tokenQueue.push(decoded);
                 
-                // Yield the token
-                yield decoded;
+                // Process tokens with backpressure control
+                while (tokenQueue.length > 0) {
+                    // Check if we should wait due to queue size
+                    if (tokenQueue.length > maxQueueSize) {
+                        await new Promise(resolve => setTimeout(resolve, minIntervalMs));
+                        continue;
+                    }
+                    
+                    // Check minimum interval between tokens
+                    const now = Date.now();
+                    if (lastTokenTime > 0 && now - lastTokenTime < minIntervalMs) {
+                        await new Promise(resolve => setTimeout(resolve, minIntervalMs - (now - lastTokenTime)));
+                    }
+                    
+                    const nextToken = tokenQueue.shift()!;
+                    fullText += nextToken;
+                    tokenCount++;
+                    lastTokenTime = Date.now();
+                    
+                    // Yield the token
+                    yield nextToken;
 
-                // Call stream callback if provided
-                if (request.streamCallback) {
-                    request.streamCallback(decoded, fullText);
+                    // Call stream callback if provided
+                    if (request.streamCallback) {
+                        request.streamCallback(nextToken, fullText);
+                    }
                 }
             }
 
@@ -753,20 +782,60 @@ export class UnifiedInferenceEngine {
     }
 
     /**
-     * Generate multiple responses (batch processing)
+     * Generate multiple responses (batch processing) with parallel execution
      */
     async generateBatch(
         prompts: string[],
-        options: InferenceOptions
+        options: InferenceOptions,
+        config: {
+            maxParallel?: number;
+            onProgress?: (completed: number, total: number) => void;
+        } = {}
     ): Promise<GenerateResult[]> {
+        const { maxParallel = PERFORMANCE_CONFIG.TOKEN_BATCH_SIZE, onProgress } = config;
         const results: GenerateResult[] = [];
+        const errors: { index: number; error: unknown }[] = [];
         
-        for (const prompt of prompts) {
-            const result = await this.generate({
-                prompt,
-                options,
+        // Process in parallel batches
+        const total = prompts.length;
+        let completed = 0;
+        
+        for (let i = 0; i < prompts.length; i += maxParallel) {
+            const batch = prompts.slice(i, i + maxParallel);
+            const batchPromises = batch.map(async (prompt, batchIndex) => {
+                try {
+                    const result = await this.generate({
+                        prompt,
+                        options,
+                    });
+                    return { index: i + batchIndex, result };
+                } catch (err) {
+                    return { index: i + batchIndex, error: err };
+                }
             });
-            results.push(result);
+            
+            const batchResults = await Promise.all(batchPromises);
+            
+            for (const batchResult of batchResults) {
+                if ('result' in batchResult) {
+                    results[batchResult.index] = batchResult.result as GenerateResult;
+                } else {
+                    errors.push({ index: batchResult.index, error: batchResult.error });
+                    results[batchResult.index] = {
+                        text: '',
+                        tokens: 0,
+                        duration: 0,
+                        averageTokensPerSecond: 0,
+                    };
+                }
+                completed++;
+                onProgress?.(completed, total);
+            }
+        }
+        
+        // Log any errors that occurred
+        if (errors.length > 0) {
+            warn(`Batch processing completed with ${errors.length} errors`);
         }
 
         return results;
