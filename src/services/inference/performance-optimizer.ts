@@ -11,7 +11,7 @@
 
 import { env } from '@xenova/transformers';
 import { log, warn, debug } from '../logging';
-import { checkWebGPUSupport, getSystemMemoryInfo } from '../security';
+import { checkWebGPUSupport, getSystemMemoryInfo, MemoryInfo } from '../security';
 
 // ============================================================================
 // Performance Constants
@@ -614,6 +614,8 @@ export class PerformanceMetricsCollector {
 export const memoryManager = MemoryManager.getInstance();
 export const metricsCollector = new PerformanceMetricsCollector();
 export const modelPreloader = new ModelPreloader();
+
+export type { PerformanceMetrics };
 
 // Initialize adaptive configuration on module load
 applyAdaptiveConfiguration().catch(err => {

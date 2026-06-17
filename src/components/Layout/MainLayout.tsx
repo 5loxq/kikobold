@@ -1,4 +1,4 @@
-import { useState, FC } from 'react';
+import { useState, FC, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sidebar } from './Sidebar';
 import { ChatWindow } from '../Chat/ChatWindow';
@@ -9,7 +9,7 @@ import { Chat } from '../../types';
 import { useChat } from '../../hooks/useChat';
 import { useModels } from '../../hooks/useModels';
 import { useProfiles } from '../../hooks/useProfiles';
-import { useInference } from '../../hooks/useInference';
+import { useEnhancedInference } from '../../hooks/useEnhancedInference';
 import * as ChatStorage from '../../services/storage/ChatStorage';
 import { error as logError } from '../../services/logging';
 
@@ -23,8 +23,23 @@ export const MainLayout: FC = () => {
   const { chat, chats, loadChats, loadChat, createNewChat, deleteChat, addMessage, renameChat } = useChat();
   const { profiles, activeProfile, selectProfile, createProfile, updateProfile, deleteProfile, exportProfiles, importProfiles } = useProfiles();
   const { downloadedModels, activeModel, downloadModel, deleteModel: deleteDownloadedModel, selectModel, isModelDownloaded } = useModels();
-  const { loadModel, generate, isModelLoaded, isLoading, webgpuAvailable, loadingProgress } = useInference();
+  const { 
+    loadModel, 
+    generate, 
+    isLoading, 
+    webgpuAvailable,
+    currentModelId,
+    refreshStatus
+  } = useEnhancedInference({ modelId: activeModel?.id || '' });
   const [error, setError] = useState<string | null>(null);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+
+  const isModelLoaded = currentModelId === activeModel?.id;
+
+  // Refresh inference status when active model changes
+  useEffect(() => {
+    refreshStatus();
+  }, [activeModel?.id, refreshStatus]);
 
   // Chat DB initialization and loading is now handled in useChat hook
 
@@ -127,14 +142,21 @@ export const MainLayout: FC = () => {
 
   const handleModelSelect = async (modelId: string) => {
     try {
-      // Load the model via WebLLM
-      await loadModel(modelId);
-
-      // Select and register the model (will save to storage if not already saved)
-      selectModel(modelId);
+      setLoadingProgress(0);
+      // Load the model via unified inference engine
+      const success = await loadModel(modelId);
+      
+      if (success) {
+        setLoadingProgress(100);
+        // Select and register the model (will save to storage if not already saved)
+        selectModel(modelId);
+      } else {
+        setLoadingProgress(0);
+      }
     } catch (err) {
       logError('Model selection failed:', err);
       setError(err instanceof Error ? err.message : 'Model selection failed');
+      setLoadingProgress(0);
     }
   };
 
