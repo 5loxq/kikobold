@@ -11,7 +11,6 @@
  * - Inline code
  * - Blockquotes
  * - Horizontal rules
- * - Tables
  * - Task lists
  */
 
@@ -313,42 +312,6 @@ const ListItem: React.FC<{ children: React.ReactNode; checked?: boolean }> = ({ 
   </li>
 );
 
-const Table: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="my-4 overflow-x-auto">
-    <table className="min-w-full border border-gray-200 dark:border-gray-700 rounded-lg">
-      {children}
-    </table>
-  </div>
-);
-
-const TableHead: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <thead className="bg-gray-50 dark:bg-gray-800">
-    {children}
-  </thead>
-);
-
-const TableBody: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <tbody>{children}</tbody>
-);
-
-const TableRow: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <tr className="border-t border-gray-200 dark:border-gray-700">
-    {children}
-  </tr>
-);
-
-const TableHeaderCell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <th className="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700 last:border-r-0">
-    {children}
-  </th>
-);
-
-const TableCell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <td className="px-4 py-2 text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700 last:border-r-0">
-    {children}
-  </td>
-);
-
 // Code block with copy button
 interface CodeBlockProps {
   language?: string;
@@ -400,7 +363,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language, value, isDarkMode, maxH
           className="flex items-center gap-1 px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           title="Copy code"
         >
-          <span className="text-sm">📋</span>
+          <span className="text-sm">\ud83d\udccb</span>
           {copied ? 'Copied!' : 'Copy'}
         </button>
       </div>
@@ -451,7 +414,6 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
   return (
     <div className={`markdown-content ${className}`}>
-      {/* We'll use a simple approach: parse markdown manually for basic formatting */}
       <MarkdownContent
         content={memoizedContent}
         isDarkMode={isDarkMode}
@@ -690,7 +652,6 @@ function processMarkdown(
 ): string {
   let match;
   let lastIndex = 0;
-  let result = content;
 
   while ((match = regex.exec(content)) !== null) {
     // Add text before the match

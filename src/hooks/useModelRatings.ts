@@ -7,10 +7,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   rateModel,
-  getModelRating,
   removeModelRating,
   getAllModelRatings,
-  getAverageRating,
   getRatingStatistics,
   getTopRatedModels,
   getCommunityRecommendations,

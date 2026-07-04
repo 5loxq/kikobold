@@ -8,7 +8,7 @@
  * - Model search and filtering
  */
 
-import { Model, Profile, LocalModel } from '../types';
+import { Model } from '../types';
 import { ModelSettings, ModelMetadata } from '../types/ensu-types';
 export type { ModelRatingSummary } from '../types/ensu-types';
 import { MODELS } from './models/model-registry';
@@ -18,6 +18,9 @@ import { secureLocalStorage } from './security';
 // Constants
 // ============================================================================
 
+const MODEL_RATINGS_KEY = 'webgui.model.ratings';
+const MIN_RATING = 1;
+const MAX_RATING = 5;
 const MODEL_SETTINGS_KEY = 'webgui.model.settings';
 const MODEL_METADATA_KEY = 'webgui.model.metadata';
 const FAVORITE_MODELS_KEY = 'webgui.model.favorites';
@@ -44,6 +47,7 @@ const DEFAULT_MODEL_SETTINGS: Omit<ModelSettings, 'id'> = {
 let modelSettingsCache: Record<string, ModelSettings> = {};
 let modelMetadataCache: Record<string, ModelMetadata> = {};
 let favoriteModelsCache: Set<string> = new Set();
+let modelRatingsCache: Record<string, number> = {};
 let initialized = false;
 
 // ============================================================================
@@ -60,6 +64,7 @@ export const initModelConfigService = async (): Promise<void> => {
   loadModelSettings();
   loadModelMetadata();
   loadFavoriteModels();
+  loadModelRatings();
   loadModelRatings();
 
   initialized = true;
@@ -109,6 +114,30 @@ const loadFavoriteModels = (): void => {
   } catch {
     favoriteModelsCache = new Set();
   }
+/**
+ * Load model ratings from storage
+ */
+const loadModelRatings = (): void => {
+  try {
+    const saved = secureLocalStorage.getItem(MODEL_RATINGS_KEY);
+    if (saved) {
+      modelRatingsCache = JSON.parse(saved);
+    }
+  } catch {
+    modelRatingsCache = {};
+  }
+};
+
+/**
+ * Save model ratings to storage
+ */
+const saveModelRatings = (): void => {
+  try {
+    secureLocalStorage.setItem(MODEL_RATINGS_KEY, JSON.stringify(modelRatingsCache));
+  } catch (error) {
+    console.error('Failed to save model ratings:', error);
+  }
+};
 };
 
 // ============================================================================

@@ -28,16 +28,14 @@ export {
     getSystemCapabilities,
     applyAdaptiveConfiguration,
     PERFORMANCE_CONFIG,
-    
-    // Types
-    GenerateRequest,
-    GenerateResult,
-    ModelLoadResult,
-    InferenceEngineConfig,
 } from './unified-inference-engine';
 
 // Re-export types from unified-inference-engine
 export type {
+    GenerateRequest,
+    GenerateResult,
+    ModelLoadResult,
+    InferenceEngineConfig,
     MemoryManager,
     TokenStreamOptimizer,
     ModelPreloader,
