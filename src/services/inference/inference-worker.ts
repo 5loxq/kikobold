@@ -6,15 +6,19 @@
  */
 
 import { pipeline, TextGenerationPipeline, env, AutoTokenizer } from '@xenova/transformers';
+
+// Workaround for read-only env properties in @xenova/transformers
+const mutableEnv = env as any;
 import { validateModelPath } from '../security';
-import { getModelConfig, ModelConfig } from '../models/model-registry';
+import { getModelConfig } from '../models/model-registry';
+import type { ModelConfig } from '../../types';
 
 // ============================================================================
 // Types
 // ============================================================================
 
 interface WorkerMessage {
-    type: 'INIT' | 'LOAD_MODEL' | 'GENERATE' | 'UNLOAD_MODEL' | 'CLEANUP' | 'GET_STATUS';
+    type: 'INIT' | 'LOAD_MODEL' | 'GENERATE' | 'UNLOAD_MODEL' | 'CLEANUP' | 'GET_STATUS' | 'CANCEL';
     modelId?: string;
     modelPath?: string;
     request?: {
@@ -67,9 +71,9 @@ const loadModel = async (modelId: string, modelPath: string, config: ModelConfig
         const memoryUsed = estimateModelMemory(config);
 
         // Load the model
-        const task = config.type === 'chat' ? 'text-generation' : 'text2text-generation';
+        const task: string = config.type === 'chat' ? 'text-generation' : 'text2text-generation';
         
-        const pipelineInstance = await pipeline(task, {
+        const pipelineInstance = await pipeline(task as any, {
             model: validateModelPath(modelPath),
             dtype: config.quantized ? 'q4' : undefined,
             progress_callback: (progress: { progress: number; status: string }) => {
@@ -78,7 +82,7 @@ const loadModel = async (modelId: string, modelPath: string, config: ModelConfig
                     data: { progress: progress.progress * 100, status: progress.status },
                 } as WorkerResult);
             },
-        });
+        } as any);
 
         // Store in cache
         modelCache.set(modelId, {
@@ -275,7 +279,7 @@ const generateStream = async (
             return;
         }
 
-        const tokenizer = await AutoTokenizer.fromPretrained(modelConfig.modelPath);
+        const tokenizer = await (AutoTokenizer as any).from_pretrained(modelConfig.modelPath);
         
         const formattedPrompt = formatPrompt(
             currentModelId,
@@ -286,7 +290,7 @@ const generateStream = async (
 
         const inputIds = await tokenizer.encode(formattedPrompt);
 
-        const generator = await currentPipeline.createTextGenerationPipeline({
+        const generator = await (currentPipeline as any)({
             max_new_tokens: request?.options?.maxTokens || 512,
             temperature: request?.options?.temperature || 0.7,
             top_p: request?.options?.topP || 0.9,
@@ -361,7 +365,7 @@ self.onmessage = async (event: MessageEvent) => {
             case 'INIT':
                 // Initialize worker with configuration
                 if (message.config) {
-                    Object.assign(env.backends.onnx.wasm, message.config);
+                    Object.assign(mutableEnv.backends.onnx.wasm, message.config);
                 }
                 postMessage({
                     type: 'STATUS',

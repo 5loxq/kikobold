@@ -76,8 +76,7 @@
       "ignoreCase": true,
       "ignoreDeclarationSort": true,
       "ignoreMemberSort": false,
-      "memberSyntaxSortOrder": ["none", "all", "multiple", "single"],
-      "allowSeparateGroups": false
+      "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
     }]
   },
   "overrides": [
