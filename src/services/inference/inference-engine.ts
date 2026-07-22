@@ -5,8 +5,8 @@ import { checkWebGPUSupport, validateModelPath } from '../security';
 import { MODEL_CONFIGS, getModelConfig } from '../models/model-registry';
 import { createError, ErrorCodes } from '../../utils/errors';
 
-// Allow loading ONNX models from HuggingFace (cached in browser after first load)
-env.allowRemoteModels = true;
+// Workaround for read-only env properties in @xenova/transformers
+const mutableEnv = env as any;
 
 // Model cache to prevent reloading the same model multiple times
 // Using LRU cache with max size to prevent memory issues
@@ -155,26 +155,26 @@ export const checkWebGPUAvailable = async (): Promise<boolean> => {
       if (isFirefox) {
         log('✓ WebGPU is available (Firefox - using conservative settings)');
         // Firefox WebGPU settings
-        env.backends.onnx.wasm.numThreads = Math.min(isMobile ? 2 : 4, navigator.hardwareConcurrency || 4);
-        env.backends.onnx.wasm.simd = true;
-        env.backends.onnx.wasm.proxy = false;
+        mutableEnv.backends.onnx.wasm.numThreads = Math.min(isMobile ? 2 : 4, navigator.hardwareConcurrency || 4);
+        mutableEnv.backends.onnx.wasm.simd = true;
+        mutableEnv.backends.onnx.wasm.proxy = false;
       } else if (isChrome) {
         log('✓ WebGPU is available (Chrome - using aggressive optimizations)');
         // Chrome WebGPU settings
-        env.backends.onnx.wasm.numThreads = Math.min(isMobile ? 4 : 8, navigator.hardwareConcurrency || 8);
-        env.backends.onnx.wasm.simd = true;
-        env.backends.onnx.wasm.proxy = false;
+        mutableEnv.backends.onnx.wasm.numThreads = Math.min(isMobile ? 4 : 8, navigator.hardwareConcurrency || 8);
+        mutableEnv.backends.onnx.wasm.simd = true;
+        mutableEnv.backends.onnx.wasm.proxy = false;
       } else if (isSafari) {
         log('✓ WebGPU is available (Safari - using mobile-optimized settings)');
         // Safari WebGPU settings (more conservative, especially on mobile)
-        env.backends.onnx.wasm.numThreads = Math.min(isMobile ? 2 : 3, navigator.hardwareConcurrency || 3);
-        env.backends.onnx.wasm.simd = true;
-        env.backends.onnx.wasm.proxy = false;
+        mutableEnv.backends.onnx.wasm.numThreads = Math.min(isMobile ? 2 : 3, navigator.hardwareConcurrency || 3);
+        mutableEnv.backends.onnx.wasm.simd = true;
+        mutableEnv.backends.onnx.wasm.proxy = false;
       } else {
         log('✓ WebGPU is available (Generic browser)');
         // Default settings for other browsers
-        env.backends.onnx.wasm.numThreads = Math.min(isMobile ? 2 : 4, navigator.hardwareConcurrency || 4);
-        env.backends.onnx.wasm.simd = true;
+        mutableEnv.backends.onnx.wasm.numThreads = Math.min(isMobile ? 2 : 4, navigator.hardwareConcurrency || 4);
+        mutableEnv.backends.onnx.wasm.simd = true;
       }
     } else {
       warn('⚠️ WebGPU is not supported in this browser');

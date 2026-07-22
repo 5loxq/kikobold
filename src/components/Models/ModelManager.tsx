@@ -5,11 +5,7 @@ import { MODELS } from '../../services/models/model-registry';
 import { ModelCard } from './ModelCard';
 import { CommunityRecommendations, RatingStatistics } from './ModelRating';
 import { info } from '../../services/logging';
-import {
-    downloadModel,
-    cancelDownload,
-    type DownloadProgress,
-} from '../../services/models/model-downloader';
+
 
 interface ModelManagerProps {
   downloadedModels: LocalModel[];

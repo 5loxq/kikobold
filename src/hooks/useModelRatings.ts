@@ -7,15 +7,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   rateModel,
-  getModelRating,
   removeModelRating,
   getAllModelRatings,
-  getAverageRating,
   getRatingStatistics,
   getTopRatedModels,
   getCommunityRecommendations,
   getSystemRecommendedModels,
-  type ModelRatingSummary,
 } from '../services/model-config';
 import { Model } from '../types';
 
