@@ -25,11 +25,12 @@ export {
     
     // Performance utilities
     detectSystemCapabilities,
-    getSystemCapabilities,
     applyAdaptiveConfiguration,
     PERFORMANCE_CONFIG,
-    
-    // Types
+} from './unified-inference-engine';
+
+// Export types separately
+export type {
     GenerateRequest,
     GenerateResult,
     ModelLoadResult,
@@ -54,15 +55,25 @@ export type { PerformanceMetrics } from './performance-optimizer';
 // Legacy Exports - For backward compatibility
 // ============================================================================
 
-// Re-export from old inference-engine.ts (deprecated, use unified engine)
-export * from './inference-engine';
+// Re-export specific types and functions from old inference-engine.ts (deprecated, use unified engine)
+export {
+    checkWebGPUAvailable,
+    clearModelCache,
+    generate,
+    getCacheStats,
+    getCachedModelIds,
+    getCurrentModelId,
+    getWebGPUAvailable,
+    isModelLoaded,
+    loadModel,
+    unloadModel,
+} from './inference-engine';
 
-// Re-export from old llm-inference-engine.ts (deprecated, use unified engine)
-export * from './llm-inference-engine';
-export * from './llm-types';
+// Re-export types from llm-types
+export type * from './llm-types';
 
-// Re-export ModelConfig from types
-export type { ModelConfig } from '../../types';
+// Re-export types from types
+export type { ModelConfig, InferenceOptions, InferenceResult, Model, LocalModel } from '../../types';
 
 // ============================================================================
 // Utility Functions
@@ -74,12 +85,12 @@ export type { ModelConfig } from '../../types';
 export const generateTextWithRetry = async (
     modelId: string,
     prompt: string,
-    options: Partial<import('./unified-inference-engine').InferenceOptions> = {},
+    options: Partial<import('../../types').InferenceOptions> = {},
     retryOptions?: {
         maxRetries?: number;
         delay?: number;
     }
-): Promise<import('./unified-inference-engine').GenerateResult> => {
+): Promise<import('../../types').InferenceResult> => {
     const { generateText } = await import('./unified-inference-engine');
     
     const maxRetries = retryOptions?.maxRetries || 3;

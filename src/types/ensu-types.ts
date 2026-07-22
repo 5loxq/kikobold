@@ -52,6 +52,7 @@ export interface ModelSettings {
   isFavorite?: boolean; // Mark as favorite
   customName?: string; // User-defined name
   notes?: string; // User notes about this model
+  tags?: string[]; // User-defined tags for categorization
 }
 
 export interface ModelMetadata {

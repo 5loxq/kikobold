@@ -16,7 +16,15 @@
  */
 
 import React, { useMemo, useCallback, useState } from 'react';
-import { Prism as SyntaxHighlighter } from 'prism-react-renderer';
+import { Prism } from 'prism-react-renderer';
+
+// Type assertion for SyntaxHighlighter to work around type issues
+const SyntaxHighlighter = Prism as unknown as React.ComponentType<{
+  language: string;
+  style: any;
+  customStyle?: React.CSSProperties;
+  children: React.ReactNode;
+}>;
 
 // Supported programming languages for syntax highlighting
 const SUPPORTED_LANGUAGES = [
@@ -313,42 +321,6 @@ const ListItem: React.FC<{ children: React.ReactNode; checked?: boolean }> = ({ 
   </li>
 );
 
-const Table: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="my-4 overflow-x-auto">
-    <table className="min-w-full border border-gray-200 dark:border-gray-700 rounded-lg">
-      {children}
-    </table>
-  </div>
-);
-
-const TableHead: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <thead className="bg-gray-50 dark:bg-gray-800">
-    {children}
-  </thead>
-);
-
-const TableBody: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <tbody>{children}</tbody>
-);
-
-const TableRow: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <tr className="border-t border-gray-200 dark:border-gray-700">
-    {children}
-  </tr>
-);
-
-const TableHeaderCell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <th className="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700 last:border-r-0">
-    {children}
-  </th>
-);
-
-const TableCell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <td className="px-4 py-2 text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700 last:border-r-0">
-    {children}
-  </td>
-);
-
 // Code block with copy button
 interface CodeBlockProps {
   language?: string;
@@ -624,7 +596,6 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
           <Paragraph key={index}>
             <InlineMarkdown
               content={block}
-              isDarkMode={isDarkMode}
               onLinkClick={onLinkClick}
             />
           </Paragraph>
@@ -637,11 +608,10 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
 // Component for inline markdown formatting
 interface InlineMarkdownProps {
   content: string;
-  isDarkMode: boolean;
   onLinkClick?: (url: string) => void;
 }
 
-const InlineMarkdown: React.FC<InlineMarkdownProps> = ({ content, isDarkMode, onLinkClick }) => {
+const InlineMarkdown: React.FC<InlineMarkdownProps> = ({ content, onLinkClick }) => {
   // Split by markdown formatting
   const parts: React.ReactNode[] = [];
   let remaining = content;
@@ -690,7 +660,6 @@ function processMarkdown(
 ): string {
   let match;
   let lastIndex = 0;
-  let result = content;
 
   while ((match = regex.exec(content)) !== null) {
     // Add text before the match

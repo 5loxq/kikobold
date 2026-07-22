@@ -8,8 +8,8 @@
  * - Model search and filtering
  */
 
-import { Model, Profile, LocalModel } from '../types';
-import { ModelSettings, ModelMetadata } from '../types/ensu-types';
+import type { Model } from '../types';
+import type { ModelSettings, ModelMetadata } from '../types/ensu-types';
 export type { ModelRatingSummary } from '../types/ensu-types';
 import { MODELS } from './models/model-registry';
 import { secureLocalStorage } from './security';
@@ -21,6 +21,9 @@ import { secureLocalStorage } from './security';
 const MODEL_SETTINGS_KEY = 'webgui.model.settings';
 const MODEL_METADATA_KEY = 'webgui.model.metadata';
 const FAVORITE_MODELS_KEY = 'webgui.model.favorites';
+const MODEL_RATINGS_KEY = 'webgui.model.ratings';
+const MIN_RATING = 1;
+const MAX_RATING = 5;
 
 // Default model settings
 const DEFAULT_MODEL_SETTINGS: Omit<ModelSettings, 'id'> = {
@@ -35,6 +38,7 @@ const DEFAULT_MODEL_SETTINGS: Omit<ModelSettings, 'id'> = {
   isFavorite: false,
   customName: '',
   notes: '',
+  tags: [],
 };
 
 // ============================================================================
@@ -44,6 +48,7 @@ const DEFAULT_MODEL_SETTINGS: Omit<ModelSettings, 'id'> = {
 let modelSettingsCache: Record<string, ModelSettings> = {};
 let modelMetadataCache: Record<string, ModelMetadata> = {};
 let favoriteModelsCache: Set<string> = new Set();
+let modelRatingsCache: Record<string, number> = {};
 let initialized = false;
 
 // ============================================================================
@@ -162,7 +167,7 @@ export const getModelSettings = (modelId: string): ModelSettings => {
 
   // Check cache first
   if (modelSettingsCache[modelId]) {
-    return { ...DEFAULT_MODEL_SETTINGS, id: modelId, ...modelSettingsCache[modelId] };
+    return { ...DEFAULT_MODEL_SETTINGS, ...modelSettingsCache[modelId], id: modelId };
   }
 
   // Return defaults
@@ -176,7 +181,7 @@ export const getAllModelSettings = (): Record<string, ModelSettings> => {
   const allSettings: Record<string, ModelSettings> = {};
   
   for (const [modelId, settings] of Object.entries(modelSettingsCache)) {
-    allSettings[modelId] = { ...DEFAULT_MODEL_SETTINGS, id: modelId, ...settings };
+    allSettings[modelId] = { ...DEFAULT_MODEL_SETTINGS, ...settings, id: modelId };
   }
   
   return allSettings;
@@ -390,12 +395,12 @@ export const filterModels = (
 
   // Filter by max size
   if (options.maxSizeMB) {
-    filtered = filtered.filter(model => (model.fileSizeMB || 0) <= options.maxSizeMB);
+    filtered = filtered.filter(model => (model.fileSizeMB || 0) <= (options.maxSizeMB || 0));
   }
 
   // Filter by min context length
   if (options.minContextLength) {
-    filtered = filtered.filter(model => model.contextLength >= options.minContextLength);
+    filtered = filtered.filter(model => model.contextLength >= (options.minContextLength || 0));
   }
 
   // Filter by search query
@@ -782,70 +787,6 @@ export const formatFileSize = (bytes: number): string => {
 };
 
 // ============================================================================
-// Export all functions
-// ============================================================================
-
-export default {
-  // Initialization
-  initModelConfigService,
-  
-  // Model Settings
-  getModelSettings,
-  getAllModelSettings,
-  updateModelSettings,
-  resetModelSettings,
-  resetAllModelSettings,
-  
-  // Model Metadata
-  getModelMetadata,
-  updateModelMetadata,
-  getAllModelMetadata,
-  
-  // Favorites
-  isModelFavorite,
-  setModelFavorite,
-  toggleModelFavorite,
-  getFavoriteModelIds,
-  getFavoriteModels,
-  
-  // Search and Filter
-  searchModels,
-  filterModels,
-  sortModels,
-  
-  // Customization
-  setModelCustomName,
-  getModelDisplayName,
-  setModelNotes,
-  getModelNotes,
-  
-  // Tags
-  addModelTag,
-  removeModelTag,
-  getModelTags,
-  getAllModelTags,
-  
-  // Recommendations
-  getRecommendedModels,
-  getCommunityRecommendations,
-  getModelsForDevice,
-  getSystemRecommendedModels,
-  
-  // Utilities
-  formatParameterCount,
-  formatFileSize,
-  
-  // Ratings
-  rateModel,
-  getModelRating,
-  removeModelRating,
-  getAllModelRatings,
-  getAverageRating,
-  getRatingStatistics,
-  getTopRatedModels,
-};
-
-// ============================================================================
 // Model Ratings System
 // ============================================================================
 
@@ -1000,4 +941,68 @@ export const getTopRatedModels = (limit: number = 5): Array<{model: Model, ratin
   ratedModels.sort((a, b) => b.rating - a.rating || a.model.name.localeCompare(b.model.name));
   
   return ratedModels.slice(0, limit);
+};
+
+// ============================================================================
+// Export all functions
+// ============================================================================
+
+export default {
+  // Initialization
+  initModelConfigService,
+  
+  // Model Settings
+  getModelSettings,
+  getAllModelSettings,
+  updateModelSettings,
+  resetModelSettings,
+  resetAllModelSettings,
+  
+  // Model Metadata
+  getModelMetadata,
+  updateModelMetadata,
+  getAllModelMetadata,
+  
+  // Favorites
+  isModelFavorite,
+  setModelFavorite,
+  toggleModelFavorite,
+  getFavoriteModelIds,
+  getFavoriteModels,
+  
+  // Search and Filter
+  searchModels,
+  filterModels,
+  sortModels,
+  
+  // Customization
+  setModelCustomName,
+  getModelDisplayName,
+  setModelNotes,
+  getModelNotes,
+  
+  // Tags
+  addModelTag,
+  removeModelTag,
+  getModelTags,
+  getAllModelTags,
+  
+  // Recommendations
+  getRecommendedModels,
+  getCommunityRecommendations,
+  getModelsForDevice,
+  getSystemRecommendedModels,
+  
+  // Utilities
+  formatParameterCount,
+  formatFileSize,
+  
+  // Ratings
+  rateModel,
+  getModelRating,
+  removeModelRating,
+  getAllModelRatings,
+  getAverageRating,
+  getRatingStatistics,
+  getTopRatedModels,
 };

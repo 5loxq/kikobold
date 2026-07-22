@@ -12,12 +12,13 @@
  * - Batch processing support
  */
 
-import { pipeline, TextGenerationPipeline, env, AutoModel, AutoTokenizer } from '@xenova/transformers';
-import { log, warn, error, debug } from '../logging';
-import { checkWebGPUSupport, validateModelPath, getSystemMemoryInfo } from '../security';
-import { MODEL_CONFIGS, getModelConfig, ModelConfig } from '../models/model-registry';
-import { createError, ErrorCodes, AppError, withRetry } from '../../utils/errors';
-import { Model, LocalModel, InferenceOptions, InferenceResult } from '../../types';
+import { TextGenerationPipeline, AutoTokenizer, pipeline } from '@xenova/transformers';
+import { log, warn, error } from '../logging';
+import { checkWebGPUSupport, validateModelPath } from '../security';
+import { getModelConfig } from '../models/model-registry';
+import { createError, ErrorCodes, AppError } from '../../utils/errors';
+import type { InferenceOptions } from '../../types';
+import type { ModelConfig } from '../../types';
 import {
     PERFORMANCE_CONFIG,
     detectSystemCapabilities,
@@ -172,6 +173,19 @@ class InferenceEngineState {
         this.currentPipeline = null;
     }
 
+    // Getters for external access
+    getCurrentModelId(): string | null {
+        return this.currentModelId;
+    }
+
+    getCurrentPipeline(): TextGenerationPipeline | null {
+        return this.currentPipeline;
+    }
+
+    getModelCache(): Map<string, { pipeline: TextGenerationPipeline; timestamp: number; memoryUsedMB: number; context: any }> {
+        return this.modelCache;
+    }
+
     // Loading state
     setLoading(loading: boolean) {
         this.isLoading = loading;
@@ -214,13 +228,6 @@ class InferenceEngineState {
 // Web Worker Support
 // ============================================================================
 
-interface WorkerMessage {
-    type: 'INIT' | 'GENERATE' | 'CANCEL';
-    modelId?: string;
-    request?: GenerateRequest;
-    config?: any;
-}
-
 interface WorkerResult {
     type: 'RESULT' | 'TOKEN' | 'PROGRESS' | 'ERROR';
     data?: any;
@@ -255,7 +262,7 @@ class InferenceWorker {
                         this.handleProgress(result.data);
                         break;
                     case 'ERROR':
-                        this.handleError(result.error);
+                        if (result.error) this.handleError(result.error);
                         break;
                 }
             };
@@ -296,7 +303,7 @@ class InferenceWorker {
 
     private handleError(error: string) {
         // Find and reject all pending promises
-        this.pendingPromises.forEach((promise, id) => {
+        this.pendingPromises.forEach((promise, _id) => {
             promise.reject(new Error(error));
         });
         this.pendingPromises.clear();
@@ -344,7 +351,6 @@ export class UnifiedInferenceEngine {
     private worker: InferenceWorker | null = null;
     private tokenOptimizer: TokenStreamOptimizer;
     private config: Required<InferenceEngineConfig>;
-    private systemCapabilities: Awaited<ReturnType<typeof detectSystemCapabilities>> | null = null;
 
     constructor(config: InferenceEngineConfig = {}) {
         this.config = { ...DEFAULT_CONFIG, ...config };
@@ -360,7 +366,6 @@ export class UnifiedInferenceEngine {
 
         // Initialize system capabilities
         detectSystemCapabilities().then(caps => {
-            this.systemCapabilities = caps;
             this.applySystemOptimizations(caps);
         }).catch(err => {
             warn('System capabilities detection failed:', err);
@@ -461,7 +466,7 @@ export class UnifiedInferenceEngine {
             const estimatedMemoryMB = this.estimateModelMemory(modelConfig);
 
             // Load the model
-            let pipeline: TextGenerationPipeline;
+            let pipelineInstance: TextGenerationPipeline;
 
             if (options.useWebWorker && this.worker) {
                 // Load via Web Worker (not yet implemented in worker)
@@ -470,7 +475,7 @@ export class UnifiedInferenceEngine {
                 // Load directly
                 const modelPath = validateModelPath(modelConfig.modelPath);
                 
-                pipeline = await pipeline(
+                pipelineInstance = await (pipeline as any)(
                     modelConfig.type === 'chat' ? 'text-generation' : 'text2text-generation',
                     {
                         model: modelPath,
@@ -482,8 +487,8 @@ export class UnifiedInferenceEngine {
             const loadTime = Date.now() - startTime;
 
             // Cache the model
-            this.state.cacheModel(modelId, pipeline, estimatedMemoryMB);
-            this.state.setCurrentModel(modelId, pipeline);
+            this.state.cacheModel(modelId, pipelineInstance, estimatedMemoryMB);
+            this.state.setCurrentModel(modelId, pipelineInstance);
             this.state.setLoading(false);
 
             // Record metrics
@@ -492,7 +497,7 @@ export class UnifiedInferenceEngine {
             return {
                 modelId,
                 success: true,
-                pipeline,
+                pipeline: pipelineInstance,
                 memoryUsedMB: estimatedMemoryMB,
                 loadTime,
             };
@@ -514,7 +519,7 @@ export class UnifiedInferenceEngine {
      * Unload a model
      */
     unloadModel(modelId: string): boolean {
-        if (this.state.currentModelId === modelId) {
+        if (this.state.getCurrentModelId() === modelId) {
             this.state.clearCurrentModel();
         }
         return this.state.evictModel(modelId);
@@ -543,7 +548,7 @@ export class UnifiedInferenceEngine {
     /**
      * Get preloading status
      */
-    isPreloading(modelId: string): boolean {
+    isPreloading(_modelId: string): boolean {
         // Check if model is in preload queue
         return false; // TODO: Implement
     }
@@ -590,7 +595,7 @@ export class UnifiedInferenceEngine {
         const startTime = Date.now();
         
         try {
-            const pipeline = this.state.currentPipeline;
+            const pipeline = this.state.getCurrentPipeline();
             if (!pipeline) {
                 throw createError('No model loaded', ErrorCodes.MODEL_NOT_FOUND);
             }
@@ -599,7 +604,7 @@ export class UnifiedInferenceEngine {
 
             // Format prompt
             const formattedPrompt = this.formatPrompt(
-                this.state.currentModelId!, 
+                this.state.getCurrentModelId()!, 
                 request.prompt,
                 request.options.systemPrompt,
                 request.options.language || 'en'
@@ -631,9 +636,8 @@ export class UnifiedInferenceEngine {
 
             // Process result
             const responseText = this.extractResponse(
-                this.state.currentModelId!,
-                result as { generated_text: string },
-                formattedPrompt
+                this.state.getCurrentModelId()!,
+                result as { generated_text: string }
             );
 
             const duration = Date.now() - startTime;
@@ -677,7 +681,7 @@ export class UnifiedInferenceEngine {
         const { maxQueueSize = 10, minIntervalMs = 0 } = backpressureConfig;
         
         try {
-            const pipeline = this.state.currentPipeline;
+            const pipeline = this.state.getCurrentPipeline();
             if (!pipeline) {
                 throw createError('No model loaded', ErrorCodes.MODEL_NOT_FOUND);
             }
@@ -686,26 +690,26 @@ export class UnifiedInferenceEngine {
 
             // Format prompt
             const formattedPrompt = this.formatPrompt(
-                this.state.currentModelId!,
+                this.state.getCurrentModelId()!,
                 request.prompt,
                 request.options.systemPrompt,
                 request.options.language || 'en'
             );
 
             // Use tokenizer for streaming
-            const modelConfig = getModelConfig(this.state.currentModelId!);
+            const modelConfig = getModelConfig(this.state.getCurrentModelId()!);
             if (!modelConfig) {
                 throw createError('Model config not found', ErrorCodes.CONFIGURATION_ERROR);
             }
 
             // Load tokenizer
-            const tokenizer = await AutoTokenizer.fromPretrained(modelConfig.modelPath);
+            const tokenizer = await (AutoTokenizer as any).from_pretrained(modelConfig.modelPath);
 
             // Tokenize input
             const inputIds = await tokenizer.encode(formattedPrompt);
 
             // Generate with streaming
-            const generator = await pipeline.createTextGenerationPipeline({
+            const generator = await (pipeline as any)({
                 max_new_tokens: request.options.maxTokens,
                 temperature: request.options.temperature,
                 top_p: request.options.topP,
@@ -726,7 +730,6 @@ export class UnifiedInferenceEngine {
                     break;
                 }
 
-                const token = output.token;
                 const decoded = tokenizer.decode([output.token]);
                 
                 // Apply backpressure: limit queue size and minimum interval
@@ -937,8 +940,7 @@ export class UnifiedInferenceEngine {
 
     private extractResponse(
         modelId: string,
-        generatedText: { generated_text: string },
-        fullPrompt: string
+        generatedText: { generated_text: string }
     ): string {
         const config = getModelConfig(modelId);
         let responseText = generatedText.generated_text || '';
@@ -982,8 +984,8 @@ export class UnifiedInferenceEngine {
      */
     getStatus() {
         return {
-            currentModelId: this.state.currentModelId,
-            cachedModels: Array.from(this.state.modelCache.keys()),
+            currentModelId: this.state.getCurrentModelId(),
+            cachedModels: Array.from(this.state.getModelCache().keys()),
             isLoading: this.state.isModelLoading(),
             isGenerating: this.state.isGenerating(),
             webgpuAvailable: this.state.getWebGPUAvailable(),
@@ -1124,18 +1126,10 @@ export const streamText = async function* (
 // Exports
 // ============================================================================
 
-export type {
-    GenerateRequest,
-    GenerateResult,
-    ModelLoadResult,
-    InferenceEngineConfig,
-};
-
 export {
     PERFORMANCE_CONFIG,
     detectSystemCapabilities,
     applyAdaptiveConfiguration,
-    getSystemCapabilities,
     MemoryManager,
     TokenStreamOptimizer,
     ModelPreloader,
