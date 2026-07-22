@@ -11,7 +11,10 @@
 
 import { env } from '@xenova/transformers';
 import { log, warn, debug } from '../logging';
-import { checkWebGPUSupport, getSystemMemoryInfo, MemoryInfo } from '../security';
+import { checkWebGPUSupport } from '../security';
+
+// Workaround for read-only env properties in @xenova/transformers
+const mutableEnv = env as any;
 
 // ============================================================================
 // Performance Constants
@@ -163,8 +166,8 @@ export const applyAdaptiveConfiguration = async (): Promise<void> => {
     }
 
     // Enable local model caching for better performance
-    env.allowLocalModels = true;
-    env.allowRemoteModels = true;
+    mutableEnv.allowLocalModels = true;
+    mutableEnv.allowRemoteModels = true;
 
     debug('Adaptive configuration applied:', {
         threads: env.backends.onnx.wasm.numThreads,
@@ -296,7 +299,6 @@ export class TokenStreamOptimizer {
     private activeBatches: number = 0;
     private pendingTokens: string[] = [];
     private batchQueue: TokenBatch[] = [];
-    private lastBatchTime: number = 0;
     
     constructor(batchSize: number = PERFORMANCE_CONFIG.TOKEN_BATCH_SIZE) {
         this.batchSize = batchSize;
@@ -334,7 +336,6 @@ export class TokenStreamOptimizer {
         
         this.pendingTokens = this.pendingTokens.slice(this.batchSize);
         this.activeBatches++;
-        this.lastBatchTime = batch.timestamp;
 
         try {
             const startTime = Date.now();

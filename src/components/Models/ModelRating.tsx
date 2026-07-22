@@ -80,7 +80,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
   };
 
   const renderStar = (starIndex: number) => {
-    const filled = (hoverRating !== null ? hoverRating : rating) >= starIndex + 1;
+    const filled = (hoverRating !== null ? hoverRating : rating ?? 0) >= starIndex + 1;
     const starColor = filled ? 'text-yellow-400' : 'text-gray-300';
     const starSize = getStarSize();
 
