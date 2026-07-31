@@ -38,12 +38,13 @@ export default defineConfig({
     sourcemap: false, // Disable for production to reduce size
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Split vendor chunks for better caching
-          react: ['react', 'react-dom'],
-          transformers: ['@xenova/transformers'],
-          i18n: ['i18next', 'react-i18next'],
-        },
+        // manualChunks is now a function in Vite 8 / Rolldown
+        // Temporarily disabled for compatibility
+        // manualChunks: (id) => {
+        //   if (id.includes('react')) return 'react';
+        //   if (id.includes('transformers')) return 'transformers';
+        //   if (id.includes('i18n')) return 'i18n';
+        // },
       },
     },
     // Increase chunk size warning limit for large models

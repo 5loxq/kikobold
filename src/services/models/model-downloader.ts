@@ -350,6 +350,22 @@ export const cancelAllDownloads = (): void => {
     log('✓ All downloads cancelled');
 };
 
+// Stub functions for ModelStorage compatibility
+export const deleteCachedModel = async (_modelId: string): Promise<boolean> => {
+    warn('deleteCachedModel: Not implemented');
+    return false;
+};
+
+export const getCachedModel = (_modelId: string): LocalModel | null => {
+    warn('getCachedModel: Not implemented');
+    return null;
+};
+
+export const isModelCached = (_modelId: string): boolean => {
+    warn('isModelCached: Not implemented');
+    return false;
+};
+
 export default {
     downloadModel,
     cancelDownload,
@@ -357,4 +373,7 @@ export default {
     initModelCache,
     formatBytes,
     isGgufHeader,
+    deleteCachedModel,
+    getCachedModel,
+    isModelCached,
 };
