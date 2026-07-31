@@ -1,4 +1,4 @@
-import { LocalModel } from '../../types';
+import { LocalModel, Model } from '../../types';
 import { warn, log } from '../logging';
 import { secureLocalStorage } from '../security';
 import {
@@ -7,8 +7,6 @@ import {
     getCachedModel,
     isModelCached,
     initModelCache,
-    type DownloadOptions,
-    type DownloadProgress,
 } from '../models/model-downloader';
 
 const MODEL_STORAGE_KEY = 'llm_downloaded_models';
@@ -182,7 +180,7 @@ export const downloadModel = async (
                 saveModel(downloadedModel);
                 onComplete?.(downloadedModel);
             },
-            onError: (err, modelId) => {
+            onError: (err, _modelId) => {
                 onError?.(err);
             },
             maxRetries: 3,
