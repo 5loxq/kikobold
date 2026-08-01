@@ -332,7 +332,8 @@ export const hasCustomColor = (colorType: keyof ThemeSettings): boolean => {
  * Get theme color with fallback
  */
 export const getThemeColor = (colorType: keyof ThemeSettings, fallback: string): string => {
-  return currentTheme[colorType] || fallback;
+  const value = currentTheme[colorType];
+  return (typeof value === 'string' ? value : fallback) || fallback;
 };
 
 // ============================================================================

@@ -33,20 +33,30 @@ setInterval(() => {
 function cleanupOldCacheEntries(): void {
   if (modelCache.size <= MAX_CACHE_SIZE) return;
   
-  // Get all entries sorted by timestamp
+  // Get all entries sorted by timestamp (oldest first)
   const entries = Array.from(modelCache.entries())
     .sort((a, b) => a[1].timestamp - b[1].timestamp);
   
   // Remove oldest entries to get back to max size
-  while (modelCache.size > MAX_CACHE_SIZE) {
+  while (modelCache.size > MAX_CACHE_SIZE && entries.length > 0) {
     const oldestEntry = entries.shift();
     if (oldestEntry) {
       try {
+        const [modelId, cached] = oldestEntry;
+        
         // Clean up the pipeline if it has a dispose method
-        if (typeof (oldestEntry[1].pipeline as any).dispose === 'function') {
-          (oldestEntry[1].pipeline as any).dispose();
+        if (typeof (cached.pipeline as any).dispose === 'function') {
+          (cached.pipeline as any).dispose();
         }
-        modelCache.delete(oldestEntry[0]);
+        
+        // Also clean up if this is the current model
+        if (currentModelId === modelId) {
+          currentPipeline = null;
+          currentModelId = null;
+        }
+        
+        modelCache.delete(modelId);
+        log(`Cleaned up cached model: ${modelId}`);
       } catch (error) {
         warn(`Error cleaning up cached model ${oldestEntry[0]}:`, error);
       }
@@ -289,6 +299,17 @@ export const loadModel = async (modelId: string): Promise<void> => {
       pipeline: generator as TextGenerationPipeline, 
       timestamp: Date.now() 
     });
+    
+    // Clean up previous pipeline if it exists and is different
+    if (currentPipeline && currentModelId && currentModelId !== modelId) {
+      try {
+        if (typeof (currentPipeline as any).dispose === 'function') {
+          (currentPipeline as any).dispose();
+        }
+      } catch (cleanupError) {
+        warn('Error cleaning up previous pipeline:', cleanupError);
+      }
+    }
     
     currentPipeline = generator as TextGenerationPipeline;
     currentModelId = modelId;
