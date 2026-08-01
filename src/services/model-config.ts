@@ -8,11 +8,57 @@
  * - Model search and filtering
  */
 
-import type { Model } from '../types';
-import type { ModelSettings, ModelMetadata } from '../types/ensu-types';
-export type { ModelRatingSummary } from '../types/ensu-types';
+import type { Model, LocalModel, Message } from '../types';
 import { MODELS } from './models/model-registry';
 import { secureLocalStorage } from './security';
+
+// Local type definitions to avoid circular dependencies with ensu-types.ts
+export interface ModelSettings {
+  id: string;
+  temperature?: number;
+  topP?: number;
+  topK?: number;
+  maxTokens?: number;
+  contextLength?: number;
+  repeatPenalty?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
+  seed?: number;
+  stopSequences?: string[];
+  isFavorite?: boolean;
+  customName?: string;
+  notes?: string;
+  tags?: string[];
+}
+
+export interface ModelMetadata {
+  id: string;
+  name: string;
+  description: string;
+  author?: string;
+  license?: string;
+  sizeBytes: number;
+  parameterCount: number;
+  quantized: boolean;
+  quantizationMethod?: string;
+  contextLength: number;
+  recommended: boolean;
+  tags?: string[];
+  createdAt?: number;
+  updatedAt?: number;
+  downloadUrl: string;
+  homepageUrl?: string;
+  repositoryUrl?: string;
+}
+
+export interface ModelRatingSummary {
+  modelId: string;
+  rating: number;
+  modelName: string;
+}
+
+// Re-export for compatibility with existing imports
+export type { Model, LocalModel, Message };
 
 // ============================================================================
 // Constants
