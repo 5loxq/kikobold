@@ -1,11 +1,6 @@
-// Models service exports
-export {
-  MODEL_CONFIGS,
-  MODELS,
-  getModelConfig,
-  getModelById,
-  getRecommendedModels,
-} from './model-registry';
+/**
+ * Model Services Index
+ */
 
-// Re-export ModelConfig from types
-export type { ModelConfig } from '../../types';
+export * from './model-registry';
+export * from './model-downloader';
