@@ -12,9 +12,10 @@
 
 import { InferenceOptions } from '../types';
 import { StreamingOptions, CancelablePromise } from '../types/ensu-types';
-import { createAppError, ErrorCodes, isRetryableError, getUserMessage, classifyError } from '../utils/errors';
-import { createInferenceBackend, type LlmMessage, type GenerateChatRequest, type GenerateEvent } from './inference/llm-inference-engine';
-import { error as logError, warn as logWarn } from './logging';
+import { createAppError, ErrorCodes, isRetryableError, getUserMessage } from '../utils/errors';
+import { createInferenceBackend } from './inference/llm-inference-engine';
+import type { LlmMessage, GenerateChatRequest, GenerateEvent } from './inference/llm-types';
+import { error as logError } from './logging';
 
 // ============================================================================
 // Streaming Error Types
@@ -392,9 +393,10 @@ export const streamWithLLMBackend = (
               controller: null,
             };
             
-            emitStreamEvent({ type: 'error', error: new Error(event.message) });
-            streamingOptions.onError?.(event.message);
-            reject(new Error(event.message));
+            const errorObj = new Error(event.message);
+            emitStreamEvent({ type: 'error', error: errorObj });
+            streamingOptions.onError?.(errorObj);
+            reject(errorObj);
             break;
         }
       });
@@ -411,9 +413,10 @@ export const streamWithLLMBackend = (
           controller: null,
         };
         
-        emitStreamEvent({ type: 'error', error: streamState.error });
-        streamingOptions.onError?.(errorMessage);
-        reject(new Error(errorMessage));
+        const finalError = streamState.error || new Error(errorMessage);
+        emitStreamEvent({ type: 'error', error: finalError });
+        streamingOptions.onError?.(finalError);
+        reject(finalError);
       }
     }
   }) as CancelablePromise<string>;
@@ -640,7 +643,7 @@ type StreamEventListener = (event: {
   token?: string;
   fullText?: string;
   progress?: StreamProgress;
-  error?: Error;
+  error?: Error | null;
 }) => void;
 
 const streamEventListeners: Set<StreamEventListener> = new Set();
@@ -748,10 +751,5 @@ export default {
   isStreamingError,
 };
 
-// Named exports for TypeScript
-export {
-  StreamingErrorCode,
-  createStreamingError,
-  getStreamingErrorMessage,
-  isStreamingError,
-};
+// Note: All functions are already exported as named exports above
+// The default export is available for backward compatibility

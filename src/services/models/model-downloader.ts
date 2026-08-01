@@ -15,7 +15,7 @@
 
 import { LocalModel, Model } from '../../types';
 import { warn, log, error } from '../logging';
-import { validateModelPath } from '../security';
+import { validateModelPath, formatBytes } from '../security';
 
 // Types for download progress and status
 export interface DownloadProgress {
@@ -96,26 +96,14 @@ export const isGgufHeader = (bytes: Uint8Array): boolean => {
     );
 };
 
-/**
- * Format bytes to human-readable string
- */
-export const formatBytes = (bytes: number): string => {
-    if (!bytes || bytes <= 0) return '0 B';
-    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const idx = Math.min(
-        units.length - 1,
-        Math.floor(Math.log(bytes) / Math.log(1024))
-    );
-    const value = bytes / Math.pow(1024, idx);
-    return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[idx]}`;
-};
+
 
 /**
  * Parse content range header to get total size
  */
 const parseContentRangeTotal = (header: string | null): number | undefined => {
     if (!header) return undefined;
-    const match = header.match(/\/(\d+)/);
+    const match = header.match(/\/(\d+)$/);
     if (!match) return undefined;
     const total = Number(match[1]);
     return Number.isFinite(total) ? total : undefined;
@@ -461,7 +449,6 @@ export default {
     cancelDownload,
     cancelAllDownloads,
     initModelCache,
-    formatBytes,
     isGgufHeader,
     deleteCachedModel,
     getCachedModel,

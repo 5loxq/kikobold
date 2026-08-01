@@ -2,8 +2,8 @@
  * Enhanced types for Ensu-inspired features
  */
 
-// Re-export basic types for convenience
-export type { Chat, Message, Model, Profile, LocalModel, InferenceOptions } from './index';
+// Import types from index
+import type { Chat, Model, InferenceOptions } from './index';
 
 // ============================================================================
 // Conversation Management Types
@@ -19,6 +19,10 @@ export interface ChatMetadata {
   tags?: string[];
   customName?: string; // User-defined name for the chat
 }
+
+// Note: This file previously re-exported types from index.ts which caused circular dependencies.
+// All basic types should be imported directly from './types' or './types/index.ts'
+// This file only contains the extended type definitions.
 
 export interface ChatExportOptions {
   format: 'json' | 'markdown';
@@ -160,18 +164,8 @@ export interface SystemInfo {
       cores: number;
       name: string;
     };
-    gpu: {
-      available: boolean;
-      name: string;
-      vendor: string;
-      memoryMB: number;
-      webgpuSupport: boolean;
-    };
-    memory: {
-      totalMB: number;
-      availableMB: number;
-      usedMB: number;
-    };
+    gpu: GPUInfo;
+    memory: MemoryInfo;
   };
   features: {
     webgpu: boolean;

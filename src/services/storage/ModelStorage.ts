@@ -1,6 +1,7 @@
 import { LocalModel, Model } from '../../types';
 import { warn, log } from '../logging';
 import { secureLocalStorage } from '../security';
+import type { DownloadProgress } from '../inference/llm-types';
 import {
     downloadModel as enhancedDownloadModel,
     deleteCachedModel,
@@ -202,7 +203,7 @@ export const checkModelCached = async (modelId: string, url?: string): Promise<b
         const model = getDownloadedModels().find(m => m.id === modelId);
         return !!model;
     }
-    return isModelCached(modelId, url);
+    return isModelCached(modelId);
 };
 
 /**

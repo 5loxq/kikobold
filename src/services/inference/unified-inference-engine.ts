@@ -634,14 +634,23 @@ export class UnifiedInferenceEngine {
                 timeoutPromise,
             ]);
 
-            // Process result
-            const responseText = this.extractResponse(
+            // Process result - handle different possible return types
+            let responseText: string;
+            if (Array.isArray(result)) {
+                responseText = (result[0] as any)?.generated_text || '';
+            } else if (result && typeof result === 'object' && 'generated_text' in result) {
+                responseText = (result as any).generated_text as string;
+            } else {
+                responseText = String(result);
+            }
+            
+            const finalResponseText = this.extractResponse(
                 this.state.getCurrentModelId()!,
-                result as { generated_text: string }
+                { generated_text: responseText }
             );
 
             const duration = Date.now() - startTime;
-            const tokens = this.estimateTokenCount(responseText);
+            const tokens = this.estimateTokenCount(finalResponseText);
 
             // Record metrics
             metricsCollector.recordTokens(tokens, duration);
@@ -649,7 +658,7 @@ export class UnifiedInferenceEngine {
             this.state.endGeneration();
 
             return {
-                text: responseText,
+                text: finalResponseText,
                 tokens,
                 duration,
                 averageTokensPerSecond: tokens / (duration / 1000),
@@ -1120,6 +1129,56 @@ export const streamText = async function* (
         prompt,
         options: defaultOptions,
     });
+};
+
+/**
+ * Interface for retry options
+ */
+export interface RetryOptions {
+    maxRetries?: number;
+    delay?: number;
+    backoffMultiplier?: number;
+}
+
+/**
+ * Generate text with automatic retry on failure
+ */
+export const generateTextWithRetry = async (
+    modelId: string,
+    prompt: string,
+    options: Partial<InferenceOptions> = {},
+    retryOptions: RetryOptions = {}
+): Promise<GenerateResult> => {
+    const {
+        maxRetries = 3,
+        delay = 1000,
+        backoffMultiplier = 2,
+    } = retryOptions;
+
+    let lastError: Error | null = null;
+    let attempt = 0;
+
+    while (attempt <= maxRetries) {
+        try {
+            const result = await generateText(modelId, prompt, options);
+            return result;
+        } catch (error) {
+            lastError = error instanceof Error ? error : new Error(String(error));
+            attempt++;
+
+            if (attempt > maxRetries) {
+                break;
+            }
+
+            // Exponential backoff
+            const currentDelay = delay * Math.pow(backoffMultiplier, attempt - 1);
+            log(`Retrying generation (attempt ${attempt}/${maxRetries}) after ${currentDelay}ms delay...`);
+            await new Promise(resolve => setTimeout(resolve, currentDelay));
+        }
+    }
+
+    // If all retries failed, throw the last error
+    throw lastError || new Error('All retry attempts failed');
 };
 
 // ============================================================================
