@@ -7,6 +7,8 @@
  * - Model caching using Cache API
  * - Checksum verification (GGUF header validation)
  * - Retry mechanism with exponential backoff
+ * - Parallel download support
+ * - Download speed estimation
  * 
  * Inspired by Ensu's implementation from ente-io/ente
  */
@@ -22,6 +24,8 @@ export interface DownloadProgress {
     bytesDownloaded: number;
     totalBytes: number;
     modelId: string;
+    speed?: number; // bytes per second
+    eta?: number; // estimated time remaining in seconds
 }
 
 export interface DownloadOptions {
@@ -30,20 +34,35 @@ export interface DownloadOptions {
     onComplete?: (model: LocalModel) => void;
     onError?: (error: Error, modelId: string) => void;
     maxRetries?: number;
+    maxParallel?: number;
 }
 
 // Constants
 const DEFAULT_MAX_RETRIES = 3;
+const DEFAULT_MAX_PARALLEL = 2;
 const MIN_GGUF_BYTES = 1024 * 1024; // 1MB minimum GGUF file size
 const CHUNK_SIZE = 4 * 1024 * 1024; // 4MB chunks for writing
+const SPEED_SAMPLE_INTERVAL = 500; // ms for speed calculation
 
 // GGUF file magic header: "GGUF"
 const GGUF_MAGIC = new Uint8Array([0x47, 0x47, 0x55, 0x46]);
 
 // Active downloads map
 const activeDownloads = new Map<string, { 
-    controller: AbortController; 
+    controller: AbortController;
+    state: {
+        bytesDownloaded: number;
+        totalBytes: number;
+        startTime: number;
+        lastBytes: number;
+        lastTime: number;
+        speed: number;
+    };
 }>();
+
+// Download queue for parallel download control
+const downloadQueue: Array<{ options: DownloadOptions; resolve: (value: LocalModel | null) => void; reject: (error: Error) => void }> = [];
+let activeDownloadCount = 0;
 
 // Cache for model files using Cache API
 let modelCache: Cache | null = null;
@@ -54,8 +73,8 @@ let modelCache: Cache | null = null;
 export const initModelCache = async (): Promise<Cache | null> => {
     try {
         if ('caches' in window) {
-            modelCache = await caches.open('llm-models-cache');
-            log('✓ Model cache initialized (Cache API)');
+            modelCache = await caches.open('llm-models-cache-v2');
+            log('\u2713 Model cache initialized (Cache API v2)');
             return modelCache;
         }
     } catch (err) {
@@ -114,9 +133,7 @@ const fetchRemoteSize = async (url: string): Promise<number | undefined> => {
             const range = parseContentRangeTotal(head.headers.get('Content-Range'));
             if (range) return range;
         }
-    } catch {
-        // ignore head failures
-    }
+    } catch { /* ignore head failures */ }
 
     try {
         const res = await fetch(url, { headers: { Range: 'bytes=0-0' } });
@@ -125,18 +142,35 @@ const fetchRemoteSize = async (url: string): Promise<number | undefined> => {
         if (range) return range;
         const length = Number(res.headers.get('Content-Length') ?? 0);
         return length > 0 ? length : undefined;
-    } catch {
-        return undefined;
+    } catch { return undefined; }
+};
+
+/**
+ * Process download queue
+ */
+const processQueue = async (maxParallel: number = DEFAULT_MAX_PARALLEL) => {
+    while (downloadQueue.length > 0 && activeDownloadCount < maxParallel) {
+        const item = downloadQueue.shift()!;
+        activeDownloadCount++;
+
+        try {
+            const result = await downloadModelInternal(item.options);
+            item.resolve(result);
+        } catch (err) {
+            item.reject(err instanceof Error ? err : new Error(String(err)));
+        } finally {
+            activeDownloadCount--;
+        }
     }
 };
 
 /**
  * Main download function with resume support
  */
-export const downloadModel = async (options: DownloadOptions): Promise<LocalModel | null> => {
+const downloadModelInternal = async (options: DownloadOptions): Promise<LocalModel | null> => {
     const { model, maxRetries = DEFAULT_MAX_RETRIES } = options;
     const modelId = model.id;
-    
+
     // Validate model URL for security
     if (!validateModelPath(model.downloadUrl)) {
         const err = new Error(`Model URL is not from a trusted source: ${model.downloadUrl}`);
@@ -151,17 +185,27 @@ export const downloadModel = async (options: DownloadOptions): Promise<LocalMode
         return null;
     }
 
-    // Create filename for storage
-    const filename = model.downloadUrl.split('/').pop() || 'model.gguf';
-    
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         const controller = new AbortController();
         let downloaded = 0;
         let totalBytes = 0;
-        
-        // Update active downloads
-        activeDownloads.set(modelId, { controller });
-        
+        let lastBytes = 0;
+        let lastTime = Date.now();
+        let speed = 0;
+
+        // Initialize download state
+        activeDownloads.set(modelId, {
+            controller,
+            state: {
+                bytesDownloaded: 0,
+                totalBytes: 0,
+                startTime: Date.now(),
+                lastBytes: 0,
+                lastTime: Date.now(),
+                speed: 0,
+            }
+        });
+
         try {
             // Get remote file size
             const remoteSize = await fetchRemoteSize(model.downloadUrl);
@@ -191,14 +235,16 @@ export const downloadModel = async (options: DownloadOptions): Promise<LocalMode
 
             // Store in Cache API
             if (modelCache) {
-                await modelCache.put(model.downloadUrl, response.clone());
+                try {
+                    await modelCache.put(model.downloadUrl, response.clone());
+                } catch (cacheErr) {
+                    warn('Failed to cache model:', cacheErr);
+                }
             }
 
             // Read and validate the first chunk (header)
             const reader = response.body.getReader();
             let headerBytes: Uint8Array | null = null;
-            let bytesSinceYield = 0;
-            const yieldAfterBytes = 4 * 1024 * 1024;
 
             while (true) {
                 const { done, value } = await reader.read();
@@ -218,34 +264,48 @@ export const downloadModel = async (options: DownloadOptions): Promise<LocalMode
                     }
 
                     downloaded += chunk.length;
-                    bytesSinceYield += chunk.length;
+
+                    // Calculate speed periodically
+                    const now = Date.now();
+                    if (now - lastTime >= SPEED_SAMPLE_INTERVAL) {
+                        speed = (downloaded - lastBytes) / ((now - lastTime) / 1000);
+                        lastBytes = downloaded;
+                        lastTime = now;
+                    }
+
+                    // Calculate ETA
+                    const eta = speed > 0 && totalBytes > 0
+                        ? (totalBytes - downloaded) / speed
+                        : 0;
 
                     // Update progress
-                    const percent = totalBytes
+                    const percent = totalBytes > 0
                         ? Math.min(99, Math.round((downloaded / totalBytes) * 100))
                         : 0;
-                    
+
                     options.onProgress?.({
                         percent,
                         status: `Downloading... ${formatBytes(downloaded)} / ${totalBytes ? formatBytes(totalBytes) : '?'}`,
                         bytesDownloaded: downloaded,
                         totalBytes,
                         modelId,
+                        speed,
+                        eta,
                     });
 
                     // Yield to event loop periodically
-                    if (bytesSinceYield >= yieldAfterBytes) {
-                        bytesSinceYield = 0;
+                    if (downloaded % (CHUNK_SIZE * 4) === 0) {
                         await new Promise(resolve => setTimeout(resolve, 0));
                     }
                 }
             }
 
-            // Validate header if we got it
+            // Validate header
             if (headerBytes && !isGgufHeader(headerBytes)) {
-                // Clean up cache
                 if (modelCache) {
-                    await modelCache.delete(model.downloadUrl);
+                    try {
+                        await modelCache.delete(model.downloadUrl);
+                    } catch { /* ignore */ }
                 }
                 throw new Error('Downloaded file is not GGUF');
             }
@@ -253,7 +313,9 @@ export const downloadModel = async (options: DownloadOptions): Promise<LocalMode
             // Validate minimum size
             if (downloaded < MIN_GGUF_BYTES) {
                 if (modelCache) {
-                    await modelCache.delete(model.downloadUrl);
+                    try {
+                        await modelCache.delete(model.downloadUrl);
+                    } catch { /* ignore */ }
                 }
                 throw new Error('Downloaded file too small');
             }
@@ -262,7 +324,7 @@ export const downloadModel = async (options: DownloadOptions): Promise<LocalMode
             const localModel: LocalModel = {
                 id: modelId,
                 name: model.name,
-                path: model.downloadUrl, // Using URL as path for web-based caching
+                path: model.downloadUrl,
                 size: downloaded,
                 downloadedAt: Date.now(),
             };
@@ -270,7 +332,7 @@ export const downloadModel = async (options: DownloadOptions): Promise<LocalMode
             // Clean up active downloads
             activeDownloads.delete(modelId);
 
-            log(`✓ Model ${modelId} downloaded successfully: ${formatBytes(downloaded)}`);
+            log(`\u2713 Model ${modelId} downloaded successfully: ${formatBytes(downloaded)}`);
             
             options.onProgress?.({
                 percent: 100,
@@ -278,6 +340,8 @@ export const downloadModel = async (options: DownloadOptions): Promise<LocalMode
                 bytesDownloaded: downloaded,
                 totalBytes,
                 modelId,
+                speed,
+                eta: 0,
             });
 
             options.onComplete?.(localModel);
@@ -287,37 +351,33 @@ export const downloadModel = async (options: DownloadOptions): Promise<LocalMode
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             const aborted = controller.signal.aborted;
-            const reason = controller.signal.reason;
 
             // Clean up cache on error
             if (modelCache) {
                 try {
                     await modelCache.delete(model.downloadUrl);
-                } catch {
-                    // ignore cache delete errors
-                }
+                } catch { /* ignore */ }
             }
 
-            if (aborted && reason === 'cancelled') {
+            if (aborted) {
                 activeDownloads.delete(modelId);
                 throw new Error('Download cancelled');
             }
 
             if (attempt >= maxRetries) {
                 activeDownloads.delete(modelId);
-                error(`✗ Download failed after ${attempt} attempts for ${modelId}: ${errorMessage}`);
+                error(`\u2717 Download failed after ${attempt} attempts for ${modelId}: ${errorMessage}`);
                 options.onError?.(new Error(errorMessage), modelId);
                 return null;
             }
 
-            warn(`⚠️ Download attempt ${attempt} failed for ${modelId}: ${errorMessage}. Retrying...`);
+            warn(`\u26a0\ufe0f Download attempt ${attempt} failed for ${modelId}: ${errorMessage}. Retrying...`);
             
             // Exponential backoff
             const delay = Math.min(1500 * attempt, 5000);
             await new Promise(resolve => setTimeout(resolve, delay));
 
         } finally {
-            // Clean up if this was the last attempt or cancelled
             if (attempt >= maxRetries || controller.signal.reason === 'cancelled') {
                 activeDownloads.delete(modelId);
             }
@@ -328,6 +388,35 @@ export const downloadModel = async (options: DownloadOptions): Promise<LocalMode
 };
 
 /**
+ * Main download function with queue support
+ */
+export const downloadModel = async (options: DownloadOptions): Promise<LocalModel | null> => {
+    const maxParallel = options.maxParallel ?? DEFAULT_MAX_PARALLEL;
+
+    // Check if we can start immediately
+    if (activeDownloadCount < maxParallel) {
+        activeDownloadCount++;
+        try {
+            const result = await downloadModelInternal(options);
+            return result;
+        } finally {
+            activeDownloadCount--;
+            processQueue(maxParallel);
+        }
+    }
+
+    // Otherwise, add to queue
+    return new Promise((resolve, reject) => {
+        downloadQueue.push({
+            options,
+            resolve,
+            reject,
+        });
+        processQueue(maxParallel);
+    });
+};
+
+/**
  * Cancel an active download
  */
 export const cancelDownload = (modelId: string): void => {
@@ -335,7 +424,7 @@ export const cancelDownload = (modelId: string): void => {
     if (download) {
         download.controller.abort('cancelled');
         activeDownloads.delete(modelId);
-        log(`✓ Download cancelled: ${modelId}`);
+        log(`\u2713 Download cancelled: ${modelId}`);
     }
 };
 
@@ -343,11 +432,12 @@ export const cancelDownload = (modelId: string): void => {
  * Cancel all active downloads
  */
 export const cancelAllDownloads = (): void => {
-    activeDownloads.forEach((download, modelId) => {
+    activeDownloads.forEach((download, _modelId) => {
         download.controller.abort('cancelled');
     });
     activeDownloads.clear();
-    log('✓ All downloads cancelled');
+    downloadQueue.length = 0;
+    log('\u2713 All downloads cancelled');
 };
 
 // Stub functions for ModelStorage compatibility
