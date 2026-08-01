@@ -410,21 +410,39 @@ export const validateModelPath = (path: string): boolean => {
     return false;
   }
 
-  // Allow HuggingFace model paths
-  if (trimmedPath.startsWith('Xenova/') || 
-      trimmedPath.includes('huggingface.co/') ||
-      trimmedPath.startsWith('huggingface:')) {
-    return true;
+  // Allow HuggingFace model paths (Xenova/ prefix)
+  // This is specifically for @xenova/transformers model identifiers
+  if (trimmedPath.startsWith('Xenova/')) {
+    // Validate that it only contains safe characters for model names
+    const modelPart = trimmedPath.substring('Xenova/'.length);
+    return /^[a-zA-Z0-9._\-/]+$/.test(modelPart);
   }
 
-  // Allow local paths (for development)
+  // Allow full HuggingFace URLs
+  if (trimmedPath.includes('huggingface.co/')) {
+    return isTrustedUrl(trimmedPath);
+  }
+
+  // Allow HuggingFace protocol prefix
+  if (trimmedPath.startsWith('huggingface:')) {
+    const modelPart = trimmedPath.substring('huggingface:'.length);
+    return /^[a-zA-Z0-9._\-/]+$/.test(modelPart);
+  }
+
+  // Allow local paths (for development) - but be more restrictive
   if (trimmedPath.startsWith('/models/') || 
-      trimmedPath.startsWith('./models/')) {
-    return true;
+      trimmedPath.startsWith('./models/') ||
+      trimmedPath.startsWith('../models/')) {
+    // Sanitize path to prevent directory traversal
+    const sanitized = sanitizeFilePath(trimmedPath);
+    return sanitized.startsWith('/models/') || 
+           sanitized.startsWith('./models/') ||
+           sanitized.startsWith('../models/');
   }
 
-  // Validate as URL
-  return isTrustedUrl(trimmedPath) || validateUrl(trimmedPath, true);
+  // Validate as URL - but only allow trusted domains
+  // Don't allow localhost or internal IPs for model loading
+  return isTrustedUrl(trimmedPath);
 };
 
 /**
@@ -561,7 +579,6 @@ export const checkWebGPUSupport = async (): Promise<boolean> => {
         const isFirefox = navigator.userAgent.includes('Firefox');
         const isChrome = navigator.userAgent.includes('Chrome') || navigator.userAgent.includes('Chromium');
         const isSafari = navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome');
-        const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         
         if (isFirefox) {
             console.log('✓ WebGPU is available (Firefox - using conservative settings)');
@@ -770,9 +787,9 @@ export interface MemoryInfo {
  * Get system memory information
  */
 export const getSystemMemoryInfo = (): MemoryInfo => {
-    if (typeof navigator !== 'undefined' && navigator.deviceMemory) {
+    if (typeof navigator !== 'undefined' && (navigator as any).deviceMemory) {
         // Chrome/Edge provide deviceMemory in GB
-        const totalGB = navigator.deviceMemory;
+        const totalGB = (navigator as any).deviceMemory;
         const totalMB = totalGB * 1024;
         
         // Estimate available memory (rough approximation)

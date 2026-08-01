@@ -355,10 +355,10 @@ interface StorageInfo {
 
 const detectStorage = async (): Promise<StorageInfo> => {
   try {
-    const indexedDB = 'indexedDB' in window;
-    const localStorage = 'localStorage' in window;
-    const sessionStorage = 'sessionStorage' in window;
-    const cacheAPI = 'caches' in window;
+    const hasIndexedDB = 'indexedDB' in window;
+    const hasLocalStorage = 'localStorage' in window;
+    const hasSessionStorage = 'sessionStorage' in window;
+    const hasCacheAPI = 'caches' in window;
     
     // Estimate storage usage
     let usedStorageMB = 0;
@@ -368,8 +368,8 @@ const detectStorage = async (): Promise<StorageInfo> => {
     if (navigator.storage && navigator.storage.estimate) {
       try {
         const estimate = await navigator.storage.estimate();
-        usedStorageMB = Math.round(estimate.usage / (1024 * 1024));
-        maxStorageMB = Math.round(estimate.quota / (1024 * 1024));
+        usedStorageMB = Math.round((estimate.usage ?? 0) / (1024 * 1024));
+        maxStorageMB = Math.round((estimate.quota ?? 5120 * 1024 * 1024) / (1024 * 1024));
       } catch {
         // Fallback estimates
         usedStorageMB = 0;
@@ -380,7 +380,7 @@ const detectStorage = async (): Promise<StorageInfo> => {
       maxStorageMB = 5120;
       
       // Try to estimate used storage from localStorage
-      if (localStorage) {
+      if (typeof localStorage !== 'undefined') {
         let totalSize = 0;
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
@@ -396,10 +396,10 @@ const detectStorage = async (): Promise<StorageInfo> => {
     }
     
     return {
-      indexedDB,
-      localStorage,
-      sessionStorage,
-      cacheAPI,
+      indexedDB: hasIndexedDB,
+      localStorage: hasLocalStorage,
+      sessionStorage: hasSessionStorage,
+      cacheAPI: hasCacheAPI,
       maxStorageMB,
       usedStorageMB,
     };

@@ -11,7 +11,7 @@
 
 import { env } from '@xenova/transformers';
 import { log, warn, debug } from '../logging';
-import { checkWebGPUSupport } from '../security';
+import { checkWebGPUSupport, getSystemMemoryInfo } from '../security';
 
 // Workaround for read-only env properties in @xenova/transformers
 const mutableEnv = env as any;

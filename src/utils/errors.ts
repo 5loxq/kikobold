@@ -30,6 +30,7 @@ export enum ErrorCodes {
     WEBGPU_NOT_SUPPORTED = 'WEBGPU_NOT_SUPPORTED',
     WASM_NOT_SUPPORTED = 'WASM_NOT_SUPPORTED',
     FEATURE_NOT_SUPPORTED = 'FEATURE_NOT_SUPPORTED',
+    NOT_SUPPORTED = 'NOT_SUPPORTED',
     
     // Validation errors
     VALIDATION_ERROR = 'VALIDATION_ERROR',
@@ -39,6 +40,8 @@ export enum ErrorCodes {
     UNKNOWN_ERROR = 'UNKNOWN_ERROR',
     INTERNAL_ERROR = 'INTERNAL_ERROR',
     NOT_IMPLEMENTED = 'NOT_IMPLEMENTED',
+    INFERENCE_FAILED = 'INFERENCE_FAILED',
+    GENERIC_ERROR = 'GENERIC_ERROR',
 }
 
 // User-friendly error messages for each error code
@@ -64,6 +67,7 @@ const ERROR_MESSAGES: Record<string, string> = {
     [ErrorCodes.WEBGPU_NOT_SUPPORTED]: 'WebGPU is not supported in your browser. Some models may not work or will be slower.',
     [ErrorCodes.WASM_NOT_SUPPORTED]: 'WebAssembly is not supported in your browser. LLM inference will not work.',
     [ErrorCodes.FEATURE_NOT_SUPPORTED]: 'This feature is not supported in your browser.',
+    [ErrorCodes.NOT_SUPPORTED]: 'This feature is not supported in your current environment.',
     
     [ErrorCodes.VALIDATION_ERROR]: 'Validation error. Please check your input.',
     [ErrorCodes.CONFIGURATION_ERROR]: 'Configuration error. Please check your settings.',
@@ -71,6 +75,8 @@ const ERROR_MESSAGES: Record<string, string> = {
     [ErrorCodes.UNKNOWN_ERROR]: 'An unknown error occurred. Please try again.',
     [ErrorCodes.INTERNAL_ERROR]: 'An internal error occurred. Please try again later.',
     [ErrorCodes.NOT_IMPLEMENTED]: 'This feature is not yet implemented.',
+    [ErrorCodes.INFERENCE_FAILED]: 'Inference failed. Please try again.',
+    [ErrorCodes.GENERIC_ERROR]: 'A generic error occurred. Please try again.',
 };
 
 // Error context interface
@@ -108,12 +114,12 @@ export class AppError extends Error {
     this.name = 'AppError';
     this.code = code;
     this.details = details;
+    this.timestamp = Date.now();
     this.context = {
-        timestamp: Date.now(),
+        timestamp: this.timestamp,
         userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
         ...context,
     };
-    this.timestamp = this.context.timestamp;
     this.isRetryable = isRetryable;
     this.userMessage = ERROR_MESSAGES[code] || ERROR_MESSAGES[ErrorCodes.UNKNOWN_ERROR as string];
     this.cause = cause;
@@ -259,14 +265,14 @@ export class ErrorHandler {
     }
 
     if (error instanceof Error) {
-      return new AppError(error.message, 'GENERIC_ERROR', error);
+      return new AppError(error.message, ErrorCodes.GENERIC_ERROR, error);
     }
 
     if (typeof error === 'string') {
-      return new AppError(error, 'GENERIC_ERROR');
+      return new AppError(error, ErrorCodes.GENERIC_ERROR);
     }
 
-    return new AppError('Unknown error occurred', 'GENERIC_ERROR', error);
+    return new AppError('Unknown error occurred', ErrorCodes.GENERIC_ERROR, error);
   }
 
   /**
@@ -670,6 +676,7 @@ export const isCompatibilityError = (error: unknown): boolean => {
         ErrorCodes.WEBGPU_NOT_SUPPORTED,
         ErrorCodes.WASM_NOT_SUPPORTED,
         ErrorCodes.FEATURE_NOT_SUPPORTED,
+        ErrorCodes.NOT_SUPPORTED,
     ].includes(code);
 };
 
