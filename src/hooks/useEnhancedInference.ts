@@ -78,29 +78,39 @@ export interface EnhancedInferenceReturn extends InferenceState {
 
 // Custom configuration for MLC models
 // Use prebuiltAppConfig which has correct model_lib URLs from GitHub
-// For production: host models on your own webspace for better performance
+// For production: use local model files for better performance and offline support
 // NOTE: prebuiltAppConfig loads models from HuggingFace (tokenizer/config) 
 // and WASM files from GitHub (binary-mlc-llm-libs)
 const getCustomAppConfig = (): AppConfig => {
   // Filter prebuilt models to only include the ones we want
   // and add OPFS caching for better performance
   const prebuiltModels = prebuiltAppConfig.model_list || [];
-  const supportedModels = [
-    'Qwen2-0.5B-Instruct-q4f16_1-MLC',
-    'TinyLlama-1.1B-Chat-v1.0-q4f16_1-MLC',
-    'TinyLlama-1.1B-Chat-v0.4-q4f16_1-MLC',
-    'Mistral-7B-Instruct-v0.3-q4f16_1-MLC',
-    'Phi-2-q4f16_1-MLC',
-    'Llama-3.1-8B-Instruct-q4f32_1-MLC'
-  ];
-  const filteredModels = prebuiltModels.filter(model => 
-    supportedModels.includes(model.model_id)
-  );
+  
+  // For Qwen2-0.5B, use local model.wasm if available (shipped with the app)
+  // For other models, use the prebuilt config (loaded from HuggingFace + GitHub)
+  const customModels = prebuiltModels.filter(model => {
+    const supportedModels = [
+      'Qwen2-0.5B-Instruct-q4f16_1-MLC',
+      'TinyLlama-1.1B-Chat-v1.0-q4f16_1-MLC',
+      'Mistral-7B-Instruct-v0.3-q4f16_1-MLC'
+    ];
+    return supportedModels.includes(model.model_id);
+  }).map(model => {
+    // Use local path for Qwen2-0.5B since we ship it with the app
+    if (model.model_id === 'Qwen2-0.5B-Instruct-q4f16_1-MLC') {
+      return {
+        ...model,
+        model: '/models/Qwen2-0.5B-Instruct-q4f16_1-MLC',
+        model_lib: '/models/Qwen2-0.5B-Instruct-q4f16_1-MLC/model.wasm'
+      };
+    }
+    return model;
+  });
   
   return {
     ...prebuiltAppConfig,
     cacheBackend: 'opfs', // Use Origin Private File System for best caching
-    model_list: filteredModels
+    model_list: customModels
   };
 };
 
