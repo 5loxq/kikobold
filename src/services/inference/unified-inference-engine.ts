@@ -351,6 +351,7 @@ export class UnifiedInferenceEngine {
     private worker: InferenceWorker | null = null;
     private tokenOptimizer: TokenStreamOptimizer;
     private config: Required<InferenceEngineConfig>;
+    private modelPreloader = modelPreloader;
 
     constructor(config: InferenceEngineConfig = {}) {
         this.config = { ...DEFAULT_CONFIG, ...config };
@@ -548,9 +549,9 @@ export class UnifiedInferenceEngine {
     /**
      * Get preloading status
      */
-    isPreloading(_modelId: string): boolean {
-        // Check if model is in preload queue
-        return false; // TODO: Implement
+    isPreloading(modelId: string): boolean {
+        // Check if model is currently being preloaded
+        return this.modelPreloader.isPreloading(modelId);
     }
 
     // ============================================================================

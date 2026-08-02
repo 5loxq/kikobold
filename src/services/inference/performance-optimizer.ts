@@ -490,6 +490,13 @@ export class ModelPreloader {
         this.preloadConfigs.clear();
         this.activePreloads.clear();
     }
+
+    /**
+     * Check if a model is currently being preloaded
+     */
+    isPreloading(modelId: string): boolean {
+        return this.activePreloads.has(modelId);
+    }
 }
 
 // ============================================================================
