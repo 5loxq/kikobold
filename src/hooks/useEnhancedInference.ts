@@ -77,46 +77,30 @@ export interface EnhancedInferenceReturn extends InferenceState {
 // ============================================================================
 
 // Custom configuration for MLC models
-// For production: host models at https://www.posthiel.de/models/{model_id}/
-// NOTE: HuggingFace does NOT allow CORS for WASM files from external domains!
-// You MUST host the models on your own webspace for production use.
+// Use prebuiltAppConfig which has correct model_lib URLs from GitHub
+// For production: host models on your own webspace for better performance
+// NOTE: prebuiltAppConfig loads models from HuggingFace (tokenizer/config) 
+// and WASM files from GitHub (binary-mlc-llm-libs)
 const getCustomAppConfig = (): AppConfig => {
-  // Primary: User's webspace (REQUIRED for production)
-  const baseUrl = "https://www.posthiel.de/models";
-  
-  // For testing only (won't work on posthiel.de due to CORS):
-  // const baseUrl = "https://huggingface.co/mlc-ai";
+  // Filter prebuilt models to only include the ones we want
+  // and add OPFS caching for better performance
+  const prebuiltModels = prebuiltAppConfig.model_list || [];
+  const supportedModels = [
+    'Qwen2-0.5B-Instruct-q4f16_1-MLC',
+    'TinyLlama-1.1B-Chat-v1.0-q4f16_1-MLC',
+    'TinyLlama-1.1B-Chat-v0.4-q4f16_1-MLC',
+    'Mistral-7B-Instruct-v0.3-q4f16_1-MLC',
+    'Phi-2-q4f16_1-MLC',
+    'Llama-3.1-8B-Instruct-q4f32_1-MLC'
+  ];
+  const filteredModels = prebuiltModels.filter(model => 
+    supportedModels.includes(model.model_id)
+  );
   
   return {
     ...prebuiltAppConfig,
     cacheBackend: 'opfs', // Use Origin Private File System for best caching
-    model_list: [
-      {
-        model_id: "Qwen2-0.5B-Instruct-q4f16_1-MLC",
-        model: `${baseUrl}/Qwen2-0.5B-Instruct-q4f16_1-MLC`,
-        model_lib: `${baseUrl}/Qwen2-0.5B-Instruct-q4f16_1-MLC/model.wasm`
-      },
-      {
-        model_id: "TinyLlama-1.1B-q4f16_1-MLC",
-        model: `${baseUrl}/TinyLlama-1.1B-q4f16_1-MLC`,
-        model_lib: `${baseUrl}/TinyLlama-1.1B-q4f16_1-MLC/model.wasm`
-      },
-      {
-        model_id: "Phi-2-q4f16_1-MLC",
-        model: `${baseUrl}/Phi-2-q4f16_1-MLC`,
-        model_lib: `${baseUrl}/Phi-2-q4f16_1-MLC/model.wasm`
-      },
-      {
-        model_id: "Llama-3.1-8B-Instruct-q4f32_1-MLC",
-        model: `${baseUrl}/Llama-3.1-8B-Instruct-q4f32_1-MLC`,
-        model_lib: `${baseUrl}/Llama-3.1-8B-Instruct-q4f32_1-MLC/model.wasm`
-      },
-      {
-        model_id: "Mistral-7B-Instruct-v0.3-q4f32_1-MLC",
-        model: `${baseUrl}/Mistral-7B-Instruct-v0.3-q4f32_1-MLC`,
-        model_lib: `${baseUrl}/Mistral-7B-Instruct-v0.3-q4f32_1-MLC/model.wasm`
-      }
-    ]
+    model_list: filteredModels
   };
 };
 
