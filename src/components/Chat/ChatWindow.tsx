@@ -45,7 +45,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   onImportChats,
 }) => {
   const { t } = useTranslation();
-  const [selectedModelId, setSelectedModelId] = useState<string>('');
+  const [selectedModelId, setSelectedModelId] = useState<string>(_activeModel?.id || '');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -57,6 +57,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [chat?.messages]);
+
+  useEffect(() => {
+    if (_activeModel?.id) {
+      setSelectedModelId(_activeModel.id);
+    }
+  }, [_activeModel?.id]);
 
   if (!chat) {
     return (
