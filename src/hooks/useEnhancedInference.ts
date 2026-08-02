@@ -76,38 +76,47 @@ export interface EnhancedInferenceReturn extends InferenceState {
 // Custom AppConfig for WebLLM with MLC models
 // ============================================================================
 
-// Custom configuration for MLC models hosted on HuggingFace
-const getCustomAppConfig = (): AppConfig => ({
-  ...prebuiltAppConfig,
-  cacheBackend: 'opfs', // Use Origin Private File System for best caching
-  model_list: [
-    {
-      model_id: "Qwen2-0.5B-Instruct-q4f16_1-MLC",
-      model: "https://huggingface.co/mlc-ai/Qwen2-0.5B-Instruct-q4f16_1-MLC",
-      model_lib: "https://huggingface.co/mlc-ai/Qwen2-0.5B-Instruct-q4f16_1-MLC/model.wasm"
-    },
-    {
-      model_id: "TinyLlama-1.1B-q4f16_1-MLC",
-      model: "https://huggingface.co/mlc-ai/TinyLlama-1.1B-q4f16_1-MLC",
-      model_lib: "https://huggingface.co/mlc-ai/TinyLlama-1.1B-q4f16_1-MLC/model.wasm"
-    },
-    {
-      model_id: "Phi-2-q4f16_1-MLC",
-      model: "https://huggingface.co/mlc-ai/Phi-2-q4f16_1-MLC",
-      model_lib: "https://huggingface.co/mlc-ai/Phi-2-q4f16_1-MLC/model.wasm"
-    },
-    {
-      model_id: "Llama-3.1-8B-Instruct-q4f32_1-MLC",
-      model: "https://huggingface.co/mlc-ai/Llama-3.1-8B-Instruct-q4f32_1-MLC",
-      model_lib: "https://huggingface.co/mlc-ai/Llama-3.1-8B-Instruct-q4f32_1-MLC/model.wasm"
-    },
-    {
-      model_id: "Mistral-7B-Instruct-v0.3-q4f32_1-MLC",
-      model: "https://huggingface.co/mlc-ai/Mistral-7B-Instruct-v0.3-q4f32_1-MLC",
-      model_lib: "https://huggingface.co/mlc-ai/Mistral-7B-Instruct-v0.3-q4f32_1-MLC/model.wasm"
-    }
-  ]
-});
+// Custom configuration for MLC models
+// For production: host models at https://www.posthiel.de/models/{model_id}/
+const getCustomAppConfig = (): AppConfig => {
+  // Primary: User's webspace (uncomment when models are uploaded)
+  // const baseUrl = "https://www.posthiel.de/models";
+  
+  // For now, use HuggingFace as fallback
+  const baseUrl = "https://huggingface.co/mlc-ai";
+  
+  return {
+    ...prebuiltAppConfig,
+    cacheBackend: 'opfs', // Use Origin Private File System for best caching
+    model_list: [
+      {
+        model_id: "Qwen2-0.5B-Instruct-q4f16_1-MLC",
+        model: `${baseUrl}/Qwen2-0.5B-Instruct-q4f16_1-MLC`,
+        model_lib: `${baseUrl}/Qwen2-0.5B-Instruct-q4f16_1-MLC/model.wasm`
+      },
+      {
+        model_id: "TinyLlama-1.1B-q4f16_1-MLC",
+        model: `${baseUrl}/TinyLlama-1.1B-q4f16_1-MLC`,
+        model_lib: `${baseUrl}/TinyLlama-1.1B-q4f16_1-MLC/model.wasm`
+      },
+      {
+        model_id: "Phi-2-q4f16_1-MLC",
+        model: `${baseUrl}/Phi-2-q4f16_1-MLC`,
+        model_lib: `${baseUrl}/Phi-2-q4f16_1-MLC/model.wasm`
+      },
+      {
+        model_id: "Llama-3.1-8B-Instruct-q4f32_1-MLC",
+        model: `${baseUrl}/Llama-3.1-8B-Instruct-q4f32_1-MLC`,
+        model_lib: `${baseUrl}/Llama-3.1-8B-Instruct-q4f32_1-MLC/model.wasm`
+      },
+      {
+        model_id: "Mistral-7B-Instruct-v0.3-q4f32_1-MLC",
+        model: `${baseUrl}/Mistral-7B-Instruct-v0.3-q4f32_1-MLC`,
+        model_lib: `${baseUrl}/Mistral-7B-Instruct-v0.3-q4f32_1-MLC/model.wasm`
+      }
+    ]
+  };
+};
 
 // ============================================================================
 // Main Hook
@@ -156,10 +165,18 @@ export const useEnhancedInference = (
       setError(null);
       setProgress(0);
 
+      // Check if WebGPU is available
+      const hasWebGPU = !!(navigator as any).gpu;
+      if (!hasWebGPU) {
+        throw new Error('WebGPU is not supported in your browser. Please use Chrome, Firefox 113+, Edge, or Safari 16.4+.');
+      }
+
       // Use custom config or default
       const effectiveAppConfig = customAppConfig || getCustomAppConfig();
 
       log(`Loading model: ${modelId} with WebLLM`);
+      log(`Using WebGPU: ${hasWebGPU ? 'Yes' : 'No'}`);
+      log(`Using WASM: ${typeof WebAssembly !== 'undefined' ? 'Yes' : 'No'}`);
 
       const engine = await CreateMLCEngine(modelId, {
         appConfig: effectiveAppConfig,
@@ -185,6 +202,19 @@ export const useEnhancedInference = (
       setIsLoading(false);
       setProgress(0);
       warn(`Failed to load model ${modelId}: ${err}`);
+      
+      // Enhanced error messages for common issues
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      if (errorMessage.includes('CORS') || errorMessage.includes('cross-origin')) {
+        setError('CORS error: Cannot load model from this domain. Models must be hosted on the same domain or with proper CORS headers.');
+      } else if (errorMessage.includes('404') || errorMessage.includes('not found')) {
+        setError('Model files not found. Please ensure models are uploaded to the configured URL.');
+      } else if (errorMessage.includes('WebGPU')) {
+        setError('WebGPU not available. Please use a modern browser (Chrome, Firefox 113+, Edge, Safari 16.4+).');
+      } else if (errorMessage.includes('WASM')) {
+        setError('WebAssembly error. Please ensure your browser supports WASM and the model files are accessible.');
+      }
+      
       return false;
     }
   }, [customAppConfig]);
