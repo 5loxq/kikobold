@@ -7,7 +7,7 @@
 
 import { pipeline, TextGenerationPipeline } from '@xenova/transformers';
 import { log, warn } from '../logging';
-import { checkWebGPUSupport, isWASMSupported } from '../wasm';
+import { checkWebGPUSupport, isWASMSupported } from '../security';
 import { isTauriRuntime } from '../tauri-runtime';
 import { createError, ErrorCodes } from '../../utils/errors';
 import type { BackendKind } from './types';
