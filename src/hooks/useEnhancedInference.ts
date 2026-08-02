@@ -78,12 +78,14 @@ export interface EnhancedInferenceReturn extends InferenceState {
 
 // Custom configuration for MLC models
 // For production: host models at https://www.posthiel.de/models/{model_id}/
+// NOTE: HuggingFace does NOT allow CORS for WASM files from external domains!
+// You MUST host the models on your own webspace for production use.
 const getCustomAppConfig = (): AppConfig => {
-  // Primary: User's webspace (uncomment when models are uploaded)
-  // const baseUrl = "https://www.posthiel.de/models";
+  // Primary: User's webspace (REQUIRED for production)
+  const baseUrl = "https://www.posthiel.de/models";
   
-  // For now, use HuggingFace as fallback
-  const baseUrl = "https://huggingface.co/mlc-ai";
+  // For testing only (won't work on posthiel.de due to CORS):
+  // const baseUrl = "https://huggingface.co/mlc-ai";
   
   return {
     ...prebuiltAppConfig,
@@ -206,13 +208,16 @@ export const useEnhancedInference = (
       // Enhanced error messages for common issues
       const errorMessage = err instanceof Error ? err.message : String(err);
       if (errorMessage.includes('CORS') || errorMessage.includes('cross-origin')) {
-        setError('CORS error: Cannot load model from this domain. Models must be hosted on the same domain or with proper CORS headers.');
+        setError('⚠️ CORS Fehler: Modelle müssen auf demselben Server gehostet werden (www.posthiel.de). Bitte lade die MLC-Modelle in den Ordner /models/ hoch. Anleitung: Siehe Dokumentation.');
       } else if (errorMessage.includes('404') || errorMessage.includes('not found')) {
-        setError('Model files not found. Please ensure models are uploaded to the configured URL.');
+        setError('⚠️ Modell-Dateien nicht gefunden. Bitte stelle sicher, dass die Modelle in https://www.posthiel.de/models/{Modell-ID}/ verfügbar sind.');
       } else if (errorMessage.includes('WebGPU')) {
-        setError('WebGPU not available. Please use a modern browser (Chrome, Firefox 113+, Edge, Safari 16.4+).');
+        setError('⚠️ WebGPU nicht verfügbar. Bitte verwende einen modernen Browser: Chrome, Firefox 113+, Edge oder Safari 16.4+.');
       } else if (errorMessage.includes('WASM')) {
-        setError('WebAssembly error. Please ensure your browser supports WASM and the model files are accessible.');
+        setError('⚠️ WebAssembly-Fehler. Bitte stelle sicher, dass dein Browser WASM unterstützt und HTTPS verwendet wird.');
+      } else {
+        // Default error message with more context
+        setError(`⚠️ Fehler beim Laden des Modells: ${errorMessage}. Bitte lade die Modell-Dateien auf deinen Webspace hoch.`);
       }
       
       return false;

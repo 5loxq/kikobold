@@ -30,9 +30,9 @@ export const MainLayout: FC = () => {
     webgpuAvailable,
     currentModelId,
     refreshStatus,
-    error: inferenceError
+    error
   } = useEnhancedInference({ modelId: activeModel?.id || '' });
-  const [error, setError] = useState<string | null>(inferenceError);
+  const [localError, setLocalError] = useState<string | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
 
   const isModelLoaded = currentModelId === activeModel?.id;
@@ -41,13 +41,6 @@ export const MainLayout: FC = () => {
   useEffect(() => {
     refreshStatus();
   }, [activeModel?.id, refreshStatus]);
-
-  // Update error state when inference error changes
-  useEffect(() => {
-    if (inferenceError) {
-      setError(inferenceError);
-    }
-  }, [inferenceError]);
 
   // Chat DB initialization and loading is now handled in useChat hook
 
@@ -62,7 +55,7 @@ export const MainLayout: FC = () => {
     } catch (err) {
       logError('Failed to create new chat:', err);
       // Show error to user
-      setError(err instanceof Error ? err.message : 'Failed to create new chat');
+      setLocalError(err instanceof Error ? err.message : 'Failed to create new chat');
     }
   };
 
@@ -76,7 +69,7 @@ export const MainLayout: FC = () => {
       setActiveTab('chat');
     } catch (err) {
       logError('Failed to select chat:', err);
-      setError(err instanceof Error ? err.message : 'Failed to select chat');
+      setLocalError(err instanceof Error ? err.message : 'Failed to select chat');
     }
   };
 
@@ -127,7 +120,7 @@ export const MainLayout: FC = () => {
       }
     } catch (err) {
       logError('Failed to send message:', err);
-      setError(err instanceof Error ? err.message : 'Failed to send message');
+      setLocalError(err instanceof Error ? err.message : 'Failed to send message');
     }
   };
 
@@ -149,7 +142,7 @@ export const MainLayout: FC = () => {
     try {
       setLoadingProgress(0);
       // Clear previous errors
-      setError(null);
+      setLocalError(null);
       
       // Load the model via unified inference engine
       const success = await loadModel(modelId);
@@ -164,7 +157,7 @@ export const MainLayout: FC = () => {
       }
     } catch (err) {
       logError('Model selection failed:', err);
-      setError(err instanceof Error ? err.message : 'Model selection failed');
+      setLocalError(err instanceof Error ? err.message : 'Model selection failed');
       setLoadingProgress(0);
     }
   };
@@ -283,7 +276,7 @@ export const MainLayout: FC = () => {
             activeModel={activeModel}
             isLoading={isLoading}
             isModelLoaded={isModelLoaded}
-            error={error}
+            error={localError || error}
             webgpuAvailable={webgpuAvailable}
             loadingProgress={loadingProgress}
             isModelDownloaded={isModelDownloaded}
