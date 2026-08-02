@@ -3,7 +3,7 @@
  * This provides a more robust and feature-rich inference system
  */
 
-import { pipeline, TextGenerationPipeline, env } from '@xenova/transformers';
+import { pipeline, TextGenerationPipeline, env } from '@xenova-transformers-stub';
 import { log, warn, error } from '../logging';
 import { checkWebGPUSupport, validateModelPath } from '../security';
 import { getModelConfig } from '../models/model-registry';

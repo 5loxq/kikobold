@@ -12,7 +12,7 @@
  * - Batch processing support
  */
 
-import { TextGenerationPipeline, AutoTokenizer, pipeline } from '@xenova/transformers';
+import { TextGenerationPipeline, AutoTokenizer, pipeline } from '@xenova-transformers-stub';
 import { log, warn, error } from '../logging';
 import { checkWebGPUSupport, validateModelPath } from '../security';
 import { getModelConfig } from '../models/model-registry';

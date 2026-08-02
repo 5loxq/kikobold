@@ -5,7 +5,7 @@
  * Unified inference service that works across different providers
  */
 
-import { pipeline, TextGenerationPipeline } from '@xenova/transformers';
+import { pipeline, TextGenerationPipeline } from '@xenova-transformers-stub';
 import { log, warn } from '../logging';
 import { checkWebGPUSupport, isWASMSupported } from '../security';
 import { isTauriRuntime } from '../tauri-runtime';
