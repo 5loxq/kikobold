@@ -2,4 +2,5 @@
  * Performance Monitoring Components
  */
 
-export { default as PerformanceMonitor, type PerformanceMonitorProps } from './PerformanceMonitor';
+// Legacy performance monitor disabled - using WebLLM native monitoring
+export {};

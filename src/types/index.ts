@@ -41,6 +41,7 @@ export interface Model {
   contextLength: number;
   isLocal?: boolean; // true if model is pre-downloaded locally
   localPath?: string; // path to local model file (e.g., "/models/tinyllama.gguf")
+  provider?: string; // e.g., "mlc-ai", "huggingface"
 }
 
 // Model configuration for inference engine
@@ -55,6 +56,7 @@ export interface ModelConfig {
   quantized: boolean;
   recommended: boolean;
   contextLength: number;
+  provider?: string; // e.g., "mlc-ai", "huggingface"
 }
 
 export interface LocalModel {

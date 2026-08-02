@@ -5,7 +5,7 @@
  * Communicates with main thread via message passing
  */
 
-import { pipeline, TextGenerationPipeline, env, AutoTokenizer } from '@xenova/transformers';
+import { pipeline, TextGenerationPipeline, env, AutoTokenizer } from '@xenova-transformers-stub';
 
 // Workaround for read-only env properties in @xenova/transformers
 const mutableEnv = env as any;
