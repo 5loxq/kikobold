@@ -555,69 +555,52 @@ export const sanitizeMessageContent = (content: string): string => {
 };
 
 /**
- * Check if WebGPU is supported in the browser with browser-specific optimizations
+ * Check if WebGPU is supported in the browser
  */
 export const checkWebGPUSupport = async (): Promise<boolean> => {
     try {
-        // Check if WebGPU is available
         if (!('gpu' in navigator)) {
             return false;
         }
 
-        // Try to create a device
         const adapter = await (navigator as any).gpu.requestAdapter();
         if (!adapter) {
             return false;
         }
 
         const device = await adapter.requestDevice();
-        if (!device) {
-            return false;
-        }
-
-        // Browser-specific optimizations
-        const isFirefox = navigator.userAgent.includes('Firefox');
-        const isChrome = navigator.userAgent.includes('Chrome') || navigator.userAgent.includes('Chromium');
-        const isSafari = navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome');
+        return !!device;
         
-        if (isFirefox) {
-            console.log('✓ WebGPU is available (Firefox - using conservative settings)');
-        } else if (isChrome) {
-            console.log('✓ WebGPU is available (Chrome - using aggressive optimizations)');
-        } else if (isSafari) {
-            console.log('✓ WebGPU is available (Safari - using mobile-optimized settings)');
-        } else {
-            console.log('✓ WebGPU is available (Generic browser)');
-        }
-        
-        return true;
-    } catch (err) {
-        console.warn('⚠️ WebGPU check failed:', err);
+    } catch {
         return false;
     }
 };
 
 /**
  * Check if WASM is supported in the browser
+ * Note: Returns true even if instantiateStreaming is not available,
+ * as basic WebAssembly is still functional
  */
 export const checkWASMSupport = (): boolean => {
     try {
-        // Check if WebAssembly is available
-        if (!('WebAssembly' in window)) {
+        if (typeof WebAssembly === 'undefined') {
             return false;
         }
-
-        // Check if WebAssembly.instantiateStreaming is available
-        if (!('instantiateStreaming' in WebAssembly)) {
-            return false;
+        
+        // Some older browsers don't support streaming but still support basic WASM
+        if (typeof WebAssembly.instantiateStreaming === 'undefined') {
+            return true; // WASM is still supported, just not streaming
         }
-
+        
         return true;
     } catch (err) {
         console.warn('WASM check failed:', err);
         return false;
     }
 };
+
+// Alias for backward compatibility
+export const isWASMSupported = checkWASMSupport;
 
 /**
  * Check if the browser supports required features for LLM inference

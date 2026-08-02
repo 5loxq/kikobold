@@ -7,6 +7,7 @@
 
 import { getRuntimeEnvironment } from './tauri-runtime';
 import { log, warn } from './logging';
+import { checkWebGPUSupport, checkWASMSupport } from './security';
 
 /**
  * WASM module interface
@@ -44,25 +45,7 @@ export interface CryptoAdapter {
 let wasmModulePromise: Promise<WasmModule | null> | null = null;
 let cryptoInitDone: boolean = false;
 
-/**
- * Check if WASM is supported in the current environment
- */
-export const isWASMSupported = (): boolean => {
-    try {
-        if (typeof WebAssembly === 'undefined') {
-            return false;
-        }
-        
-        if (typeof WebAssembly.instantiateStreaming === 'undefined') {
-            // Some older browsers don't support streaming
-            return true; // But WASM is still supported, just not streaming
-        }
-        
-        return true;
-    } catch {
-        return false;
-    }
-};
+
 
 /**
  * Initialize WebAssembly support
@@ -295,27 +278,7 @@ export const getCryptoAdapter = (): CryptoAdapter => {
     return cryptoAdapter;
 };
 
-/**
- * Check if WebGPU is supported (separate from WASM but often used together)
- */
-export const checkWebGPUSupport = async (): Promise<boolean> => {
-    try {
-        if (!('gpu' in navigator)) {
-            return false;
-        }
-        
-        const adapter = await (navigator as any).gpu.requestAdapter();
-        if (!adapter) {
-            return false;
-        }
-        
-        const device = await adapter.requestDevice();
-        return !!device;
-        
-    } catch {
-        return false;
-    }
-};
+
 
 /**
  * Check if SIMD is supported in WASM
@@ -352,7 +315,7 @@ export const getWASMInfo = async (): Promise<{
     simdSupported: boolean;
     runtime: string;
 }> => {
-    const wasmSupported = isWASMSupported();
+    const wasmSupported = checkWASMSupport();
     const webgpuSupported = await checkWebGPUSupport();
     const simdSupported = checkSIMDSupport();
     const runtime = getRuntimeEnvironment();
@@ -366,12 +329,10 @@ export const getWASMInfo = async (): Promise<{
 };
 
 export default {
-    isWASMSupported,
     initWASM,
     ensureCryptoInit,
     createCryptoAdapter,
     getCryptoAdapter,
-    checkWebGPUSupport,
     checkSIMDSupport,
     getWASMInfo,
 };
