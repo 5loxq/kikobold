@@ -26,7 +26,7 @@ export const MainLayout: FC = () => {
   const { 
     loadModel, 
     generate, 
-    isLoading, 
+    isLoading,
     webgpuAvailable,
     currentModelId,
     refreshStatus
@@ -104,14 +104,11 @@ export const MainLayout: FC = () => {
       await addMessage('user', message);
 
       // Generate response with language setting and correct system prompt
+      // Note: WebLLM uses top_p and max_tokens (snake_case)
       const result = await generate(message, {
         temperature: activeProfile.temperature,
-        topP: activeProfile.topP,
-        maxTokens: activeProfile.maxTokens,
-        systemPrompt: i18n.language === 'de' && activeProfile.systemPrompt_de 
-          ? activeProfile.systemPrompt_de 
-          : activeProfile.systemPrompt,
-        language: i18n.language, // Pass current language to ensure responses in correct language
+        top_p: activeProfile.topP,
+        max_tokens: activeProfile.maxTokens,
       });
 
       if (result) {

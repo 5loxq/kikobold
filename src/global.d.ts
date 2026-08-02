@@ -87,4 +87,79 @@ declare global {
     interface Window {
         WebAssembly: typeof WebAssembly;
     }
+    
+    interface Process {
+        env: Record<string, string>;
+        cwd: () => string;
+        platform: string;
+        version: string;
+    }
+    
+    var process: Process;
+}
+
+// Error stack trace support
+declare global {
+    interface ErrorConstructor {
+        captureStackTrace(error: Error, constructorOpt?: Function): void;
+    }
+}
+
+// Legacy @xenova/transformers module stubs (no longer used, replaced by WebLLM)
+declare module '@xenova/transformers' {
+    export const pipeline: any;
+    export const env: any;
+    export const AutoTokenizer: any;
+    export type TextGenerationPipeline = any;
+}
+
+// Stub module for build compatibility
+declare module '@xenova-transformers-stub' {
+    export const pipeline: any;
+    export const env: { 
+        useCPU: boolean;
+        useWebGPU: boolean;
+        localModelPath: string;
+        remoteHost: string;
+        allowedRemoteHosts: string[];
+    };
+    export const AutoTokenizer: any;
+    export type TextGenerationPipeline = any;
+}
+
+// WebLLM types
+declare module '@mlc-ai/web-llm' {
+    export interface MLCEngineInterface {
+        chat: {
+            completions: {
+                create: (options: any) => Promise<any>;
+            };
+        };
+        getCurrentModelId: () => string | null;
+        reload: (modelId: string) => Promise<void>;
+    }
+
+    export interface AppConfig {
+        model_list?: Array<{
+            model_id: string;
+            model: string;
+            model_lib?: string;
+            integrity?: any;
+        }>;
+        cacheBackend?: 'cache' | 'indexeddb' | 'opfs' | 'cross-origin';
+    }
+
+    export interface EngineConfig {
+        appConfig?: AppConfig;
+        initProgressCallback?: (progress: { text?: string; progress: number }) => void;
+    }
+
+    export function CreateMLCEngine(
+        modelId: string,
+        config?: EngineConfig
+    ): Promise<MLCEngineInterface>;
+
+    export const prebuiltAppConfig: AppConfig;
+
+    export function setLogLevel(level: 'debug' | 'info' | 'warn' | 'error' | 'silent'): void;
 }

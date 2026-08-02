@@ -1,5 +1,5 @@
 import { InferenceOptions, InferenceResult } from '../../types';
-import { pipeline, TextGenerationPipeline, env } from '@xenova/transformers';
+import { pipeline, TextGenerationPipeline, env } from '@xenova-transformers-stub';
 import { log, warn } from '../logging';
 import { checkWebGPUSupport, validateModelPath } from '../security';
 import { MODEL_CONFIGS, getModelConfig } from '../models/model-registry';

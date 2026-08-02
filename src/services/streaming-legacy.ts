@@ -13,8 +13,7 @@
 import { InferenceOptions } from '../types';
 import { StreamingOptions, CancelablePromise } from '../types/ensu-types';
 import { createAppError, ErrorCodes, isRetryableError, getUserMessage } from '../utils/errors';
-import { createInferenceBackend } from './inference/llm-inference-engine';
-import type { LlmMessage, GenerateChatRequest, GenerateEvent } from './inference/llm-types';
+// Legacy inference backend disabled - using WebLLM directly
 import { error as logError } from './logging';
 
 // ============================================================================

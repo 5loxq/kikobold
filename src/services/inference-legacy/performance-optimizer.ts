@@ -9,7 +9,7 @@
  * - Model caching strategies
  */
 
-import { env } from '@xenova/transformers';
+import { env } from '@xenova-transformers-stub';
 import { log, warn, debug } from '../logging';
 import { checkWebGPUSupport, getSystemMemoryInfo } from '../security';
 
