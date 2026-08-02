@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { fileURLToPath, URL } from 'node:url'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -46,14 +47,15 @@ export default defineConfig({
         //   if (id.includes('i18n')) return 'i18n';
         // },
       },
+      external: ['@xenova/transformers'],
     },
     // Increase chunk size warning limit for large models
     chunkSizeWarningLimit: 2000,
   },
   // Optimize dependencies
   optimizeDeps: {
-    include: ['react', 'react-dom', '@xenova/transformers'],
-    exclude: [],
+    include: ['react', 'react-dom', '@mlc-ai/web-llm'],
+    exclude: ['@xenova/transformers'],
   },
   // Cache directory for faster rebuilds
   cacheDir: 'node_modules/.vite-cache',
