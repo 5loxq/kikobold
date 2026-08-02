@@ -228,7 +228,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               )}
               {error && !isLoading && (
                 <span className="text-sm text-red-600 font-medium flex items-center gap-1">
-                  ❌ {t('chat.loadingError')}
+                  ❌ {error}
                 </span>
               )}
             </>

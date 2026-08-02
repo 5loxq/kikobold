@@ -29,9 +29,10 @@ export const MainLayout: FC = () => {
     isLoading,
     webgpuAvailable,
     currentModelId,
-    refreshStatus
+    refreshStatus,
+    error: inferenceError
   } = useEnhancedInference({ modelId: activeModel?.id || '' });
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(inferenceError);
   const [loadingProgress, setLoadingProgress] = useState(0);
 
   const isModelLoaded = currentModelId === activeModel?.id;
@@ -40,6 +41,13 @@ export const MainLayout: FC = () => {
   useEffect(() => {
     refreshStatus();
   }, [activeModel?.id, refreshStatus]);
+
+  // Update error state when inference error changes
+  useEffect(() => {
+    if (inferenceError) {
+      setError(inferenceError);
+    }
+  }, [inferenceError]);
 
   // Chat DB initialization and loading is now handled in useChat hook
 
@@ -140,6 +148,9 @@ export const MainLayout: FC = () => {
   const handleModelSelect = async (modelId: string) => {
     try {
       setLoadingProgress(0);
+      // Clear previous errors
+      setError(null);
+      
       // Load the model via unified inference engine
       const success = await loadModel(modelId);
       
@@ -149,6 +160,7 @@ export const MainLayout: FC = () => {
         selectModel(modelId);
       } else {
         setLoadingProgress(0);
+        // Error is already set by loadModel via inferenceError state
       }
     } catch (err) {
       logError('Model selection failed:', err);

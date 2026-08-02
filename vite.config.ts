@@ -47,7 +47,7 @@ export default defineConfig({
         //   if (id.includes('i18n')) return 'i18n';
         // },
       },
-      external: ['@xenova/transformers'],
+      external: ['@xenova/transformers', /inference-legacy/, /legacy/, /-legacy/],
     },
     // Increase chunk size warning limit for large models
     chunkSizeWarningLimit: 2000,
