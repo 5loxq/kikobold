@@ -74,7 +74,7 @@ export const importChats = (file: File): Promise<Chat[]> => {
     // Validate file input using security utilities
     const fileValidation = validateFileUpload(file, 10, ['.json']); // 10MB max size, only .json
     if (!fileValidation.valid) {
-      reject(new Error(`Invalid file: ${fileValidation.error || 'too large or wrong type'}`));
+      reject(new Error(`Invalid file: ${fileValidation.error ?? 'too large or wrong type'}`));
       return;
     }
 
@@ -96,7 +96,7 @@ export const importChats = (file: File): Promise<Chat[]> => {
         // Validate JSON content for security
         const contentValidation = validateJsonContent(content);
         if (!contentValidation.valid) {
-          reject(new Error(`Invalid content: ${contentValidation.error || 'Unknown error'}`));
+          reject(new Error(`Invalid content: ${contentValidation.error ?? 'Unknown error'}`));
           return;
         }
 
@@ -177,8 +177,8 @@ export const exportChatAsMarkdown = (chat: Chat): void => {
       // Escape special markdown characters in content
       const safeContent = message.content
         .replace(/\*/g, '\\*')
-        .replace(/\_/g, '\\_')
-        .replace(/\`/g, '\\`');
+        .replace(/_/g, '\\_')
+        .replace(/`/g, '\\`');
       markdown += `## ${sender}\n\n${safeContent}\n\n---\n\n`;
     });
 

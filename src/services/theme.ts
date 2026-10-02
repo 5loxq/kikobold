@@ -8,7 +8,7 @@
  * - System preference detection
  */
 
-import { ThemeMode, ThemeSettings, CustomizationSettings } from '../types/ensu-types';
+import { CustomizationSettings, ThemeMode, ThemeSettings } from '../types/ensu-types';
 
 // ============================================================================
 // Constants
@@ -54,7 +54,7 @@ let initialized = false;
  * Initialize theme service
  */
 export const initThemeService = async (): Promise<void> => {
-  if (initialized) return;
+  if (initialized) {return;}
 
   // Load saved settings
   const savedSettings = loadThemeSettings();
@@ -96,7 +96,7 @@ const loadThemeSettings = (): CustomizationSettings | null => {
     }
 
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return null;
+    if (!saved) {return null;}
 
     const parsed = JSON.parse(saved) as CustomizationSettings;
     return parsed;
@@ -229,7 +229,7 @@ export const resetTheme = (): void => {
  * Apply theme to document
  */
 const applyTheme = (theme: ThemeSettings): void => {
-  if (typeof document === 'undefined') return;
+  if (typeof document === 'undefined') {return;}
 
   const html = document.documentElement;
   
@@ -312,7 +312,7 @@ export const useTheme = (): {
  * Get CSS variable value
  */
 export const getCSSVar = (name: string, defaultValue: string = ''): string => {
-  if (typeof document === 'undefined') return defaultValue;
+  if (typeof document === 'undefined') {return defaultValue;}
   
   const value = getComputedStyle(document.documentElement)
     .getPropertyValue(name)

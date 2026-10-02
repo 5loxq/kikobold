@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Profile, UseProfilesReturn } from '../types';
 import * as ProfileStorage from '../services/storage/ProfileStorage';
 

@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
-import { Model, LocalModel, UseModelsReturn } from '../types';
+import { useCallback, useEffect, useState } from 'react';
+import { LocalModel, Model, UseModelsReturn } from '../types';
 import { MODELS } from '../services/models/model-registry';
 import { info } from '../services/logging';
 
@@ -91,7 +91,7 @@ export const useModels = (): UseModelsReturn => {
 
   // Save active model to storage when it changes
   useEffect(() => {
-    setActiveModelToStorage(activeModel?.id || null);
+    setActiveModelToStorage(activeModel?.id ?? null);
   }, [activeModel?.id]);
 
   const downloadModel = useCallback(

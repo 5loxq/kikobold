@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { error, log } from '../../services/logging';
 import { sanitizeInputLight } from '../../services/security';
@@ -79,7 +79,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
       }
 
       // Check for microphone permission
-      if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
+      if (!navigator.mediaDevices?.getUserMedia) {
         alert(t('chat.micPermissionRequired'));
         return;
       }
@@ -154,7 +154,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
     } catch (err) {
       error('Failed to start speech recognition:', err);
       setIsListening(false);
-      alert(t('chat.micError') + ': ' + (err instanceof Error ? err.message : String(err)));
+      alert(`${t('chat.micError')  }: ${  err instanceof Error ? err.message : String(err)}`);
     }
   };
 
@@ -189,10 +189,10 @@ export const InputBox: React.FC<InputBoxProps> = ({
     setInput(sanitizedInput);
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = Math.min(
+      textareaRef.current.style.height = `${Math.min(
         textareaRef.current.scrollHeight,
         150
-      ) + 'px';
+      )  }px`;
     }
   }, []);
 

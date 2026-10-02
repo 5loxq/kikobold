@@ -9,11 +9,11 @@
  * - OPFS (Origin Private File System) support
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { 
-  CreateMLCEngine, 
-  MLCEngineInterface,
-  AppConfig 
+  AppConfig, 
+  CreateMLCEngine,
+  MLCEngineInterface 
 } from "@mlc-ai/web-llm";
 import { handleErrorSilent } from '../utils/errors';
 import { log, warn } from '../services/logging';
@@ -160,7 +160,7 @@ export const useEnhancedInference = (
       }
 
       // Use custom config or default
-      const effectiveAppConfig = customAppConfig || getCustomAppConfig();
+      const effectiveAppConfig = customAppConfig ?? getCustomAppConfig();
 
       log(`Loading model: ${modelId} with WebLLM`);
       log(`Using WebGPU: ${hasWebGPU ? 'Yes' : 'No'}`);

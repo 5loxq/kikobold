@@ -104,7 +104,7 @@ export const checkForUpdates = async (): Promise<boolean> => {
  */
 export const skipWaiting = async (): Promise<void> => {
     try {
-        if (!serviceWorkerRegistration || !serviceWorkerRegistration.waiting) {
+        if (!serviceWorkerRegistration?.waiting) {
             return;
         }
 
