@@ -25,7 +25,9 @@ export const MainLayout: FC = () => {
   const { downloadedModels, activeModel, downloadModel, deleteModel: deleteDownloadedModel, selectModel, isModelDownloaded } = useModels();
   const { 
     loadModel, 
-    generate, 
+    generate,
+    cancel: stopGeneration,
+    isGenerating,
     isLoading,
     webgpuAvailable,
     currentModelId,
@@ -280,6 +282,8 @@ export const MainLayout: FC = () => {
             webgpuAvailable={webgpuAvailable}
             loadingProgress={loadingProgress}
             isModelDownloaded={isModelDownloaded}
+            isGenerating={isGenerating}
+            onStopGeneration={stopGeneration}
             onSendMessage={handleSendMessage}
             onSelectModel={handleModelSelect}
             onSelectProfile={handleSelectProfile}
