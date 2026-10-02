@@ -10,11 +10,14 @@ interface MessageListProps {
   isDarkMode?: boolean;
 }
 
-// Memoized message component to prevent re-renders
-const MessageBubbleInner: React.FC<{
+interface MessageBubbleProps {
   message: Message;
   isDarkMode?: boolean;
-}> = ({ message, isDarkMode }) => {
+}
+
+// Memoized message component to prevent re-renders
+const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, isDarkMode }) => {
+  const { t } = useTranslation();
   const isUser = message.role === 'user';
   const timeStr = React.useMemo(
     () => new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -23,6 +26,13 @@ const MessageBubbleInner: React.FC<{
 
   // Use useMemo for the content to prevent re-renders when content hasn't changed
   const content = React.useMemo(() => message.content, [message.content]);
+  const [copied, setCopied] = React.useState(false);
+  const handleCopy = React.useCallback((): void => {
+    void navigator.clipboard.writeText(message.content).then(() => {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    });
+  }, [message.content]);
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-2`}>
@@ -40,11 +50,23 @@ const MessageBubbleInner: React.FC<{
             className="markdown-message"
           />
         </div>
-        <p className={`text-xs mt-2 opacity-70 ${
-          isUser ? 'text-blue-100' : 'text-gray-500'
-        }`}>
-          {timeStr}
-        </p>
+        <div className="flex items-center justify-between mt-2">
+          <p className={`text-xs opacity-70 ${
+            isUser ? 'text-blue-100' : 'text-gray-500'
+          }`}>
+            {timeStr}
+          </p>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
+              isUser ? 'text-blue-100 hover:bg-blue-500/40' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+            }`}
+            title={copied ? t('chat.copied') : t('chat.copyMessage')}
+          >
+            {copied ? '✓' : '⧉'}
+          </button>
+        </div>
       </div>
     </div>
   );

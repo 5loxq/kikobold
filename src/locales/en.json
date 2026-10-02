@@ -40,6 +40,8 @@
     "loadingError": "Loading error",
     "speechRecognitionNotSupported": "Speech Recognition is not supported in this browser",
     "micError": "Microphone Error",
+    "copyMessage": "Copy message",
+    "copied": "Copied!",
     "voiceInputTooltip": "Click to start/stop voice input"
   },
   "models": {
