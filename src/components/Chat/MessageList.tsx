@@ -8,13 +8,40 @@ interface MessageListProps {
   isLoading: boolean;
   messagesEndRef?: React.RefObject<HTMLDivElement>;
   isDarkMode?: boolean;
+  searchQuery?: string;
+}
+
+interface MessageBubbleProps {
+  message: Message;
+  isDarkMode?: boolean;
+  searchQuery?: string;
 }
 
 // Memoized message component to prevent re-renders
-const MessageBubble: React.FC<{
-  message: Message;
-  isDarkMode?: boolean;
-}> = React.memo(({ message, isDarkMode }) => {
+const escapeRegExp = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const HighlightedText: React.FC<{ text: string; query: string; isUser: boolean }> = ({ text, query, isUser }) => {
+  if (!query.trim()) {return <>{text}</>;}
+  const escaped = escapeRegExp(query.trim());
+  const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
+  if (parts.length === 1) {return <>{text}</>;}
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === query.trim().toLowerCase() ? (
+          <mark key={i} className={isUser ? 'bg-yellow-300/80 text-gray-900 rounded px-0.5' : 'bg-yellow-200 text-gray-900 rounded px-0.5'}>
+            {part}
+          </mark>
+        ) : (
+          <React.Fragment key={i}>{part}</React.Fragment>
+        )
+      )}
+    </>
+  );
+};
+
+const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, isDarkMode, searchQuery }) => {
+  const { t } = useTranslation();
   const isUser = message.role === 'user';
   const timeStr = React.useMemo(
     () => new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -23,6 +50,13 @@ const MessageBubble: React.FC<{
 
   // Use useMemo for the content to prevent re-renders when content hasn't changed
   const content = React.useMemo(() => message.content, [message.content]);
+  const [copied, setCopied] = React.useState(false);
+  const handleCopy = React.useCallback((): void => {
+    void navigator.clipboard.writeText(message.content).then(() => {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    });
+  }, [message.content]);
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-2`}>
@@ -34,28 +68,47 @@ const MessageBubble: React.FC<{
         }`}
       >
         <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
-          <MarkdownRenderer 
-            content={content} 
-            isDarkMode={isDarkMode}
-            className="markdown-message"
-          />
+          {searchQuery?.trim() && !isUser ? (
+            <HighlightedText text={content} query={searchQuery} isUser={isUser} />
+          ) : (
+            <MarkdownRenderer
+              content={content}
+              isDarkMode={isDarkMode}
+              className="markdown-message"
+            />
+          )}
         </div>
-        <p className={`text-xs mt-2 opacity-70 ${
-          isUser ? 'text-blue-100' : 'text-gray-500'
-        }`}>
-          {timeStr}
-        </p>
+        <div className="flex items-center justify-between mt-2">
+          <p className={`text-xs opacity-70 ${
+            isUser ? 'text-blue-100' : 'text-gray-500'
+          }`}>
+            {timeStr}
+          </p>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
+              isUser ? 'text-blue-100 hover:bg-blue-500/40' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+            }`}
+            title={copied ? t('chat.copied') : t('chat.copyMessage')}
+          >
+            {copied ? '✓' : '⧉'}
+          </button>
+        </div>
       </div>
     </div>
   );
-}, (prevProps, nextProps) => {
+};
+
+const MessageBubble = React.memo(MessageBubbleInner, (prevProps, nextProps) => {
   // Custom comparison function for better performance
   return (
     prevProps.message.id === nextProps.message.id &&
     prevProps.message.content === nextProps.message.content &&
     prevProps.message.timestamp === nextProps.message.timestamp &&
     prevProps.message.role === nextProps.message.role &&
-    prevProps.isDarkMode === nextProps.isDarkMode
+    prevProps.isDarkMode === nextProps.isDarkMode &&
+    prevProps.searchQuery === nextProps.searchQuery
   );
 });
 
@@ -89,8 +142,7 @@ function areMessagesEqual(
          prevLast.timestamp === nextLast.timestamp;
 }
 
-export const MessageList: React.FC<MessageListProps> = React.memo(
-  ({ messages, isLoading, messagesEndRef, isDarkMode }) => {
+const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, messagesEndRef, isDarkMode, searchQuery }) => {
     const { t } = useTranslation();
 
     return (
@@ -104,7 +156,7 @@ export const MessageList: React.FC<MessageListProps> = React.memo(
         ) : (
           messages.map((message) => (
             <div key={message.id} className="animate-fade-in">
-              <MessageBubble message={message} isDarkMode={isDarkMode} />
+              <MessageBubble message={message} isDarkMode={isDarkMode} searchQuery={searchQuery} />
             </div>
           ))
         )}
@@ -129,8 +181,9 @@ export const MessageList: React.FC<MessageListProps> = React.memo(
         {messagesEndRef && <div ref={messagesEndRef} />}
       </div>
     );
-  },
-  areMessagesEqual
-);
+};
+
+export const MessageList = React.memo(MessageListInner, areMessagesEqual);
+MessageList.displayName = 'MessageList';
 
 export default MessageList;

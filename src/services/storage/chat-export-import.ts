@@ -1,4 +1,4 @@
-import { Chat } from '../../types';
+import { Chat, Message } from '../../types';
 import { info, warn } from '../logging';
 import { validateFileUpload, validateJsonContent } from '../security';
 
@@ -9,23 +9,29 @@ export interface ExportedChat {
 }
 
 // Validate chat object for export/import
-function validateChat(chat: any): chat is Chat {
-  return chat && 
-    typeof chat.id === 'string' && 
-    typeof chat.title === 'string' &&
-    Array.isArray(chat.messages) &&
-    typeof chat.profileId === 'string' &&
-    typeof chat.createdAt === 'number' &&
-    typeof chat.updatedAt === 'number';
+function validateChat(chat: unknown): chat is Chat {
+  return (
+    typeof chat === 'object' &&
+    chat !== null &&
+    typeof (chat as Chat).id === 'string' &&
+    typeof (chat as Chat).title === 'string' &&
+    Array.isArray((chat as Chat).messages) &&
+    typeof (chat as Chat).profileId === 'string' &&
+    typeof (chat as Chat).createdAt === 'number' &&
+    typeof (chat as Chat).updatedAt === 'number'
+  );
 }
 
 // Validate message object for export/import
-function validateMessage(message: any): boolean {
-  return message && 
-    typeof message.id === 'string' && 
-    (message.role === 'user' || message.role === 'assistant') &&
-    typeof message.content === 'string' &&
-    typeof message.timestamp === 'number';
+function validateMessage(message: unknown): boolean {
+  return (
+    typeof message === 'object' &&
+    message !== null &&
+    typeof (message as Message).id === 'string' &&
+    ((message as Message).role === 'user' || (message as Message).role === 'assistant') &&
+    typeof (message as Message).content === 'string' &&
+    typeof (message as Message).timestamp === 'number'
+  );
 }
 
 /**
@@ -74,7 +80,7 @@ export const importChats = (file: File): Promise<Chat[]> => {
     // Validate file input using security utilities
     const fileValidation = validateFileUpload(file, 10, ['.json']); // 10MB max size, only .json
     if (!fileValidation.valid) {
-      reject(new Error(`Invalid file: ${fileValidation.error || 'too large or wrong type'}`));
+      reject(new Error(`Invalid file: ${fileValidation.error ?? 'too large or wrong type'}`));
       return;
     }
 
@@ -85,7 +91,7 @@ export const importChats = (file: File): Promise<Chat[]> => {
 
     const reader = new FileReader();
 
-    reader.onload = (event) => {
+    reader.onload = (event): void => {
       try {
         const content = event.target?.result as string;
         if (typeof content !== 'string' || content.trim().length === 0) {
@@ -96,7 +102,7 @@ export const importChats = (file: File): Promise<Chat[]> => {
         // Validate JSON content for security
         const contentValidation = validateJsonContent(content);
         if (!contentValidation.valid) {
-          reject(new Error(`Invalid content: ${contentValidation.error || 'Unknown error'}`));
+          reject(new Error(`Invalid content: ${contentValidation.error ?? 'Unknown error'}`));
           return;
         }
 
@@ -137,7 +143,7 @@ export const importChats = (file: File): Promise<Chat[]> => {
       }
     };
 
-    reader.onerror = () => {
+    reader.onerror = (): void => {
       console.error('File reader error:', reader.error);
       reject(new Error('Failed to read file'));
     };
@@ -177,8 +183,8 @@ export const exportChatAsMarkdown = (chat: Chat): void => {
       // Escape special markdown characters in content
       const safeContent = message.content
         .replace(/\*/g, '\\*')
-        .replace(/\_/g, '\\_')
-        .replace(/\`/g, '\\`');
+        .replace(/_/g, '\\_')
+        .replace(/`/g, '\\`');
       markdown += `## ${sender}\n\n${safeContent}\n\n---\n\n`;
     });
 

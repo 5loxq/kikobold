@@ -3,7 +3,7 @@
 
 // Tauri API modules - loaded dynamically, types not needed for compilation
 declare module '@tauri-apps/api/core' {
-    export function invoke(command: string, args?: any): Promise<any>;
+    export function invoke(command: string, args?: Record<string, unknown>): Promise<unknown>;
     export function convertFileSrc(filePath: string): string;
 }
 
@@ -95,27 +95,27 @@ declare global {
         version: string;
     }
     
-    var process: Process;
+    let process: Process;
 }
 
 // Error stack trace support
 declare global {
     interface ErrorConstructor {
-        captureStackTrace(error: Error, constructorOpt?: Function): void;
+        captureStackTrace(error: Error, constructorOpt?: (...args: unknown[]) => unknown): void;
     }
 }
 
 // Legacy @xenova/transformers module stubs (no longer used, replaced by WebLLM)
 declare module '@xenova/transformers' {
-    export const pipeline: any;
-    export const env: any;
-    export const AutoTokenizer: any;
-    export type TextGenerationPipeline = any;
+    export const pipeline: (task: string, model: string, options?: Record<string, unknown>) => Promise<(text: string, options?: Record<string, unknown>) => Promise<Record<string, unknown>>>;
+    export const env: Record<string, unknown>;
+    export const AutoTokenizer: Record<string, unknown>;
+    export type TextGenerationPipeline = (text: string, options?: Record<string, unknown>) => Promise<Record<string, unknown>>;
 }
 
 // Stub module for build compatibility
 declare module '@xenova-transformers-stub' {
-    export const pipeline: any;
+    export const pipeline: (task: string, model: string, options?: Record<string, unknown>) => Promise<(text: string, options?: Record<string, unknown>) => Promise<Record<string, unknown>>>;
     export const env: { 
         useCPU: boolean;
         useWebGPU: boolean;
@@ -123,20 +123,54 @@ declare module '@xenova-transformers-stub' {
         remoteHost: string;
         allowedRemoteHosts: string[];
     };
-    export const AutoTokenizer: any;
-    export type TextGenerationPipeline = any;
+    export const AutoTokenizer: Record<string, unknown>;
+    export type TextGenerationPipeline = (text: string, options?: Record<string, unknown>) => Promise<Record<string, unknown>>;
 }
 
 // WebLLM types
 declare module '@mlc-ai/web-llm' {
+    export interface ChatCompletionMessage {
+        role: string;
+        content: string;
+    }
+
+    export interface ChatCompletionChoice {
+        message?: ChatCompletionMessage;
+    }
+
+    export interface ChatCompletionUsage {
+        prompt_tokens?: number;
+        completion_tokens?: number;
+        total_tokens?: number;
+    }
+
+    export interface ChatCompletionResult {
+        choices: ChatCompletionChoice[];
+        usage?: ChatCompletionUsage;
+    }
+
+    export interface ChatCompletionChunk {
+        choices?: Array<{ delta?: { content?: string } }>;
+    }
+
+    export interface ChatCompletionCreateOptions {
+        messages: Array<{ role: string; content: string }>;
+        stream?: boolean;
+        temperature?: number;
+        top_p?: number;
+        max_tokens?: number;
+    }
+
     export interface MLCEngineInterface {
         chat: {
             completions: {
-                create: (options: any) => Promise<any>;
+                create: (options: ChatCompletionCreateOptions) => Promise<ChatCompletionResult | AsyncIterable<ChatCompletionChunk>>;
             };
         };
-        getCurrentModelId: () => string | null;
+        getCurrentModelId?: () => string | null;
         reload: (modelId: string) => Promise<void>;
+        interruptGenerate: () => void;
+        unload: () => Promise<void>;
     }
 
     export interface AppConfig {
@@ -144,7 +178,7 @@ declare module '@mlc-ai/web-llm' {
             model_id: string;
             model: string;
             model_lib?: string;
-            integrity?: any;
+            integrity?: Record<string, unknown>;
         }>;
         cacheBackend?: 'cache' | 'indexeddb' | 'opfs' | 'cross-origin';
     }

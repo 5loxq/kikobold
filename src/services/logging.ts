@@ -25,28 +25,28 @@ export const getLogLevel = (): LogLevel => {
 };
 
 // Log a debug message
-export const debug = (message: string, ...optionalParams: any[]): void => {
+export const debug = (message: string, ...optionalParams: unknown[]): void => {
   if (shouldLog(LogLevel.DEBUG)) {
-    console.debug(`[DEBUG] ${message}`, ...optionalParams);
+    console.debug(`[DEBUG] ${message}`, ...optionalParams); // eslint-disable-line no-console
   }
 };
 
 // Log an info message
-export const info = (message: string, ...optionalParams: any[]): void => {
+export const info = (message: string, ...optionalParams: unknown[]): void => {
   if (shouldLog(LogLevel.INFO)) {
     console.info(`[INFO] ${message}`, ...optionalParams);
   }
 };
 
 // Log a warning message
-export const warn = (message: string, ...optionalParams: any[]): void => {
+export const warn = (message: string, ...optionalParams: unknown[]): void => {
   if (shouldLog(LogLevel.WARN)) {
     console.warn(`[WARN] ${message}`, ...optionalParams);
   }
 };
 
 // Log an error message
-export const error = (message: string, ...optionalParams: any[]): void => {
+export const error = (message: string, ...optionalParams: unknown[]): void => {
   if (shouldLog(LogLevel.ERROR)) {
     console.error(`[ERROR] ${message}`, ...optionalParams);
   }
@@ -66,6 +66,6 @@ function shouldLog(level: LogLevel): boolean {
 }
 
 // Log important events (similar to console.log but with our logging system)
-export const log = (message: string, ...optionalParams: any[]): void => {
+export const log = (message: string, ...optionalParams: unknown[]): void => {
   info(message, ...optionalParams);
 };

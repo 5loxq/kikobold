@@ -15,13 +15,13 @@
  * - Task lists
  */
 
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Prism } from 'prism-react-renderer';
 
 // Type assertion for SyntaxHighlighter to work around type issues
 const SyntaxHighlighter = Prism as unknown as React.ComponentType<{
   language: string;
-  style: any;
+  style: Record<string, unknown>;
   customStyle?: React.CSSProperties;
   children: React.ReactNode;
 }>;
@@ -267,13 +267,13 @@ const Image: React.FC<{ src?: string; alt?: string; onClick?: (src: string) => v
     }
   }, [src, onClick]);
 
-  if (!src) return null;
+  if (!src) {return null;}
 
   return (
     <div className="my-4">
       <img
         src={src}
-        alt={alt || ''}
+        alt={alt ?? ''}
         onLoad={() => setLoaded(true)}
         onClick={handleClick}
         className={`rounded-lg shadow-md cursor-pointer transition-all duration-300 ${
@@ -333,7 +333,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language, value, isDarkMode, maxH
   const [copied, setCopied] = useState(false);
 
   const handleCopy = useCallback(() => {
-    if (typeof navigator === 'undefined') return;
+    if (typeof navigator === 'undefined') {return;}
 
     navigator.clipboard.writeText(value).then(() => {
       setCopied(true);
@@ -378,7 +378,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language, value, isDarkMode, maxH
       </div>
       <div
         className="overflow-auto rounded-lg shadow-sm"
-        style={{ maxHeight: maxHeight || '400px' }}
+        style={{ maxHeight: maxHeight ?? '400px' }}
       >
         <SyntaxHighlighter
           language={detectedLanguage}

@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
-import { Model, LocalModel, UseModelsReturn } from '../types';
+import { useCallback, useEffect, useState } from 'react';
+import { LocalModel, Model, UseModelsReturn } from '../types';
 import { MODELS } from '../services/models/model-registry';
 import { info } from '../services/logging';
 
@@ -34,7 +34,7 @@ const getDownloadedModelsFromStorage = (): LocalModel[] => {
   }
 };
 
-const saveDownloadedModelsToStorage = (models: LocalModel[]) => {
+const saveDownloadedModelsToStorage = (models: LocalModel[]): void => {
   try {
     localStorage.setItem(STORAGE_KEYS.DOWNLOADED_MODELS, JSON.stringify(models));
   } catch {
@@ -50,7 +50,7 @@ const getActiveModelFromStorage = (): string | null => {
   }
 };
 
-const setActiveModelToStorage = (modelId: string | null) => {
+const setActiveModelToStorage = (modelId: string | null): void => {
   try {
     if (modelId) {
       localStorage.setItem(STORAGE_KEYS.ACTIVE_MODEL, modelId);
@@ -91,7 +91,7 @@ export const useModels = (): UseModelsReturn => {
 
   // Save active model to storage when it changes
   useEffect(() => {
-    setActiveModelToStorage(activeModel?.id || null);
+    setActiveModelToStorage(activeModel?.id ?? null);
   }, [activeModel?.id]);
 
   const downloadModel = useCallback(
@@ -145,7 +145,7 @@ export const useModels = (): UseModelsReturn => {
         return false;
       }
     },
-    [downloadedModels]
+    []
   );
 
   const deleteModel = useCallback(

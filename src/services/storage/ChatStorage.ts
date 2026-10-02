@@ -8,23 +8,29 @@ const STORE_NAME = 'chats';
 let db: IDBDatabase | null = null;
 
 // Validate chat object
-function validateChat(chat: any): chat is Chat {
-  return chat && 
-    typeof chat.id === 'string' && 
-    typeof chat.title === 'string' &&
-    Array.isArray(chat.messages) &&
-    typeof chat.profileId === 'string' &&
-    typeof chat.createdAt === 'number' &&
-    typeof chat.updatedAt === 'number';
+function validateChat(chat: unknown): chat is Chat {
+  return (
+    typeof chat === 'object' &&
+    chat !== null &&
+    typeof (chat as Chat).id === 'string' && 
+    typeof (chat as Chat).title === 'string' &&
+    Array.isArray((chat as Chat).messages) &&
+    typeof (chat as Chat).profileId === 'string' &&
+    typeof (chat as Chat).createdAt === 'number' &&
+    typeof (chat as Chat).updatedAt === 'number'
+  );
 }
 
 // Validate message object
-function validateMessage(message: any): message is Message {
-  return message && 
-    typeof message.id === 'string' && 
-    (message.role === 'user' || message.role === 'assistant') &&
-    typeof message.content === 'string' &&
-    typeof message.timestamp === 'number';
+function validateMessage(message: unknown): message is Message {
+  return (
+    typeof message === 'object' &&
+    message !== null &&
+    typeof (message as Message).id === 'string' && 
+    ((message as Message).role === 'user' || (message as Message).role === 'assistant') &&
+    typeof (message as Message).content === 'string' &&
+    typeof (message as Message).timestamp === 'number'
+  );
 }
 
 export const initChatDB = async (): Promise<void> => {
@@ -36,17 +42,17 @@ export const initChatDB = async (): Promise<void> => {
 
       const request = indexedDB.open(DB_NAME, 1);
 
-      request.onerror = () => {
+      request.onerror = (): void => {
         console.error('IndexedDB error:', request.error);
-        reject(request.error || new Error('Failed to open database'));
+        reject(request.error ?? new Error('Failed to open database'));
       };
 
-      request.onsuccess = () => {
+      request.onsuccess = (): void => {
         db = request.result;
         resolve();
       };
 
-      request.onupgradeneeded = (event) => {
+      request.onupgradeneeded = (event): void => {
         try {
           const database = (event.target as IDBOpenDBRequest).result;
           if (!database.objectStoreNames.contains(STORE_NAME)) {
@@ -67,7 +73,8 @@ export const initChatDB = async (): Promise<void> => {
 };
 
 export const saveChat = async (chat: Chat): Promise<void> => {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) {throw new Error('Database not initialized');}
+  const database = db;
 
   // Validate chat object
   if (!validateChat(chat)) {
@@ -93,16 +100,16 @@ export const saveChat = async (chat: Chat): Promise<void> => {
 
   return new Promise((resolve, reject) => {
     try {
-      const transaction = db!.transaction([STORE_NAME], 'readwrite');
+      const transaction = database.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
       const request = store.put(sanitizedChat);
 
-      request.onerror = () => {
+      request.onerror = (): void => {
         console.error('Failed to save chat:', request.error);
-        reject(request.error || new Error('Failed to save chat'));
+        reject(request.error ?? new Error('Failed to save chat'));
       };
 
-      request.onsuccess = () => resolve();
+      request.onsuccess = (): void => resolve();
     } catch (error) {
       console.error('Error saving chat:', error);
       reject(error);
@@ -111,7 +118,8 @@ export const saveChat = async (chat: Chat): Promise<void> => {
 };
 
 export const getChat = async (id: string): Promise<Chat | null> => {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) {throw new Error('Database not initialized');}
+  const database = db;
 
   if (typeof id !== 'string' || id.trim().length === 0) {
     throw new Error('Invalid chat ID');
@@ -119,22 +127,22 @@ export const getChat = async (id: string): Promise<Chat | null> => {
 
   return new Promise((resolve, reject) => {
     try {
-      const transaction = db!.transaction([STORE_NAME], 'readonly');
+      const transaction = database.transaction([STORE_NAME], 'readonly');
       const store = transaction.objectStore(STORE_NAME);
       const request = store.get(id);
 
-      request.onerror = () => {
+      request.onerror = (): void => {
         console.error('Failed to get chat:', request.error);
-        reject(request.error || new Error('Failed to get chat'));
+        reject(request.error ?? new Error('Failed to get chat'));
       };
 
-      request.onsuccess = () => {
+      request.onsuccess = (): void => {
         const result = request.result;
         if (result && !validateChat(result)) {
           warn('Retrieved invalid chat from database');
           resolve(null);
         } else {
-          resolve(result || null);
+          resolve(result ?? null);
         }
       };
     } catch (error) {
@@ -145,20 +153,21 @@ export const getChat = async (id: string): Promise<Chat | null> => {
 };
 
 export const getAllChats = async (): Promise<Chat[]> => {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) {throw new Error('Database not initialized');}
+  const database = db;
 
   return new Promise((resolve, reject) => {
     try {
-      const transaction = db!.transaction([STORE_NAME], 'readonly');
+      const transaction = database.transaction([STORE_NAME], 'readonly');
       const store = transaction.objectStore(STORE_NAME);
       const request = store.getAll();
 
-      request.onerror = () => {
+      request.onerror = (): void => {
         console.error('Failed to get all chats:', request.error);
-        reject(request.error || new Error('Failed to get all chats'));
+        reject(request.error ?? new Error('Failed to get all chats'));
       };
 
-      request.onsuccess = () => {
+      request.onsuccess = (): void => {
         const chats = request.result;
         // Filter out invalid chats
         const validChats = Array.isArray(chats) 
@@ -174,7 +183,8 @@ export const getAllChats = async (): Promise<Chat[]> => {
 };
 
 export const deleteChat = async (id: string): Promise<void> => {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) {throw new Error('Database not initialized');}
+  const database = db;
 
   if (typeof id !== 'string' || id.trim().length === 0) {
     throw new Error('Invalid chat ID');
@@ -182,16 +192,16 @@ export const deleteChat = async (id: string): Promise<void> => {
 
   return new Promise((resolve, reject) => {
     try {
-      const transaction = db!.transaction([STORE_NAME], 'readwrite');
+      const transaction = database.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
       const request = store.delete(id);
 
-      request.onerror = () => {
+      request.onerror = (): void => {
         console.error('Failed to delete chat:', request.error);
-        reject(request.error || new Error('Failed to delete chat'));
+        reject(request.error ?? new Error('Failed to delete chat'));
       };
 
-      request.onsuccess = () => resolve();
+      request.onsuccess = (): void => resolve();
     } catch (error) {
       console.error('Error deleting chat:', error);
       reject(error);
@@ -220,7 +230,7 @@ export const updateChatMessages = async (chatId: string, messages: Message[]): P
   });
 
   const chat = await getChat(chatId);
-  if (!chat) throw new Error('Chat not found');
+  if (!chat) {throw new Error('Chat not found');}
 
   chat.messages = sanitizedMessages;
   chat.updatedAt = Date.now();

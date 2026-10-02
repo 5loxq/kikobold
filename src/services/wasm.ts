@@ -7,7 +7,7 @@
 
 import { getRuntimeEnvironment } from './tauri-runtime';
 import { log, warn } from './logging';
-import { checkWebGPUSupport, checkWASMSupport } from './security';
+import { checkWASMSupport, checkWebGPUSupport } from './security';
 
 /**
  * WASM module interface
@@ -18,7 +18,7 @@ export interface WasmModule {
     crypto_generate_key?: (() => string) | (() => Promise<string>);
     crypto_encrypt_blob?: (dataB64: string, keyB64: string) => { encrypted_data: string; decryption_header: string } | Promise<{ encrypted_data: string; decryption_header: string }>;
     crypto_decrypt_blob?: (encryptedDataB64: string, headerB64: string, keyB64: string) => string | Promise<string>;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 /**
@@ -98,7 +98,7 @@ const loadTauriWasm = async (): Promise<WasmModule | null> => {
             crypto_init: () => {
                 // In Tauri, crypto is handled natively
             },
-            crypto_generate_key: async () => {
+            crypto_generate_key: async (): Promise<string> => {
                 try {
                     const { invoke } = await import('@tauri-apps/api/core');
                     return await invoke('crypto_generate_key') as string;
@@ -106,7 +106,7 @@ const loadTauriWasm = async (): Promise<WasmModule | null> => {
                     return '';
                 }
             },
-            crypto_encrypt_blob: async (dataB64: string, keyB64: string) => {
+            crypto_encrypt_blob: async (dataB64: string, keyB64: string): Promise<{ encrypted_data: string; decryption_header: string }> => {
                 try {
                     const { invoke } = await import('@tauri-apps/api/core');
                     const result = await invoke('crypto_encrypt_blob', {
@@ -117,7 +117,7 @@ const loadTauriWasm = async (): Promise<WasmModule | null> => {
                     return { encrypted_data: '', decryption_header: '' };
                 }
             },
-            crypto_decrypt_blob: async (encryptedDataB64: string, headerB64: string, keyB64: string) => {
+            crypto_decrypt_blob: async (encryptedDataB64: string, headerB64: string, keyB64: string): Promise<string> => {
                 try {
                     const { invoke } = await import('@tauri-apps/api/core');
                     return await invoke('crypto_decrypt_blob', {
@@ -146,11 +146,11 @@ const loadWebWasm = async (): Promise<WasmModule | null> => {
     try {
         // Try to dynamically import the WASM module
         // This assumes the module is built and available
-        // @ts-ignore - module may not exist at compile time
+        // @ts-expect-error - module may not exist at compile time
         const wasmModule = await import('../wasm/bindings');
         
         log('WASM loaded for web environment');
-        return wasmModule.default || wasmModule;
+        return (wasmModule.default ?? wasmModule) as WasmModule;
         
     } catch (importError) {
         warn('Failed to import WASM module:', importError);
@@ -159,7 +159,7 @@ const loadWebWasm = async (): Promise<WasmModule | null> => {
         try {
             const wasmModule = await import('ente-wasm/load');
             const loaded = await wasmModule.loadEnteWasm();
-            return loaded;
+            return loaded as WasmModule;
         } catch (fallbackError) {
             warn('Failed to load WASM with fallback:', fallbackError);
         }
@@ -194,11 +194,11 @@ export const ensureCryptoInit = async (): Promise<void> => {
  */
 export const createCryptoAdapter = (): CryptoAdapter => {
     return {
-        crypto_init: async () => {
+        crypto_init: async (): Promise<void> => {
             await ensureCryptoInit();
         },
         
-        crypto_generate_key: async () => {
+        crypto_generate_key: async (): Promise<string> => {
             try {
                 const module = await initWASM();
                 if (module && typeof module.crypto_generate_key === 'function') {
@@ -217,7 +217,7 @@ export const createCryptoAdapter = (): CryptoAdapter => {
             }
         },
         
-        crypto_encrypt_blob: async (dataB64: string, keyB64: string) => {
+        crypto_encrypt_blob: async (dataB64: string, keyB64: string): Promise<{ encrypted_data: string; decryption_header: string }> => {
             try {
                 const module = await initWASM();
                 if (module && typeof module.crypto_encrypt_blob === 'function') {
@@ -226,19 +226,19 @@ export const createCryptoAdapter = (): CryptoAdapter => {
                 
                 // Fallback: simple encryption
                 return {
-                    encrypted_data: btoa(dataB64 + '|' + keyB64),
+                    encrypted_data: btoa(`${dataB64  }|${  keyB64}`),
                     decryption_header: 'fallback'
                 };
                 
             } catch {
                 return {
-                    encrypted_data: btoa(dataB64 + '|' + keyB64),
+                    encrypted_data: btoa(`${dataB64  }|${  keyB64}`),
                     decryption_header: 'fallback'
                 };
             }
         },
         
-        crypto_decrypt_blob: async (encryptedDataB64: string, headerB64: string, keyB64: string) => {
+        crypto_decrypt_blob: async (encryptedDataB64: string, headerB64: string, keyB64: string): Promise<string> => {
             try {
                 const module = await initWASM();
                 if (module && typeof module.crypto_decrypt_blob === 'function') {

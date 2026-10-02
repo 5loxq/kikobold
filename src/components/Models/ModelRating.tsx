@@ -8,16 +8,16 @@
  * - Community recommendations
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Model } from '../../types';
 import {
-  rateModel,
+  getCommunityRecommendations,
   getModelRating,
-  removeModelRating,
   getRatingStatistics,
   getTopRatedModels,
-  getCommunityRecommendations,
+  rateModel,
+  removeModelRating,
 } from '../../services/model-config';
 
 interface StarRatingProps {
@@ -49,8 +49,8 @@ export const StarRating: React.FC<StarRatingProps> = ({
     setRating(currentRating);
   }, [modelId]);
 
-  const handleRatingChange = async (newRating: number | null) => {
-    if (!editable || isLoading) return;
+  const handleRatingChange = async (newRating: number | null): Promise<void> => {
+    if (!editable || isLoading) {return;}
 
     setIsLoading(true);
     try {
@@ -68,7 +68,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
     }
   };
 
-  const getStarSize = () => {
+  const getStarSize = (): string => {
     switch (size) {
       case 'small':
         return 'text-lg';
@@ -79,8 +79,8 @@ export const StarRating: React.FC<StarRatingProps> = ({
     }
   };
 
-  const renderStar = (starIndex: number) => {
-    const filled = (hoverRating !== null ? hoverRating : rating ?? 0) >= starIndex + 1;
+  const renderStar = (starIndex: number): JSX.Element => {
+    const filled = (hoverRating ?? rating ?? 0) >= starIndex + 1;
     const starColor = filled ? 'text-yellow-400' : 'text-gray-300';
     const starSize = getStarSize();
 
@@ -195,7 +195,7 @@ export const RatingStatistics: React.FC<RatingStatisticsProps> = ({
         <div className="flex justify-between text-sm">
           <span>{t('models.averageRating')}:</span>
           <span className="font-medium">
-            {stats.averageRating?.toFixed(1) || 'N/A'}
+            {stats.averageRating?.toFixed(1) ?? 'N/A'}
           </span>
         </div>
         
