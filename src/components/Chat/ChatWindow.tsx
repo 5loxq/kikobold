@@ -50,7 +50,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const [editedTitle, setEditedTitle] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = (): void => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
@@ -240,7 +240,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           <ChatExportImport
             chat={chat}
             allChats={chats}
-            onImportChats={onImportChats ?? (async () => {})}
+            onImportChats={onImportChats ?? (async (): Promise<void> => {})}
           />
         </div>
       </div>

@@ -75,7 +75,7 @@ export const useModelRatings = (): UseModelRatingsReturn => {
 
   // Load all data on mount
   useEffect(() => {
-    const loadData = async () => {
+    const loadData = async (): Promise<void> => {
       try {
         setIsLoading(true);
         

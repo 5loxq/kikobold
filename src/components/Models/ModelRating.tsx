@@ -49,7 +49,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
     setRating(currentRating);
   }, [modelId]);
 
-  const handleRatingChange = async (newRating: number | null) => {
+  const handleRatingChange = async (newRating: number | null): Promise<void> => {
     if (!editable || isLoading) {return;}
 
     setIsLoading(true);
@@ -68,7 +68,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
     }
   };
 
-  const getStarSize = () => {
+  const getStarSize = (): string => {
     switch (size) {
       case 'small':
         return 'text-lg';
@@ -79,7 +79,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
     }
   };
 
-  const renderStar = (starIndex: number) => {
+  const renderStar = (starIndex: number): JSX.Element => {
     const filled = (hoverRating ?? rating ?? 0) >= starIndex + 1;
     const starColor = filled ? 'text-yellow-400' : 'text-gray-300';
     const starSize = getStarSize();

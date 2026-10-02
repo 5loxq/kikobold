@@ -162,6 +162,16 @@ const detectOS = (): OSInfo => {
 // GPU Detection
 // ============================================================================
 
+interface GPUAdapterInfoStub {
+  vendor?: string;
+  device?: { description?: string; memory?: { totalBytes?: number } };
+}
+
+interface GPUAdapterStub {
+  name?: string;
+  requestAdapterInfo?: () => Promise<GPUAdapterInfoStub>;
+}
+
 const detectGPU = async (): Promise<GPUInfo> => {
   try {
     // Check if WebGPU is available
@@ -169,12 +179,12 @@ const detectGPU = async (): Promise<GPUInfo> => {
     
     if (webgpuAvailable && 'gpu' in navigator) {
       try {
-        const adapter = await (navigator as any).gpu.requestAdapter();
+        const adapter = await (navigator as Navigator & { gpu: { requestAdapter: () => Promise<GPUAdapterStub | null> } }).gpu.requestAdapter();
         if (adapter) {
           const info = await adapter.requestAdapterInfo?.();
           return {
-            name: info?.device?.description || adapter.name || 'Unknown GPU',
-            vendor: info?.vendor || 'Unknown',
+            name: info?.device?.description ?? adapter.name ?? 'Unknown GPU',
+            vendor: info?.vendor ?? 'Unknown',
             memoryMB: info?.device?.memory?.totalBytes ? 
                       Math.round(info.device.memory.totalBytes / (1024 * 1024)) : 0,
             webgpuSupport: true,
@@ -219,8 +229,11 @@ const detectGPU = async (): Promise<GPUInfo> => {
 const detectMemory = async (): Promise<MemoryInfo> => {
   try {
     // Check if performance.memory is available (only in Chrome)
-    if (typeof window !== 'undefined' && 'performance' in window && 'memory' in (window as any).performance) {
-      const memory = (window as any).performance.memory;
+    const perf = typeof window !== 'undefined' && 'performance' in window
+      ? (window.performance as Performance & { memory?: { jsHeapSizeLimit: number; usedJSHeapSize: number } })
+      : undefined;
+    if (perf?.memory) {
+      const memory = perf.memory;
       const totalMB = Math.round(memory.jsHeapSizeLimit / (1024 * 1024));
       const usedMB = Math.round(memory.usedJSHeapSize / (1024 * 1024));
       const availableMB = totalMB - usedMB;
@@ -436,7 +449,7 @@ export const getSystemInfo = async (): Promise<SystemInfo> => {
     return infoPromise;
   }
   
-  infoPromise = (async () => {
+  infoPromise = (async (): Promise<SystemInfo> => {
     const [browser, os, gpu, memory, cpu, features, storage] = await Promise.all([
       Promise.resolve(detectBrowser()),
       Promise.resolve(detectOS()),

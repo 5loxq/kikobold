@@ -21,7 +21,7 @@ import { Prism } from 'prism-react-renderer';
 // Type assertion for SyntaxHighlighter to work around type issues
 const SyntaxHighlighter = Prism as unknown as React.ComponentType<{
   language: string;
-  style: any;
+  style: Record<string, unknown>;
   customStyle?: React.CSSProperties;
   children: React.ReactNode;
 }>;
