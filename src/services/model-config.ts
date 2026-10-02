@@ -8,7 +8,7 @@
  * - Model search and filtering
  */
 
-import type { Model, LocalModel, Message } from '../types';
+import type { LocalModel, Message, Model } from '../types';
 import { MODELS } from './models/model-registry';
 import { secureLocalStorage } from './security';
 
@@ -105,7 +105,7 @@ let initialized = false;
  * Initialize model configuration service
  */
 export const initModelConfigService = async (): Promise<void> => {
-  if (initialized) return;
+  if (initialized) {return;}
 
   // Load saved settings
   loadModelSettings();
@@ -276,7 +276,7 @@ export const resetAllModelSettings = (): void => {
  * Get metadata for a specific model
  */
 export const getModelMetadata = (modelId: string): ModelMetadata | null => {
-  if (!modelId) return null;
+  if (!modelId) {return null;}
 
   // Check cache first
   if (modelMetadataCache[modelId]) {
@@ -292,7 +292,7 @@ export const getModelMetadata = (modelId: string): ModelMetadata | null => {
       description: builtInModel.description || '',
       author: 'HuggingFace',
       license: 'Apache-2.0',
-      sizeBytes: (builtInModel.fileSizeMB || 0) * 1024 * 1024,
+      sizeBytes: (builtInModel.fileSizeMB ?? 0) * 1024 * 1024,
       parameterCount: parseParameterCount(builtInModel.modelSize),
       quantized: builtInModel.quantized,
       quantizationMethod: builtInModel.quantized ? 'GGUF' : undefined,
@@ -342,7 +342,7 @@ export const getAllModelMetadata = (): Record<string, ModelMetadata> => {
  * Check if a model is a favorite
  */
 export const isModelFavorite = (modelId: string): boolean => {
-  if (!modelId) return false;
+  if (!modelId) {return false;}
   return favoriteModelsCache.has(modelId);
 };
 
@@ -441,12 +441,12 @@ export const filterModels = (
 
   // Filter by max size
   if (options.maxSizeMB) {
-    filtered = filtered.filter(model => (model.fileSizeMB || 0) <= (options.maxSizeMB || 0));
+    filtered = filtered.filter(model => (model.fileSizeMB ?? 0) <= (options.maxSizeMB ?? 0));
   }
 
   // Filter by min context length
   if (options.minContextLength) {
-    filtered = filtered.filter(model => model.contextLength >= (options.minContextLength || 0));
+    filtered = filtered.filter(model => model.contextLength >= (options.minContextLength ?? 0));
   }
 
   // Filter by search query
@@ -475,7 +475,7 @@ export const sortModels = (
         comparison = a.name.localeCompare(b.name);
         break;
       case 'size':
-        comparison = (a.fileSizeMB || 0) - (b.fileSizeMB || 0);
+        comparison = (a.fileSizeMB ?? 0) - (b.fileSizeMB ?? 0);
         break;
       case 'contextLength':
         comparison = a.contextLength - b.contextLength;
@@ -507,7 +507,7 @@ export const setModelCustomName = (modelId: string, customName: string): void =>
  */
 export const getModelDisplayName = (modelId: string): string => {
   const settings = getModelSettings(modelId);
-  return settings.customName || MODELS.find(m => m.id === modelId)?.name || modelId;
+  return settings.customName ?? MODELS.find(m => m.id === modelId)?.name ?? modelId;
 };
 
 /**
@@ -522,7 +522,7 @@ export const setModelNotes = (modelId: string, notes: string): void => {
  */
 export const getModelNotes = (modelId: string): string => {
   const settings = getModelSettings(modelId);
-  return settings.notes || '';
+  return settings.notes ?? '';
 };
 
 // ============================================================================
@@ -534,7 +534,7 @@ export const getModelNotes = (modelId: string): string => {
  */
 export const addModelTag = (modelId: string, tag: string): void => {
   const settings = getModelSettings(modelId);
-  const tags = settings.tags || [];
+  const tags = settings.tags ?? [];
   
   if (!tags.includes(tag)) {
     tags.push(tag);
@@ -547,7 +547,7 @@ export const addModelTag = (modelId: string, tag: string): void => {
  */
 export const removeModelTag = (modelId: string, tag: string): void => {
   const settings = getModelSettings(modelId);
-  const tags = settings.tags || [];
+  const tags = settings.tags ?? [];
   
   const updatedTags = tags.filter(t => t !== tag);
   updateModelSettings(modelId, { tags: updatedTags });
@@ -558,7 +558,7 @@ export const removeModelTag = (modelId: string, tag: string): void => {
  */
 export const getModelTags = (modelId: string): string[] => {
   const settings = getModelSettings(modelId);
-  return settings.tags || [];
+  return settings.tags ?? [];
 };
 
 /**
@@ -701,7 +701,7 @@ export const getSystemRecommendedModels = (
   
   // Check if we have system info
   const hasGPU = systemInfo?.hardware?.gpu?.available;
-  const totalMemoryMB = systemInfo?.hardware?.memory?.totalMB || 0;
+  const totalMemoryMB = systemInfo?.hardware?.memory?.totalMB ?? 0;
   const browserName = systemInfo?.browser?.name;
   
   // Always recommend small models for compatibility
@@ -777,8 +777,8 @@ export const getSystemRecommendedModels = (
   
   // Sort by model size (smallest first)
   uniqueRecommendations.sort((a, b) => {
-    const sizeA = a.model.fileSizeMB || 0;
-    const sizeB = b.model.fileSizeMB || 0;
+    const sizeA = a.model.fileSizeMB ?? 0;
+    const sizeB = b.model.fileSizeMB ?? 0;
     return sizeA - sizeB;
   });
   
@@ -794,7 +794,7 @@ export const getSystemRecommendedModels = (
  */
 function parseParameterCount(sizeStr: string): number {
   const match = sizeStr.match(/(\d+(?:\.\d+)?)\s*B/i);
-  if (!match) return 0;
+  if (!match) {return 0;}
   
   const num = parseFloat(match[1]);
   return Math.round(num * 1000000000);

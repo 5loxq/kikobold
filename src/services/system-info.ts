@@ -8,8 +8,8 @@
  * - Storage information
  */
 
-import { SystemInfo, GPUInfo, MemoryInfo } from '../types/ensu-types';
-import { checkWebGPUSupport, checkWASMSupport } from './security';
+import { GPUInfo, MemoryInfo, SystemInfo } from '../types/ensu-types';
+import { checkWASMSupport, checkWebGPUSupport } from './security';
 
 // ============================================================================
 // Browser Detection
@@ -365,7 +365,7 @@ const detectStorage = async (): Promise<StorageInfo> => {
     let maxStorageMB = 0;
     
     // Try to get quota information
-    if (navigator.storage && navigator.storage.estimate) {
+    if (navigator.storage?.estimate) {
       try {
         const estimate = await navigator.storage.estimate();
         usedStorageMB = Math.round((estimate.usage ?? 0) / (1024 * 1024));
@@ -533,7 +533,7 @@ export const getOSName = (): string => {
  * Check if running on mobile device
  */
 export const isMobileDevice = (): boolean => {
-  if (typeof navigator === 'undefined') return false;
+  if (typeof navigator === 'undefined') {return false;}
   return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 };
 
@@ -548,7 +548,7 @@ export const isDesktopDevice = (): boolean => {
  * Get device type
  */
 export const getDeviceType = (): 'mobile' | 'tablet' | 'desktop' => {
-  if (typeof navigator === 'undefined') return 'desktop';
+  if (typeof navigator === 'undefined') {return 'desktop';}
   
   const userAgent = navigator.userAgent;
   
