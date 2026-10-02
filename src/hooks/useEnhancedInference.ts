@@ -391,6 +391,7 @@ export const useEnhancedInference = (
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
+    engineRef.current?.interruptGenerate?.();
     setIsGenerating(false);
     setIsStreaming(false);
   }, []);
