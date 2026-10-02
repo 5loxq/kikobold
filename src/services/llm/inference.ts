@@ -118,7 +118,7 @@ class InferenceSession {
             
             this.pipeline = await pipeline('text-generation', this.modelPath, {
                 dtype: 'auto',
-            } as any);
+            } as Record<string, unknown>);
             
             log(`Inference session initialized: ${this.modelPath}`);
         } catch (err) {
@@ -158,10 +158,10 @@ class InferenceSession {
             let generatedTokens = 0;
             
             if (Array.isArray(result)) {
-                generatedText = result.map(r => (r as any).generated_text || '').join('');
+                generatedText = result.map(r => (r as { generated_text?: string }).generated_text ?? '').join('');
                 generatedTokens = result.length;
             } else if (result && typeof result === 'object' && 'generated_text' in result) {
-                generatedText = (result as any).generated_text as string;
+                generatedText = (result as { generated_text?: string }).generated_text as string;
                 generatedTokens = 1;
             } else {
                 generatedText = String(result);
@@ -234,11 +234,11 @@ class InferenceSession {
             });
             
             if (Array.isArray(result)) {
-                return (result[0] as any)?.generated_text || '';
+                return (result[0] as { generated_text?: string } | undefined)?.generated_text ?? '';
             }
             
             if (result && typeof result === 'object' && 'generated_text' in result) {
-                return (result as any).generated_text as string;
+                return (result as { generated_text?: string }).generated_text as string;
             }
             
             return String(result);
@@ -256,8 +256,8 @@ class InferenceSession {
     cleanup(): void {
         if (this.pipeline) {
             try {
-                if (typeof (this.pipeline as any).dispose === 'function') {
-                    (this.pipeline as any).dispose();
+                if (typeof (this.pipeline as { dispose?: () => void }).dispose === 'function') {
+                    (this.pipeline as { dispose?: () => void }).dispose?.();
                 }
             } catch {
                 // Ignore cleanup errors
@@ -585,7 +585,7 @@ class NativeBackend implements InferenceBackend {
     cancel(jobId: number): void {
         if (!isTauriRuntime()) {return;}
         // Fire and forget - Tauri invoke is async but we can't await in a sync method
-        (async () => {
+        (async (): Promise<void> => {
             try {
                 const { invoke } = await import('@tauri-apps/api/core');
                 await invoke('cancel_job', { jobId });

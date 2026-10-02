@@ -10,8 +10,21 @@ interface InputBoxProps {
 }
 
 // Type definition for SpeechRecognition API
+interface SpeechRecognitionInstance {
+  continuous: boolean;
+  interimResults: boolean;
+  maxAlternatives: number;
+  lang: string;
+  onstart: () => void;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onerror: (event: SpeechRecognitionErrorEvent) => void;
+  onend: () => void;
+  start: () => void;
+  stop: () => void;
+}
+
 interface SpeechRecognitionType {
-  new (): typeof SpeechRecognition;
+  new (): SpeechRecognitionInstance;
   continuous: boolean;
   interimResults: boolean;
   maxAlternatives: number;
@@ -49,10 +62,10 @@ interface SpeechRecognitionErrorEvent {
 // Get SpeechRecognition API with proper typing
 const getSpeechRecognition = (): SpeechRecognitionType | null => {
   if ('SpeechRecognition' in window) {
-    return (window as any).SpeechRecognition as SpeechRecognitionType;
+    return (window as Window & { SpeechRecognition?: unknown }).SpeechRecognition as SpeechRecognitionType;
   }
   if ('webkitSpeechRecognition' in window) {
-    return (window as any).webkitSpeechRecognition as SpeechRecognitionType;
+    return (window as Window & { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition as SpeechRecognitionType;
   }
   return null;
 };
@@ -68,9 +81,9 @@ export const InputBox: React.FC<InputBoxProps> = ({
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
-  const startListening = async () => {
+  const startListening = async (): Promise<void> => {
     try {
       // Check if SpeechRecognition is available
       if (!SpeechRecognition) {
@@ -114,12 +127,12 @@ export const InputBox: React.FC<InputBoxProps> = ({
       const currentLang = i18n.language === 'de' ? 'de-DE' : 'en-US';
       recognition.lang = currentLang;
 
-      recognition.onstart = () => {
+      recognition.onstart = (): void => {
         setIsListening(true);
         log('Speech recognition started');
       };
 
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
+      recognition.onresult = (event: SpeechRecognitionEvent): void => {
         let transcript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
           transcript += event.results[i][0].transcript;
@@ -136,14 +149,14 @@ export const InputBox: React.FC<InputBoxProps> = ({
         }
       };
 
-      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      recognition.onerror = (event: SpeechRecognitionErrorEvent): void => {
         const errorMsg = event.error instanceof Error ? event.error.message : String(event.error);
         error('Speech recognition error:', event.error);
         setIsListening(false);
         alert(`${t('chat.micError')}: ${errorMsg}`);
       };
 
-      recognition.onend = () => {
+      recognition.onend = (): void => {
         setIsListening(false);
         log('Speech recognition ended');
       };
@@ -158,13 +171,13 @@ export const InputBox: React.FC<InputBoxProps> = ({
     }
   };
 
-  const stopListening = () => {
+  const stopListening = (): void => {
     if (recognitionRef.current) {
       recognitionRef.current.stop();
     }
   };
 
-  const handleSend = () => {
+  const handleSend = (): void => {
     if (input.trim() && !isLoading && isModelLoaded) {
       onSendMessage(input);
       setInput('');
@@ -174,7 +187,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent): void => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();

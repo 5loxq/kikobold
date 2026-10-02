@@ -83,8 +83,9 @@ export const getCurrentVersion = (): string => {
         
         // In web, try to read from import.meta.env or window
         if (typeof window !== 'undefined') {
-            if ((window as any).APP_VERSION) {
-                return (window as any).APP_VERSION;
+            const appVersion = (window as Window & { APP_VERSION?: string }).APP_VERSION;
+            if (appVersion) {
+                return appVersion;
             }
         }
         
@@ -175,9 +176,9 @@ const checkTauriUpdates = async (currentVersion: string): Promise<UpdateCheckRes
                 updateInfo = {
                     version,
                     description: 'New version available',
-                    releaseNotes: (update as any).body || (update as any).releaseNotes,
-                    releaseDate: (update as any).date?.toISOString(),
-                    downloadUrl: (update as any).url,
+                    releaseNotes: (update as { body?: string; releaseNotes?: string }).body ?? (update as { releaseNotes?: string }).releaseNotes,
+                    releaseDate: (update as { date?: Date }).date?.toISOString(),
+                    downloadUrl: (update as { url?: string }).url,
                     isMandatory: false,
                     available: true,
                 };

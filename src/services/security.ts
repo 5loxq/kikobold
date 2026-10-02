@@ -563,7 +563,7 @@ export const checkWebGPUSupport = async (): Promise<boolean> => {
             return false;
         }
 
-        const adapter = await (navigator as any).gpu.requestAdapter();
+        const adapter = await (navigator as Navigator & { gpu: { requestAdapter: () => Promise<{ requestDevice: () => Promise<unknown> } | null> } }).gpu.requestAdapter();
         if (!adapter) {
             return false;
         }
@@ -770,9 +770,9 @@ export interface MemoryInfo {
  * Get system memory information
  */
 export const getSystemMemoryInfo = (): MemoryInfo => {
-    if (typeof navigator !== 'undefined' && (navigator as any).deviceMemory) {
+    if (typeof navigator !== 'undefined' && (navigator as Navigator & { deviceMemory?: number }).deviceMemory) {
         // Chrome/Edge provide deviceMemory in GB
-        const totalGB = (navigator as any).deviceMemory;
+        const totalGB = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 4;
         const totalMB = totalGB * 1024;
         
         // Estimate available memory (rough approximation)
@@ -784,12 +784,15 @@ export const getSystemMemoryInfo = (): MemoryInfo => {
     }
     
     // Fallback: use performance.memory if available (Chrome)
-    if (typeof performance !== 'undefined' && (performance as any).memory) {
-        const mem = (performance as any).memory;
+    const performanceWithMemory = typeof performance !== 'undefined'
+        ? (performance as Performance & { memory?: { jsHeapSizeLimit?: number; usedJSHeapSize?: number } })
+        : undefined;
+    if (performanceWithMemory?.memory) {
+        const mem = performanceWithMemory.memory;
         return {
             totalMB: mem.jsHeapSizeLimit ? Math.round(mem.jsHeapSizeLimit / (1024 * 1024)) : 4096,
-            availableMB: mem.jsHeapSizeLimit ? Math.round((mem.jsHeapSizeLimit - mem.usedJSHeapSize) / (1024 * 1024)) : 2048,
-            usedMB: mem.usedJSHeapSize ? Math.round(mem.usedJSHeapSize / (1024 * 1024)) : 512,
+            availableMB: mem.jsHeapSizeLimit ? Math.round((mem.jsHeapSizeLimit - (mem.usedJSHeapSize ?? 0)) / (1024 * 1024)) : 2048,
+            usedMB: mem.usedJSHeapSize ? Math.round(mem.usedJSHeapSize / (1024 * 1024)) : 512, // eslint-disable-line @typescript-eslint/no-unnecessary-condition
         };
     }
     
