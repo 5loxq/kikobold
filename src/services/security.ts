@@ -28,7 +28,7 @@ const XSS_PATTERNS = [
 ];
 
 // Control characters and dangerous Unicode
-const DANGEROUS_CHARS = /[\x00-\x1F\x7F-\x9F\u2028\u2029]/g;
+const DANGEROUS_CHARS = /[\x00-\x1F\x7F-\x9F\u2028\u2029]/g; // eslint-disable-line no-control-regex
 
 /**
  * Sanitize HTML content to prevent XSS attacks
@@ -468,9 +468,9 @@ export const isTrustedDomain = (url: string): boolean => {
         // Check if domain or any of its subdomains are trusted
         return TRUSTED_DOMAINS.some(trusted => {
             // Exact match
-            if (hostname === trusted) return true;
+            if (hostname === trusted) {return true;}
             // Subdomain match
-            if (hostname.endsWith(`.${trusted}`)) return true;
+            if (hostname.endsWith(`.${trusted}`)) {return true;}
             return false;
         });
     } catch {
@@ -511,7 +511,7 @@ export const sanitizeModelName = (name: string): string => {
  * Format bytes to human-readable string
  */
 export const formatBytes = (bytes: number): string => {
-    if (!bytes || bytes <= 0) return '0 B';
+    if (!bytes || bytes <= 0) {return '0 B';}
     const units = ['B', 'KB', 'MB', 'GB', 'TB'];
     const idx = Math.min(
         units.length - 1,
@@ -563,7 +563,7 @@ export const checkWebGPUSupport = async (): Promise<boolean> => {
             return false;
         }
 
-        const adapter = await (navigator as any).gpu.requestAdapter();
+        const adapter = await (navigator as Navigator & { gpu: { requestAdapter: () => Promise<{ requestDevice: () => Promise<unknown> } | null> } }).gpu.requestAdapter();
         if (!adapter) {
             return false;
         }
@@ -701,7 +701,7 @@ export const isOnnxFile = (filename: string): boolean => {
 export const validateModelFileExtension = (filename: string): boolean => {
     const lower = filename.toLowerCase();
     const validExtensions = ['.gguf', '.bin', '.onnx', '.safetensors', '.json'];
-    return validExtensions.some(ext => lower.endsWith(ext) || lower.includes(ext + '?'));
+    return validExtensions.some(ext => lower.endsWith(ext) || lower.includes(`${ext  }?`));
 };
 
 /**
@@ -770,9 +770,9 @@ export interface MemoryInfo {
  * Get system memory information
  */
 export const getSystemMemoryInfo = (): MemoryInfo => {
-    if (typeof navigator !== 'undefined' && (navigator as any).deviceMemory) {
+    if (typeof navigator !== 'undefined' && (navigator as Navigator & { deviceMemory?: number }).deviceMemory) {
         // Chrome/Edge provide deviceMemory in GB
-        const totalGB = (navigator as any).deviceMemory;
+        const totalGB = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 4;
         const totalMB = totalGB * 1024;
         
         // Estimate available memory (rough approximation)
@@ -784,12 +784,15 @@ export const getSystemMemoryInfo = (): MemoryInfo => {
     }
     
     // Fallback: use performance.memory if available (Chrome)
-    if (typeof performance !== 'undefined' && (performance as any).memory) {
-        const mem = (performance as any).memory;
+    const performanceWithMemory = typeof performance !== 'undefined'
+        ? (performance as Performance & { memory?: { jsHeapSizeLimit?: number; usedJSHeapSize?: number } })
+        : undefined;
+    if (performanceWithMemory?.memory) {
+        const mem = performanceWithMemory.memory;
         return {
             totalMB: mem.jsHeapSizeLimit ? Math.round(mem.jsHeapSizeLimit / (1024 * 1024)) : 4096,
-            availableMB: mem.jsHeapSizeLimit ? Math.round((mem.jsHeapSizeLimit - mem.usedJSHeapSize) / (1024 * 1024)) : 2048,
-            usedMB: mem.usedJSHeapSize ? Math.round(mem.usedJSHeapSize / (1024 * 1024)) : 512,
+            availableMB: mem.jsHeapSizeLimit ? Math.round((mem.jsHeapSizeLimit - (mem.usedJSHeapSize ?? 0)) / (1024 * 1024)) : 2048,
+            usedMB: mem.usedJSHeapSize ? Math.round(mem.usedJSHeapSize / (1024 * 1024)) : 512, // eslint-disable-line @typescript-eslint/no-unnecessary-condition
         };
     }
     

@@ -1,23 +1,26 @@
 import { Profile } from '../../types';
 import { warn } from '../logging';
-import { secureLocalStorage, sanitizeInput } from '../security';
+import { sanitizeInput, secureLocalStorage } from '../security';
 
 const PROFILE_STORAGE_KEY = 'llm_profiles';
 
 // Validate profile object
-function validateProfile(profile: any): profile is Profile {
-  return profile &&
-    typeof profile.id === 'string' &&
-    typeof profile.name === 'string' &&
-    typeof profile.systemPrompt === 'string' &&
-    typeof profile.temperature === 'number' &&
-    typeof profile.topP === 'number' &&
-    typeof profile.maxTokens === 'number' &&
-    typeof profile.createdAt === 'number' &&
-    typeof profile.updatedAt === 'number' &&
-    profile.temperature >= 0 && profile.temperature <= 2 &&
-    profile.topP >= 0 && profile.topP <= 1 &&
-    profile.maxTokens >= 1 && profile.maxTokens <= 2048;
+function validateProfile(profile: unknown): profile is Profile {
+  return (
+    typeof profile === 'object' &&
+    profile !== null &&
+    typeof (profile as Profile).id === 'string' &&
+    typeof (profile as Profile).name === 'string' &&
+    typeof (profile as Profile).systemPrompt === 'string' &&
+    typeof (profile as Profile).temperature === 'number' &&
+    typeof (profile as Profile).topP === 'number' &&
+    typeof (profile as Profile).maxTokens === 'number' &&
+    typeof (profile as Profile).createdAt === 'number' &&
+    typeof (profile as Profile).updatedAt === 'number' &&
+    (profile as Profile).temperature >= 0 && (profile as Profile).temperature <= 2 &&
+    (profile as Profile).topP >= 0 && (profile as Profile).topP <= 1 &&
+    (profile as Profile).maxTokens >= 1 && (profile as Profile).maxTokens <= 2048
+  );
 }
 
 export const getProfiles = (): Profile[] => {

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { error, log } from '../../services/logging';
 import { sanitizeInputLight } from '../../services/security';
@@ -7,11 +7,26 @@ interface InputBoxProps {
   onSendMessage: (message: string) => void;
   isLoading: boolean;
   isModelLoaded: boolean;
+  isGenerating?: boolean;
+  onStopGeneration?: () => void;
 }
 
 // Type definition for SpeechRecognition API
+interface SpeechRecognitionInstance {
+  continuous: boolean;
+  interimResults: boolean;
+  maxAlternatives: number;
+  lang: string;
+  onstart: () => void;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onerror: (event: SpeechRecognitionErrorEvent) => void;
+  onend: () => void;
+  start: () => void;
+  stop: () => void;
+}
+
 interface SpeechRecognitionType {
-  new (): typeof SpeechRecognition;
+  new (): SpeechRecognitionInstance;
   continuous: boolean;
   interimResults: boolean;
   maxAlternatives: number;
@@ -49,10 +64,10 @@ interface SpeechRecognitionErrorEvent {
 // Get SpeechRecognition API with proper typing
 const getSpeechRecognition = (): SpeechRecognitionType | null => {
   if ('SpeechRecognition' in window) {
-    return (window as any).SpeechRecognition as SpeechRecognitionType;
+    return (window as Window & { SpeechRecognition?: unknown }).SpeechRecognition as SpeechRecognitionType;
   }
   if ('webkitSpeechRecognition' in window) {
-    return (window as any).webkitSpeechRecognition as SpeechRecognitionType;
+    return (window as Window & { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition as SpeechRecognitionType;
   }
   return null;
 };
@@ -63,14 +78,16 @@ export const InputBox: React.FC<InputBoxProps> = ({
   onSendMessage,
   isLoading,
   isModelLoaded,
+  isGenerating = false,
+  onStopGeneration,
 }) => {
   const { t, i18n } = useTranslation();
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
-  const startListening = async () => {
+  const startListening = async (): Promise<void> => {
     try {
       // Check if SpeechRecognition is available
       if (!SpeechRecognition) {
@@ -79,7 +96,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
       }
 
       // Check for microphone permission
-      if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
+      if (!navigator.mediaDevices?.getUserMedia) {
         alert(t('chat.micPermissionRequired'));
         return;
       }
@@ -114,12 +131,12 @@ export const InputBox: React.FC<InputBoxProps> = ({
       const currentLang = i18n.language === 'de' ? 'de-DE' : 'en-US';
       recognition.lang = currentLang;
 
-      recognition.onstart = () => {
+      recognition.onstart = (): void => {
         setIsListening(true);
         log('Speech recognition started');
       };
 
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
+      recognition.onresult = (event: SpeechRecognitionEvent): void => {
         let transcript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
           transcript += event.results[i][0].transcript;
@@ -136,14 +153,14 @@ export const InputBox: React.FC<InputBoxProps> = ({
         }
       };
 
-      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      recognition.onerror = (event: SpeechRecognitionErrorEvent): void => {
         const errorMsg = event.error instanceof Error ? event.error.message : String(event.error);
         error('Speech recognition error:', event.error);
         setIsListening(false);
         alert(`${t('chat.micError')}: ${errorMsg}`);
       };
 
-      recognition.onend = () => {
+      recognition.onend = (): void => {
         setIsListening(false);
         log('Speech recognition ended');
       };
@@ -154,17 +171,17 @@ export const InputBox: React.FC<InputBoxProps> = ({
     } catch (err) {
       error('Failed to start speech recognition:', err);
       setIsListening(false);
-      alert(t('chat.micError') + ': ' + (err instanceof Error ? err.message : String(err)));
+      alert(`${t('chat.micError')  }: ${  err instanceof Error ? err.message : String(err)}`);
     }
   };
 
-  const stopListening = () => {
+  const stopListening = (): void => {
     if (recognitionRef.current) {
       recognitionRef.current.stop();
     }
   };
 
-  const handleSend = () => {
+  const handleSend = (): void => {
     if (input.trim() && !isLoading && isModelLoaded) {
       onSendMessage(input);
       setInput('');
@@ -174,8 +191,13 @@ export const InputBox: React.FC<InputBoxProps> = ({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent): void => {
     if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+    // Ctrl/Cmd+Enter also sends, works even with shift held
+    if (e.key === 'Enter' && e.shiftKey && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       handleSend();
     }
@@ -189,10 +211,10 @@ export const InputBox: React.FC<InputBoxProps> = ({
     setInput(sanitizedInput);
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = Math.min(
+      textareaRef.current.style.height = `${Math.min(
         textareaRef.current.scrollHeight,
         150
-      ) + 'px';
+      )  }px`;
     }
   }, []);
 
@@ -246,6 +268,17 @@ export const InputBox: React.FC<InputBoxProps> = ({
           {isListening ? '🛑' : '🎙️'}
         </button>
 
+        {/* Stop Generation Button */}
+        {isGenerating && onStopGeneration && (
+          <button
+            onClick={onStopGeneration}
+            className="px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow-md bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 transform hover:scale-105 active:scale-95"
+            aria-label={t('chat.stop')}
+            title={t('chat.stop')}
+          >
+            ⏹
+          </button>
+        )}
         {/* Send Button - Modern Design */}
         <button
           onClick={handleSend}

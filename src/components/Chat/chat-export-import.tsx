@@ -18,23 +18,23 @@ export const ChatExportImport: React.FC<ChatExportImportProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importingStatus, setImportingStatus] = React.useState<string | null>(null);
 
-  const handleExportCurrentChat = () => {
-    if (!chat) return;
+  const handleExportCurrentChat = (): void => {
+    if (!chat) {return;}
     ChatExport.exportChatAsMarkdown(chat);
   };
 
-  const handleExportAllChats = () => {
-    if (allChats.length === 0) return;
+  const handleExportAllChats = (): void => {
+    if (allChats.length === 0) {return;}
     ChatExport.exportChats(allChats);
   };
 
-  const handleImportClick = () => {
+  const handleImportClick = (): void => {
     fileInputRef.current?.click();
   };
 
-  const handleFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelected = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {return;}
 
     try {
       setImportingStatus('importing');

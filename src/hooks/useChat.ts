@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Chat, Message, UseChatReturn } from '../types';
 import * as ChatStorage from '../services/storage/ChatStorage';
 
@@ -20,7 +20,7 @@ export const useChat = (): UseChatReturn => {
   }, []);
 
   useEffect(() => {
-    const initDB = async () => {
+    const initDB = async (): Promise<void> => {
       try {
         await ChatStorage.initChatDB();
         await loadChats();
@@ -72,7 +72,7 @@ export const useChat = (): UseChatReturn => {
 
       // Use functional state update to avoid stale closure issues
       setChat(prevChat => {
-        if (!prevChat) return prevChat;
+        if (!prevChat) {return prevChat;}
         const updatedMessages = [...prevChat.messages, newMessage];
         // Save to storage asynchronously
         ChatStorage.updateChatMessages(prevChat.id, updatedMessages);
