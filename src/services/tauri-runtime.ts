@@ -13,12 +13,12 @@ export const isTauriRuntime = (): boolean => {
         // Check for Tauri-specific global objects
         if (typeof window !== 'undefined') {
             // Check for __TAURI__ global (Tauri v2+)
-            if ((window as any).__TAURI__ !== undefined) {
+            if ((window as Window & { __TAURI__?: unknown }).__TAURI__ !== undefined) {
                 return true;
             }
             
             // Check for tauri API availability
-            if ((window as any).tauri !== undefined) {
+            if ((window as Window & { tauri?: unknown }).tauri !== undefined) {
                 return true;
             }
             
@@ -64,7 +64,7 @@ export const isElectronRuntime = (): boolean => {
     try {
         if (typeof window !== 'undefined') {
             // Check for Electron-specific global objects
-            const w = window as unknown as { electron?: any; process?: { versions?: { electron?: string } } };
+            const w = window as unknown as { electron?: unknown; process?: { versions?: { electron?: string } } };
             if (w.electron !== undefined) {
                 return true;
             }
@@ -77,7 +77,7 @@ export const isElectronRuntime = (): boolean => {
             // Check for process.versions.electron
             if (typeof process !== 'undefined' && 
                 process.versions !== undefined && 
-                (process.versions as any).electron !== undefined) {
+                (process.versions as { electron?: string }).electron !== undefined) {
                 return true;
             }
         }
@@ -94,7 +94,7 @@ export const isBrowserExtension = (): boolean => {
     try {
         if (typeof window !== 'undefined') {
             // Check for extension-specific contexts
-            const w = window as unknown as { chrome?: { extension?: any }; browser?: { extension?: any } };
+            const w = window as unknown as { chrome?: { extension?: unknown }; browser?: { extension?: unknown } };
             if (w.chrome !== undefined && w.chrome.extension !== undefined) {
                 return true;
             }

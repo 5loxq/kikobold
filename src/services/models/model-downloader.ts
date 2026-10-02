@@ -136,9 +136,12 @@ const fetchRemoteSize = async (url: string): Promise<number | undefined> => {
 /**
  * Process download queue
  */
-const processQueue = async (maxParallel: number = DEFAULT_MAX_PARALLEL) => {
+const processQueue = async (maxParallel: number = DEFAULT_MAX_PARALLEL): Promise<void> => {
     while (downloadQueue.length > 0 && activeDownloadCount < maxParallel) {
-        const item = downloadQueue.shift()!;
+        const item = downloadQueue.shift();
+        if (!item) {
+            continue;
+        }
         activeDownloadCount++;
 
         try {

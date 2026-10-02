@@ -5,7 +5,7 @@ import { secureLocalStorage } from '../../services/security';
 export const LanguageSwitcher: React.FC<{ isCollapsed?: boolean }> = ({ isCollapsed = false }) => {
   const { i18n } = useTranslation();
 
-  const handleLanguageChange = (lang: string) => {
+  const handleLanguageChange = (lang: string): void => {
     i18n.changeLanguage(lang);
     secureLocalStorage.setItem('language_preference', lang);
   };

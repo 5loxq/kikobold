@@ -26,7 +26,7 @@ export const ModelManager: React.FC<ModelManagerProps> = ({
   const [downloading, setDownloading] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<Record<string, number>>({});
 
-  const handleDownload = async (model: Model) => {
+  const handleDownload = async (model: Model): Promise<void> => {
     setDownloading(model.id);
     setDownloadProgress(prev => ({ ...prev, [model.id]: 0 }));
 
