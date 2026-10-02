@@ -8,15 +8,39 @@ interface MessageListProps {
   isLoading: boolean;
   messagesEndRef?: React.RefObject<HTMLDivElement>;
   isDarkMode?: boolean;
+  searchQuery?: string;
 }
 
 interface MessageBubbleProps {
   message: Message;
   isDarkMode?: boolean;
+  searchQuery?: string;
 }
 
 // Memoized message component to prevent re-renders
-const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, isDarkMode }) => {
+const escapeRegExp = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const HighlightedText: React.FC<{ text: string; query: string; isUser: boolean }> = ({ text, query, isUser }) => {
+  if (!query.trim()) {return <>{text}</>;}
+  const escaped = escapeRegExp(query.trim());
+  const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
+  if (parts.length === 1) {return <>{text}</>;}
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === query.trim().toLowerCase() ? (
+          <mark key={i} className={isUser ? 'bg-yellow-300/80 text-gray-900 rounded px-0.5' : 'bg-yellow-200 text-gray-900 rounded px-0.5'}>
+            {part}
+          </mark>
+        ) : (
+          <React.Fragment key={i}>{part}</React.Fragment>
+        )
+      )}
+    </>
+  );
+};
+
+const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, isDarkMode, searchQuery }) => {
   const { t } = useTranslation();
   const isUser = message.role === 'user';
   const timeStr = React.useMemo(
@@ -44,11 +68,15 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, isDarkMode 
         }`}
       >
         <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
-          <MarkdownRenderer 
-            content={content} 
-            isDarkMode={isDarkMode}
-            className="markdown-message"
-          />
+          {searchQuery?.trim() && !isUser ? (
+            <HighlightedText text={content} query={searchQuery} isUser={isUser} />
+          ) : (
+            <MarkdownRenderer
+              content={content}
+              isDarkMode={isDarkMode}
+              className="markdown-message"
+            />
+          )}
         </div>
         <div className="flex items-center justify-between mt-2">
           <p className={`text-xs opacity-70 ${
@@ -79,7 +107,8 @@ const MessageBubble = React.memo(MessageBubbleInner, (prevProps, nextProps) => {
     prevProps.message.content === nextProps.message.content &&
     prevProps.message.timestamp === nextProps.message.timestamp &&
     prevProps.message.role === nextProps.message.role &&
-    prevProps.isDarkMode === nextProps.isDarkMode
+    prevProps.isDarkMode === nextProps.isDarkMode &&
+    prevProps.searchQuery === nextProps.searchQuery
   );
 });
 
@@ -113,7 +142,7 @@ function areMessagesEqual(
          prevLast.timestamp === nextLast.timestamp;
 }
 
-const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, messagesEndRef, isDarkMode }) => {
+const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, messagesEndRef, isDarkMode, searchQuery }) => {
     const { t } = useTranslation();
 
     return (
@@ -127,7 +156,7 @@ const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, mes
         ) : (
           messages.map((message) => (
             <div key={message.id} className="animate-fade-in">
-              <MessageBubble message={message} isDarkMode={isDarkMode} />
+              <MessageBubble message={message} isDarkMode={isDarkMode} searchQuery={searchQuery} />
             </div>
           ))
         )}

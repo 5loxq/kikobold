@@ -7,6 +7,8 @@ interface InputBoxProps {
   onSendMessage: (message: string) => void;
   isLoading: boolean;
   isModelLoaded: boolean;
+  isGenerating?: boolean;
+  onStopGeneration?: () => void;
 }
 
 // Type definition for SpeechRecognition API
@@ -76,6 +78,8 @@ export const InputBox: React.FC<InputBoxProps> = ({
   onSendMessage,
   isLoading,
   isModelLoaded,
+  isGenerating = false,
+  onStopGeneration,
 }) => {
   const { t, i18n } = useTranslation();
   const [input, setInput] = useState('');
@@ -264,6 +268,17 @@ export const InputBox: React.FC<InputBoxProps> = ({
           {isListening ? '🛑' : '🎙️'}
         </button>
 
+        {/* Stop Generation Button */}
+        {isGenerating && onStopGeneration && (
+          <button
+            onClick={onStopGeneration}
+            className="px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow-md bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 transform hover:scale-105 active:scale-95"
+            aria-label={t('chat.stop')}
+            title={t('chat.stop')}
+          >
+            ⏹
+          </button>
+        )}
         {/* Send Button - Modern Design */}
         <button
           onClick={handleSend}

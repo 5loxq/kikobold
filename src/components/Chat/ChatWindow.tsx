@@ -19,6 +19,8 @@ interface ChatWindowProps {
   webgpuAvailable: boolean | null;
   loadingProgress?: number;
   isModelDownloaded?: (modelId: string) => boolean;
+  isGenerating?: boolean;
+  onStopGeneration?: () => void;
   onSendMessage: (message: string) => void;
   onSelectModel: (modelId: string) => void;
   onSelectProfile?: (profileId: string) => void;
@@ -38,6 +40,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   webgpuAvailable,
   loadingProgress = 0,
   isModelDownloaded,
+  isGenerating = false,
+  onStopGeneration,
   onSendMessage,
   onSelectModel,
   onSelectProfile,
@@ -48,7 +52,18 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const [selectedModelId, setSelectedModelId] = useState<string>(_activeModel?.id ?? '');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const visibleMessages = React.useMemo(
+    () =>
+      normalizedSearch
+        ? chat?.messages.filter((m) => m.content.toLowerCase().includes(normalizedSearch)) ?? []
+        : chat?.messages ?? [],
+    [chat?.messages, normalizedSearch]
+  );
 
   const scrollToBottom = (): void => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -235,6 +250,29 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           )}
         </div>
 
+        {/* Search in chat */}
+        {isSearchOpen && (
+          <div className="flex items-center gap-2 mt-4">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('chat.searchPlaceholder')}
+              autoFocus
+              className="flex-1 max-w-sm px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
+            />
+            <span className="text-xs text-gray-500">
+              {normalizedSearch ? `${visibleMessages.length}` : ''}
+            </span>
+            <button
+              onClick={() => { setSearchQuery(''); setIsSearchOpen(false); }}
+              className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+              title={t('chat.searchClose')}
+            >
+              ✕
+            </button>
+          </div>
+        )}
         {/* Export/Import Section */}
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
           <ChatExportImport
@@ -242,17 +280,26 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             allChats={chats}
             onImportChats={onImportChats ?? (async (): Promise<void> => {})}
           />
+          <button
+            onClick={() => setIsSearchOpen((v) => !v)}
+            className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors text-sm flex items-center gap-1"
+            title={t('chat.searchInChat')}
+          >
+            🔍 {t('chat.searchInChat')}
+          </button>
         </div>
       </div>
 
       {/* Messages Area */}
-      <MessageList messages={chat.messages} isLoading={isLoading} messagesEndRef={messagesEndRef} isDarkMode={checkDarkMode()} />
+      <MessageList messages={visibleMessages} isLoading={isLoading} messagesEndRef={messagesEndRef} isDarkMode={checkDarkMode()} searchQuery={searchQuery} />
 
       {/* Input Area */}
       <InputBox
         onSendMessage={onSendMessage}
         isLoading={isLoading}
         isModelLoaded={isModelLoaded}
+        isGenerating={isGenerating}
+        onStopGeneration={onStopGeneration}
       />
     </div>
   );
