@@ -1,10 +1,10 @@
-import { FC, useEffect, useState } from 'react';
+import { FC, lazy, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sidebar } from './Sidebar';
 import { ChatWindow } from '../Chat/ChatWindow';
-import { ModelManager } from '../Models/ModelManager';
-import { ProfileManager } from '../Profiles/ProfileManager';
-import { HelpPage } from '../Help/HelpPage';
+const ModelManager = lazy(() => import('../Models/ModelManager').then(m => ({ default: m.ModelManager })));
+const ProfileManager = lazy(() => import('../Profiles/ProfileManager').then(m => ({ default: m.ProfileManager })));
+const HelpPage = lazy(() => import('../Help/HelpPage').then(m => ({ default: m.HelpPage })));
 import { Chat } from '../../types';
 import { useChat } from '../../hooks/useChat';
 import { useModels } from '../../hooks/useModels';
@@ -289,6 +289,7 @@ export const MainLayout: FC = () => {
         )}
 
         {activeTab === 'models' && (
+          <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
           <ModelManager
             downloadedModels={downloadedModels}
             activeModel={activeModel}
@@ -296,9 +297,11 @@ export const MainLayout: FC = () => {
             onDeleteModel={deleteDownloadedModel}
             onSelectModel={selectModel}
           />
+          </Suspense>
         )}
 
         {activeTab === 'profiles' && (
+          <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
           <ProfileManager
             profiles={profiles}
             activeProfile={activeProfile}
@@ -309,6 +312,7 @@ export const MainLayout: FC = () => {
             onExportProfiles={exportProfiles}
             onImportProfiles={importProfiles}
           />
+          </Suspense>
         )}
 
         {activeTab === 'settings' && (
@@ -340,7 +344,9 @@ export const MainLayout: FC = () => {
         )}
 
         {activeTab === 'help' && (
-          <HelpPage />
+          <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
+            <HelpPage />
+          </Suspense>
         )}
       </div>
     </div>
