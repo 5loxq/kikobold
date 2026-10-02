@@ -54,7 +54,7 @@ export const isEncryptionAvailable = (): boolean => {
     // In the future, this would check for Web Crypto API support
     return typeof window !== 'undefined' && (
         window.crypto !== undefined ||
-        (window as any).msCrypto !== undefined
+        (window as Window & { msCrypto?: unknown }).msCrypto !== undefined
     );
 };
 
@@ -127,8 +127,9 @@ const simpleDecrypt = (encryptedData: string, key: string): string => {
  */
 const getEncryptionKey = async (): Promise<string> => {
     // Check memory cache first
-    if (memoryCache.has(ENCRYPTION_KEY_KEY)) {
-        return memoryCache.get(ENCRYPTION_KEY_KEY)!;
+    const cachedKey = memoryCache.get(ENCRYPTION_KEY_KEY);
+    if (cachedKey !== undefined) {
+        return cachedKey;
     }
     
     // Try to get from localStorage

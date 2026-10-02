@@ -20,7 +20,7 @@ export const useChat = (): UseChatReturn => {
   }, []);
 
   useEffect(() => {
-    const initDB = async () => {
+    const initDB = async (): Promise<void> => {
       try {
         await ChatStorage.initChatDB();
         await loadChats();

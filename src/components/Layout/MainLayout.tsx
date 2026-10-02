@@ -44,7 +44,7 @@ export const MainLayout: FC = () => {
 
   // Chat DB initialization and loading is now handled in useChat hook
 
-  const handleNewChat = async () => {
+  const handleNewChat = async (): Promise<void> => {
     try {
       if (!activeProfile) {
         throw new Error('No active profile selected');
@@ -59,7 +59,7 @@ export const MainLayout: FC = () => {
     }
   };
 
-  const handleSelectChat = async (selectedChat: Chat) => {
+  const handleSelectChat = async (selectedChat: Chat): Promise<void> => {
     try {
       if (!selectedChat?.id) {
         throw new Error('Invalid chat selected');
@@ -73,7 +73,7 @@ export const MainLayout: FC = () => {
     }
   };
 
-  const handleSendMessage = async (message: string) => {
+  const handleSendMessage = async (message: string): Promise<void> => {
     try {
       if (!chat) {
         throw new Error('No active chat');
@@ -124,7 +124,7 @@ export const MainLayout: FC = () => {
     }
   };
 
-  const speakResponse = (text: string) => {
+  const speakResponse = (text: string): void => {
     // Cancel any ongoing speech
     window.speechSynthesis.cancel();
 
@@ -138,7 +138,7 @@ export const MainLayout: FC = () => {
     window.speechSynthesis.speak(utterance);
   };
 
-  const handleModelSelect = async (modelId: string) => {
+  const handleModelSelect = async (modelId: string): Promise<void> => {
     try {
       setLoadingProgress(0);
       // Clear previous errors
@@ -162,7 +162,7 @@ export const MainLayout: FC = () => {
     }
   };
 
-  const handleImportChats = async (importedChats: Chat[]) => {
+  const handleImportChats = async (importedChats: Chat[]): Promise<void> => {
     // Import each chat into the database
     for (const importedChat of importedChats) {
       await ChatStorage.saveChat(importedChat);
@@ -171,7 +171,7 @@ export const MainLayout: FC = () => {
     await loadChats();
   };
 
-  const handleSelectProfile = (profileId: string) => {
+  const handleSelectProfile = (profileId: string): void => {
     const selectedProfile = profiles.find(p => p.id === profileId);
     if (selectedProfile) {
       selectProfile(selectedProfile);

@@ -1,4 +1,4 @@
-import { Chat } from '../../types';
+import { Chat, Message } from '../../types';
 import { info, warn } from '../logging';
 import { validateFileUpload, validateJsonContent } from '../security';
 
@@ -9,23 +9,29 @@ export interface ExportedChat {
 }
 
 // Validate chat object for export/import
-function validateChat(chat: any): chat is Chat {
-  return chat && 
-    typeof chat.id === 'string' && 
-    typeof chat.title === 'string' &&
-    Array.isArray(chat.messages) &&
-    typeof chat.profileId === 'string' &&
-    typeof chat.createdAt === 'number' &&
-    typeof chat.updatedAt === 'number';
+function validateChat(chat: unknown): chat is Chat {
+  return (
+    typeof chat === 'object' &&
+    chat !== null &&
+    typeof (chat as Chat).id === 'string' &&
+    typeof (chat as Chat).title === 'string' &&
+    Array.isArray((chat as Chat).messages) &&
+    typeof (chat as Chat).profileId === 'string' &&
+    typeof (chat as Chat).createdAt === 'number' &&
+    typeof (chat as Chat).updatedAt === 'number'
+  );
 }
 
 // Validate message object for export/import
-function validateMessage(message: any): boolean {
-  return message && 
-    typeof message.id === 'string' && 
-    (message.role === 'user' || message.role === 'assistant') &&
-    typeof message.content === 'string' &&
-    typeof message.timestamp === 'number';
+function validateMessage(message: unknown): boolean {
+  return (
+    typeof message === 'object' &&
+    message !== null &&
+    typeof (message as Message).id === 'string' &&
+    ((message as Message).role === 'user' || (message as Message).role === 'assistant') &&
+    typeof (message as Message).content === 'string' &&
+    typeof (message as Message).timestamp === 'number'
+  );
 }
 
 /**
@@ -85,7 +91,7 @@ export const importChats = (file: File): Promise<Chat[]> => {
 
     const reader = new FileReader();
 
-    reader.onload = (event) => {
+    reader.onload = (event): void => {
       try {
         const content = event.target?.result as string;
         if (typeof content !== 'string' || content.trim().length === 0) {
@@ -137,7 +143,7 @@ export const importChats = (file: File): Promise<Chat[]> => {
       }
     };
 
-    reader.onerror = () => {
+    reader.onerror = (): void => {
       console.error('File reader error:', reader.error);
       reject(new Error('Failed to read file'));
     };

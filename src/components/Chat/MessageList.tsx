@@ -11,10 +11,10 @@ interface MessageListProps {
 }
 
 // Memoized message component to prevent re-renders
-const MessageBubble: React.FC<{
+const MessageBubbleInner: React.FC<{
   message: Message;
   isDarkMode?: boolean;
-}> = React.memo(({ message, isDarkMode }) => {
+}> = ({ message, isDarkMode }) => {
   const isUser = message.role === 'user';
   const timeStr = React.useMemo(
     () => new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -48,7 +48,9 @@ const MessageBubble: React.FC<{
       </div>
     </div>
   );
-}, (prevProps, nextProps) => {
+};
+
+const MessageBubble = React.memo(MessageBubbleInner, (prevProps, nextProps) => {
   // Custom comparison function for better performance
   return (
     prevProps.message.id === nextProps.message.id &&
@@ -89,8 +91,7 @@ function areMessagesEqual(
          prevLast.timestamp === nextLast.timestamp;
 }
 
-export const MessageList: React.FC<MessageListProps> = React.memo(
-  ({ messages, isLoading, messagesEndRef, isDarkMode }) => {
+const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, messagesEndRef, isDarkMode }) => {
     const { t } = useTranslation();
 
     return (
@@ -129,8 +130,9 @@ export const MessageList: React.FC<MessageListProps> = React.memo(
         {messagesEndRef && <div ref={messagesEndRef} />}
       </div>
     );
-  },
-  areMessagesEqual
-);
+};
+
+export const MessageList = React.memo(MessageListInner, areMessagesEqual);
+MessageList.displayName = 'MessageList';
 
 export default MessageList;

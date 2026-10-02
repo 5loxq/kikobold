@@ -34,7 +34,7 @@ const getDownloadedModelsFromStorage = (): LocalModel[] => {
   }
 };
 
-const saveDownloadedModelsToStorage = (models: LocalModel[]) => {
+const saveDownloadedModelsToStorage = (models: LocalModel[]): void => {
   try {
     localStorage.setItem(STORAGE_KEYS.DOWNLOADED_MODELS, JSON.stringify(models));
   } catch {
@@ -50,7 +50,7 @@ const getActiveModelFromStorage = (): string | null => {
   }
 };
 
-const setActiveModelToStorage = (modelId: string | null) => {
+const setActiveModelToStorage = (modelId: string | null): void => {
   try {
     if (modelId) {
       localStorage.setItem(STORAGE_KEYS.ACTIVE_MODEL, modelId);
@@ -145,7 +145,7 @@ export const useModels = (): UseModelsReturn => {
         return false;
       }
     },
-    [downloadedModels]
+    []
   );
 
   const deleteModel = useCallback(
