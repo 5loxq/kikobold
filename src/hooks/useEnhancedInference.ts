@@ -18,6 +18,7 @@ import type {
 } from "@mlc-ai/web-llm";
 import { handleErrorSilent } from '../utils/errors';
 import { log, warn } from '../services/logging';
+import { stripHiddenPartsText } from '../services/llm/text-processing';
 
 // ============================================================================
 // Types
@@ -27,6 +28,7 @@ export interface WebLLMGenerateOptions {
   temperature?: number;
   top_p?: number;
   max_tokens?: number;
+  history?: Array<{ role: 'user' | 'assistant'; content: string }>;
 }
 
 export interface WebLLMGenerateResult {
@@ -366,13 +368,14 @@ export const useEnhancedInference = (
         }
       }
 
-      setResult(fullText);
+      const visibleText = stripHiddenPartsText(fullText);
+      setResult(visibleText);
       setTokensGenerated(tokenCountRef.current);
       setDuration(Date.now() - startTimeRef.current);
       setIsGenerating(false);
       setIsStreaming(false);
       
-      return fullText;
+      return visibleText;
 
     } catch (err: unknown) {
       const appError = handleErrorSilent(err);
