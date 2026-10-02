@@ -10,12 +10,11 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
+import type {
   AppConfig,
   ChatCompletionChunk,
   ChatCompletionResult,
-  CreateMLCEngine,
-  MLCEngineInterface
+  MLCEngineInterface,
 } from "@mlc-ai/web-llm";
 import { handleErrorSilent } from '../utils/errors';
 import { log, warn } from '../services/logging';
@@ -179,6 +178,7 @@ export const useEnhancedInference = (
       log(`Using WebGPU: ${hasWebGPU ? 'Yes' : 'No'}`);
       log(`Using WASM: ${typeof WebAssembly !== 'undefined' ? 'Yes' : 'No'}`);
 
+      const { CreateMLCEngine } = await import("@mlc-ai/web-llm");
       const engine = await CreateMLCEngine(modelId, {
         appConfig: effectiveAppConfig,
         initProgressCallback: (p: { text?: string; progress: number }) => {

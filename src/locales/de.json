@@ -40,6 +40,8 @@
     "loadingError": "Fehler beim Laden",
     "speechRecognitionNotSupported": "Spracherkennung wird in diesem Browser nicht unterstützt",
     "micError": "Mikrofon-Fehler",
+    "copyMessage": "Nachricht kopieren",
+    "copied": "Kopiert!",
     "voiceInputTooltip": "Klicken um Sprachingabe zu starten/stoppen"
   },
   "models": {

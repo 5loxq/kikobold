@@ -192,6 +192,11 @@ export const InputBox: React.FC<InputBoxProps> = ({
       e.preventDefault();
       handleSend();
     }
+    // Ctrl/Cmd+Enter also sends, works even with shift held
+    if (e.key === 'Enter' && e.shiftKey && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      handleSend();
+    }
   };
 
   const handleInput = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
