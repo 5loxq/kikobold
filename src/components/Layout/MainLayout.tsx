@@ -108,10 +108,15 @@ export const MainLayout: FC = () => {
 
       // Generate response with language setting and correct system prompt
       // Note: WebLLM uses top_p and max_tokens (snake_case)
+      const history = chat.messages.slice(-10).map((m) => ({
+        role: m.role === 'assistant' ? ('assistant' as const) : ('user' as const),
+        content: m.content,
+      }));
       const result = await generate(message, {
         temperature: activeProfile.temperature,
         top_p: activeProfile.topP,
         max_tokens: activeProfile.maxTokens,
+        history,
       });
 
       if (result) {
