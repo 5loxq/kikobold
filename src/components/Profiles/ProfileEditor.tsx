@@ -12,10 +12,10 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({
   onSave,
   onCancel,
 }) => {
-  const [name, setName] = useState(profile?.name || '');
-  const [systemPrompt, setSystemPrompt] = useState(profile?.systemPrompt || '');
+  const [name, setName] = useState(profile?.name ?? '');
+  const [systemPrompt, setSystemPrompt] = useState(profile?.systemPrompt ?? '');
 
-  const handleSave = () => {
+  const handleSave = (): void => {
     if (name.trim() && systemPrompt.trim()) {
       onSave(name, systemPrompt);
     }

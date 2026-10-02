@@ -118,7 +118,7 @@ class InferenceSession {
             
             this.pipeline = await pipeline('text-generation', this.modelPath, {
                 dtype: 'auto',
-            } as any);
+            } as Record<string, unknown>);
             
             log(`Inference session initialized: ${this.modelPath}`);
         } catch (err) {
@@ -146,11 +146,11 @@ class InferenceSession {
             const prompt = this.messagesToPrompt(request.messages);
             
             const result = await this.pipeline(prompt, {
-                max_new_tokens: request.maxTokens || 512,
-                temperature: request.temperature || 0.7,
-                top_p: request.topP || 0.9,
-                top_k: request.topK || 50,
-                repetition_penalty: request.repeatPenalty || 1.1,
+                max_new_tokens: request.maxTokens ?? 512,
+                temperature: request.temperature ?? 0.7,
+                top_p: request.topP ?? 0.9,
+                top_k: request.topK ?? 50,
+                repetition_penalty: request.repeatPenalty ?? 1.1,
                 num_return_sequences: 1,
             });
             
@@ -158,10 +158,10 @@ class InferenceSession {
             let generatedTokens = 0;
             
             if (Array.isArray(result)) {
-                generatedText = result.map(r => (r as any).generated_text || '').join('');
+                generatedText = result.map(r => (r as { generated_text?: string }).generated_text ?? '').join('');
                 generatedTokens = result.length;
             } else if (result && typeof result === 'object' && 'generated_text' in result) {
-                generatedText = (result as any).generated_text as string;
+                generatedText = (result as { generated_text?: string }).generated_text as string;
                 generatedTokens = 1;
             } else {
                 generatedText = String(result);
@@ -226,19 +226,19 @@ class InferenceSession {
         
         try {
             const result = await this.pipeline(prompt, {
-                max_new_tokens: options.maxTokens || 512,
-                temperature: options.temperature || 0.7,
-                top_p: options.topP || 0.9,
-                top_k: options.topK || 50,
+                max_new_tokens: options.maxTokens ?? 512,
+                temperature: options.temperature ?? 0.7,
+                top_p: options.topP ?? 0.9,
+                top_k: options.topK ?? 50,
                 num_return_sequences: 1,
             });
             
             if (Array.isArray(result)) {
-                return (result[0] as any)?.generated_text || '';
+                return (result[0] as { generated_text?: string } | undefined)?.generated_text ?? '';
             }
             
             if (result && typeof result === 'object' && 'generated_text' in result) {
-                return (result as any).generated_text as string;
+                return (result as { generated_text?: string }).generated_text as string;
             }
             
             return String(result);
@@ -256,8 +256,8 @@ class InferenceSession {
     cleanup(): void {
         if (this.pipeline) {
             try {
-                if (typeof (this.pipeline as any).dispose === 'function') {
-                    (this.pipeline as any).dispose();
+                if (typeof (this.pipeline as { dispose?: () => void }).dispose === 'function') {
+                    (this.pipeline as { dispose?: () => void }).dispose?.();
                 }
             } catch {
                 // Ignore cleanup errors
@@ -271,11 +271,11 @@ class InferenceSession {
         
         for (const message of messages) {
             if (message.role === 'system') {
-                prompt += '\n\n### System:\n' + message.content;
+                prompt += `\n\n### System:\n${  message.content}`;
             } else if (message.role === 'user') {
-                prompt += '\n\n### User:\n' + message.content;
+                prompt += `\n\n### User:\n${  message.content}`;
             } else if (message.role === 'assistant') {
-                prompt += '\n\n### Assistant:\n' + message.content;
+                prompt += `\n\n### Assistant:\n${  message.content}`;
             }
         }
         
@@ -294,7 +294,7 @@ class WasmBackend implements InferenceBackend {
     private initialized: boolean = false;
     
     async initBackend(): Promise<void> {
-        if (this.initialized) return;
+        if (this.initialized) {return;}
         if (!isWASMSupported()) {
             throw createError(
                 'WebAssembly not supported',
@@ -377,7 +377,7 @@ class WebGPUBackend implements InferenceBackend {
     private initialized: boolean = false;
     
     async initBackend(): Promise<void> {
-        if (this.initialized) return;
+        if (this.initialized) {return;}
         if (!await checkWebGPUSupport()) {
             throw createError(
                 'WebGPU not supported',
@@ -490,7 +490,7 @@ class NativeBackend implements InferenceBackend {
     }
     
     async unloadModel(): Promise<void> {
-        if (!isTauriRuntime()) return;
+        if (!isTauriRuntime()) {return;}
         try {
             const { invoke } = await import('@tauri-apps/api/core');
             await invoke('unload_model');
@@ -519,7 +519,7 @@ class NativeBackend implements InferenceBackend {
     }
     
     async freeContext(): Promise<void> {
-        if (!isTauriRuntime()) return;
+        if (!isTauriRuntime()) {return;}
         try {
             const { invoke } = await import('@tauri-apps/api/core');
             await invoke('free_context');
@@ -583,9 +583,9 @@ class NativeBackend implements InferenceBackend {
     }
     
     cancel(jobId: number): void {
-        if (!isTauriRuntime()) return;
+        if (!isTauriRuntime()) {return;}
         // Fire and forget - Tauri invoke is async but we can't await in a sync method
-        (async () => {
+        (async (): Promise<void> => {
             try {
                 const { invoke } = await import('@tauri-apps/api/core');
                 await invoke('cancel_job', { jobId });
@@ -596,7 +596,7 @@ class NativeBackend implements InferenceBackend {
     }
     
     async isModelAvailable(modelPath: string): Promise<boolean> {
-        if (!isTauriRuntime()) return false;
+        if (!isTauriRuntime()) {return false;}
         try {
             const { invoke } = await import('@tauri-apps/api/core');
             return await invoke('is_model_available', { modelPath }) as boolean;
@@ -620,13 +620,13 @@ export const createInferenceBackend = async (
     if (preferredKind) {
         switch (preferredKind) {
             case 'webgpu':
-                if (webgpuAvailable) return new WebGPUBackend();
+                if (webgpuAvailable) {return new WebGPUBackend();}
                 break;
             case 'wasm':
-                if (wasmAvailable) return new WasmBackend();
+                if (wasmAvailable) {return new WasmBackend();}
                 break;
             case 'native':
-                if (isTauri) return new NativeBackend();
+                if (isTauri) {return new NativeBackend();}
                 break;
         }
     }
@@ -659,9 +659,9 @@ export const getAvailableBackends = async (): Promise<BackendKind[]> => {
     const wasmAvailable = isWASMSupported();
     const isTauri = isTauriRuntime();
     
-    if (isTauri) backends.push('native');
-    if (webgpuAvailable) backends.push('webgpu');
-    if (wasmAvailable) backends.push('wasm');
+    if (isTauri) {backends.push('native');}
+    if (webgpuAvailable) {backends.push('webgpu');}
+    if (wasmAvailable) {backends.push('wasm');}
     
     return backends;
 };

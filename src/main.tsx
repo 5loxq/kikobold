@@ -7,10 +7,10 @@ import { initModelCache } from './services/models/model-downloader';
 import { initThemeService } from './services/theme';
 import { initModelConfigService } from './services/model-config';
 import { getSystemInfo } from './services/system-info';
-import { log, info } from './services/logging';
+import { info, log } from './services/logging';
 
 // Initialize services before rendering the app
-const initializeServices = async () => {
+const initializeServices = async (): Promise<void> => {
     try {
         // Initialize offline support (service worker, etc.)
         await initOfflineSupport();
@@ -43,7 +43,7 @@ const initializeServices = async () => {
 
 // Initialize services and then render the app
 initializeServices().then(() => {
-    ReactDOM.createRoot(document.getElementById('root')!).render(
+    ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         <React.StrictMode>
             <App />
         </React.StrictMode>,

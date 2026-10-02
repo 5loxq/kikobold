@@ -1,10 +1,10 @@
-import { useState, FC, useEffect } from 'react';
+import { FC, lazy, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sidebar } from './Sidebar';
 import { ChatWindow } from '../Chat/ChatWindow';
-import { ModelManager } from '../Models/ModelManager';
-import { ProfileManager } from '../Profiles/ProfileManager';
-import { HelpPage } from '../Help/HelpPage';
+const ModelManager = lazy(() => import('../Models/ModelManager').then(m => ({ default: m.ModelManager })));
+const ProfileManager = lazy(() => import('../Profiles/ProfileManager').then(m => ({ default: m.ProfileManager })));
+const HelpPage = lazy(() => import('../Help/HelpPage').then(m => ({ default: m.HelpPage })));
 import { Chat } from '../../types';
 import { useChat } from '../../hooks/useChat';
 import { useModels } from '../../hooks/useModels';
@@ -25,13 +25,15 @@ export const MainLayout: FC = () => {
   const { downloadedModels, activeModel, downloadModel, deleteModel: deleteDownloadedModel, selectModel, isModelDownloaded } = useModels();
   const { 
     loadModel, 
-    generate, 
+    generate,
+    cancel: stopGeneration,
+    isGenerating,
     isLoading,
     webgpuAvailable,
     currentModelId,
     refreshStatus,
     error
-  } = useEnhancedInference({ modelId: activeModel?.id || '' });
+  } = useEnhancedInference({ modelId: activeModel?.id ?? '' });
   const [localError, setLocalError] = useState<string | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
 
@@ -44,7 +46,7 @@ export const MainLayout: FC = () => {
 
   // Chat DB initialization and loading is now handled in useChat hook
 
-  const handleNewChat = async () => {
+  const handleNewChat = async (): Promise<void> => {
     try {
       if (!activeProfile) {
         throw new Error('No active profile selected');
@@ -59,9 +61,9 @@ export const MainLayout: FC = () => {
     }
   };
 
-  const handleSelectChat = async (selectedChat: Chat) => {
+  const handleSelectChat = async (selectedChat: Chat): Promise<void> => {
     try {
-      if (!selectedChat || !selectedChat.id) {
+      if (!selectedChat?.id) {
         throw new Error('Invalid chat selected');
       }
 
@@ -73,7 +75,7 @@ export const MainLayout: FC = () => {
     }
   };
 
-  const handleSendMessage = async (message: string) => {
+  const handleSendMessage = async (message: string): Promise<void> => {
     try {
       if (!chat) {
         throw new Error('No active chat');
@@ -124,7 +126,7 @@ export const MainLayout: FC = () => {
     }
   };
 
-  const speakResponse = (text: string) => {
+  const speakResponse = (text: string): void => {
     // Cancel any ongoing speech
     window.speechSynthesis.cancel();
 
@@ -138,7 +140,7 @@ export const MainLayout: FC = () => {
     window.speechSynthesis.speak(utterance);
   };
 
-  const handleModelSelect = async (modelId: string) => {
+  const handleModelSelect = async (modelId: string): Promise<void> => {
     try {
       setLoadingProgress(0);
       // Clear previous errors
@@ -162,7 +164,7 @@ export const MainLayout: FC = () => {
     }
   };
 
-  const handleImportChats = async (importedChats: Chat[]) => {
+  const handleImportChats = async (importedChats: Chat[]): Promise<void> => {
     // Import each chat into the database
     for (const importedChat of importedChats) {
       await ChatStorage.saveChat(importedChat);
@@ -171,7 +173,7 @@ export const MainLayout: FC = () => {
     await loadChats();
   };
 
-  const handleSelectProfile = (profileId: string) => {
+  const handleSelectProfile = (profileId: string): void => {
     const selectedProfile = profiles.find(p => p.id === profileId);
     if (selectedProfile) {
       selectProfile(selectedProfile);
@@ -276,10 +278,12 @@ export const MainLayout: FC = () => {
             activeModel={activeModel}
             isLoading={isLoading}
             isModelLoaded={isModelLoaded}
-            error={localError || error}
+            error={localError ?? error}
             webgpuAvailable={webgpuAvailable}
             loadingProgress={loadingProgress}
             isModelDownloaded={isModelDownloaded}
+            isGenerating={isGenerating}
+            onStopGeneration={stopGeneration}
             onSendMessage={handleSendMessage}
             onSelectModel={handleModelSelect}
             onSelectProfile={handleSelectProfile}
@@ -289,6 +293,7 @@ export const MainLayout: FC = () => {
         )}
 
         {activeTab === 'models' && (
+          <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
           <ModelManager
             downloadedModels={downloadedModels}
             activeModel={activeModel}
@@ -296,9 +301,11 @@ export const MainLayout: FC = () => {
             onDeleteModel={deleteDownloadedModel}
             onSelectModel={selectModel}
           />
+          </Suspense>
         )}
 
         {activeTab === 'profiles' && (
+          <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
           <ProfileManager
             profiles={profiles}
             activeProfile={activeProfile}
@@ -309,6 +316,7 @@ export const MainLayout: FC = () => {
             onExportProfiles={exportProfiles}
             onImportProfiles={importProfiles}
           />
+          </Suspense>
         )}
 
         {activeTab === 'settings' && (
@@ -340,7 +348,9 @@ export const MainLayout: FC = () => {
         )}
 
         {activeTab === 'help' && (
-          <HelpPage />
+          <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
+            <HelpPage />
+          </Suspense>
         )}
       </div>
     </div>

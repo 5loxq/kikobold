@@ -26,7 +26,7 @@ export const ModelManager: React.FC<ModelManagerProps> = ({
   const [downloading, setDownloading] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<Record<string, number>>({});
 
-  const handleDownload = async (model: Model) => {
+  const handleDownload = async (model: Model): Promise<void> => {
     setDownloading(model.id);
     setDownloadProgress(prev => ({ ...prev, [model.id]: 0 }));
 
@@ -34,7 +34,7 @@ export const ModelManager: React.FC<ModelManagerProps> = ({
     let progress = 0;
     const progressInterval = setInterval(() => {
       progress += Math.random() * 30;
-      if (progress > 90) progress = 90;
+      if (progress > 90) {progress = 90;}
       setDownloadProgress(prev => ({ ...prev, [model.id]: Math.floor(progress) }));
     }, 500);
 

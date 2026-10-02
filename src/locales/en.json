@@ -40,7 +40,13 @@
     "loadingError": "Loading error",
     "speechRecognitionNotSupported": "Speech Recognition is not supported in this browser",
     "micError": "Microphone Error",
-    "voiceInputTooltip": "Click to start/stop voice input"
+    "stop": "Stop",
+    "copyMessage": "Copy message",
+    "copied": "Copied!",
+    "voiceInputTooltip": "Click to start/stop voice input",
+    "searchInChat": "Search in chat",
+    "searchPlaceholder": "Search messages...",
+    "searchClose": "Close search"
   },
   "models": {
     "available": "Available Models",

@@ -4,15 +4,15 @@
  * Provides easy access to model rating functionality in React components
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
+  getAllModelRatings,
+  getCommunityRecommendations,
+  getRatingStatistics,
+  getSystemRecommendedModels,
+  getTopRatedModels,
   rateModel,
   removeModelRating,
-  getAllModelRatings,
-  getRatingStatistics,
-  getTopRatedModels,
-  getCommunityRecommendations,
-  getSystemRecommendedModels,
 } from '../services/model-config';
 import { Model } from '../types';
 
@@ -75,7 +75,7 @@ export const useModelRatings = (): UseModelRatingsReturn => {
 
   // Load all data on mount
   useEffect(() => {
-    const loadData = async () => {
+    const loadData = async (): Promise<void> => {
       try {
         setIsLoading(true);
         

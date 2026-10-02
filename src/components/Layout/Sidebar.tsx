@@ -25,7 +25,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { t } = useTranslation();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const tabs = [
+  type TabId = 'chat' | 'models' | 'profiles' | 'settings' | 'help';
+  const tabs: Array<{ id: TabId; icon: string; label: string }> = [
     { id: 'chat', icon: '💬', label: t('sidebar.chat') },
     { id: 'models', icon: '🤖', label: t('sidebar.models') },
     { id: 'profiles', icon: '👤', label: t('sidebar.profiles') },
@@ -67,7 +68,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => onTabChange(tab.id as any)}
+            onClick={() => onTabChange(tab.id)}
             className={`p-2 rounded transition-colors whitespace-nowrap text-sm ${
               activeTab === tab.id
                 ? 'bg-blue-600'
