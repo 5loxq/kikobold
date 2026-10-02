@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Chat, Profile, LocalModel } from '../../types';
+import { Chat, LocalModel, Profile } from '../../types';
 import { MessageList } from './MessageList';
 import { InputBox } from './InputBox';
 import { ChatExportImport } from './chat-export-import';
@@ -45,7 +45,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   onImportChats,
 }) => {
   const { t } = useTranslation();
-  const [selectedModelId, setSelectedModelId] = useState<string>(_activeModel?.id || '');
+  const [selectedModelId, setSelectedModelId] = useState<string>(_activeModel?.id ?? '');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -240,7 +240,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           <ChatExportImport
             chat={chat}
             allChats={chats}
-            onImportChats={onImportChats || (async () => {})}
+            onImportChats={onImportChats ?? (async () => {})}
           />
         </div>
       </div>

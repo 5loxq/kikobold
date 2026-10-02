@@ -74,8 +74,8 @@ export const getCurrentVersion = (): string => {
         // In Tauri, we can read from the package
         if (isTauriRuntime()) {
             try {
-                const { invoke } = require('@tauri-apps/api/core');
-                return invoke('get_app_version') as string;
+                // In Tauri the version is resolved asynchronously by checkTauriUpdates;
+                // fall through to the fallbacks here.
             } catch {
                 // Fallback
             }
@@ -106,8 +106,8 @@ export const compareVersions = (a: string, b: string): number => {
         const aPart = aParts[i] || 0;
         const bPart = bParts[i] || 0;
         
-        if (aPart > bPart) return 1;
-        if (aPart < bPart) return -1;
+        if (aPart > bPart) {return 1;}
+        if (aPart < bPart) {return -1;}
     }
     
     return 0;

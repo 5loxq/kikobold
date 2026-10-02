@@ -1,4 +1,4 @@
-import { useState, FC, useEffect } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sidebar } from './Sidebar';
 import { ChatWindow } from '../Chat/ChatWindow';
@@ -31,7 +31,7 @@ export const MainLayout: FC = () => {
     currentModelId,
     refreshStatus,
     error
-  } = useEnhancedInference({ modelId: activeModel?.id || '' });
+  } = useEnhancedInference({ modelId: activeModel?.id ?? '' });
   const [localError, setLocalError] = useState<string | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
 
@@ -61,7 +61,7 @@ export const MainLayout: FC = () => {
 
   const handleSelectChat = async (selectedChat: Chat) => {
     try {
-      if (!selectedChat || !selectedChat.id) {
+      if (!selectedChat?.id) {
         throw new Error('Invalid chat selected');
       }
 
@@ -276,7 +276,7 @@ export const MainLayout: FC = () => {
             activeModel={activeModel}
             isLoading={isLoading}
             isModelLoaded={isModelLoaded}
-            error={localError || error}
+            error={localError ?? error}
             webgpuAvailable={webgpuAvailable}
             loadingProgress={loadingProgress}
             isModelDownloaded={isModelDownloaded}

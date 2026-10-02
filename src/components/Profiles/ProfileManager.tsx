@@ -29,7 +29,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
   const handleExport = () => {
     const data = onExportProfiles();
     const element = document.createElement('a');
-    element.setAttribute('href', 'data:text/json;charset=utf-8,' + encodeURIComponent(data));
+    element.setAttribute('href', `data:text/json;charset=utf-8,${  encodeURIComponent(data)}`);
     element.setAttribute('download', 'profiles.json');
     element.style.display = 'none';
     document.body.appendChild(element);
@@ -52,7 +52,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
             alert('Failed to import profiles - invalid JSON format');
           }
         } catch (error) {
-          alert('Error reading file: ' + (error instanceof Error ? error.message : 'Unknown error'));
+          alert(`Error reading file: ${  error instanceof Error ? error.message : 'Unknown error'}`);
         }
       }
     };

@@ -95,13 +95,13 @@ declare global {
         version: string;
     }
     
-    var process: Process;
+    let process: Process;
 }
 
 // Error stack trace support
 declare global {
     interface ErrorConstructor {
-        captureStackTrace(error: Error, constructorOpt?: Function): void;
+        captureStackTrace(error: Error, constructorOpt?: (...args: unknown[]) => unknown): void;
     }
 }
 

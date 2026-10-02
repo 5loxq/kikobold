@@ -10,7 +10,7 @@ const resources = {
 };
 
 // Get language preference from localStorage or default to 'de' (German)
-const savedLanguage = secureLocalStorage.getItem('language_preference') || 'de';
+const savedLanguage = secureLocalStorage.getItem('language_preference') ?? 'de';
 
 i18n
   .use(initReactI18next)

@@ -7,7 +7,7 @@ import { initModelCache } from './services/models/model-downloader';
 import { initThemeService } from './services/theme';
 import { initModelConfigService } from './services/model-config';
 import { getSystemInfo } from './services/system-info';
-import { log, info } from './services/logging';
+import { info, log } from './services/logging';
 
 // Initialize services before rendering the app
 const initializeServices = async () => {
