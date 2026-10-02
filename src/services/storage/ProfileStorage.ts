@@ -1,6 +1,6 @@
 import { Profile } from '../../types';
 import { warn } from '../logging';
-import { secureLocalStorage, sanitizeInput } from '../security';
+import { sanitizeInput, secureLocalStorage } from '../security';
 
 const PROFILE_STORAGE_KEY = 'llm_profiles';
 

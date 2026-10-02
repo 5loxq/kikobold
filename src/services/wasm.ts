@@ -7,7 +7,7 @@
 
 import { getRuntimeEnvironment } from './tauri-runtime';
 import { log, warn } from './logging';
-import { checkWebGPUSupport, checkWASMSupport } from './security';
+import { checkWASMSupport, checkWebGPUSupport } from './security';
 
 /**
  * WASM module interface
@@ -146,7 +146,7 @@ const loadWebWasm = async (): Promise<WasmModule | null> => {
     try {
         // Try to dynamically import the WASM module
         // This assumes the module is built and available
-        // @ts-ignore - module may not exist at compile time
+        // @ts-expect-error - module may not exist at compile time
         const wasmModule = await import('../wasm/bindings');
         
         log('WASM loaded for web environment');
@@ -226,13 +226,13 @@ export const createCryptoAdapter = (): CryptoAdapter => {
                 
                 // Fallback: simple encryption
                 return {
-                    encrypted_data: btoa(dataB64 + '|' + keyB64),
+                    encrypted_data: btoa(`${dataB64  }|${  keyB64}`),
                     decryption_header: 'fallback'
                 };
                 
             } catch {
                 return {
-                    encrypted_data: btoa(dataB64 + '|' + keyB64),
+                    encrypted_data: btoa(`${dataB64  }|${  keyB64}`),
                     decryption_header: 'fallback'
                 };
             }

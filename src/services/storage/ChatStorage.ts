@@ -38,7 +38,7 @@ export const initChatDB = async (): Promise<void> => {
 
       request.onerror = () => {
         console.error('IndexedDB error:', request.error);
-        reject(request.error || new Error('Failed to open database'));
+        reject(request.error ?? new Error('Failed to open database'));
       };
 
       request.onsuccess = () => {
@@ -67,7 +67,7 @@ export const initChatDB = async (): Promise<void> => {
 };
 
 export const saveChat = async (chat: Chat): Promise<void> => {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) {throw new Error('Database not initialized');}
 
   // Validate chat object
   if (!validateChat(chat)) {
@@ -99,7 +99,7 @@ export const saveChat = async (chat: Chat): Promise<void> => {
 
       request.onerror = () => {
         console.error('Failed to save chat:', request.error);
-        reject(request.error || new Error('Failed to save chat'));
+        reject(request.error ?? new Error('Failed to save chat'));
       };
 
       request.onsuccess = () => resolve();
@@ -111,7 +111,7 @@ export const saveChat = async (chat: Chat): Promise<void> => {
 };
 
 export const getChat = async (id: string): Promise<Chat | null> => {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) {throw new Error('Database not initialized');}
 
   if (typeof id !== 'string' || id.trim().length === 0) {
     throw new Error('Invalid chat ID');
@@ -125,7 +125,7 @@ export const getChat = async (id: string): Promise<Chat | null> => {
 
       request.onerror = () => {
         console.error('Failed to get chat:', request.error);
-        reject(request.error || new Error('Failed to get chat'));
+        reject(request.error ?? new Error('Failed to get chat'));
       };
 
       request.onsuccess = () => {
@@ -145,7 +145,7 @@ export const getChat = async (id: string): Promise<Chat | null> => {
 };
 
 export const getAllChats = async (): Promise<Chat[]> => {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) {throw new Error('Database not initialized');}
 
   return new Promise((resolve, reject) => {
     try {
@@ -155,7 +155,7 @@ export const getAllChats = async (): Promise<Chat[]> => {
 
       request.onerror = () => {
         console.error('Failed to get all chats:', request.error);
-        reject(request.error || new Error('Failed to get all chats'));
+        reject(request.error ?? new Error('Failed to get all chats'));
       };
 
       request.onsuccess = () => {
@@ -174,7 +174,7 @@ export const getAllChats = async (): Promise<Chat[]> => {
 };
 
 export const deleteChat = async (id: string): Promise<void> => {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) {throw new Error('Database not initialized');}
 
   if (typeof id !== 'string' || id.trim().length === 0) {
     throw new Error('Invalid chat ID');
@@ -188,7 +188,7 @@ export const deleteChat = async (id: string): Promise<void> => {
 
       request.onerror = () => {
         console.error('Failed to delete chat:', request.error);
-        reject(request.error || new Error('Failed to delete chat'));
+        reject(request.error ?? new Error('Failed to delete chat'));
       };
 
       request.onsuccess = () => resolve();
@@ -220,7 +220,7 @@ export const updateChatMessages = async (chatId: string, messages: Message[]): P
   });
 
   const chat = await getChat(chatId);
-  if (!chat) throw new Error('Chat not found');
+  if (!chat) {throw new Error('Chat not found');}
 
   chat.messages = sanitizedMessages;
   chat.updatedAt = Date.now();

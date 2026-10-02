@@ -34,7 +34,7 @@ export const ModelManager: React.FC<ModelManagerProps> = ({
     let progress = 0;
     const progressInterval = setInterval(() => {
       progress += Math.random() * 30;
-      if (progress > 90) progress = 90;
+      if (progress > 90) {progress = 90;}
       setDownloadProgress(prev => ({ ...prev, [model.id]: Math.floor(progress) }));
     }, 500);
 
