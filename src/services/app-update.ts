@@ -74,8 +74,8 @@ export const getCurrentVersion = (): string => {
         // In Tauri, we can read from the package
         if (isTauriRuntime()) {
             try {
-                const { invoke } = require('@tauri-apps/api/core');
-                return invoke('get_app_version') as string;
+                // In Tauri the version is resolved asynchronously by checkTauriUpdates;
+                // fall through to the fallbacks here.
             } catch {
                 // Fallback
             }
@@ -83,8 +83,9 @@ export const getCurrentVersion = (): string => {
         
         // In web, try to read from import.meta.env or window
         if (typeof window !== 'undefined') {
-            if ((window as any).APP_VERSION) {
-                return (window as any).APP_VERSION;
+            const appVersion = (window as Window & { APP_VERSION?: string }).APP_VERSION;
+            if (appVersion) {
+                return appVersion;
             }
         }
         
@@ -106,8 +107,8 @@ export const compareVersions = (a: string, b: string): number => {
         const aPart = aParts[i] || 0;
         const bPart = bParts[i] || 0;
         
-        if (aPart > bPart) return 1;
-        if (aPart < bPart) return -1;
+        if (aPart > bPart) {return 1;}
+        if (aPart < bPart) {return -1;}
     }
     
     return 0;
@@ -175,9 +176,9 @@ const checkTauriUpdates = async (currentVersion: string): Promise<UpdateCheckRes
                 updateInfo = {
                     version,
                     description: 'New version available',
-                    releaseNotes: (update as any).body || (update as any).releaseNotes,
-                    releaseDate: (update as any).date?.toISOString(),
-                    downloadUrl: (update as any).url,
+                    releaseNotes: (update as { body?: string; releaseNotes?: string }).body ?? (update as { releaseNotes?: string }).releaseNotes,
+                    releaseDate: (update as { date?: Date }).date?.toISOString(),
+                    downloadUrl: (update as { url?: string }).url,
                     isMandatory: false,
                     available: true,
                 };

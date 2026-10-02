@@ -26,10 +26,10 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
   const [isCreating, setIsCreating] = useState(false);
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
 
-  const handleExport = () => {
+  const handleExport = (): void => {
     const data = onExportProfiles();
     const element = document.createElement('a');
-    element.setAttribute('href', 'data:text/json;charset=utf-8,' + encodeURIComponent(data));
+    element.setAttribute('href', `data:text/json;charset=utf-8,${  encodeURIComponent(data)}`);
     element.setAttribute('download', 'profiles.json');
     element.style.display = 'none';
     document.body.appendChild(element);
@@ -37,12 +37,12 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
     document.body.removeChild(element);
   };
 
-  const handleImport = async () => {
+  const handleImport = async (): Promise<void> => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
-    input.onchange = async (e: any) => {
-      const file = e.target.files[0];
+    input.onchange = async (e: unknown): Promise<void> => {
+      const file = (e as { target: { files: File[] } }).target.files[0];
       if (file) {
         try {
           const text = await file.text();
@@ -52,7 +52,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
             alert('Failed to import profiles - invalid JSON format');
           }
         } catch (error) {
-          alert('Error reading file: ' + (error instanceof Error ? error.message : 'Unknown error'));
+          alert(`Error reading file: ${  error instanceof Error ? error.message : 'Unknown error'}`);
         }
       }
     };

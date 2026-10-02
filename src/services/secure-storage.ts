@@ -54,7 +54,7 @@ export const isEncryptionAvailable = (): boolean => {
     // In the future, this would check for Web Crypto API support
     return typeof window !== 'undefined' && (
         window.crypto !== undefined ||
-        (window as any).msCrypto !== undefined
+        (window as Window & { msCrypto?: unknown }).msCrypto !== undefined
     );
 };
 
@@ -127,8 +127,9 @@ const simpleDecrypt = (encryptedData: string, key: string): string => {
  */
 const getEncryptionKey = async (): Promise<string> => {
     // Check memory cache first
-    if (memoryCache.has(ENCRYPTION_KEY_KEY)) {
-        return memoryCache.get(ENCRYPTION_KEY_KEY)!;
+    const cachedKey = memoryCache.get(ENCRYPTION_KEY_KEY);
+    if (cachedKey !== undefined) {
+        return cachedKey;
     }
     
     // Try to get from localStorage
@@ -287,7 +288,7 @@ export const secureGetItem = async <T>(
         
         // Try in-memory cache
         if (!data) {
-            data = memoryCache.get(STORAGE_KEY_PREFIX + key) || null;
+            data = memoryCache.get(STORAGE_KEY_PREFIX + key) ?? null;
         }
         
         if (!data) {
@@ -400,7 +401,7 @@ export const secureClearAll = async (): Promise<StorageResult> => {
             // Remove all items with our prefix
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
-                if (key && key.startsWith(STORAGE_KEY_PREFIX)) {
+                if (key?.startsWith(STORAGE_KEY_PREFIX)) {
                     localStorage.removeItem(key);
                 }
             }
@@ -443,7 +444,7 @@ export const secureListKeys = async (): Promise<string[]> => {
         if (typeof localStorage !== 'undefined') {
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
-                if (key && key.startsWith(STORAGE_KEY_PREFIX)) {
+                if (key?.startsWith(STORAGE_KEY_PREFIX)) {
                     keys.push(key.substring(STORAGE_KEY_PREFIX.length));
                 }
             }

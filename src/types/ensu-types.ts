@@ -3,7 +3,7 @@
  */
 
 // Import types from index
-import type { Chat, Model, InferenceOptions } from './index';
+import type { Chat, InferenceOptions, Model } from './index';
 
 // ============================================================================
 // Conversation Management Types

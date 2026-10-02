@@ -9,11 +9,12 @@
  * - OPFS (Origin Private File System) support
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { 
-  CreateMLCEngine, 
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type {
+  AppConfig,
+  ChatCompletionChunk,
+  ChatCompletionResult,
   MLCEngineInterface,
-  AppConfig 
 } from "@mlc-ai/web-llm";
 import { handleErrorSilent } from '../utils/errors';
 import { log, warn } from '../services/logging';
@@ -22,10 +23,21 @@ import { log, warn } from '../services/logging';
 // Types
 // ============================================================================
 
+export interface WebLLMGenerateOptions {
+  temperature?: number;
+  top_p?: number;
+  max_tokens?: number;
+}
+
+export interface WebLLMGenerateResult {
+  text: string;
+  usage?: unknown;
+}
+
 export interface UseEnhancedInferenceOptions {
   modelId: string;
-  defaultOptions?: any;
-  engineConfig?: any;
+  defaultOptions?: WebLLMGenerateOptions;
+  engineConfig?: Record<string, unknown>;
   autoRetry?: boolean;
   appConfig?: AppConfig;
 }
@@ -58,8 +70,8 @@ export interface InferenceState {
 
 export interface EnhancedInferenceReturn extends InferenceState {
   // Actions
-  generate: (prompt: string, options?: any) => Promise<{ text: string; usage?: any } | null>;
-  generateStream: (prompt: string, options?: any, onChunk?: (text: string) => void) => Promise<string>;
+  generate: (prompt: string, options?: WebLLMGenerateOptions) => Promise<WebLLMGenerateResult | null>;
+  generateStream: (prompt: string, options?: WebLLMGenerateOptions, onChunk?: (text: string) => void) => Promise<string>;
   cancel: () => void;
   
   // Model management
@@ -154,18 +166,19 @@ export const useEnhancedInference = (
       setProgress(0);
 
       // Check if WebGPU is available
-      const hasWebGPU = !!(navigator as any).gpu;
+      const hasWebGPU = !!(navigator as Navigator & { gpu?: unknown }).gpu;
       if (!hasWebGPU) {
         throw new Error('WebGPU is not supported in your browser. Please use Chrome, Firefox 113+, Edge, or Safari 16.4+.');
       }
 
       // Use custom config or default
-      const effectiveAppConfig = customAppConfig || getCustomAppConfig();
+      const effectiveAppConfig = customAppConfig ?? getCustomAppConfig();
 
       log(`Loading model: ${modelId} with WebLLM`);
       log(`Using WebGPU: ${hasWebGPU ? 'Yes' : 'No'}`);
       log(`Using WASM: ${typeof WebAssembly !== 'undefined' ? 'Yes' : 'No'}`);
 
+      const { CreateMLCEngine } = await import("@mlc-ai/web-llm");
       const engine = await CreateMLCEngine(modelId, {
         appConfig: effectiveAppConfig,
         initProgressCallback: (p: { text?: string; progress: number }) => {
@@ -231,8 +244,8 @@ export const useEnhancedInference = (
   // Generate text (non-streaming)
   const generate = useCallback(async (
     prompt: string,
-    options: any = {}
-  ): Promise<{ text: string; usage?: any } | null> => {
+    options: WebLLMGenerateOptions = {}
+  ): Promise<WebLLMGenerateResult | null> => {
     try {
       if (!engineRef.current) {
         throw new Error('Model not loaded. Please load a model first.');
@@ -256,13 +269,14 @@ export const useEnhancedInference = (
         messages: [
           { role: "user", content: prompt }
         ],
-        temperature: mergedOptions.temperature,
-        top_p: mergedOptions.top_p,
-        max_tokens: mergedOptions.max_tokens,
         ...mergedOptions
       });
 
-      const responseText = reply.choices[0]?.message?.content || '';
+      if (typeof (reply as AsyncIterable<unknown>)[Symbol.asyncIterator] === 'function') {
+        throw new Error('Unexpected streaming response for non-streaming request');
+      }
+      const completion = reply as ChatCompletionResult;
+      const responseText = completion.choices[0]?.message?.content ?? '';
       
       setResult(responseText);
       setTokensGenerated(tokenCountRef.current);
@@ -271,7 +285,7 @@ export const useEnhancedInference = (
 
       return {
         text: responseText,
-        usage: reply.usage
+        usage: completion.usage
       };
 
     } catch (err: unknown) {
@@ -285,7 +299,7 @@ export const useEnhancedInference = (
   // Generate text with streaming
   const generateStream = useCallback(async (
     prompt: string,
-    options: any = {},
+    options: WebLLMGenerateOptions = {},
     onChunk?: (text: string) => void
   ): Promise<string> => {
     try {
@@ -316,16 +330,17 @@ export const useEnhancedInference = (
         ...options
       };
 
-      const chunks = await engineRef.current.chat.completions.create({
+      const response = await engineRef.current.chat.completions.create({
         messages: [
           { role: "user", content: prompt }
         ],
         stream: true,
-        temperature: mergedOptions.temperature,
-        top_p: mergedOptions.top_p,
-        max_tokens: mergedOptions.max_tokens,
         ...mergedOptions
       });
+      if (typeof (response as AsyncIterable<unknown>)[Symbol.asyncIterator] !== 'function') {
+        throw new Error('Expected streaming response but received a single completion');
+      }
+      const chunks = response as AsyncIterable<ChatCompletionChunk>;
 
       let fullText = '';
       
@@ -334,7 +349,7 @@ export const useEnhancedInference = (
           break;
         }
 
-        const delta = chunk.choices[0]?.delta?.content || '';
+        const delta = chunk.choices?.[0]?.delta?.content ?? '';
         fullText += delta;
         tokenCountRef.current++;
         
@@ -376,6 +391,7 @@ export const useEnhancedInference = (
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
+    engineRef.current?.interruptGenerate?.();
     setIsGenerating(false);
     setIsStreaming(false);
   }, []);
@@ -386,7 +402,7 @@ export const useEnhancedInference = (
       setWebgpuAvailable(true);
       try {
         // WebLLM engine has getCurrentModelId method
-        const modelId = (engineRef.current as any).getCurrentModelId?.();
+        const modelId = (engineRef.current as { getCurrentModelId?: () => string | undefined }).getCurrentModelId?.();
         if (modelId) {
           setCurrentModelId(modelId);
         }
@@ -416,7 +432,7 @@ export const useEnhancedInference = (
   }, [modelId, currentModelId, loadModel]);
 
   // Cleanup on unmount
-  useEffect(() => {
+  useEffect((): (() => void) => {
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -476,14 +492,16 @@ export const useEnhancedInference = (
 /**
  * Hook for batch inference operations
  */
-export const useBatchInference = (options: UseEnhancedInferenceOptions) => {
+export const useBatchInference = (options: UseEnhancedInferenceOptions): {
+  generateBatch: (prompts: string[], batchOptions?: WebLLMGenerateOptions) => Promise<WebLLMGenerateResult[]>;
+} => {
   const { generate } = useEnhancedInference(options);
 
   const generateBatch = useCallback(async (
     prompts: string[],
-    batchOptions?: any
-  ): Promise<{ text: string; usage?: any }[]> => {
-    const results: { text: string; usage?: any }[] = [];
+    batchOptions?: WebLLMGenerateOptions
+  ): Promise<WebLLMGenerateResult[]> => {
+    const results: WebLLMGenerateResult[] = [];
     
     for (const prompt of prompts) {
       const result = await generate(prompt, batchOptions);
@@ -505,15 +523,15 @@ export const useConversationInference = (
   options: UseEnhancedInferenceOptions & {
     conversationId: string;
   }
-) => {
-  const { conversationId, ...baseOptions } = options;
+): EnhancedInferenceReturn => {
+  const baseOptions = options;
   const { generate, generateStream, ...baseReturn } = useEnhancedInference(baseOptions);
 
   const generateWithContext = useCallback(async (
     prompt: string,
-    options?: any,
+    options?: WebLLMGenerateOptions,
     messages?: Array<{ role: string; content: string }>
-  ): Promise<{ text: string; usage?: any } | null> => {
+  ): Promise<WebLLMGenerateResult | null> => {
     try {
       // For WebLLM, context is handled via the messages array
       if (messages && messages.length > 0) {
@@ -527,7 +545,7 @@ export const useConversationInference = (
       warn('Failed to generate with context:', err);
       return null;
     }
-  }, [conversationId, generate]);
+  }, [generate]);
 
   return {
     ...baseReturn,
@@ -539,8 +557,11 @@ export const useConversationInference = (
 /**
  * Hook for monitoring inference performance
  */
-export const useInferencePerformance = () => {
-  const [metrics, setMetrics] = useState<any>({});
+export const useInferencePerformance = (): {
+  metrics: Record<string, unknown>;
+  memoryUsage: { usedMB: number; totalMB: number; usagePercent: number };
+} => {
+  const [metrics, setMetrics] = useState<Record<string, unknown>>({});
   const [memoryUsage, setMemoryUsage] = useState<{
     usedMB: number;
     totalMB: number;
@@ -563,7 +584,13 @@ export const useInferencePerformance = () => {
  */
 export const useModelPreloader = (options: {
   modelIds: string[];
-}) => {
+}): {
+  preloadStatus: Record<string, {
+    status: 'pending' | 'loading' | 'loaded' | 'failed';
+    progress: number;
+    error?: string;
+  }>;
+} => {
   const { modelIds } = options;
   const [preloadStatus, setPreloadStatus] = useState<Record<string, {
     status: 'pending' | 'loading' | 'loaded' | 'failed';
@@ -571,8 +598,8 @@ export const useModelPreloader = (options: {
     error?: string;
   }>>({});
 
-  useEffect(() => {
-    const preload = async () => {
+  useEffect((): void => {
+    const preload = async (): Promise<void> => {
       // Initialize status
       const initialStatus: typeof preloadStatus = {};
       for (const modelId of modelIds) {

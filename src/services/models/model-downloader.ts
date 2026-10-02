@@ -14,8 +14,8 @@
  */
 
 import { LocalModel, Model } from '../../types';
-import { warn, log, error } from '../logging';
-import { validateModelPath, formatBytes } from '../security';
+import { error, log, warn } from '../logging';
+import { formatBytes, validateModelPath } from '../security';
 
 // Types for download progress and status
 export interface DownloadProgress {
@@ -87,7 +87,7 @@ export const initModelCache = async (): Promise<Cache | null> => {
  * Validate GGUF file header
  */
 export const isGgufHeader = (bytes: Uint8Array): boolean => {
-    if (bytes.length < 4) return false;
+    if (bytes.length < 4) {return false;}
     return (
         bytes[0] === GGUF_MAGIC[0] &&
         bytes[1] === GGUF_MAGIC[1] &&
@@ -102,9 +102,9 @@ export const isGgufHeader = (bytes: Uint8Array): boolean => {
  * Parse content range header to get total size
  */
 const parseContentRangeTotal = (header: string | null): number | undefined => {
-    if (!header) return undefined;
+    if (!header) {return undefined;}
     const match = header.match(/\/(\d+)$/);
-    if (!match) return undefined;
+    if (!match) {return undefined;}
     const total = Number(match[1]);
     return Number.isFinite(total) ? total : undefined;
 };
@@ -117,17 +117,17 @@ const fetchRemoteSize = async (url: string): Promise<number | undefined> => {
         const head = await fetch(url, { method: 'HEAD' });
         if (head.ok) {
             const length = Number(head.headers.get('Content-Length') ?? 0);
-            if (length > 0) return length;
+            if (length > 0) {return length;}
             const range = parseContentRangeTotal(head.headers.get('Content-Range'));
-            if (range) return range;
+            if (range) {return range;}
         }
     } catch { /* ignore head failures */ }
 
     try {
         const res = await fetch(url, { headers: { Range: 'bytes=0-0' } });
-        if (!res.ok) return undefined;
+        if (!res.ok) {return undefined;}
         const range = parseContentRangeTotal(res.headers.get('Content-Range'));
-        if (range) return range;
+        if (range) {return range;}
         const length = Number(res.headers.get('Content-Length') ?? 0);
         return length > 0 ? length : undefined;
     } catch { return undefined; }
@@ -136,9 +136,12 @@ const fetchRemoteSize = async (url: string): Promise<number | undefined> => {
 /**
  * Process download queue
  */
-const processQueue = async (maxParallel: number = DEFAULT_MAX_PARALLEL) => {
+const processQueue = async (maxParallel: number = DEFAULT_MAX_PARALLEL): Promise<void> => {
     while (downloadQueue.length > 0 && activeDownloadCount < maxParallel) {
-        const item = downloadQueue.shift()!;
+        const item = downloadQueue.shift();
+        if (!item) {
+            continue;
+        }
         activeDownloadCount++;
 
         try {
@@ -197,7 +200,7 @@ const downloadModelInternal = async (options: DownloadOptions): Promise<LocalMod
         try {
             // Get remote file size
             const remoteSize = await fetchRemoteSize(model.downloadUrl);
-            totalBytes = remoteSize || 0;
+            totalBytes = remoteSize ?? 0;
 
             // Emit initial progress
             options.onProgress?.({
@@ -234,10 +237,10 @@ const downloadModelInternal = async (options: DownloadOptions): Promise<LocalMod
             const reader = response.body.getReader();
             let headerBytes: Uint8Array | null = null;
 
-            while (true) {
+            for (;;) {
                 const { done, value } = await reader.read();
-                if (done) break;
-                if (!value) continue;
+                if (done) {break;}
+                if (!value) {continue;}
 
                 // Process in chunks
                 for (let offset = 0; offset < value.length; offset += CHUNK_SIZE) {
