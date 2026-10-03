@@ -12,7 +12,7 @@ import { useProfiles } from '../../hooks/useProfiles';
 import { useEnhancedInference } from '../../hooks/useEnhancedInference';
 import * as ChatStorage from '../../services/storage/ChatStorage';
 import { error as logError } from '../../services/logging';
-import { buildPromptWithDocuments, type DocumentAttachment } from '../../services/attachments';
+import { buildPromptWithDocuments, type DocumentAttachment, type ImageAttachment } from '../../services/attachments';
 
 
 type ActiveTab = 'chat' | 'models' | 'profiles' | 'settings' | 'help';
@@ -33,7 +33,8 @@ export const MainLayout: FC = () => {
     webgpuAvailable,
     currentModelId,
     refreshStatus,
-    error
+    error,
+    supportsImageInput
   } = useEnhancedInference({ modelId: activeModel?.id ?? '' });
   const [localError, setLocalError] = useState<string | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -80,7 +81,11 @@ export const MainLayout: FC = () => {
     await handleSendMessage(message, attachments);
   };
 
-  const handleSendMessage = async (message: string, attachments?: DocumentAttachment[]): Promise<void> => {
+  const handleSendMessageWithImages = async (message: string, images: ImageAttachment[]): Promise<void> => {
+    await handleSendMessage(message, undefined, images);
+  };
+
+  const handleSendMessage = async (message: string, attachments?: DocumentAttachment[], images?: ImageAttachment[]): Promise<void> => {
     try {
       if (!chat) {
         throw new Error('No active chat');
@@ -125,6 +130,7 @@ export const MainLayout: FC = () => {
         top_p: activeProfile.topP,
         max_tokens: activeProfile.maxTokens,
         history,
+        images,
       });
 
       if (result) {
@@ -299,6 +305,8 @@ export const MainLayout: FC = () => {
             onStopGeneration={stopGeneration}
             onSendMessage={handleSendMessage}
             onSendMessageWithDocuments={handleSendMessageWithDocuments}
+            supportsImageInput={supportsImageInput}
+            onSendMessageWithImages={handleSendMessageWithImages}
             onSelectModel={handleModelSelect}
             onSelectProfile={handleSelectProfile}
             onRenameChat={renameChat}
@@ -350,7 +358,7 @@ export const MainLayout: FC = () => {
                 <div>
                   <h3 className="font-bold text-lg mb-2">{t('settings.about')}</h3>
                   <p className="text-gray-600">
-                    Local LLM Chat v1.0.0
+                    Local LLM Chat v1.3.0
                   </p>
                   <p className="text-gray-600">
                     {t('settings.description')}
