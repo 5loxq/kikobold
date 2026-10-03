@@ -6,6 +6,7 @@ import MarkdownRenderer from './MarkdownRenderer';
 interface MessageListProps {
   messages: Message[];
   isLoading: boolean;
+  streamingMessage?: string | null;
   messagesEndRef?: React.RefObject<HTMLDivElement>;
   isDarkMode?: boolean;
   searchQuery?: string;
@@ -117,6 +118,15 @@ function areMessagesEqual(
   prevProps: MessageListProps,
   nextProps: MessageListProps
 ): boolean {
+  // Streaming message, loading state, search and theme always force a re-render
+  if (
+    prevProps.streamingMessage !== nextProps.streamingMessage ||
+    prevProps.isLoading !== nextProps.isLoading ||
+    prevProps.searchQuery !== nextProps.searchQuery ||
+    prevProps.isDarkMode !== nextProps.isDarkMode
+  ) {
+    return false;
+  }
   // Only re-render if messages array reference changes or length changes
   // This prevents unnecessary re-renders when only other props change
   if (prevProps.messages === nextProps.messages) {
@@ -142,7 +152,7 @@ function areMessagesEqual(
          prevLast.timestamp === nextLast.timestamp;
 }
 
-const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, messagesEndRef, isDarkMode, searchQuery }) => {
+const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, streamingMessage, messagesEndRef, isDarkMode, searchQuery }) => {
     const { t } = useTranslation();
 
     return (
@@ -161,6 +171,16 @@ const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, mes
           ))
         )}
 
+        {streamingMessage && (
+          <div className="flex justify-start">
+            <div className={`px-5 py-3 rounded-2xl rounded-bl-2xl border shadow-sm ${
+              isDarkMode ? 'bg-gray-800 text-gray-200 border-gray-700' : 'bg-white text-gray-800 border-gray-100'
+            }`}>
+              <div className="whitespace-pre-wrap break-words text-sm">{streamingMessage}<span className="animate-pulse">▍</span></div>
+            </div>
+          </div>
+        )}
+
         {isLoading && (
           <div className="flex justify-start">
             <div className={`px-5 py-3 rounded-2xl rounded-bl-2xl border shadow-sm ${
@@ -172,7 +192,7 @@ const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, mes
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-typing-bounce" style={{ animationDelay: '0.15s' }}></div>
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-typing-bounce" style={{ animationDelay: '0.3s' }}></div>
                 </div>
-                <span className="ml-2 text-gray-400 text-sm">Denkt nach...</span>
+                <span className="ml-2 text-gray-400 text-sm">{t('chat.thinking')}</span>
               </div>
             </div>
           </div>
