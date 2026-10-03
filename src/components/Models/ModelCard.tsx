@@ -25,6 +25,16 @@ export const ModelCard: React.FC<ModelCardProps> = ({
       <div className="flex items-start justify-between mb-2">
         <div className="flex-1">
           <h4 className="font-bold text-gray-800">{model.name}</h4>
+          {model.provider === 'gguf-hf' && (
+            <span className="inline-block mt-1 px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded font-medium">
+              GGUF · WASM
+            </span>
+          )}
+          {model.provider === 'webllm-hf-cdn' && (
+            <span className="inline-block mt-1 px-2 py-1 text-xs bg-green-100 text-green-700 rounded font-medium">
+              WebGPU
+            </span>
+          )}
           {model.recommended && (
             <span className="inline-block mt-1 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded font-medium">
               {t('models.recommended')}

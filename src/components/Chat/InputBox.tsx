@@ -2,6 +2,13 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { error, log } from '../../services/logging';
 import { sanitizeInputLight } from '../../services/security';
+import {
+  ATTACHMENT_LIMITS,
+  createDocumentAttachment,
+  type DocumentAttachment,
+  formatBytes,
+  isAllowedDocument,
+} from '../../services/attachments';
 
 interface InputBoxProps {
   onSendMessage: (message: string) => void;
@@ -9,6 +16,7 @@ interface InputBoxProps {
   isModelLoaded: boolean;
   isGenerating?: boolean;
   onStopGeneration?: () => void;
+  onSendMessageWithDocuments?: (message: string, attachments: DocumentAttachment[]) => void;
 }
 
 // Type definition for SpeechRecognition API
@@ -80,12 +88,40 @@ export const InputBox: React.FC<InputBoxProps> = ({
   isModelLoaded,
   isGenerating = false,
   onStopGeneration,
+  onSendMessageWithDocuments,
 }) => {
   const { t, i18n } = useTranslation();
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [documents, setDocuments] = useState<DocumentAttachment[]>([]);
+  const [isAttaching, setIsAttaching] = useState(false);
+
+  const removeDocument = (id: string): void => {
+    setDocuments((prev) => prev.filter((d) => d.id !== id));
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = '';
+    if (files.length === 0) {return;}
+    setIsAttaching(true);
+    try {
+      const accepted: DocumentAttachment[] = [];
+      for (const file of files) {
+        if (documents.length + accepted.length >= ATTACHMENT_LIMITS.MAX_ATTACHMENTS) {break;}
+        if (!isAllowedDocument(file)) {continue;}
+        accepted.push(await createDocumentAttachment(file));
+      }
+      if (accepted.length > 0) {
+        setDocuments((prev) => [...prev, ...accepted]);
+      }
+    } finally {
+      setIsAttaching(false);
+    }
+  };
 
   const startListening = async (): Promise<void> => {
     try {
@@ -183,8 +219,13 @@ export const InputBox: React.FC<InputBoxProps> = ({
 
   const handleSend = (): void => {
     if (input.trim() && !isLoading && isModelLoaded) {
-      onSendMessage(input);
+      if (documents.length > 0 && onSendMessageWithDocuments) {
+        onSendMessageWithDocuments(input, documents);
+      } else {
+        onSendMessage(input);
+      }
       setInput('');
+      setDocuments([]);
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
       }
@@ -238,6 +279,29 @@ export const InputBox: React.FC<InputBoxProps> = ({
         </div>
       )}
 
+      {documents.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-3">
+          {documents.map((doc) => (
+            <div
+              key={doc.id}
+              className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800"
+            >
+              <span>📄 {doc.name}</span>
+              <span className="text-xs text-blue-500">{formatBytes(doc.size)}</span>
+              <button
+                onClick={() => removeDocument(doc.id)}
+                className="text-blue-400 hover:text-red-500 transition-colors"
+                aria-label="Remove document"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      {isAttaching && (
+        <div className="mb-3 text-sm text-gray-500">📎 {t('chat.attaching')}</div>
+      )}
       <div className="flex gap-3 items-end">
         <div className="flex-1 relative">
           <textarea
@@ -253,6 +317,24 @@ export const InputBox: React.FC<InputBoxProps> = ({
           />
         </div>
 
+        {/* Document Attach Button */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept=".txt,.md,.json,.csv,.tsv,.log,.xml,.yml,.yaml,.ini,.cfg,.ts,.tsx,.js,.jsx,.py,.java,.c,.cpp,.h,.hpp,.cs,.go,.rs,.rb,.php,.sql,.sh,.css,.html"
+          onChange={(e) => void handleFileSelect(e)}
+          className="hidden"
+        />
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isVoiceDisabled || isAttaching || documents.length >= ATTACHMENT_LIMITS.MAX_ATTACHMENTS}
+          className={`px-4 py-3 rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow-md bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:from-gray-700 hover:to-gray-800 ${isVoiceDisabled || isAttaching ? 'opacity-50 cursor-not-allowed' : ''}`}
+          title={t('chat.attachDocument')}
+          aria-label={t('chat.attachDocument')}
+        >
+          📎
+        </button>
         {/* Voice Input Button - Modern Design */}
         <button
           onClick={isListening ? stopListening : startListening}
