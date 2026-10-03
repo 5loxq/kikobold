@@ -53,7 +53,8 @@
     "imageAttached": "Bild angehängt",
     "share": "Teilen",
     "shareSuccess": "Kopiert!",
-    "shareSharing": "Wird kopiert..."
+    "shareSharing": "Wird kopiert...",
+    "thinking": "Denkt nach..."
   },
   "models": {
     "available": "Verfügbare Modelle",

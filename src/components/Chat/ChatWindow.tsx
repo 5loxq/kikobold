@@ -20,6 +20,7 @@ interface ChatWindowProps {
   loadingProgress?: number;
   isModelDownloaded?: (modelId: string) => boolean;
   isGenerating?: boolean;
+  streamingMessage?: string | null;
   onStopGeneration?: () => void;
   onSendMessage: (message: string) => void;
   onSendMessageWithDocuments?: (message: string, attachments: import('../../services/attachments').DocumentAttachment[]) => void;
@@ -44,6 +45,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   loadingProgress = 0,
   isModelDownloaded,
   isGenerating = false,
+  streamingMessage = null,
   onStopGeneration,
   onSendMessage,
   onSendMessageWithDocuments,
@@ -297,7 +299,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       </div>
 
       {/* Messages Area */}
-      <MessageList messages={visibleMessages} isLoading={isLoading} messagesEndRef={messagesEndRef} isDarkMode={checkDarkMode()} searchQuery={searchQuery} />
+      <MessageList messages={visibleMessages} isLoading={isLoading} streamingMessage={streamingMessage} messagesEndRef={messagesEndRef} isDarkMode={checkDarkMode()} searchQuery={searchQuery} />
 
       {/* Input Area */}
       <InputBox
