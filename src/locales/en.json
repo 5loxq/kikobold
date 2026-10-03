@@ -50,7 +50,10 @@
     "attachDocument": "Attach document",
     "attaching": "Attaching...",
     "attachImage": "Attach image (multimodal model)",
-    "imageAttached": "Image attached"
+    "imageAttached": "Image attached",
+    "share": "Share",
+    "shareSuccess": "Copied!",
+    "shareSharing": "Copying..."
   },
   "models": {
     "available": "Available Models",
