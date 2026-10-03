@@ -43,6 +43,39 @@ export const buildPromptWithDocuments = (message: string, attachments: DocumentA
   return `${message}\n\nThe user attached the following documents. Use them as context:\n\n${docs}`;
 };
 
+export interface ImageAttachment {
+  id: string;
+  name: string;
+  size: number;
+  data: ArrayBuffer;
+}
+
+export const MAX_IMAGE_SIZE = 4 * 1024 * 1024;
+export const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+
+export const isAllowedImage = (file: File): boolean => {
+  return ALLOWED_IMAGE_TYPES.includes(file.type) && file.size <= MAX_IMAGE_SIZE;
+};
+
+export const createImageAttachment = (file: File): Promise<ImageAttachment> =>
+  new Promise<ImageAttachment>((resolve, reject) => {
+    if (!isAllowedImage(file)) {
+      reject(new Error(`Unsupported image: ${file.name}`));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (): void => {
+      resolve({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        name: file.name,
+        size: file.size,
+        data: reader.result as ArrayBuffer,
+      });
+    };
+    reader.onerror = (): void => reject(reader.error ?? new Error('Failed to read image'));
+    reader.readAsArrayBuffer(file);
+  });
+
 export const ATTACHMENT_LIMITS = { MAX_FILE_SIZE, MAX_ATTACHMENTS };
 
 export const formatBytes = (size: number): string => {
