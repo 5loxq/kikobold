@@ -206,6 +206,25 @@ export const useEnhancedInference = (
         throw new Error('WebGPU is not supported in your browser. Please use Chrome, Firefox 113+, Edge, or Safari 16.4+.');
       }
 
+      // Proactive check: WebLLM requires maxStorageBuffersPerShaderStage >= 10.
+      // Some GPUs/drivers only report 9, which makes engine init fail AFTER
+      // downloading the model. Detect this early and use the WASM variant.
+      try {
+        const gpu = (navigator as Navigator & { gpu?: { requestAdapter(): Promise<{ limits?: Record<string, number> } | null> | undefined } }).gpu;
+        const adapter = await gpu?.requestAdapter();
+        const maxStorageBuffers = adapter?.limits?.['maxStorageBuffersPerShaderStage'] ?? 10;
+        if (maxStorageBuffers < 10) {
+          const fallbackModelId = getWasmFallbackModelId(modelId);
+          if (fallbackModelId) {
+            log(`WebGPU limit too low (maxStorageBuffersPerShaderStage=${maxStorageBuffers}) - falling back to WASM model ${fallbackModelId}`);
+            setIsLoading(false);
+            return loadModel(fallbackModelId);
+          }
+        }
+      } catch {
+        // Adapter check is best-effort; let WebLLM surface real errors
+      }
+
       // Use custom config or default
       const effectiveAppConfig = customAppConfig ?? getCustomAppConfig();
 
@@ -235,25 +254,36 @@ export const useEnhancedInference = (
       return true;
 
     } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+
+      // Runtime limit errors (e.g. maxStorageBuffersPerShaderStage) surface
+      // only at engine init - automatically fall back to the WASM variant.
+      if (/maxStorageBuffersPerShaderStage|exceeds limit/i.test(errorMessage) && getEngineType(modelId) === 'webllm') {
+        const fallbackModelId = getWasmFallbackModelId(modelId);
+        if (fallbackModelId) {
+          warn(`WebGPU runtime limit exceeded for ${modelId} - falling back to WASM model ${fallbackModelId}`);
+          setError(null);
+          return loadModel(fallbackModelId);
+        }
+      }
+
       const appError = handleErrorSilent(err);
       setError(appError.userMessage);
       setIsLoading(false);
       setProgress(0);
       warn(`Failed to load model ${modelId}: ${err}`);
-      
+
       // Enhanced error messages for common issues
-      const errorMessage = err instanceof Error ? err.message : String(err);
       if (errorMessage.includes('CORS') || errorMessage.includes('cross-origin')) {
-        setError('⚠️ CORS Fehler: Modelle müssen auf demselben Server gehostet werden (www.posthiel.de). Bitte lade die MLC-Modelle in den Ordner /models/ hoch. Anleitung: Siehe Dokumentation.');
+        setError('⚠️ CORS-Fehler beim Laden vom HuggingFace-CDN. Bitte prüfe deine Internetverbindung und versuche es erneut.');
       } else if (errorMessage.includes('404') || errorMessage.includes('not found')) {
-        setError('⚠️ Modell-Dateien nicht gefunden. Bitte stelle sicher, dass die Modelle in https://www.posthiel.de/models/{Modell-ID}/ verfügbar sind.');
+        setError('⚠️ Modell nicht auf dem HuggingFace-CDN gefunden. Bitte prüfe die Modell-ID in der Registry.');
       } else if (errorMessage.includes('WebGPU')) {
         setError('⚠️ WebGPU nicht verfügbar. Bitte verwende einen modernen Browser: Chrome, Firefox 113+, Edge oder Safari 16.4+.');
       } else if (errorMessage.includes('WASM')) {
         setError('⚠️ WebAssembly-Fehler. Bitte stelle sicher, dass dein Browser WASM unterstützt und HTTPS verwendet wird.');
       } else {
-        // Default error message with more context
-        setError(`⚠️ Fehler beim Laden des Modells: ${errorMessage}. Bitte lade die Modell-Dateien auf deinen Webspace hoch.`);
+        setError(`⚠️ Fehler beim Laden des Modells: ${errorMessage}`);
       }
       
       return false;
