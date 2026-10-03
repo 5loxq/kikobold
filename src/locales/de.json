@@ -48,7 +48,9 @@
     "searchPlaceholder": "Nachrichten durchsuchen...",
     "searchClose": "Suche schließen",
     "attachDocument": "Dokument anhängen",
-    "attaching": "Anhängen..."
+    "attaching": "Anhängen...",
+    "attachImage": "Bild anhängen (multimodales Modell)",
+    "imageAttached": "Bild angehängt"
   },
   "models": {
     "available": "Verfügbare Modelle",
