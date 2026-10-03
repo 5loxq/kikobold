@@ -22,6 +22,7 @@ interface ChatWindowProps {
   isGenerating?: boolean;
   onStopGeneration?: () => void;
   onSendMessage: (message: string) => void;
+  onSendMessageWithDocuments?: (message: string, attachments: import('../../services/attachments').DocumentAttachment[]) => void;
   onSelectModel: (modelId: string) => void;
   onSelectProfile?: (profileId: string) => void;
   onRenameChat?: (chatId: string, newTitle: string) => void;
@@ -43,6 +44,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   isGenerating = false,
   onStopGeneration,
   onSendMessage,
+  onSendMessageWithDocuments,
   onSelectModel,
   onSelectProfile,
   onRenameChat,
@@ -216,7 +218,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               const isDownloaded = isModelDownloaded?.(model.id) ?? false;
               return (
                 <option key={model.id} value={model.id}>
-                  {isDownloaded ? '✅' : '📥'} {model.name} ({model.modelSize})
+                  {isDownloaded ? '✅' : '📥'} {model.name} ({model.modelSize}){model.provider === 'gguf-hf' ? ' · WASM' : ' · WebGPU'}
                 </option>
               );
             })}
@@ -296,6 +298,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       {/* Input Area */}
       <InputBox
         onSendMessage={onSendMessage}
+        onSendMessageWithDocuments={onSendMessageWithDocuments}
         isLoading={isLoading}
         isModelLoaded={isModelLoaded}
         isGenerating={isGenerating}
