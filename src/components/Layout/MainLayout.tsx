@@ -26,7 +26,8 @@ export const MainLayout: FC = () => {
   const { downloadedModels, activeModel, downloadModel, deleteModel: deleteDownloadedModel, selectModel, isModelDownloaded } = useModels();
   const { 
     loadModel, 
-    generate,
+    generateStream,
+    streamText,
     cancel: stopGeneration,
     isGenerating,
     isLoading,
@@ -37,6 +38,7 @@ export const MainLayout: FC = () => {
     supportsImageInput
   } = useEnhancedInference({ modelId: activeModel?.id ?? '' });
   const [localError, setLocalError] = useState<string | null>(null);
+  const [streamingMessage, setStreamingMessage] = useState<string | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
 
   const isModelLoaded = currentModelId === activeModel?.id;
@@ -125,7 +127,8 @@ export const MainLayout: FC = () => {
         role: m.role === 'assistant' ? ('assistant' as const) : ('user' as const),
         content: m.content,
       }));
-      const result = await generate(prompt, {
+      setStreamingMessage('start');
+      const result = await generateStream(prompt, {
         temperature: activeProfile.temperature,
         top_p: activeProfile.topP,
         max_tokens: activeProfile.maxTokens,
@@ -133,15 +136,17 @@ export const MainLayout: FC = () => {
         images,
       });
 
-      if (result) {
-        await addMessage('assistant', result.text);
+      if (result && result.trim().length > 0) {
+        await addMessage('assistant', result);
 
         // Auto-speak the response
-        speakResponse(result.text);
+        speakResponse(result);
       }
     } catch (err) {
       logError('Failed to send message:', err);
       setLocalError(err instanceof Error ? err.message : 'Failed to send message');
+    } finally {
+      setStreamingMessage(null);
     }
   };
 
@@ -302,6 +307,7 @@ export const MainLayout: FC = () => {
             loadingProgress={loadingProgress}
             isModelDownloaded={isModelDownloaded}
             isGenerating={isGenerating}
+            streamingMessage={streamingMessage ? streamText : null}
             onStopGeneration={stopGeneration}
             onSendMessage={handleSendMessage}
             onSendMessageWithDocuments={handleSendMessageWithDocuments}

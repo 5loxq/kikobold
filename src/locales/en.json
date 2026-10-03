@@ -53,7 +53,8 @@
     "imageAttached": "Image attached",
     "share": "Share",
     "shareSuccess": "Copied!",
-    "shareSharing": "Copying..."
+    "shareSharing": "Copying...",
+    "thinking": "Thinking..."
   },
   "models": {
     "available": "Available Models",
