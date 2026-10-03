@@ -358,7 +358,7 @@ export const MainLayout: FC = () => {
                 <div>
                   <h3 className="font-bold text-lg mb-2">{t('settings.about')}</h3>
                   <p className="text-gray-600">
-                    Local LLM Chat v1.3.0
+                    Local LLM Chat v1.3.1
                   </p>
                   <p className="text-gray-600">
                     {t('settings.description')}

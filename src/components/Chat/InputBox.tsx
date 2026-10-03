@@ -113,7 +113,13 @@ export const InputBox: React.FC<InputBoxProps> = ({
   };
 
   const removeImage = (id: string): void => {
-    setImages((prev) => prev.filter((img) => img.id !== id));
+    setImages((prev) => {
+      const removed = prev.find((img) => img.id === id);
+      if (removed) {
+        URL.revokeObjectURL(removed.previewUrl);
+      }
+      return prev.filter((img) => img.id !== id);
+    });
   };
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
@@ -261,7 +267,10 @@ export const InputBox: React.FC<InputBoxProps> = ({
       }
       setInput('');
       setDocuments([]);
-      setImages([]);
+      setImages((prev) => {
+        prev.forEach((img) => URL.revokeObjectURL(img.previewUrl));
+        return [];
+      });
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
       }
@@ -336,18 +345,22 @@ export const InputBox: React.FC<InputBoxProps> = ({
         </div>
       )}
       {images.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-3">
+        <div className="flex flex-wrap gap-3 mb-3">
           {images.map((img) => (
             <div
               key={img.id}
-              className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 border border-purple-200 rounded-lg text-sm text-purple-800"
+              className="relative group w-24 h-24 rounded-xl overflow-hidden border-2 border-purple-200 shadow-sm"
             >
-              <span>🖼️ {img.name}</span>
-              <span className="text-xs text-purple-500">{formatBytes(img.size)}</span>
+              <img
+                src={img.previewUrl}
+                alt={img.name}
+                className="w-full h-full object-cover"
+              />
               <button
                 onClick={() => removeImage(img.id)}
-                className="text-purple-400 hover:text-red-500 transition-colors"
+                className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-black/60 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                 aria-label="Remove image"
+                title={`${img.name} (${formatBytes(img.size)})`}
               >
                 ✕
               </button>
