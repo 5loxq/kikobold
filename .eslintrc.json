@@ -84,6 +84,12 @@
       "rules": {
         "@typescript-eslint/no-explicit-any": "off"
       }
+    },
+    {
+      "files": ["src/components/Chat/MarkdownRenderer.tsx"],
+      "rules": {
+        "react/no-danger": "off"
+      }
     }
   ]
 }
