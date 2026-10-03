@@ -5,9 +5,12 @@ import { sanitizeInputLight } from '../../services/security';
 import {
   ATTACHMENT_LIMITS,
   createDocumentAttachment,
+  createImageAttachment,
   type DocumentAttachment,
   formatBytes,
+  type ImageAttachment,
   isAllowedDocument,
+  isAllowedImage,
 } from '../../services/attachments';
 
 interface InputBoxProps {
@@ -17,6 +20,8 @@ interface InputBoxProps {
   isGenerating?: boolean;
   onStopGeneration?: () => void;
   onSendMessageWithDocuments?: (message: string, attachments: DocumentAttachment[]) => void;
+  supportsImageInput?: boolean;
+  onSendMessageWithImages?: (message: string, images: ImageAttachment[]) => void;
 }
 
 // Type definition for SpeechRecognition API
@@ -89,6 +94,8 @@ export const InputBox: React.FC<InputBoxProps> = ({
   isGenerating = false,
   onStopGeneration,
   onSendMessageWithDocuments,
+  supportsImageInput = false,
+  onSendMessageWithImages,
 }) => {
   const { t, i18n } = useTranslation();
   const [input, setInput] = useState('');
@@ -98,9 +105,35 @@ export const InputBox: React.FC<InputBoxProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [documents, setDocuments] = useState<DocumentAttachment[]>([]);
   const [isAttaching, setIsAttaching] = useState(false);
+  const [images, setImages] = useState<ImageAttachment[]>([]);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const removeDocument = (id: string): void => {
     setDocuments((prev) => prev.filter((d) => d.id !== id));
+  };
+
+  const removeImage = (id: string): void => {
+    setImages((prev) => prev.filter((img) => img.id !== id));
+  };
+
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = '';
+    if (files.length === 0) {return;}
+    setIsAttaching(true);
+    try {
+      const accepted: ImageAttachment[] = [];
+      for (const file of files) {
+        if (accepted.length >= ATTACHMENT_LIMITS.MAX_ATTACHMENTS) {break;}
+        if (!isAllowedImage(file)) {continue;}
+        accepted.push(await createImageAttachment(file));
+      }
+      if (accepted.length > 0) {
+        setImages((prev) => [...prev, ...accepted]);
+      }
+    } finally {
+      setIsAttaching(false);
+    }
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
@@ -219,13 +252,16 @@ export const InputBox: React.FC<InputBoxProps> = ({
 
   const handleSend = (): void => {
     if (input.trim() && !isLoading && isModelLoaded) {
-      if (documents.length > 0 && onSendMessageWithDocuments) {
+      if (images.length > 0 && onSendMessageWithImages) {
+        onSendMessageWithImages(input, images);
+      } else if (documents.length > 0 && onSendMessageWithDocuments) {
         onSendMessageWithDocuments(input, documents);
       } else {
         onSendMessage(input);
       }
       setInput('');
       setDocuments([]);
+      setImages([]);
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
       }
@@ -299,6 +335,26 @@ export const InputBox: React.FC<InputBoxProps> = ({
           ))}
         </div>
       )}
+      {images.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-3">
+          {images.map((img) => (
+            <div
+              key={img.id}
+              className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 border border-purple-200 rounded-lg text-sm text-purple-800"
+            >
+              <span>🖼️ {img.name}</span>
+              <span className="text-xs text-purple-500">{formatBytes(img.size)}</span>
+              <button
+                onClick={() => removeImage(img.id)}
+                className="text-purple-400 hover:text-red-500 transition-colors"
+                aria-label="Remove image"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
       {isAttaching && (
         <div className="mb-3 text-sm text-gray-500">📎 {t('chat.attaching')}</div>
       )}
@@ -317,6 +373,28 @@ export const InputBox: React.FC<InputBoxProps> = ({
           />
         </div>
 
+        {/* Image Attach Button (only for multimodal models) */}
+        {supportsImageInput && (
+          <>
+            <input
+              ref={imageInputRef}
+              type="file"
+              multiple
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              onChange={(e) => void handleImageSelect(e)}
+              className="hidden"
+            />
+            <button
+              onClick={() => imageInputRef.current?.click()}
+              disabled={isVoiceDisabled || isAttaching || images.length >= ATTACHMENT_LIMITS.MAX_ATTACHMENTS}
+              className={`px-4 py-3 rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow-md bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800 ${isVoiceDisabled || isAttaching ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title={t('chat.attachImage')}
+              aria-label={t('chat.attachImage')}
+            >
+              🖼️
+            </button>
+          </>
+        )}
         {/* Document Attach Button */}
         <input
           ref={fileInputRef}
