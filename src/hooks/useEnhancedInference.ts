@@ -23,8 +23,10 @@ import { getEngineType, getModelConfig } from '../services/models/model-registry
 import {
   cancelWllamaGeneration,
   generateWithWllama,
+  generateWithWllamaStream,
   isWllamaModelLoaded,
   loadWllamaModel,
+  supportsWllamaImageInput,
   unloadWllamaModel,
 } from '../services/inference/wllama-engine';
 
@@ -37,6 +39,7 @@ export interface WebLLMGenerateOptions {
   top_p?: number;
   max_tokens?: number;
   history?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  images?: Array<{ name: string; data: ArrayBuffer }>;
 }
 
 export interface WebLLMGenerateResult {
@@ -84,6 +87,7 @@ export interface EnhancedInferenceReturn extends InferenceState {
   generateStream: (prompt: string, options?: WebLLMGenerateOptions, onChunk?: (text: string) => void) => Promise<string>;
   cancel: () => void;
   activeEngine: 'webllm' | 'wllama' | null;
+  supportsImageInput: boolean;
   
   // Model management
   loadModel: (modelId: string) => Promise<boolean>;
@@ -164,6 +168,7 @@ export const useEnhancedInference = (
     setActiveEngine(engine);
   }, []);
   const [webgpuAvailable, setWebgpuAvailable] = useState<boolean | null>(null);
+  const [supportsImageInput, setSupportsImageInput] = useState(false);
 
   // Refs
   const engineRef = useRef<MLCEngineInterface | null>(null);
@@ -201,6 +206,7 @@ export const useEnhancedInference = (
         }
         setCurrentModelId(modelId);
         setEngine('wllama');
+        setSupportsImageInput(supportsWllamaImageInput());
         setIsLoading(false);
         return true;
       }
@@ -232,6 +238,7 @@ export const useEnhancedInference = (
       engineRef.current = engine;
       setCurrentModelId(modelId);
       setEngine('webllm');
+      setSupportsImageInput(false);
       setWebgpuAvailable(true); // WebLLM uses WebGPU
       setIsLoading(false);
       
@@ -271,6 +278,7 @@ export const useEnhancedInference = (
         await unloadWllamaModel();
         setCurrentModelId(null);
         setEngine(null);
+        setSupportsImageInput(false);
         return true;
       }
       if (engineRef.current && currentModelId === modelId) {
@@ -318,6 +326,7 @@ export const useEnhancedInference = (
           top_p: mergedOptions.top_p,
           max_tokens: mergedOptions.max_tokens,
           history: mergedOptions.history,
+          images: mergedOptions.images,
         });
         const responseText = stripHiddenPartsText(rawText);
         setResult(responseText);
@@ -371,10 +380,6 @@ export const useEnhancedInference = (
     onChunk?: (text: string) => void
   ): Promise<string> => {
     try {
-      if (!engineRef.current) {
-        throw new Error('Model not loaded. Please load a model first.');
-      }
-
       // Cancel any existing generation
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -398,39 +403,74 @@ export const useEnhancedInference = (
         ...options
       };
 
-      const response = await engineRef.current.chat.completions.create({
-        messages: [
-          { role: "user", content: prompt }
-        ],
-        stream: true,
-        ...mergedOptions
-      });
-      if (typeof (response as AsyncIterable<unknown>)[Symbol.asyncIterator] !== 'function') {
-        throw new Error('Expected streaming response but received a single completion');
-      }
-      const chunks = response as AsyncIterable<ChatCompletionChunk>;
-
       let fullText = '';
-      
-      for await (const chunk of chunks) {
-        if (newAbortController.signal.aborted) {
-          break;
+
+      if (activeEngineRef.current === 'wllama') {
+        if (!currentModelId || !isWllamaModelLoaded(currentModelId)) {
+          throw new Error('Model not loaded. Please load a model first.');
+        }
+        fullText = await generateWithWllamaStream(
+          prompt,
+          {
+            temperature: mergedOptions.temperature,
+            top_p: mergedOptions.top_p,
+            max_tokens: mergedOptions.max_tokens,
+            history: mergedOptions.history,
+            images: mergedOptions.images,
+          },
+          (delta) => {
+            fullText += delta;
+            tokenCountRef.current++;
+            setStreamText(fullText);
+            const elapsed = (Date.now() - startTimeRef.current) / 1000;
+            if (elapsed > 0) {
+              setTokensPerSecond(tokenCountRef.current / elapsed);
+            }
+            if (onChunk) {
+              onChunk(delta);
+            }
+          }
+        );
+      } else {
+        if (!engineRef.current) {
+          throw new Error('Model not loaded. Please load a model first.');
         }
 
-        const delta = chunk.choices?.[0]?.delta?.content ?? '';
-        fullText += delta;
-        tokenCountRef.current++;
-        
-        setStreamText(fullText);
-        
-        // Calculate tokens per second
-        const elapsed = (Date.now() - startTimeRef.current) / 1000;
-        if (elapsed > 0) {
-          setTokensPerSecond(tokenCountRef.current / elapsed);
-        }
+        const historyMessages = (mergedOptions.history ?? []).map((m) => ({ role: m.role, content: m.content }));
 
-        if (onChunk) {
-          onChunk(delta);
+        const response = await engineRef.current.chat.completions.create({
+          messages: [
+            ...historyMessages,
+            { role: "user", content: prompt }
+          ],
+          stream: true,
+          ...mergedOptions
+        });
+        if (typeof (response as AsyncIterable<unknown>)[Symbol.asyncIterator] !== 'function') {
+          throw new Error('Expected streaming response but received a single completion');
+        }
+        const chunks = response as AsyncIterable<ChatCompletionChunk>;
+
+        for await (const chunk of chunks) {
+          if (newAbortController.signal.aborted) {
+            break;
+          }
+
+          const delta = chunk.choices?.[0]?.delta?.content ?? '';
+          fullText += delta;
+          tokenCountRef.current++;
+
+          setStreamText(fullText);
+
+          // Calculate tokens per second
+          const elapsed = (Date.now() - startTimeRef.current) / 1000;
+          if (elapsed > 0) {
+            setTokensPerSecond(tokenCountRef.current / elapsed);
+          }
+
+          if (onChunk) {
+            onChunk(delta);
+          }
         }
       }
 
@@ -452,7 +492,7 @@ export const useEnhancedInference = (
     } finally {
       abortControllerRef.current = null;
     }
-  }, [defaultOptions]);
+  }, [defaultOptions, currentModelId]);
 
   // Cancel generation
   const cancel = useCallback(() => {
@@ -550,6 +590,7 @@ export const useEnhancedInference = (
     unloadModel,
     preloadModel,
     activeEngine,
+    supportsImageInput,
     
     // Status
     refreshStatus,
