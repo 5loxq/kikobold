@@ -218,7 +218,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               const isDownloaded = isModelDownloaded?.(model.id) ?? false;
               return (
                 <option key={model.id} value={model.id}>
-                  {isDownloaded ? '✅' : '📥'} {model.name} ({model.modelSize})
+                  {isDownloaded ? '✅' : '📥'} {model.name} ({model.modelSize}){model.provider === 'gguf-hf' ? ' · WASM' : ' · WebGPU'}
                 </option>
               );
             })}
