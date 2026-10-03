@@ -14,7 +14,7 @@ import { type AppConfig, type ChatCompletionChunk, type ChatCompletionResult, ty
 import { handleErrorSilent } from '../utils/errors';
 import { log, warn } from '../services/logging';
 import { stripHiddenPartsText } from '../services/llm/text-processing';
-import { getEngineType, getModelConfig } from '../services/models/model-registry';
+import { getEngineType, getModelConfig, getWasmFallbackModelId } from '../services/models/model-registry';
 import {
   cancelWllamaGeneration,
   generateWithWllama,
@@ -196,6 +196,13 @@ export const useEnhancedInference = (
       // Check if WebGPU is available
       const hasWebGPU = !!(navigator as Navigator & { gpu?: unknown }).gpu;
       if (!hasWebGPU) {
+        // Automatic fallback: load the WASM/GGUF variant of the model instead
+        const fallbackModelId = getWasmFallbackModelId(modelId);
+        if (fallbackModelId) {
+          log(`WebGPU not available - falling back to WASM model ${fallbackModelId}`);
+          setIsLoading(false);
+          return loadModel(fallbackModelId);
+        }
         throw new Error('WebGPU is not supported in your browser. Please use Chrome, Firefox 113+, Edge, or Safari 16.4+.');
       }
 
