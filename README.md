@@ -46,7 +46,8 @@ The app ships with two inference engines:
 | Qwen 2.5 1.5B Instruct | GGUF/WASM | ~1.1 GB | ✅ | 8192 | Balanced quality/speed |
 | Llama 3.2 3B Instruct | GGUF/WASM | ~2.0 GB | — | 8192 | Stronger, needs more RAM |
 | Phi 3.5 Mini Instruct | GGUF/WASM | ~2.4 GB | — | 4096 | Strong at code/reasoning |
-| Qwen2 VL 2B Instruct | GGUF/WASM | ~1.7 GB | — | 8192 | **Multimodal**: image input (📷 button) |
+| Qwen2 VL 2B Instruct | GGUF/WASM | ~1.7 GB | — | 8192 | **Multimodal**: image input (🖼️ button) |
+| SmolVLM 500M Instruct | GGUF/WASM | ~410 MB | ✅ | 8192 | **Multimodal**: smallest vision model, low RAM |
 
 All GGUF models are downloaded from Hugging Face on first use and cached in the browser (Cache Storage).
 The vision model additionally downloads an `mmproj` projector file so it can understand images.
@@ -546,6 +547,7 @@ This project follows **Semantic Versioning 2.0.0** (`MAJOR.MINOR.PATCH`):
 | 1.1.0 | 2026-09-28 | Chat search, stop-generation, modern UI, code cleanup. |
 | 1.2.0 | 2026-10-03 | Dual-engine (WebLLM + wllama), CDN model loading, conversation history, hidden-parts filtering, KaTeX math, document attachments. |
 | 1.3.0 | 2026-10-03 | 5 new GGUF models, true token streaming for wllama, multimodal image input (Qwen2-VL + mmproj). |
+| 1.3.1 | 2026-10-03 | SmolVLM 500M as compact vision model, image thumbnails with hover-remove, share chat as markdown to clipboard. |
 
 ### Version Check
 

@@ -158,6 +158,55 @@ export const importChats = (file: File): Promise<Chat[]> => {
 };
 
 /**
+ * Build shareable markdown text of a single chat
+ */
+export const buildChatMarkdown = (chat: Chat): string => {
+  if (!validateChat(chat)) {
+    throw new Error('Invalid chat object');
+  }
+  if (chat.messages.length === 0) {
+    throw new Error('Chat has no messages to share');
+  }
+  let markdown = `# ${chat.title}\n\n`;
+  markdown += `*Created: ${new Date(chat.createdAt).toLocaleString()}*\n\n`;
+  chat.messages.forEach((message) => {
+    if (!validateMessage(message)) {
+      warn('Skipping invalid message in markdown export');
+      return;
+    }
+    const sender = message.role === 'user' ? '\ud83d\udc64 You' : '\ud83e\udd16 Assistant';
+    const safeContent = message.content
+      .replace(/\*/g, '\\*')
+      .replace(/_/g, '\\_')
+      .replace(/`/g, '\\`');
+    markdown += `## ${sender}\n\n${safeContent}\n\n---\n\n`;
+  });
+  return markdown;
+};
+
+/**
+ * Copy a chat as markdown to the clipboard (with legacy execCommand fallback)
+ */
+export const shareChatToClipboard = async (chat: Chat): Promise<void> => {
+  const markdown = buildChatMarkdown(chat);
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(markdown);
+    return;
+  }
+  const textarea = document.createElement('textarea');
+  textarea.value = markdown;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  const ok = document.execCommand('copy');
+  document.body.removeChild(textarea);
+  if (!ok) {
+    throw new Error('Clipboard copy not supported in this browser');
+  }
+};
+
+/**
  * Export single chat as markdown
  */
 export const exportChatAsMarkdown = (chat: Chat): void => {
