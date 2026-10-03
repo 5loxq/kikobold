@@ -36,6 +36,14 @@ export const isWllamaModelLoaded = (modelId: string): boolean => {
   return wllamaInstance !== null && loadedModelId === modelId;
 };
 
+export const wllamaIsActive = (): boolean => {
+  return wllamaInstance !== null;
+};
+
+const isAbortError = (err: unknown): boolean => {
+  return err instanceof Error && (err.name === 'AbortError' || /abort/i.test(err.message));
+};
+
 export const supportsWllamaImageInput = (): boolean => {
   if (!wllamaInstance) {
     return false;
@@ -148,6 +156,11 @@ export const generateWithWllama = async (
     });
     const text = response.choices[0]?.message?.content ?? '';
     return text.trim();
+  } catch (err) {
+    if (isAbortError(err)) {
+      return '';
+    }
+    throw err;
   } finally {
     activeAbortController = null;
   }
@@ -185,6 +198,11 @@ export const generateWithWllamaStream = async (
       },
     });
     return fullText;
+  } catch (err) {
+    if (isAbortError(err)) {
+      return fullText;
+    }
+    throw err;
   } finally {
     activeAbortController = null;
   }
