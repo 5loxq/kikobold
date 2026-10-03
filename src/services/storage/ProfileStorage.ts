@@ -2,7 +2,7 @@ import { Profile } from '../../types';
 import { warn } from '../logging';
 import { sanitizeInput, secureLocalStorage } from '../security';
 
-const PROFILE_STORAGE_KEY = 'llm_profiles';
+const PROFILE_STORAGE_KEY = 'llm_profiles_v2';
 
 // Validate profile object
 function validateProfile(profile: unknown): profile is Profile {
@@ -110,39 +110,37 @@ export const getProfile = (id: string): Profile | undefined => {
 };
 
 export const getDefaultProfiles = (): Profile[] => {
+  const now = Date.now();
   return [
     {
       id: 'default',
-      name: 'Default',
-      systemPrompt: 'You are a helpful AI assistant.',
-      systemPrompt_de: 'Du bist ein hilfreicher KI-Assistent.',
+      name: 'Standard',
+      systemPrompt: 'Du bist ein hilfreicher KI-Assistent. Antworte klar und strukturiert. Antworte in der Sprache des Nutzers.',
       temperature: 0.7,
       topP: 0.9,
       maxTokens: 512,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
     },
     {
       id: 'creative',
-      name: 'Creative',
-      systemPrompt: 'You are a creative AI assistant. Be imaginative and think outside the box.',
-      systemPrompt_de: 'Du bist ein kreativer KI-Assistent. Sei einfallsreich und denke quer.',
+      name: 'Kreativ',
+      systemPrompt: 'Du bist ein kreativer KI-Assistent. Sei einfallsreich, denke quer und bringe ungewöhnliche Ideen und Perspektiven ein.',
       temperature: 0.9,
       topP: 0.95,
       maxTokens: 512,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
     },
     {
       id: 'precise',
-      name: 'Precise',
-      systemPrompt: 'You are a precise and factual AI assistant. Provide accurate information.',
-      systemPrompt_de: 'Du bist ein präziser und faktenbasierter KI-Assistent. Gib genaue Informationen.',
+      name: 'Präzise',
+      systemPrompt: 'Du bist ein präziser, faktenbasierter Assistent. Antworte kurz, korrekt und ohne Ausschmückungen. Wenn du unsicher bist, sage es deutlich.',
       temperature: 0.3,
       topP: 0.8,
       maxTokens: 512,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
     },
   ];
 };

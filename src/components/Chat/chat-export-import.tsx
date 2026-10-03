@@ -78,8 +78,8 @@ export const ChatExportImport: React.FC<ChatExportImportProps> = ({
         title={chat ? t('chat.export') : t('chat.noChat')}
         className={`px-3 py-2 text-sm rounded font-medium transition-colors ${
           !chat
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            : 'bg-green-100 text-green-700 hover:bg-green-200'
+            ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed'
+            : 'bg-green-100 dark:bg-green-950/40 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-950/70'
         }`}
       >
         ⬇️ {t('chat.exportChat')}
@@ -92,8 +92,8 @@ export const ChatExportImport: React.FC<ChatExportImportProps> = ({
         title={allChats.length > 0 ? t('chat.exportAll') : t('chat.noChats')}
         className={`px-3 py-2 text-sm rounded font-medium transition-colors ${
           allChats.length === 0
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+            ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed'
+            : 'bg-blue-100 text-indigo-700 dark:text-indigo-300 hover:bg-blue-200'
         }`}
       >
         ⬇️ {t('chat.exportAll')}
@@ -106,7 +106,7 @@ export const ChatExportImport: React.FC<ChatExportImportProps> = ({
         title={chat ? t('chat.share') : t('chat.noChat')}
         className={`px-3 py-2 text-sm rounded font-medium transition-colors ${
           !chat || shareStatus === 'sharing'
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed'
             : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
         }`}
       >
@@ -134,8 +134,8 @@ export const ChatExportImport: React.FC<ChatExportImportProps> = ({
         <div
           className={`text-xs px-2 py-1 rounded ${
             shareStatus === 'sharing'
-              ? 'bg-amber-50 text-amber-600'
-              : 'bg-red-50 text-red-600'
+              ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400'
+              : 'bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400'
           }`}
         >
           {shareStatus === 'sharing' ? t('chat.shareSharing') : shareStatus}
@@ -147,10 +147,10 @@ export const ChatExportImport: React.FC<ChatExportImportProps> = ({
         <div
           className={`text-xs px-2 py-1 rounded ${
             importingStatus === 'importing'
-              ? 'bg-blue-50 text-blue-600'
+              ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
               : importingStatus === 'success'
-              ? 'bg-green-50 text-green-600'
-              : 'bg-red-50 text-red-600'
+              ? 'bg-green-50 dark:bg-green-950/40 text-green-600 dark:text-green-400'
+              : 'bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400'
           }`}
         >
           {importingStatus === 'importing'

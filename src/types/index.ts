@@ -20,7 +20,6 @@ export interface Profile {
   id: string;
   name: string;
   systemPrompt: string;
-  systemPrompt_de?: string;
   temperature: number;
   topP: number;
   maxTokens: number;

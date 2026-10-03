@@ -9,15 +9,13 @@
  * Inspired by Ensu's service worker implementation
  */
 
-const CACHE_NAME = 'llm-webgui-v1';
+const CACHE_NAME = 'llm-webgui-v3';
 const MODEL_CACHE_NAME = 'llm-models-v1';
 
 // Static assets to cache
 const STATIC_ASSETS = [
     '/',
     '/index.html',
-    '/manifest.json',
-    '/favicon.ico',
 ];
 
 // Install event - cache static assets
@@ -74,13 +72,34 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // Navigations (page loads) are network-first so new deployments are
+    // picked up immediately. A cache-first '/' would keep serving a stale
+    // index.html that references deleted asset files (white page).
+    if (request.mode === 'navigate') {
+        event.respondWith(
+            fetch(request)
+                .then((response) => {
+                    if (response.ok) {
+                        const clone = response.clone();
+                        caches.open(CACHE_NAME)
+                            .then((cache) => cache.put('/', clone))
+                            .catch(() => {});
+                    }
+                    return response;
+                })
+                .catch(() =>
+                    caches.match(request).then((cached) => cached || caches.match('/'))
+                )
+        );
+        return;
+    }
+
     // Handle static assets with cache-first strategy
     if (isStaticAsset(url)) {
         event.respondWith(
             caches.match(request)
                 .then((response) => {
                     if (response) {
-                        console.log(`[SW] Serving static asset from cache: ${url.pathname}`);
                         return response;
                     }
                     
@@ -163,14 +182,15 @@ async function fetchAndCache(request, cacheName) {
     try {
         const response = await fetch(request);
         
-        // Clone response for caching
-        const responseClone = response.clone();
-        
-        // Only cache successful responses
+        // Only cache successful, non-HTML responses. The SPA fallback serves
+        // index.html for missing files - caching that as a .js/.css response
+        // would permanently break the page (white screen).
         if (response.ok) {
-            const cache = await caches.open(cacheName);
-            await cache.put(request, responseClone);
-            console.log(`[SW] Cached: ${request.url}`);
+            const contentType = response.headers.get('content-type') || '';
+            if (!contentType.includes('text/html')) {
+                const cache = await caches.open(cacheName);
+                await cache.put(request, response.clone());
+            }
         }
         
         return response;

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Chat, Message, UseChatReturn } from '../types';
 import * as ChatStorage from '../services/storage/ChatStorage';
 
@@ -7,6 +7,14 @@ export const useChat = (): UseChatReturn => {
   const [chat, setChat] = useState<Chat | null>(null);
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Always-current chat reference. Async flows (e.g. send message -> stream
+  // response -> save response) must not rely on the `chat` state captured at
+  // call time, otherwise the second write overwrites the first message.
+  const chatRef = useRef<Chat | null>(null);
+  useEffect(() => {
+    chatRef.current = chat;
+  }, [chat]);
 
   const loadChats = useCallback(async () => {
     try {
@@ -51,7 +59,8 @@ export const useChat = (): UseChatReturn => {
 
   const addMessage = useCallback(async (role: 'user' | 'assistant', content: string) => {
     try {
-      if (!chat) {
+      const currentChat = chatRef.current;
+      if (!currentChat) {
         throw new Error('No active chat');
       }
 
@@ -70,26 +79,26 @@ export const useChat = (): UseChatReturn => {
         timestamp: Date.now(),
       };
 
-      if (!chat) {
-        throw new Error('No active chat');
-      }
-
-      const updatedMessages = [...chat.messages, newMessage];
+      const updatedMessages = [...currentChat.messages, newMessage];
       // Persist outside of the state updater: React state updaters must be
       // pure (StrictMode invokes them twice), so no side effects inside.
-      await ChatStorage.updateChatMessages(chat.id, updatedMessages);
-      setChat({
-        ...chat,
+      await ChatStorage.updateChatMessages(currentChat.id, updatedMessages);
+      const updatedChat: Chat = {
+        ...currentChat,
         messages: updatedMessages,
         updatedAt: Date.now(),
-      });
+      };
+      // Keep the ref in sync immediately so consecutive calls within one
+      // async flow (user message + streamed response) both see all messages.
+      chatRef.current = updatedChat;
+      setChat(updatedChat);
 
       await loadChats();
     } catch (error) {
       console.error('Failed to add message:', error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
-  }, [chat, loadChats]);
+  }, [loadChats]);
 
   const deleteChat = useCallback(async (id: string) => {
     try {

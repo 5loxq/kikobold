@@ -315,11 +315,11 @@ export const InputBox: React.FC<InputBoxProps> = ({
   }, [isLoading, isModelLoaded]);
 
   return (
-    <div className="border-t border-gray-100 p-4 bg-gradient-to-br from-gray-50 to-white">
+    <div className="px-4 py-3 bg-transparent">
       {!isModelLoaded && (
-        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800 shadow-sm">
+        <div className="mb-3 p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-2xl text-sm text-amber-800 dark:text-amber-400">
           <div className="flex items-center gap-2">
-            <span className="text-lg">⚠️</span>
+            <span className="text-lg">⏳</span>
             <span className="font-medium">{t('chat.modelLoading')}</span>
           </div>
         </div>
@@ -330,13 +330,13 @@ export const InputBox: React.FC<InputBoxProps> = ({
           {documents.map((doc) => (
             <div
               key={doc.id}
-              className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800"
+              className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900 rounded-xl text-sm text-indigo-800 dark:text-indigo-300"
             >
               <span>📄 {doc.name}</span>
-              <span className="text-xs text-blue-500">{formatBytes(doc.size)}</span>
+              <span className="text-xs text-indigo-400">{formatBytes(doc.size)}</span>
               <button
                 onClick={() => removeDocument(doc.id)}
-                className="text-blue-400 hover:text-red-500 transition-colors"
+                className="text-indigo-400 hover:text-red-500 transition-colors"
                 aria-label="Remove document"
               >
                 ✕
@@ -350,7 +350,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
           {images.map((img) => (
             <div
               key={img.id}
-              className="relative group w-24 h-24 rounded-xl overflow-hidden border-2 border-purple-200 shadow-sm"
+              className="relative group w-24 h-24 rounded-2xl overflow-hidden border-2 border-violet-200 dark:border-violet-900 shadow-sm"
             >
               <img
                 src={img.previewUrl}
@@ -371,10 +371,18 @@ export const InputBox: React.FC<InputBoxProps> = ({
         </div>
       )}
       {isAttaching && (
-        <div className="mb-3 text-sm text-gray-500">📎 {t('chat.attaching')}</div>
+        <div className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">📎 {t('chat.attaching')}</div>
       )}
-      <div className="flex gap-3 items-end">
-        <div className="flex-1 relative">
+
+      {/* Unified composer: textarea + actions inside one capsule */}
+      <div className="max-w-3xl mx-auto w-full">
+        <div
+          className={`rounded-3xl border shadow-lg shadow-zinc-900/5 dark:shadow-black/20 bg-white dark:bg-zinc-900 transition-all duration-200 ${
+            isLoading || !isModelLoaded
+              ? 'border-zinc-200 dark:border-zinc-800 opacity-80'
+              : 'border-zinc-200 dark:border-zinc-700 focus-within:border-indigo-400 dark:focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10'
+          }`}
+        >
           <textarea
             ref={textareaRef}
             value={input}
@@ -382,98 +390,105 @@ export const InputBox: React.FC<InputBoxProps> = ({
             onKeyDown={handleKeyDown}
             placeholder={isModelLoaded ? t('chat.placeholder') : t('chat.selectModel')}
             disabled={isLoading || !isModelLoaded}
-            className="w-full px-5 py-3 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md"
+            className="w-full px-5 pt-4 pb-2 bg-transparent border-0 resize-none focus:outline-none focus:ring-0 disabled:cursor-not-allowed text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 text-sm leading-relaxed"
             rows={1}
-            style={{ minHeight: '50px', maxHeight: '150px' }}
+            style={{ minHeight: '28px', maxHeight: '150px' }}
           />
-        </div>
 
-        {/* Image Attach Button (only for multimodal models) */}
-        {supportsImageInput && (
-          <>
+          <div className="flex items-center gap-1.5 px-3 pb-3 pt-1">
+            {/* Image Attach Button (only for multimodal models) */}
+            {supportsImageInput && (
+              <>
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  multiple
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  onChange={(e) => void handleImageSelect(e)}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={isVoiceDisabled || isAttaching || images.length >= ATTACHMENT_LIMITS.MAX_ATTACHMENTS}
+                  className={`w-9 h-9 rounded-xl text-sm transition-all bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 ${isVoiceDisabled || isAttaching ? 'opacity-40 cursor-not-allowed' : ''}`}
+                  title={t('chat.attachImage')}
+                  aria-label={t('chat.attachImage')}
+                >
+                  🖼️
+                </button>
+              </>
+            )}
+            {/* Document Attach Button */}
             <input
-              ref={imageInputRef}
+              ref={fileInputRef}
               type="file"
               multiple
-              accept="image/png,image/jpeg,image/webp,image/gif"
-              onChange={(e) => void handleImageSelect(e)}
+              accept=".txt,.md,.json,.csv,.tsv,.log,.xml,.yml,.yaml,.ini,.cfg,.ts,.tsx,.js,.jsx,.py,.java,.c,.cpp,.h,.hpp,.cs,.go,.rs,.rb,.php,.sql,.sh,.css,.html"
+              onChange={(e) => void handleFileSelect(e)}
               className="hidden"
             />
             <button
-              onClick={() => imageInputRef.current?.click()}
-              disabled={isVoiceDisabled || isAttaching || images.length >= ATTACHMENT_LIMITS.MAX_ATTACHMENTS}
-              className={`px-4 py-3 rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow-md bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800 ${isVoiceDisabled || isAttaching ? 'opacity-50 cursor-not-allowed' : ''}`}
-              title={t('chat.attachImage')}
-              aria-label={t('chat.attachImage')}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isVoiceDisabled || isAttaching || documents.length >= ATTACHMENT_LIMITS.MAX_ATTACHMENTS}
+              className={`w-9 h-9 rounded-xl text-sm transition-all bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 ${isVoiceDisabled || isAttaching ? 'opacity-40 cursor-not-allowed' : ''}`}
+              title={t('chat.attachDocument')}
+              aria-label={t('chat.attachDocument')}
             >
-              🖼️
+              📎
             </button>
-          </>
-        )}
-        {/* Document Attach Button */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept=".txt,.md,.json,.csv,.tsv,.log,.xml,.yml,.yaml,.ini,.cfg,.ts,.tsx,.js,.jsx,.py,.java,.c,.cpp,.h,.hpp,.cs,.go,.rs,.rb,.php,.sql,.sh,.css,.html"
-          onChange={(e) => void handleFileSelect(e)}
-          className="hidden"
-        />
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isVoiceDisabled || isAttaching || documents.length >= ATTACHMENT_LIMITS.MAX_ATTACHMENTS}
-          className={`px-4 py-3 rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow-md bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:from-gray-700 hover:to-gray-800 ${isVoiceDisabled || isAttaching ? 'opacity-50 cursor-not-allowed' : ''}`}
-          title={t('chat.attachDocument')}
-          aria-label={t('chat.attachDocument')}
-        >
-          📎
-        </button>
-        {/* Voice Input Button - Modern Design */}
-        <button
-          onClick={isListening ? stopListening : startListening}
-          disabled={isVoiceDisabled}
-          className={`px-4 py-3 rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow-md ${
-            isListening
-              ? 'bg-red-600 text-white hover:bg-red-700 animate-pulse'
-              : 'bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:from-gray-700 hover:to-gray-800'
-          } ${isVoiceDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-          title={t('chat.voiceInputTooltip')}
-          aria-label={t('chat.voiceInputTooltip')}
-        >
-          {isListening ? '🛑' : '🎙️'}
-        </button>
+            {/* Voice Input Button */}
+            <button
+              onClick={isListening ? stopListening : startListening}
+              disabled={isVoiceDisabled}
+              className={`w-9 h-9 rounded-xl text-sm transition-all ${
+                isListening
+                  ? 'bg-red-600 text-white animate-pulse'
+                  : 'bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+              } ${isVoiceDisabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+              title={t('chat.voiceInputTooltip')}
+              aria-label={t('chat.voiceInputTooltip')}
+            >
+              {isListening ? '🛑' : '🎙️'}
+            </button>
 
-        {/* Stop Generation Button */}
-        {isGenerating && onStopGeneration && (
-          <button
-            onClick={onStopGeneration}
-            className="px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow-md bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 transform hover:scale-105 active:scale-95"
-            aria-label={t('chat.stop')}
-            title={t('chat.stop')}
-          >
-            ⏹
-          </button>
-        )}
-        {/* Send Button - Modern Design */}
-        <button
-          onClick={handleSend}
-          disabled={isSendDisabled}
-          className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow-md ${
-            isSendDisabled
-              ? 'bg-blue-300 text-white cursor-not-allowed'
-              : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 transform hover:scale-105 active:scale-95'
-          }`}
-          aria-label={t('chat.send')}
-        >
-          {isLoading ? (
-            <span className="flex items-center gap-2">
-              <span className="animate-spin text-xs">🌀</span>
-              {t('chat.sending')}
-            </span>
-          ) : (
-            '➤'
-          )}
-        </button>
+            <div className="flex-1"></div>
+
+            {/* Stop Generation Button */}
+            {isGenerating && onStopGeneration && (
+              <button
+                onClick={onStopGeneration}
+                className="h-9 px-4 rounded-xl text-sm font-medium transition-all bg-red-600 text-white hover:bg-red-700 active:scale-95"
+                aria-label={t('chat.stop')}
+                title={t('chat.stop')}
+              >
+                ⏹ {t('chat.stop')}
+              </button>
+            )}
+            {/* Send Button */}
+            <button
+              onClick={handleSend}
+              disabled={isSendDisabled}
+              className={`h-9 px-4 rounded-xl text-sm font-medium transition-all ${
+                isSendDisabled
+                  ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:from-indigo-400 hover:to-violet-500 hover:shadow-lg hover:shadow-indigo-500/25 active:scale-95'
+              }`}
+              aria-label={t('chat.send')}
+            >
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <span className="animate-spin text-xs">🌀</span>
+                  {t('chat.sending')}
+                </span>
+              ) : (
+                '➤'
+              )}
+            </button>
+          </div>
+        </div>
+        <p className="text-center text-[11px] text-zinc-400 dark:text-zinc-600 mt-2">
+          {t('chat.privacyNote')}
+        </p>
       </div>
 
       {/* Fullscreen Image Preview Modal */}
