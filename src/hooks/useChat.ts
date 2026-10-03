@@ -70,17 +70,18 @@ export const useChat = (): UseChatReturn => {
         timestamp: Date.now(),
       };
 
-      // Use functional state update to avoid stale closure issues
-      setChat(prevChat => {
-        if (!prevChat) {return prevChat;}
-        const updatedMessages = [...prevChat.messages, newMessage];
-        // Save to storage asynchronously
-        ChatStorage.updateChatMessages(prevChat.id, updatedMessages);
-        return {
-          ...prevChat,
-          messages: updatedMessages,
-          updatedAt: Date.now(),
-        };
+      if (!chat) {
+        throw new Error('No active chat');
+      }
+
+      const updatedMessages = [...chat.messages, newMessage];
+      // Persist outside of the state updater: React state updaters must be
+      // pure (StrictMode invokes them twice), so no side effects inside.
+      await ChatStorage.updateChatMessages(chat.id, updatedMessages);
+      setChat({
+        ...chat,
+        messages: updatedMessages,
+        updatedAt: Date.now(),
       });
 
       await loadChats();
