@@ -10,12 +10,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type {
-  AppConfig,
-  ChatCompletionChunk,
-  ChatCompletionResult,
-  MLCEngineInterface,
-} from "@mlc-ai/web-llm";
+import { type AppConfig, type ChatCompletionChunk, type ChatCompletionResult, type MLCEngineInterface, prebuiltAppConfig } from "@mlc-ai/web-llm";
 import { handleErrorSilent } from '../utils/errors';
 import { log, warn } from '../services/logging';
 import { stripHiddenPartsText } from '../services/llm/text-processing';
@@ -28,6 +23,7 @@ import {
   loadWllamaModel,
   supportsWllamaImageInput,
   unloadWllamaModel,
+  wllamaIsActive,
 } from '../services/inference/wllama-engine';
 
 // ============================================================================
@@ -102,34 +98,13 @@ export interface EnhancedInferenceReturn extends InferenceState {
 // Custom AppConfig for WebLLM with MLC models
 // ============================================================================
 
-// Custom configuration for MLC models
-// Use ONLY local model files for offline support and better performance
-// All models must be available in /public/models/{model_id}/
-// WebLLM will automatically look for params_shard_*.bin files in the same directory as model.wasm
+// App config for WebLLM: keep the official prebuilt model list (HF CDN sources)
+// and only switch the cache backend to OPFS. Passing a custom model_list here
+// would REPLACE the prebuilt list entirely and break CDN model loading.
 const getCustomAppConfig = (): AppConfig => {
-  // Only use Qwen2-0.5B-Instruct-q4f16_1-MLC since it's the only model available locally
-  // WebLLM expects: model.wasm (runtime) + params_shard_*.bin (weights) in same directory
-  const customModels = [
-    {
-      model_id: 'Qwen2-0.5B-Instruct-q4f16_1-MLC',
-      model: '/models/Qwen2-0.5B-Instruct-q4f16_1-MLC',
-      model_lib: '/models/Qwen2-0.5B-Instruct-q4f16_1-MLC/model.wasm',
-      vocab_url: '/models/Qwen2-0.5B-Instruct-q4f16_1-MLC/vocab.json',
-      tokenizer_url: '/models/Qwen2-0.5B-Instruct-q4f16_1-MLC/tokenizer.json',
-      tokenizer_config_url: '/models/Qwen2-0.5B-Instruct-q4f16_1-MLC/tokenizer_config.json',
-      ndarray_cache_url: '/models/Qwen2-0.5B-Instruct-q4f16_1-MLC/ndarray-cache.json',
-      mlc_config_url: '/models/Qwen2-0.5B-Instruct-q4f16_1-MLC/mlc-chat-config.json',
-      context_length: 32768,
-      max_seq_length: 32768,
-      prefill_chunk_size: 2048,
-      // WebLLM will automatically look for params_shard_*.bin in the model directory
-      // when model_lib points to a local path
-    }
-  ];
-  
   return {
     cacheBackend: 'opfs', // Use Origin Private File System for best caching
-    model_list: customModels,
+    model_list: prebuiltAppConfig.model_list,
   };
 };
 
@@ -192,6 +167,8 @@ export const useEnhancedInference = (
         if (!config?.gguf) {
           throw new Error('No GGUF source configured for this model');
         }
+        // Free the WebLLM engine if another engine is active
+        engineRef.current = null;
         setWebgpuAvailable(null);
         const ok = await loadWllamaModel(modelId, config.gguf, {
           onProgress: (fraction, label) => {
@@ -209,6 +186,11 @@ export const useEnhancedInference = (
         setSupportsImageInput(supportsWllamaImageInput());
         setIsLoading(false);
         return true;
+      }
+
+      // Free the wllama instance if another engine is active
+      if (wllamaIsActive()) {
+        await unloadWllamaModel();
       }
 
       // Check if WebGPU is available
