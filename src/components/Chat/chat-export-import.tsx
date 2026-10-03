@@ -17,6 +17,7 @@ export const ChatExportImport: React.FC<ChatExportImportProps> = ({
   const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importingStatus, setImportingStatus] = React.useState<string | null>(null);
+  const [shareStatus, setShareStatus] = React.useState<string | null>(null);
 
   const handleExportCurrentChat = (): void => {
     if (!chat) {return;}
@@ -26,6 +27,19 @@ export const ChatExportImport: React.FC<ChatExportImportProps> = ({
   const handleExportAllChats = (): void => {
     if (allChats.length === 0) {return;}
     ChatExport.exportChats(allChats);
+  };
+
+  const handleShareCurrentChat = async (): Promise<void> => {
+    if (!chat) {return;}
+    try {
+      setShareStatus('sharing');
+      await ChatExport.shareChatToClipboard(chat);
+      setShareStatus('success');
+      setTimeout(() => setShareStatus(null), 3000);
+    } catch (err) {
+      setShareStatus(`error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setTimeout(() => setShareStatus(null), 5000);
+    }
   };
 
   const handleImportClick = (): void => {
@@ -85,6 +99,20 @@ export const ChatExportImport: React.FC<ChatExportImportProps> = ({
         ⬇️ {t('chat.exportAll')}
       </button>
 
+      {/* Share Current Chat as Markdown */}
+      <button
+        onClick={() => void handleShareCurrentChat()}
+        disabled={!chat || shareStatus === 'sharing'}
+        title={chat ? t('chat.share') : t('chat.noChat')}
+        className={`px-3 py-2 text-sm rounded font-medium transition-colors ${
+          !chat || shareStatus === 'sharing'
+            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+        }`}
+      >
+        {shareStatus === 'success' ? '✅' : '🔗'} {shareStatus === 'success' ? t('chat.shareSuccess') : t('chat.share')}
+      </button>
+
       {/* Import Chats */}
       <button
         onClick={handleImportClick}
@@ -101,6 +129,18 @@ export const ChatExportImport: React.FC<ChatExportImportProps> = ({
         onChange={handleFileSelected}
         style={{ display: 'none' }}
       />
+
+      {shareStatus && shareStatus !== 'success' && (
+        <div
+          className={`text-xs px-2 py-1 rounded ${
+            shareStatus === 'sharing'
+              ? 'bg-amber-50 text-amber-600'
+              : 'bg-red-50 text-red-600'
+          }`}
+        >
+          {shareStatus === 'sharing' ? t('chat.shareSharing') : shareStatus}
+        </div>
+      )}
 
       {/* Status Messages */}
       {importingStatus && (
