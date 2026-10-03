@@ -46,7 +46,9 @@
     "voiceInputTooltip": "Click to start/stop voice input",
     "searchInChat": "Search in chat",
     "searchPlaceholder": "Search messages...",
-    "searchClose": "Close search"
+    "searchClose": "Close search",
+    "attachDocument": "Attach document",
+    "attaching": "Attaching..."
   },
   "models": {
     "available": "Available Models",

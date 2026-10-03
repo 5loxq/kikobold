@@ -12,6 +12,7 @@ import { useProfiles } from '../../hooks/useProfiles';
 import { useEnhancedInference } from '../../hooks/useEnhancedInference';
 import * as ChatStorage from '../../services/storage/ChatStorage';
 import { error as logError } from '../../services/logging';
+import { buildPromptWithDocuments, type DocumentAttachment } from '../../services/attachments';
 
 
 type ActiveTab = 'chat' | 'models' | 'profiles' | 'settings' | 'help';
@@ -75,7 +76,11 @@ export const MainLayout: FC = () => {
     }
   };
 
-  const handleSendMessage = async (message: string): Promise<void> => {
+  const handleSendMessageWithDocuments = async (message: string, attachments: DocumentAttachment[]): Promise<void> => {
+    await handleSendMessage(message, attachments);
+  };
+
+  const handleSendMessage = async (message: string, attachments?: DocumentAttachment[]): Promise<void> => {
     try {
       if (!chat) {
         throw new Error('No active chat');
@@ -108,11 +113,14 @@ export const MainLayout: FC = () => {
 
       // Generate response with language setting and correct system prompt
       // Note: WebLLM uses top_p and max_tokens (snake_case)
+      const prompt = attachments && attachments.length > 0
+        ? buildPromptWithDocuments(message, attachments)
+        : message;
       const history = chat.messages.slice(-10).map((m) => ({
         role: m.role === 'assistant' ? ('assistant' as const) : ('user' as const),
         content: m.content,
       }));
-      const result = await generate(message, {
+      const result = await generate(prompt, {
         temperature: activeProfile.temperature,
         top_p: activeProfile.topP,
         max_tokens: activeProfile.maxTokens,
@@ -290,6 +298,7 @@ export const MainLayout: FC = () => {
             isGenerating={isGenerating}
             onStopGeneration={stopGeneration}
             onSendMessage={handleSendMessage}
+            onSendMessageWithDocuments={handleSendMessageWithDocuments}
             onSelectModel={handleModelSelect}
             onSelectProfile={handleSelectProfile}
             onRenameChat={renameChat}

@@ -46,7 +46,9 @@
     "voiceInputTooltip": "Klicken um Sprachingabe zu starten/stoppen",
     "searchInChat": "Im Chat suchen",
     "searchPlaceholder": "Nachrichten durchsuchen...",
-    "searchClose": "Suche schließen"
+    "searchClose": "Suche schließen",
+    "attachDocument": "Dokument anhängen",
+    "attaching": "Anhängen..."
   },
   "models": {
     "available": "Verfügbare Modelle",
