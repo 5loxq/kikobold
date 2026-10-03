@@ -19,6 +19,14 @@ import type {
 import { handleErrorSilent } from '../utils/errors';
 import { log, warn } from '../services/logging';
 import { stripHiddenPartsText } from '../services/llm/text-processing';
+import { getEngineType, getModelConfig } from '../services/models/model-registry';
+import {
+  cancelWllamaGeneration,
+  generateWithWllama,
+  isWllamaModelLoaded,
+  loadWllamaModel,
+  unloadWllamaModel,
+} from '../services/inference/wllama-engine';
 
 // ============================================================================
 // Types
@@ -75,6 +83,7 @@ export interface EnhancedInferenceReturn extends InferenceState {
   generate: (prompt: string, options?: WebLLMGenerateOptions) => Promise<WebLLMGenerateResult | null>;
   generateStream: (prompt: string, options?: WebLLMGenerateOptions, onChunk?: (text: string) => void) => Promise<string>;
   cancel: () => void;
+  activeEngine: 'webllm' | 'wllama' | null;
   
   // Model management
   loadModel: (modelId: string) => Promise<boolean>;
@@ -148,6 +157,12 @@ export const useEnhancedInference = (
   const [error, setError] = useState<string | null>(null);
   const [duration, setDuration] = useState(0);
   const [currentModelId, setCurrentModelId] = useState<string | null>(null);
+  const [activeEngine, setActiveEngine] = useState<'webllm' | 'wllama' | null>(null);
+  const activeEngineRef = useRef<'webllm' | 'wllama' | null>(null);
+  const setEngine = useCallback((engine: 'webllm' | 'wllama' | null): void => {
+    activeEngineRef.current = engine;
+    setActiveEngine(engine);
+  }, []);
   const [webgpuAvailable, setWebgpuAvailable] = useState<boolean | null>(null);
 
   // Refs
@@ -166,6 +181,29 @@ export const useEnhancedInference = (
       setIsLoading(true);
       setError(null);
       setProgress(0);
+      const engineType = getEngineType(modelId);
+      if (engineType === 'wllama') {
+        const config = getModelConfig(modelId);
+        if (!config?.gguf) {
+          throw new Error('No GGUF source configured for this model');
+        }
+        setWebgpuAvailable(null);
+        const ok = await loadWllamaModel(modelId, config.gguf, {
+          onProgress: (fraction, label) => {
+            setProgress(fraction * 100);
+            log(`Loading: ${label ?? ''}`);
+          },
+        });
+        if (!ok) {
+          setError('Failed to load GGUF model. Check your connection and try again.');
+          setIsLoading(false);
+          return false;
+        }
+        setCurrentModelId(modelId);
+        setEngine('wllama');
+        setIsLoading(false);
+        return true;
+      }
 
       // Check if WebGPU is available
       const hasWebGPU = !!(navigator as Navigator & { gpu?: unknown }).gpu;
@@ -193,6 +231,7 @@ export const useEnhancedInference = (
 
       engineRef.current = engine;
       setCurrentModelId(modelId);
+      setEngine('webllm');
       setWebgpuAvailable(true); // WebLLM uses WebGPU
       setIsLoading(false);
       
@@ -223,16 +262,23 @@ export const useEnhancedInference = (
       
       return false;
     }
-  }, [customAppConfig]);
+  }, [customAppConfig, setEngine]);
 
   // Unload model
   const unloadModel = useCallback(async (modelId: string): Promise<boolean> => {
     try {
+      if (activeEngineRef.current === 'wllama') {
+        await unloadWllamaModel();
+        setCurrentModelId(null);
+        setEngine(null);
+        return true;
+      }
       if (engineRef.current && currentModelId === modelId) {
         // WebLLM doesn't have a direct unload method in the current API
         // We can nullify the reference and reset state
         engineRef.current = null;
         setCurrentModelId(null);
+        setEngine(null);
         setWebgpuAvailable(null);
         return true;
       }
@@ -241,7 +287,7 @@ export const useEnhancedInference = (
       warn('Failed to unload model:', err);
       return false;
     }
-  }, [currentModelId]);
+  }, [currentModelId, setEngine]);
 
   // Generate text (non-streaming)
   const generate = useCallback(async (
@@ -249,10 +295,6 @@ export const useEnhancedInference = (
     options: WebLLMGenerateOptions = {}
   ): Promise<WebLLMGenerateResult | null> => {
     try {
-      if (!engineRef.current) {
-        throw new Error('Model not loaded. Please load a model first.');
-      }
-
       setIsGenerating(true);
       setError(null);
       setResult('');
@@ -267,10 +309,34 @@ export const useEnhancedInference = (
         ...options
       };
 
+      if (activeEngineRef.current === 'wllama') {
+        if (!currentModelId || !isWllamaModelLoaded(currentModelId)) {
+          throw new Error('Model not loaded. Please load a model first.');
+        }
+        const rawText = await generateWithWllama(prompt, {
+          temperature: mergedOptions.temperature,
+          top_p: mergedOptions.top_p,
+          max_tokens: mergedOptions.max_tokens,
+          history: mergedOptions.history,
+        });
+        const responseText = stripHiddenPartsText(rawText);
+        setResult(responseText);
+        setIsGenerating(false);
+        setDuration(Date.now() - startTimeRef.current);
+        return { text: responseText, usage: undefined };
+      }
+
+      if (!engineRef.current) {
+        throw new Error('Model not loaded. Please load a model first.');
+      }
+
+      const messages = [
+        ...(mergedOptions.history ?? []).map((m) => ({ role: m.role, content: m.content })),
+        { role: "user" as const, content: prompt },
+      ];
+
       const reply = await engineRef.current.chat.completions.create({
-        messages: [
-          { role: "user", content: prompt }
-        ],
+        messages,
         ...mergedOptions
       });
 
@@ -296,7 +362,7 @@ export const useEnhancedInference = (
       setIsGenerating(false);
       throw err;
     }
-  }, [defaultOptions]);
+  }, [defaultOptions, currentModelId]);
 
   // Generate text with streaming
   const generateStream = useCallback(async (
@@ -394,6 +460,7 @@ export const useEnhancedInference = (
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
+    cancelWllamaGeneration();
     engineRef.current?.interruptGenerate?.();
     setIsGenerating(false);
     setIsStreaming(false);
@@ -482,6 +549,7 @@ export const useEnhancedInference = (
     loadModel,
     unloadModel,
     preloadModel,
+    activeEngine,
     
     // Status
     refreshStatus,
