@@ -50,6 +50,7 @@ The app ships with two inference engines:
 | SmolVLM 500M Instruct | GGUF/WASM | ~410 MB | ✅ | 8192 | **Multimodal**: smallest vision model, low RAM |
 
 All GGUF models are downloaded from Hugging Face on first use and cached in the browser (Cache Storage).
+If a WebGPU model is selected but the browser has no WebGPU support, the app automatically loads the WASM variant of the same model instead.
 The vision model additionally downloads an `mmproj` projector file so it can understand images.
 
 ### Privacy & Security
@@ -362,7 +363,6 @@ webgui/
 │   ├── App.tsx               # Main app component
 │   └── main.tsx              # Entry point
 ├── scripts/                  # Utility scripts
-│   └── download-models.js    # Model download helper
 ├── .env                      # Environment variables
 ├── package.json              # Dependencies & scripts
 ├── tsconfig.json             # TypeScript config
@@ -548,6 +548,7 @@ This project follows **Semantic Versioning 2.0.0** (`MAJOR.MINOR.PATCH`):
 | 1.2.0 | 2026-10-03 | Dual-engine (WebLLM + wllama), CDN model loading, conversation history, hidden-parts filtering, KaTeX math, document attachments. |
 | 1.3.0 | 2026-10-03 | 5 new GGUF models, true token streaming for wllama, multimodal image input (Qwen2-VL + mmproj). |
 | 1.3.1 | 2026-10-03 | SmolVLM 500M as compact vision model, image thumbnails with hover-remove, share chat as markdown to clipboard. |
+| 1.4.0 | 2026-10-03 | Removed dead legacy code (~1800 lines), fullscreen image preview modal, automatic WebGPU-to-WASM model fallback. |
 
 ### Version Check
 

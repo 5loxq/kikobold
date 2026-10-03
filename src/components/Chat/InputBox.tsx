@@ -107,6 +107,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
   const [isAttaching, setIsAttaching] = useState(false);
   const [images, setImages] = useState<ImageAttachment[]>([]);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const [previewImage, setPreviewImage] = useState<ImageAttachment | null>(null);
 
   const removeDocument = (id: string): void => {
     setDocuments((prev) => prev.filter((d) => d.id !== id));
@@ -354,7 +355,8 @@ export const InputBox: React.FC<InputBoxProps> = ({
               <img
                 src={img.previewUrl}
                 alt={img.name}
-                className="w-full h-full object-cover"
+                onClick={() => setPreviewImage(img)}
+                className="w-full h-full object-cover cursor-zoom-in transition-transform duration-200 group-hover:scale-105"
               />
               <button
                 onClick={() => removeImage(img.id)}
@@ -473,6 +475,36 @@ export const InputBox: React.FC<InputBoxProps> = ({
           )}
         </button>
       </div>
+
+      {/* Fullscreen Image Preview Modal */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div
+            className="relative max-w-4xl max-h-full flex flex-col items-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={previewImage.previewUrl}
+              alt={previewImage.name}
+              className="max-h-[85vh] max-w-full object-contain rounded-lg shadow-2xl"
+            />
+            <div className="mt-3 flex items-center gap-3 text-white">
+              <span className="text-sm">{previewImage.name}</span>
+              <span className="text-xs text-gray-300">{formatBytes(previewImage.size)}</span>
+            </div>
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute -top-3 -right-3 w-9 h-9 flex items-center justify-center rounded-full bg-white text-gray-800 shadow-lg hover:bg-red-500 hover:text-white transition-colors"
+              aria-label={t('chat.searchClose')}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
