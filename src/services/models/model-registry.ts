@@ -201,6 +201,27 @@ export const isMultimodalModel = (modelId: string): boolean => {
   return MODEL_CONFIGS[modelId]?.multimodal === true;
 };
 
+// Find a WASM (GGUF/wllama) model to use when a WebGPU model cannot run.
+// Preference: same family + same parameter size, then any recommended GGUF model.
+export const getWasmFallbackModelId = (webllmModelId: string): string | undefined => {
+  const source = MODEL_CONFIGS[webllmModelId];
+  if (!source || source.engine !== 'webllm') {
+    return undefined;
+  }
+  const ggufModels = Object.values(MODEL_CONFIGS).filter(
+    (c) => c.engine === 'wllama' && !c.multimodal
+  );
+  const sameFamily = ggufModels.find(
+    (c) => c.modelSize === source.modelSize &&
+      c.name.toLowerCase().split(' ')[0] === source.name.toLowerCase().split(' ')[0]
+  );
+  if (sameFamily) {
+    return sameFamily.id;
+  }
+  const recommended = ggufModels.find((c) => c.recommended);
+  return recommended?.id;
+};
+
 export const getModelById = (id: string): Model | undefined => {
   return MODELS.find(m => m.id === id);
 };
