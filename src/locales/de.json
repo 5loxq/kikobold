@@ -50,7 +50,10 @@
     "attachDocument": "Dokument anhängen",
     "attaching": "Anhängen...",
     "attachImage": "Bild anhängen (multimodales Modell)",
-    "imageAttached": "Bild angehängt"
+    "imageAttached": "Bild angehängt",
+    "share": "Teilen",
+    "shareSuccess": "Kopiert!",
+    "shareSharing": "Wird kopiert..."
   },
   "models": {
     "available": "Verfügbare Modelle",

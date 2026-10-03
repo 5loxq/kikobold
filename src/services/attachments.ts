@@ -48,6 +48,7 @@ export interface ImageAttachment {
   name: string;
   size: number;
   data: ArrayBuffer;
+  previewUrl: string;
 }
 
 export const MAX_IMAGE_SIZE = 4 * 1024 * 1024;
@@ -70,6 +71,7 @@ export const createImageAttachment = (file: File): Promise<ImageAttachment> =>
         name: file.name,
         size: file.size,
         data: reader.result as ArrayBuffer,
+        previewUrl: URL.createObjectURL(file),
       });
     };
     reader.onerror = (): void => reject(reader.error ?? new Error('Failed to read image'));
