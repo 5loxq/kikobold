@@ -6,6 +6,8 @@ import MarkdownRenderer from './MarkdownRenderer';
 interface MessageListProps {
   messages: Message[];
   isLoading: boolean;
+  /** True while a model is being downloaded/loaded (not while generating) */
+  isModelLoading?: boolean;
   streamingMessage?: string | null;
   messagesEndRef?: React.RefObject<HTMLDivElement>;
   isDarkMode?: boolean;
@@ -60,12 +62,12 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, isDarkMode,
   }, [message.content]);
 
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-2`}>
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
       <div
-        className={`max-w-xs lg:max-w-2xl px-5 py-3 rounded-2xl shadow-sm ${
+        className={`max-w-xs lg:max-w-2xl px-5 py-3.5 shadow-sm ${
           isUser
-            ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-br-2xl'
-            : 'bg-white text-gray-800 rounded-bl-2xl border border-gray-100'
+            ? 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white rounded-3xl rounded-br-lg'
+            : 'bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 rounded-3xl rounded-bl-lg border border-zinc-100 dark:border-zinc-700'
         }`}
       >
         <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
@@ -80,8 +82,8 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, isDarkMode,
           )}
         </div>
         <div className="flex items-center justify-between mt-2">
-          <p className={`text-xs opacity-70 ${
-            isUser ? 'text-blue-100' : 'text-gray-500'
+          <p className={`text-xs opacity-60 ${
+            isUser ? 'text-indigo-100' : 'text-zinc-400 dark:text-zinc-500'
           }`}>
             {timeStr}
           </p>
@@ -89,7 +91,9 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, isDarkMode,
             type="button"
             onClick={handleCopy}
             className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
-              isUser ? 'text-blue-100 hover:bg-blue-500/40' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+              isUser
+                ? 'text-indigo-100 hover:bg-white/20'
+                : 'text-zinc-400 hover:bg-zinc-100 dark:text-zinc-500 dark:hover:bg-zinc-700 dark:hover:text-zinc-300'
             }`}
             title={copied ? t('chat.copied') : t('chat.copyMessage')}
           >
@@ -122,6 +126,7 @@ function areMessagesEqual(
   if (
     prevProps.streamingMessage !== nextProps.streamingMessage ||
     prevProps.isLoading !== nextProps.isLoading ||
+    prevProps.isModelLoading !== nextProps.isModelLoading ||
     prevProps.searchQuery !== nextProps.searchQuery ||
     prevProps.isDarkMode !== nextProps.isDarkMode
   ) {
@@ -152,16 +157,17 @@ function areMessagesEqual(
          prevLast.timestamp === nextLast.timestamp;
 }
 
-const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, streamingMessage, messagesEndRef, isDarkMode, searchQuery }) => {
+const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, isModelLoading, streamingMessage, messagesEndRef, isDarkMode, searchQuery }) => {
     const { t } = useTranslation();
 
     return (
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-3 max-h-[calc(100vh-300px)]">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 max-h-[calc(100vh-320px)]">
+        <div className="max-w-3xl mx-auto w-full">
         {messages.length === 0 ? (
-          <div className="text-center text-gray-400 py-12">
+          <div className="text-center text-zinc-400 dark:text-zinc-500 py-12">
             <div className="text-4xl mb-4">💬</div>
             <p className="text-lg font-medium">{t('chat.noMessagesYet')}</p>
-            <p className="text-sm mt-2 text-gray-500">{t('chat.startConversation')}</p>
+            <p className="text-sm mt-2 text-zinc-500 dark:text-zinc-500">{t('chat.startConversation')}</p>
           </div>
         ) : (
           messages.map((message) => (
@@ -173,32 +179,46 @@ const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, str
 
         {streamingMessage && (
           <div className="flex justify-start">
-            <div className={`px-5 py-3 rounded-2xl rounded-bl-2xl border shadow-sm ${
-              isDarkMode ? 'bg-gray-800 text-gray-200 border-gray-700' : 'bg-white text-gray-800 border-gray-100'
+            <div className={`px-5 py-3.5 rounded-3xl rounded-bl-lg border shadow-sm ${
+              isDarkMode ? 'bg-zinc-800 text-zinc-100 border-zinc-700' : 'bg-white text-zinc-800 border-zinc-100'
             }`}>
-              <div className="whitespace-pre-wrap break-words text-sm">{streamingMessage}<span className="animate-pulse">▍</span></div>
+              <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">{streamingMessage}<span className="animate-pulse">▍</span></div>
+            </div>
+          </div>
+        )}
+
+        {isModelLoading && (
+          <div className="flex justify-start">
+            <div className={`px-5 py-3.5 rounded-3xl rounded-bl-lg border shadow-sm ${
+              isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-100'
+            }`}>
+              <div className="flex gap-2.5 items-center">
+                <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-zinc-500 dark:text-zinc-400 text-sm">{t('chat.modelLoadingBubble')}</span>
+              </div>
             </div>
           </div>
         )}
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className={`px-5 py-3 rounded-2xl rounded-bl-2xl border shadow-sm ${
-              isDarkMode ? 'bg-gray-800 text-gray-200 border-gray-700' : 'bg-white text-gray-800 border-gray-100'
+            <div className={`px-5 py-3.5 rounded-3xl rounded-bl-lg border shadow-sm ${
+              isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-100'
             }`}>
               <div className="flex gap-1.5 items-center">
                 <div className="flex gap-1.5">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-typing-bounce" style={{ animationDelay: '0s' }}></div>
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-typing-bounce" style={{ animationDelay: '0.15s' }}></div>
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-typing-bounce" style={{ animationDelay: '0.3s' }}></div>
+                  <div className="w-2 h-2 bg-indigo-500 rounded-full animate-typing-bounce" style={{ animationDelay: '0s' }}></div>
+                  <div className="w-2 h-2 bg-indigo-500 rounded-full animate-typing-bounce" style={{ animationDelay: '0.15s' }}></div>
+                  <div className="w-2 h-2 bg-indigo-500 rounded-full animate-typing-bounce" style={{ animationDelay: '0.3s' }}></div>
                 </div>
-                <span className="ml-2 text-gray-400 text-sm">{t('chat.thinking')}</span>
+                <span className="ml-2 text-zinc-400 dark:text-zinc-500 text-sm">{t('chat.thinking')}</span>
               </div>
             </div>
           </div>
         )}
 
         {messagesEndRef && <div ref={messagesEndRef} />}
+        </div>
       </div>
     );
 };

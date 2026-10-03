@@ -5,174 +5,68 @@ export type EngineType = 'webllm' | 'wllama';
 
 export interface EngineModelConfig extends ModelConfig {
   engine: EngineType;
-  gguf?: { repo: string; file: string; mmprojFile?: string };
+  gguf?: { repo: string; file: string; mmprojFile?: string; selfHostedPath?: string };
   multimodal?: boolean;
+  badge?: 'recommended' | 'fast';
+  /** Path prefix on our own webspace; falls back to HuggingFace if missing/unavailable */
+  selfHostedPath?: string;
 }
 
-// WebLLM models are loaded via the official prebuilt config (HF CDN + browser cache).
-// GGUF models are downloaded from Hugging Face via wllama's ModelManager (cached in Cache Storage).
+// Curated selection of 3 models - kept small on purpose so the choice stays
+// clear. Every WebGPU model automatically falls back to the WASM model (LFM)
+// when the browser has no WebGPU support.
 export const MODEL_CONFIGS: Record<string, EngineModelConfig> = {
+  'LFM2.5-VL-1.6B-GGUF': {
+    id: 'LFM2.5-VL-1.6B-GGUF',
+    name: 'LFM 2.5 1.6B',
+    modelPath: 'lfm2.5-1.6b',
+    engine: 'wllama',
+    type: 'chat',
+    description: 'Allzweckmodell für Alltag, Wissen und Texte - gute Antworten bei Fragen, Zusammenfassungen und Übersetzungen. Läuft in jedem Browser, auch ohne WebGPU.',
+    modelSize: '1.6B',
+    fileSizeMB: 664,
+    quantized: true,
+    recommended: true,
+    contextLength: 8192,
+    provider: 'gguf-hf',
+    badge: 'recommended',
+    gguf: {
+      repo: 'LiquidAI/LFM2.5-VL-1.6B-GGUF',
+      selfHostedPath: '/models/LFM2.5-VL-1.6B-Q4_0.gguf',
+      file: 'LFM2.5-VL-1.6B-Q4_0.gguf',
+    },
+  },
+  'gemma-2-2b-it-q4f16_1-MLC': {
+    id: 'gemma-2-2b-it-q4f16_1-MLC',
+    name: 'Gemma 2 2B',
+    modelPath: 'gemma-2-2b-it-q4f16_1-MLC',
+    engine: 'webllm',
+    type: 'chat',
+    description: 'Für anspruchsvollere Aufgaben: längere Texte, bessere Erklärungen und solidere Qualität beim Schreiben. Braucht Chrome/Edge mit WebGPU.',
+    modelSize: '2B',
+    fileSizeMB: 1403,
+    quantized: true,
+    recommended: false,
+    contextLength: 4096,
+    provider: 'webllm-hf-cdn',
+    selfHostedPath: '/models/gemma-2-2b-it-q4f16_1-MLC',
+    badge: 'recommended',
+  },
   'Qwen2-0.5B-Instruct-q4f16_1-MLC': {
     id: 'Qwen2-0.5B-Instruct-q4f16_1-MLC',
-    name: 'Qwen 2 0.5B (WebGPU)',
+    name: 'Qwen 2 0.5B',
     modelPath: 'Qwen2-0.5B-Instruct-q4f16_1-MLC',
     engine: 'webllm',
     type: 'chat',
-    description: 'Very small and fast WebGPU model, needs a modern browser',
+    description: 'Für kurze Fragen und schnelle Antworten - ideal zum Ausprobieren, für kleine Aufgaben und ältere Geräte. Braucht Chrome/Edge mit WebGPU.',
     modelSize: '0.5B',
     fileSizeMB: 400,
-    quantized: true,
-    recommended: true,
-    contextLength: 4096,
-    provider: 'webllm-hf-cdn',
-  },
-  'TinyLlama-1.1B-Chat-v1.0-GGUF': {
-    id: 'TinyLlama-1.1B-Chat-v1.0-GGUF',
-    name: 'TinyLlama 1.1B Chat (GGUF)',
-    modelPath: 'tinyllama',
-    engine: 'wllama',
-    type: 'chat',
-    description: 'Runs on any device via WebAssembly, no WebGPU required',
-    modelSize: '1.1B',
-    fileSizeMB: 670,
-    quantized: true,
-    recommended: true,
-    contextLength: 2048,
-    provider: 'gguf-hf',
-    gguf: {
-      repo: 'TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF',
-      file: 'tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf',
-    },
-  },
-  'Qwen2-0.5B-Instruct-GGUF': {
-    id: 'Qwen2-0.5B-Instruct-GGUF',
-    name: 'Qwen 2 0.5B Instruct (GGUF)',
-    modelPath: 'qwen2-05b-instruct',
-    engine: 'wllama',
-    type: 'chat',
-    description: 'Same model as the WebGPU variant, but runs everywhere via WASM',
-    modelSize: '0.5B',
-    fileSizeMB: 400,
-    quantized: true,
-    recommended: false,
-    contextLength: 2048,
-    provider: 'gguf-hf',
-    gguf: {
-      repo: 'Qwen/Qwen2-0.5B-Instruct-GGUF',
-      file: 'qwen2-0_5b-instruct-q4_k_m.gguf',
-    },
-  },
-  'Llama-3.2-1B-Instruct-GGUF': {
-    id: 'Llama-3.2-1B-Instruct-GGUF',
-    name: 'Llama 3.2 1B Instruct (GGUF)',
-    modelPath: 'llama-3.2-1b-instruct',
-    engine: 'wllama',
-    type: 'chat',
-    description: 'Modern Meta model with good multilingual skills, runs via WASM',
-    modelSize: '1B',
-    fileSizeMB: 808,
-    quantized: true,
-    recommended: true,
-    contextLength: 8192,
-    provider: 'gguf-hf',
-    gguf: {
-      repo: 'bartowski/Llama-3.2-1B-Instruct-GGUF',
-      file: 'Llama-3.2-1B-Instruct-Q4_K_M.gguf',
-    },
-  },
-  'Llama-3.2-3B-Instruct-GGUF': {
-    id: 'Llama-3.2-3B-Instruct-GGUF',
-    name: 'Llama 3.2 3B Instruct (GGUF)',
-    modelPath: 'llama-3.2-3b-instruct',
-    engine: 'wllama',
-    type: 'chat',
-    description: 'Larger and stronger, but slower on CPU - more RAM required',
-    modelSize: '3B',
-    fileSizeMB: 2016,
-    quantized: true,
-    recommended: false,
-    contextLength: 8192,
-    provider: 'gguf-hf',
-    gguf: {
-      repo: 'bartowski/Llama-3.2-3B-Instruct-GGUF',
-      file: 'Llama-3.2-3B-Instruct-Q4_K_M.gguf',
-    },
-  },
-  'Phi-3.5-mini-instruct-GGUF': {
-    id: 'Phi-3.5-mini-instruct-GGUF',
-    name: 'Phi 3.5 Mini Instruct (GGUF)',
-    modelPath: 'phi-3.5-mini-instruct',
-    engine: 'wllama',
-    type: 'chat',
-    description: 'Microsoft model, strong at code and reasoning for its size',
-    modelSize: '3.8B',
-    fileSizeMB: 2388,
     quantized: true,
     recommended: false,
     contextLength: 4096,
-    provider: 'gguf-hf',
-    gguf: {
-      repo: 'bartowski/Phi-3.5-mini-instruct-GGUF',
-      file: 'Phi-3.5-mini-instruct-Q4_K_M.gguf',
-    },
-  },
-  'Qwen2.5-1.5B-Instruct-GGUF': {
-    id: 'Qwen2.5-1.5B-Instruct-GGUF',
-    name: 'Qwen 2.5 1.5B Instruct (GGUF)',
-    modelPath: 'qwen2.5-1.5b-instruct',
-    engine: 'wllama',
-    type: 'chat',
-    description: 'Balanced quality and speed, good multilingual support',
-    modelSize: '1.5B',
-    fileSizeMB: 1110,
-    quantized: true,
-    recommended: true,
-    contextLength: 8192,
-    provider: 'gguf-hf',
-    gguf: {
-      repo: 'Qwen/Qwen2.5-1.5B-Instruct-GGUF',
-      file: 'qwen2.5-1.5b-instruct-q4_k_m.gguf',
-    },
-  },
-  'SmolVLM-500M-Instruct-GGUF': {
-    id: 'SmolVLM-500M-Instruct-GGUF',
-    name: 'SmolVLM 500M Instruct (GGUF, Vision)',
-    modelPath: 'smolvlm-500m-instruct',
-    engine: 'wllama',
-    type: 'chat',
-    description: 'Smallest multimodal model - understands images, very low RAM usage',
-    modelSize: '0.5B',
-    fileSizeMB: 410,
-    quantized: true,
-    recommended: true,
-    contextLength: 8192,
-    provider: 'gguf-hf',
-    multimodal: true,
-    gguf: {
-      repo: 'ggml-org/SmolVLM-500M-Instruct-GGUF',
-      file: 'SmolVLM-500M-Instruct-Q8_0.gguf',
-      mmprojFile: 'mmproj-SmolVLM-500M-Instruct-Q8_0.gguf',
-    },
-  },
-  'Qwen2-VL-2B-Instruct-GGUF': {
-    id: 'Qwen2-VL-2B-Instruct-GGUF',
-    name: 'Qwen2 VL 2B Instruct (GGUF, Vision)',
-    modelPath: 'qwen2-vl-2b-instruct',
-    engine: 'wllama',
-    type: 'chat',
-    description: 'Multimodal: understands images (with mmproj projector) and text',
-    modelSize: '2B',
-    fileSizeMB: 1650,
-    quantized: true,
-    recommended: false,
-    contextLength: 8192,
-    provider: 'gguf-hf',
-    multimodal: true,
-    gguf: {
-      repo: 'ggml-org/Qwen2-VL-2B-Instruct-GGUF',
-      file: 'Qwen2-VL-2B-Instruct-Q4_K_M.gguf',
-      mmprojFile: 'mmproj-Qwen2-VL-2B-Instruct-Q8_0.gguf',
-    },
+    provider: 'webllm-hf-cdn',
+    selfHostedPath: '/models/Qwen2-0.5B-Instruct-q4f16_1-MLC',
+    badge: 'fast',
   },
 };
 
@@ -202,7 +96,8 @@ export const isMultimodalModel = (modelId: string): boolean => {
 };
 
 // Find a WASM (GGUF/wllama) model to use when a WebGPU model cannot run.
-// Preference: same family + same parameter size, then any recommended GGUF model.
+// With only one WASM model in the registry, every WebGPU model falls back
+// to it (LFM 2.5, the recommended model).
 export const getWasmFallbackModelId = (webllmModelId: string): string | undefined => {
   const source = MODEL_CONFIGS[webllmModelId];
   if (!source || source.engine !== 'webllm') {

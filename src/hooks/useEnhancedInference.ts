@@ -17,6 +17,7 @@ import { stripHiddenPartsText } from '../services/llm/text-processing';
 import { getEngineType, getModelConfig, getWasmFallbackModelId } from '../services/models/model-registry';
 import {
   cancelWllamaGeneration,
+  type DownloadStats,
   generateWithWllama,
   generateWithWllamaStream,
   isWllamaModelLoaded,
@@ -30,10 +31,25 @@ import {
 // Types
 // ============================================================================
 
+/** Download size/speed info shown while a model is being fetched */
+export type ModelLoadStats = DownloadStats;
+
+// WebLLM reports download progress only as text like "250MB/1.4GB"
+const parseWebLLMSizeText = (text: string): { loadedMB: number; totalMB: number } | null => {
+  const match = text.match(/(\d+(?:\.\d+)?)(MB|GB)\/(\d+(?:\.\d+)?)(MB|GB)/);
+  if (!match) {
+    return null;
+  }
+  const toMB = (value: string, unit: string): number =>
+    unit === 'GB' ? parseFloat(value) * 1024 : parseFloat(value);
+  return { loadedMB: toMB(match[1], match[2]), totalMB: toMB(match[3], match[4]) };
+};
+
 export interface WebLLMGenerateOptions {
   temperature?: number;
   top_p?: number;
   max_tokens?: number;
+  systemPrompt?: string;
   history?: Array<{ role: 'user' | 'assistant'; content: string }>;
   images?: Array<{ name: string; data: ArrayBuffer }>;
 }
@@ -49,6 +65,9 @@ export interface UseEnhancedInferenceOptions {
   engineConfig?: Record<string, unknown>;
   autoRetry?: boolean;
   appConfig?: AppConfig;
+  /** Automatically load `modelId` on mount. Set to false when the caller
+   *  wants to control model loading itself (e.g. ask the user first). */
+  autoLoad?: boolean;
 }
 
 export interface InferenceState {
@@ -63,6 +82,7 @@ export interface InferenceState {
   
   // Progress
   progress: number;
+  progressStats: ModelLoadStats | null;
   tokensGenerated: number;
   tokensPerSecond: number;
   
@@ -99,12 +119,26 @@ export interface EnhancedInferenceReturn extends InferenceState {
 // ============================================================================
 
 // App config for WebLLM: keep the official prebuilt model list (HF CDN sources)
-// and only switch the cache backend to OPFS. Passing a custom model_list here
-// would REPLACE the prebuilt list entirely and break CDN model loading.
-const getCustomAppConfig = (): AppConfig => {
+// and only switch the cache backend to OPFS. For models that we host on our
+// own webspace, the model URL is rewritten to the same-origin copy (no CDN
+// dependency); everything else (model_lib, metadata) stays untouched.
+const getCustomAppConfig = (useSelfHosted = true): AppConfig => {
+  const model_list = (prebuiltAppConfig.model_list ?? []).map((record) => {
+    if (!useSelfHosted) {
+      return record;
+    }
+    const config = getModelConfig(record.model_id);
+    if (config?.selfHostedPath) {
+      return {
+        ...record,
+        model: new URL(config.selfHostedPath, window.location.origin).href,
+      };
+    }
+    return record;
+  });
   return {
     cacheBackend: 'opfs', // Use Origin Private File System for best caching
-    model_list: prebuiltAppConfig.model_list,
+    model_list,
   };
 };
 
@@ -118,10 +152,11 @@ const getCustomAppConfig = (): AppConfig => {
 export const useEnhancedInference = (
   options: UseEnhancedInferenceOptions
 ): EnhancedInferenceReturn => {
-  const { 
-    modelId, 
-    defaultOptions = {}, 
-    appConfig: customAppConfig 
+  const {
+    modelId,
+    defaultOptions = {},
+    appConfig: customAppConfig,
+    autoLoad = true,
   } = options;
 
   // State
@@ -131,6 +166,7 @@ export const useEnhancedInference = (
   const [result, setResult] = useState('');
   const [streamText, setStreamText] = useState('');
   const [progress, setProgress] = useState(0);
+  const [progressStats, setProgressStats] = useState<ModelLoadStats | null>(null);
   const [tokensGenerated, setTokensGenerated] = useState(0);
   const [tokensPerSecond, setTokensPerSecond] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -161,6 +197,7 @@ export const useEnhancedInference = (
       setIsLoading(true);
       setError(null);
       setProgress(0);
+      setProgressStats(null);
       const engineType = getEngineType(modelId);
       if (engineType === 'wllama') {
         const config = getModelConfig(modelId);
@@ -171,8 +208,9 @@ export const useEnhancedInference = (
         engineRef.current = null;
         setWebgpuAvailable(null);
         const ok = await loadWllamaModel(modelId, config.gguf, {
-          onProgress: (fraction, label) => {
+          onProgress: (fraction, label, stats) => {
             setProgress(fraction * 100);
+            setProgressStats(stats ?? null);
             log(`Loading: ${label ?? ''}`);
           },
         });
@@ -233,15 +271,47 @@ export const useEnhancedInference = (
       log(`Using WASM: ${typeof WebAssembly !== 'undefined' ? 'Yes' : 'No'}`);
 
       const { CreateMLCEngine } = await import("@mlc-ai/web-llm");
-      const engine = await CreateMLCEngine(modelId, {
-        appConfig: effectiveAppConfig,
-        initProgressCallback: (p: { text?: string; progress: number }) => {
-          setProgress(p.progress * 100); // Convert to percentage
-          if (p.text) {
-            log(`Loading: ${p.text} (${Math.round(p.progress * 100)}%)`);
-          }
+      const initProgressCallback = (p: unknown): void => {
+        // The runtime report also carries timeElapsed (seconds since init
+        // start), which the engine config type does not declare.
+        const report = p as { text?: string; progress: number; timeElapsed?: number };
+        setProgress(report.progress * 100); // Convert to percentage
+        const size = report.text ? parseWebLLMSizeText(report.text) : null;
+        const elapsed = report.timeElapsed ?? 0;
+        if (size && elapsed > 0) {
+          setProgressStats({
+            ...size,
+            speedMBps: size.loadedMB / elapsed,
+          });
+        } else {
+          setProgressStats(null);
         }
-      });
+        if (report.text) {
+          log(`Loading: ${report.text} (${Math.round(report.progress * 100)}%)`);
+        }
+      };
+
+      let engine: MLCEngineInterface;
+      try {
+        engine = await CreateMLCEngine(modelId, {
+          appConfig: effectiveAppConfig,
+          initProgressCallback,
+        });
+      } catch (selfHostedError) {
+        // If our self-hosted copy cannot be fetched, retry with the
+        // original HuggingFace CDN sources before surfacing the error.
+        if (!customAppConfig && getModelConfig(modelId)?.selfHostedPath) {
+          warn(`Self-hosted model fetch failed (${selfHostedError}), retrying with HuggingFace CDN`);
+          setProgress(0);
+          setProgressStats(null);
+          engine = await CreateMLCEngine(modelId, {
+            appConfig: getCustomAppConfig(false),
+            initProgressCallback,
+          });
+        } else {
+          throw selfHostedError;
+        }
+      }
 
       engineRef.current = engine;
       setCurrentModelId(modelId);
@@ -271,6 +341,7 @@ export const useEnhancedInference = (
       setError(appError.userMessage);
       setIsLoading(false);
       setProgress(0);
+      setProgressStats(null);
       warn(`Failed to load model ${modelId}: ${err}`);
 
       // Enhanced error messages for common issues
@@ -344,6 +415,7 @@ export const useEnhancedInference = (
           temperature: mergedOptions.temperature,
           top_p: mergedOptions.top_p,
           max_tokens: mergedOptions.max_tokens,
+          systemPrompt: mergedOptions.systemPrompt,
           history: mergedOptions.history,
           images: mergedOptions.images,
         });
@@ -359,6 +431,9 @@ export const useEnhancedInference = (
       }
 
       const messages = [
+        ...(mergedOptions.systemPrompt
+          ? [{ role: 'system' as const, content: mergedOptions.systemPrompt }]
+          : []),
         ...(mergedOptions.history ?? []).map((m) => ({ role: m.role, content: m.content })),
         { role: "user" as const, content: prompt },
       ];
@@ -434,6 +509,7 @@ export const useEnhancedInference = (
             temperature: mergedOptions.temperature,
             top_p: mergedOptions.top_p,
             max_tokens: mergedOptions.max_tokens,
+            systemPrompt: mergedOptions.systemPrompt,
             history: mergedOptions.history,
             images: mergedOptions.images,
           },
@@ -459,6 +535,9 @@ export const useEnhancedInference = (
 
         const response = await engineRef.current.chat.completions.create({
           messages: [
+            ...(mergedOptions.systemPrompt
+              ? [{ role: 'system' as const, content: mergedOptions.systemPrompt }]
+              : []),
             ...historyMessages,
             { role: "user", content: prompt }
           ],
@@ -553,12 +632,12 @@ export const useEnhancedInference = (
     }
   }, [currentModelId]);
 
-  // Auto-load model when modelId changes
+  // Auto-load model when modelId changes (unless the caller opts out)
   useEffect(() => {
-    if (modelId && !currentModelId) {
+    if (autoLoad && modelId && !currentModelId) {
       loadModel(modelId);
     }
-  }, [modelId, currentModelId, loadModel]);
+  }, [modelId, currentModelId, loadModel, autoLoad]);
 
   // Cleanup on unmount
   useEffect((): (() => void) => {
@@ -586,6 +665,7 @@ export const useEnhancedInference = (
     
     // Progress
     progress,
+    progressStats,
     tokensGenerated,
     tokensPerSecond,
     

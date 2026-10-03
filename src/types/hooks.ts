@@ -31,9 +31,6 @@ export interface UseModelsReturn {
   availableModels: Model[];
   downloadedModels: LocalModel[];
   activeModel: LocalModel | null;
-  downloadingModelId: string | null;
-  downloadProgress: Record<string, number>;
-  downloadModel: (model: Model) => Promise<boolean>;
   deleteModel: (modelId: string) => void;
   selectModel: (modelId: string) => void;
   getModelInfo: (modelId: string) => Model | undefined;

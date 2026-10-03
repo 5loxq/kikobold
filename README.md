@@ -1,719 +1,159 @@
-# Local LLM Chat - WebGPU Browser Application
+# Local LLM Chat
 
-**Version:** `1.3.0` | **Status:** Production-Ready | **License:** MIT
+**Version:** 2.0.0 | **Lizenz:** MIT | **Status:** Produktionsreif
 
-A privacy-first web application that allows you to download and run language models locally in your browser using WebGPU for GPU acceleration. All processing happens 100% locally — no data is sent to any server.
+Ein datenschutzfreundlicher LLM-Chat, der komplett im Browser läuft. Die Modelle
+werden lokal heruntergeladen, im Browser gecacht und die Inferenz erfolgt
+100 % auf dem eigenen Gerät — keine Nachricht verlässt den Browser, kein Server
+verarbeitet irgendetwas.
 
----
-
-## 📌 Quick Links
-
-- **[Features](#-features)** — Full feature list
-- **[Installation](#-installation)** — Setup & development
-- **[Usage](#-usage)** — How to use the app
-- **[API Reference](#-api-reference)** — For developers
-- **[Project Structure](#-project-structure)** — Code organization
-- **[Versioning](#-versioning)** — Release policy
-- **[Contributing](#-contributing)** — How to contribute
+Live-Demo: **https://www.posthiel.de**
 
 ---
 
-## ✨ Features
+## Funktionen
 
-### Core Capabilities
+| Funktion | Beschreibung |
+|---|---|
+| **100 % lokal** | Inferenz im Browser (WebGPU oder WASM), keine Datenübertragung an Dritte |
+| **3 kuratierte Modelle** | Klare Auswahl statt Modell-Wüste, mit Empfehlung und Zweck-Beschreibung |
+| **Self-Hosting** | Modelle liegen auf dem eigenen Webspace, mit automatischem HuggingFace-Fallback |
+| **Download-Anzeige** | Fortschritt in Prozent, Geladene/Gesamtgröße („340 MB von 600 MB") und Geschwindigkeit |
+| **Light/Dark-Mode** | Umschalter in der Sidebar, folgt standardmäßig dem System, Auswahl wird gespeichert |
+| **Streaming** | Antworten erscheinen Token für Token, abbrechbar |
+| **Profile** | Standard / Kreativ / Präzise (deutsch) — der System-Prompt wird tatsächlich an das Modell übergeben |
+| **Chats** | Verlauf in IndexedDB, Suche im Chat, Export/Import als JSON |
+| **Sprache** | Deutsch und Englisch, umschaltbar |
+| **Offline** | Service Worker; nach dem Modell-Download funktioniert der Chat offline |
+| **Anhänge** | Dokumente als Kontext; Spracheingabe per Mikrofon |
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| **WebGPU Acceleration** | GPU-accelerated inference for faster responses | ✅ |
-| **Local Inference** | All models run 100% in-browser | ✅ |
-| **Voice Input/Output** | Speech recognition & text-to-speech (German) | ✅ |
-| **Model Management** | Download, manage, and switch between 5+ models | ✅ |
-| **Profile System** | Custom system prompts and inference parameters | ✅ |
+## Modelle
 
-### Supported Models
+| Modell | Wofür | Größe | Engine |
+|---|---|---|---|
+| **LFM 2.5 1.6B** (empfohlen) | Allzweckmodell für Alltag, Wissen und Texte — Fragen, Zusammenfassungen, Übersetzungen. Läuft in jedem Browser, auch ohne WebGPU | 664 MB | WASM (wllama) |
+| **Gemma 2 2B** | Anspruchsvollere Aufgaben: längere Texte, bessere Erklärungen, solidere Qualität beim Schreiben | 1,4 GB | WebGPU (WebLLM) |
+| **Qwen 2 0.5B** | Kurze Fragen und schnelle Antworten — ideal zum Ausprobieren und auf älteren Geräten | 400 MB | WebGPU (WebLLM) |
 
-The app ships with two inference engines:
+- Beim ersten Auswählen wird gefragt, ob der Download starten soll (mit Größenangabe).
+- Der Download läuft vom eigenen Webspace (siehe unten); ist dieser nicht erreichbar, wird automatisch der HuggingFace-CDN genutzt.
+- Browser ohne WebGPU (Firefox, Safari) nutzen automatisch das WASM-Modell.
+- Nach dem Download cacht der Browser die Modelle (OPFS bzw. Cache Storage) — der nächste Start ist sofort bereit.
 
-- **WebLLM** (WebGPU): loads MLC-compiled models from the HuggingFace CDN, cached in the browser (OPFS)
-- **wllama** (WASM/CPU): runs GGUF models via llama.cpp compiled to WebAssembly — works on any device, no WebGPU required, with **token streaming**
+## Setup (Entwicklung)
 
-| Model | Engine | Size | Recommended | Context | Notes |
-|-------|--------|------|-------------|---------|-------|
-| Qwen 2 0.5B | WebGPU | ~400 MB | ✅ | 4096 | Fastest, needs modern browser |
-| TinyLlama 1.1B Chat | GGUF/WASM | ~670 MB | ✅ | 2048 | Runs everywhere |
-| Qwen 2 0.5B Instruct | GGUF/WASM | ~400 MB | — | 2048 | WASM variant of the WebGPU model |
-| Llama 3.2 1B Instruct | GGUF/WASM | ~810 MB | ✅ | 8192 | Good multilingual skills |
-| Qwen 2.5 1.5B Instruct | GGUF/WASM | ~1.1 GB | ✅ | 8192 | Balanced quality/speed |
-| Llama 3.2 3B Instruct | GGUF/WASM | ~2.0 GB | — | 8192 | Stronger, needs more RAM |
-| Phi 3.5 Mini Instruct | GGUF/WASM | ~2.4 GB | — | 4096 | Strong at code/reasoning |
-| Qwen2 VL 2B Instruct | GGUF/WASM | ~1.7 GB | — | 8192 | **Multimodal**: image input (🖼️ button) |
-| SmolVLM 500M Instruct | GGUF/WASM | ~410 MB | ✅ | 8192 | **Multimodal**: smallest vision model, low RAM |
-
-All GGUF models are downloaded from Hugging Face on first use and cached in the browser (Cache Storage).
-If a WebGPU model is selected but the browser has no WebGPU support, the app automatically loads the WASM variant of the same model instead.
-The vision model additionally downloads an `mmproj` projector file so it can understand images.
-
-### Privacy & Security
-
-✅ **100% Local** — No data sent to external servers  
-✅ **No Telemetry** — Zero tracking or analytics  
-✅ **No Account Required** — Works offline after model download  
-✅ **IndexedDB Storage** — Chat history persists across sessions  
-✅ **WebGPU Fallback** — Automatic CPU fallback if GPU unavailable  
-
----
-
-## 🚀 Installation
-
-### Prerequisites
-
-- **Node.js** ≥ 18.0.0
-- **npm** ≥ 9.0.0
-- **Modern Browser** with WebGPU support (Chrome 126+, Edge 126+)
-- **Storage** ≥ 4GB free for models
-
-### Setup
+Voraussetzungen: Node.js ≥ 20, npm ≥ 9.
 
 ```bash
-# Clone the repository
-git clone https://github.com/5loxq/webgui.git
-cd webgui
-
-# Install dependencies
 npm install
-
-# Start development server (hot reload)
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
+npm run dev        # Entwicklungsserver (http://localhost:5173)
+npm run build      # Produktions-Build nach dist/
+npm run preview    # Build lokal ausprobieren
+npm run type-check # TypeScript prüfen
+npm run lint       # ESLint
 ```
 
----
+Für WebGPU-Modelle: Chrome/Edge 126+ verwenden. Firefox und Safari fallen
+automatisch auf das WASM-Modell zurück.
 
-## 📦 Deployment (Webspace / Hosting)
+## Deployment (Webspace)
 
-Die App läuft als komplett statisches Frontend — nach `npm run build` liegt alles
-bereit in `dist/` und kann direkt auf einen Webspace hochgeladen werden.
+Die App ist ein statisches Frontend — der komplette Inhalt von `dist/` kommt
+ins Web-Root (HTTPS ist Pflicht: WebGPU, OPFS und Cache Storage brauchen einen
+Secure Context).
 
-### Was hochgeladen wird
-
-Kopiere **den kompletten Inhalt von `dist/`** in das Web-Root-Verzeichnis
-(z. B. `public_html/` oder `htdocs/`) — die Ordnerstruktur muss erhalten bleiben:
-
-```
-dist/
-├── index.html
-├── sw.js                  # Service Worker (für Offline-Modus)
-├── .htaccess             # Apache-Konfiguration (siehe unten)
-├── wllama/
-│   └── wllama.wasm       # WASM-Engine (Pfad wird im Code referenziert!)
-└── assets/                # JS/CSS/Fonts mit Hash-Namen
-```
-
-**Wichtig:** Die Datei `wllama/wllama.wasm` muss exakt unter diesem relativen
-Pfad liegen — der Code lädt `/wllama/wllama.wasm`.
-
-### Voraussetzungen
-
-1. **HTTPS erforderlich** — WebGPU, OPFS, SharedArrayBuffer und Service Worker
-   funktionieren nur in einem Secure Context. Der Webspace muss ein gültiges
-   TLS-Zertifikat haben (z. B. Let's Encrypt).
-2. **Keine zusätzlichen Konfigurationen nötig** — es gibt kein `base`-Setting im
-   Build; die App erwartet, dass sie im Root (`/`) der Domain liegt.
-
-### Server-Header (empfohlen)
-
-Für multi-threaded WASM (SharedArrayBuffer) müssen folgende Header gesetzt sein:
+### Struktur auf dem Server
 
 ```
-Cross-Origin-Opener-Policy: same-origin
-Cross-Origin-Embedder-Policy: require-corp
+/                       # App (index.html, assets/, sw.js, wllama/, .htaccess)
+/models/                # Self-gehostete Modell-Dateien (optional)
+├── LFM2.5-VL-1.6B-Q4_0.gguf
+├── Qwen2-0.5B-Instruct-q4f16_1-MLC/
+└── gemma-2-2b-it-q4f16_1-MLC/
 ```
 
-- **Apache:** Die mitgelieferte `.htaccess` (in `dist/` enthalten) setzt die
-  Header automatisch — sofern `mod_headers` aktiviert ist.
-- **Nginx:** in der Server-/Location-Config ergänzen:
-  ```nginx
-  add_header Cross-Origin-Opener-Policy same-origin;
-  add_header Cross-Origin-Embedder-Policy require-corp;
-  ```
-- Ohne diese Header läuft die App trotzdem — wllama fällt dann nur auf den
-  langsameren Single-Thread-Modus zurück.
+### Modelle selbst hosten
 
-### Modelle
+1. Dateien von HuggingFace laden:
+   - `LiquidAI/LFM2.5-VL-1.6B-GGUF` → nur `LFM2.5-VL-1.6B-Q4_0.gguf`
+   - `mlc-ai/Qwen2-0.5B-Instruct-q4f16_1-MLC` → komplettes Repo
+   - `mlc-ai/gemma-2-2b-it-q4f16_1-MLC` → komplettes Repo
+2. Unter `/models/` ablegen (Struktur siehe oben).
+3. Die Pfade sind in `src/services/models/model-registry.ts` hinterlegt
+   (`selfHostedPath`). Fehlt eine Datei, greift automatisch der HF-Fallback.
 
-**Es müssen keine Modell-Dateien auf den Webspace hochgeladen werden.** Alle
-Modelle werden beim ersten Laden automatisch vom HuggingFace-CDN heruntergeladen
-und im Browser zwischengespeichert (WebLLM → OPFS, wllama → Cache Storage).
-Bei erneutem Besuch wird das Modell aus dem Browser-Cache geladen.
+Der Server muss Range-Requests unterstützen (für abbrechbare/fortsetzbare
+Downloads) — die mitgelieferte `.htaccess` setzt zusätzlich die nötigen Header
+(COOP/COEP für Multi-Threading, korrekter WASM-MIME-Type, SPA-Fallback).
 
-### Update einer bestehenden Installation
+### Wichtig nach jedem Deploy
 
-1. `npm run build` ausführen
-2. Alle Dateien in `dist/` hochladen und alte Dateien unter `assets/` **löschen**
-   (die Dateinamen enthalten Hashes)
-3. Fertig — der Service Worker aktualisiert sich beim nächsten Besuch selbst
+Der Service Worker aktualisiert sich selbstständig (Navigation ist
+Network-First). Falls trotzdem eine alte Version hängt:
+DevTools → Application → Service Workers → *Unregister*, dann neu laden.
 
-### Environment Variables
-
-Create a `.env` file in the project root:
-
-```env
-# Optional: Custom port for dev server
-VITE_PORT=3000
-
-# Optional: Disable WebGPU (for testing CPU fallback)
-VITE_DISABLE_WEBGPU=false
-
-# Optional: Custom model registry URL
-VITE_MODEL_REGISTRY_URL=https://huggingface.co
-```
-
----
-
-## 🎯 Usage
-
-### 1. Download a Model
+## Architektur
 
 ```
-→ Navigate to "Models" tab
-→ Select a model from the list
-→ Click "Download"
-→ Wait for download to complete (progress shown)
+src/
+├── components/
+│   ├── Chat/          # ChatWindow, MessageList, InputBox, Markdown, Export
+│   ├── Layout/        # MainLayout, Sidebar (inkl. Theme-Toggle), LanguageSwitcher
+│   ├── Profiles/      # Profil-Verwaltung
+│   └── Help/          # Hilfe
+├── hooks/
+│   ├── useEnhancedInference.ts   # Modell-Laden + Generierung (beide Engines)
+│   ├── useChat.ts                # Chat-Verlauf (IndexedDB)
+│   ├── useModels.ts              # Modell-Auswahl/-Registry-Zustand
+│   └── useProfiles.ts            # Profile
+├── services/
+│   ├── inference/wllama-engine.ts       # GGUF/WASM-Engine (llama.cpp)
+│   ├── models/model-registry.ts         # Kuratierte Modell-Liste + Pfade
+│   └── storage/                          # Chat (IndexedDB), Profile (localStorage)
+└── locales/           # de.json, en.json
 ```
 
-**Note:** Models are loaded from HuggingFace CDN and cached in your browser.
-
-### 2. Create/Select a Profile
-
-```
-→ Navigate to "Profiles" tab
-→ Click "New Profile" or select existing
-→ Customize:
-  - Name: Profile identifier
-  - System Prompt: Define AI behavior
-  - Temperature: 0.1-2.0 (creativity)
-  - Top-P: 0.1-1.0 (sampling diversity)
-  - Max Tokens: 1-512 (response length)
-  - Language: de/en (for voice output)
-```
-
-### 3. Start Chatting
-
-```
-→ Navigate to "Chat" tab
-→ Select a downloaded model
-→ Select a profile
-→ Click "New Chat"
-→ Type message or use 🎤 for voice input
-→ Press Enter or click Send
-```
-
-**Voice Features:**
-- 🎤 **Input:** Click microphone to start speech recognition (German)
-- 🔊 **Output:** Responses are automatically read aloud (German)
-
-### 4. Manage Data
-
-```
-# Export Profile
-→ Profiles tab → Select profile → Click "Export"
-
-# Import Profile
-→ Profiles tab → Click "Import" → Select JSON file
-
-# Delete Chat
-→ Chat tab → Hover chat → Click 🗑️
-
-# Clear Storage
-→ Settings tab → "Clear All Data"
-```
-
----
-
-## 🔧 API Reference
-
-### Inference Engine
-
-**Location:** `src/services/inference/InferenceEngine.ts`
-
-#### Methods
-
-```typescript
-// Check WebGPU support
-function checkWebGPUSupport(): boolean;
-
-// Load a model
-function loadModel(modelId: string): Promise<void>;
-
-// Unload current model
-function unloadModel(): Promise<void>;
-
-// Generate text
-function generate(
-  prompt: string,
-  options: InferenceOptions
-): Promise<InferenceResult>;
-
-// Get loaded model info
-function getCurrentModel(): { id: string; name: string } | null;
-```
-
-#### Types
-
-```typescript
-interface InferenceOptions {
-  temperature: number;    // 0.1-2.0
-  topP: number;           // 0.1-1.0
-  maxTokens: number;      // 1-512
-  systemPrompt?: string;  // Optional
-  language?: string;      // 'de' | 'en'
-}
-
-interface InferenceResult {
-  text: string;          // Generated text
-  tokens: number;        // Tokens generated
-  duration: number;      // Time in ms
-}
-```
-
-### Storage Services
-
-**Location:** `src/services/storage/`
-
-#### Chat Storage
-
-```typescript
-// Save chat
-function saveChat(chat: Chat): Promise<void>;
-
-// Load all chats
-function loadAllChats(): Promise<Chat[]>;
-
-// Delete chat
-function deleteChat(chatId: string): Promise<void>;
-
-// Export chat
-function exportChat(chat: Chat): string; // JSON
-
-// Import chat
-function importChat(json: string): Chat;
-```
-
-#### Profile Storage
-
-```typescript
-// Save profile
-function saveProfile(profile: Profile): Promise<void>;
-
-// Load all profiles
-function loadAllProfiles(): Promise<Profile[]>;
-
-// Delete profile
-function deleteProfile(profileId: string): Promise<void>;
-
-// Export profile
-function exportProfile(profile: Profile): string; // JSON
-
-// Import profile
-function importProfile(json: string): Profile;
-```
-
-#### Model Storage
-
-```typescript
-// Save model metadata
-function saveModel(model: LocalModel): Promise<void>;
-
-// Load all local models
-function loadAllModels(): Promise<LocalModel[]>;
-
-// Delete model
-function deleteModel(modelId: string): Promise<void>;
-```
-
-### Hooks
-
-**Location:** `src/hooks/`
-
-#### useInference
-
-```typescript
-const {
-  isLoading,
-  error,
-  generate,
-  currentModel,
-  webgpuAvailable,
-} = useInference();
-```
-
-#### useModels
-
-```typescript
-const {
-  models,
-  localModels,
-  downloadModel,
-  deleteModel,
-  isDownloading,
-} = useModels();
-```
-
-#### useChat
-
-```typescript
-const {
-  chats,
-  currentChat,
-  sendMessage,
-  newChat,
-  deleteChat,
-  exportChat,
-  importChat,
-} = useChat();
-```
-
-#### useProfiles
-
-```typescript
-const {
-  profiles,
-  currentProfile,
-  createProfile,
-  updateProfile,
-  deleteProfile,
-  exportProfile,
-  importProfile,
-} = useProfiles();
-```
-
----
-
-## 📁 Project Structure
-
-```
-webgui/
-├── public/                    # Static assets
-│   └── models/               # Pre-downloaded models (optional)
-├── src/
-│   ├── components/           # React components
-│   │   ├── Chat/             # Chat interface (ChatWindow, InputBox)
-│   │   ├── Models/           # Model management (ModelList, ModelCard)
-│   │   ├── Profiles/         # Profile management (ProfileEditor, ProfileManager)
-│   │   └── Layout/           # Main layout (MainLayout, Sidebar)
-│   ├── hooks/                # Custom React hooks
-│   │   ├── useChat.ts        # Chat state management
-│   │   ├── useInference.ts   # Inference state
-│   │   ├── useModels.ts      # Model management
-│   │   └── useProfiles.ts    # Profile management
-│   ├── services/             # Business logic
-│   │   ├── inference/        # Inference engine
-│   │   │   └── InferenceEngine.ts
-│   │   ├── storage/          # Data persistence
-│   │   │   ├── ChatStorage.ts
-│   │   │   ├── ModelStorage.ts
-│   │   │   └── ProfileStorage.ts
-│   │   ├── models/           # Model registry
-│   │   │   └── modelRegistry.ts
-│   │   ├── security.ts       # WebGPU detection
-│   │   └── logging.ts        # Logging utilities
-│   ├── types/                # TypeScript definitions
-│   │   └── index.ts          # All type interfaces
-│   ├── config/               # Configuration
-│   │   └── i18n.ts           # Internationalization
-│   ├── App.tsx               # Main app component
-│   └── main.tsx              # Entry point
-├── scripts/                  # Utility scripts
-├── .env                      # Environment variables
-├── package.json              # Dependencies & scripts
-├── tsconfig.json             # TypeScript config
-├── tailwind.config.js        # Tailwind CSS config
-└── vite.config.ts            # Vite config
-```
-
----
-
-## 📦 Technology Stack
-
-| Category | Technology | Version |
-|----------|------------|---------|
-| **Frontend** | React | 18.2.0 |
-| **Language** | TypeScript | 5.3.3 |
-| **Bundler** | Vite | 5.1.4 |
-| **Styling** | Tailwind CSS | 3.4.1 |
-| **Inference** | Transformers.js | 2.17.0 |
-| **WebGPU** | @mlc-ai/web-llm | 0.2.81 |
-| **Storage** | IndexedDB | Native |
-| **i18n** | i18next | 23.11.2 |
-| **Linting** | ESLint | 8.57.0 |
-
-## 🔒 Security Features
-
-This application implements comprehensive security measures:
-
-### ✅ Input Sanitization
-- All user inputs are sanitized to prevent XSS attacks
-- HTML tags and script content are removed from inputs
-- Dangerous patterns (javascript:, on* events, etc.) are blocked
-
-### ✅ URL Validation
-- Strict URL validation with SSRF prevention
-- Blocked internal IP addresses and localhost (unless explicitly allowed)
-- Trusted domain whitelist for model loading
-- Suspicious query parameters are rejected
-
-### ✅ File Upload Security
-- File type and extension validation
-- Maximum file size limits
-- Dangerous file extensions blocked (.js, .exe, .php, etc.)
-- JSON content validation for imports
-- Suspicious content patterns detected
-
-### ✅ WebGPU Security
-- COOP/COEP headers configured
-- X-Content-Type-Options: nosniff
-- X-Frame-Options: DENY
-- Referrer-Policy: strict-origin-when-cross-origin
-
-### ✅ Model Loading Security
-- Model paths validated against trusted sources
-- Only HuggingFace and local paths allowed
-- Suspicious model configurations rejected
-
-### ✅ Storage Security
-- Secure localStorage operations with validation
-- IndexedDB error handling
-- Data sanitization before storage
-
----
-
-## 🎯 Browser Compatibility
-
-| Browser | WebGPU | Voice Input | Voice Output | Full Support |
-|---------|--------|-------------|--------------|--------------|
-| Chrome 126+ | ✅ | ✅ | ✅ | ✅ |
-| Edge 126+ | ✅ | ✅ | ✅ | ✅ |
-| Firefox | ⚠️ Experimental | ⚠️ | ✅ | ⚠️ Partial |
-| Safari | ❌ | ❌ | ✅ | ❌ |
-
-**Notes:**
-- WebGPU requires Chrome/Edge 126+ for full support
-- Voice recognition requires HTTPS or localhost
-- Models >7B may require 8GB+ RAM
-
----
-
-## ⚡ Performance
-
-### Benchmarks (RTX 3080, Chrome 126)
-
-| Model | Load Time | First Token | Full Response (50 tokens) |
-|-------|-----------|-------------|---------------------------|
-| TinyLLaMA 1.1B | ~2s | ~200ms | ~800ms |
-| Phi-2 2.7B | ~5s | ~300ms | ~1.2s |
-| Qwen1.5 0.5B | ~1.5s | ~150ms | ~600ms |
-| Qwen1.5 1.8B | ~4s | ~250ms | ~1s |
-| Neural Chat 7B | ~8s | ~600ms | ~3s |
-| Mistral 7B | ~9s | ~700ms | ~3.5s |
-
-**Without WebGPU:** Responses are ~5-10x slower (CPU fallback).
-
-### Optimization Tips
-
-1. **Use smaller models** for faster inference
-2. **Close other applications** to free up memory
-3. **Reduce `maxTokens`** for shorter responses
-4. **Lower `temperature`** for more deterministic output
-5. **Use quantized models** when available
-
----
-
-## 🔍 Troubleshooting
-
-### Common Issues
-
-#### Model Loading Fails
-
-```
-❌ Error: "Failed to load model"
-✅ Solution:
-1. Check browser console for detailed error
-2. Ensure you have enough storage (Settings tab)
-3. Clear browser cache and retry
-4. Try a smaller model
-```
-
-#### WebGPU Not Available
-
-```
-⚠️ Warning: "WebGPU not supported, falling back to CPU"
-✅ Solution:
-1. Update your browser to latest version
-2. Enable WebGPU in browser flags:
-   - Chrome: chrome://flags/#enable-experimental-web-platform-features
-   - Edge: edge://flags/#enable-experimental-web-platform-features
-3. Use Chrome/Edge 126+ for best support
-```
-
-#### Out of Memory
-
-```
-❌ Error: "Out of memory"
-✅ Solution:
-1. Unload unused models (Models tab)
-2. Use a smaller model
-3. Reduce `maxTokens` in profile
-4. Close other browser tabs
-5. Restart browser
-```
-
-#### Voice Recognition Not Working
-
-```
-❌ Error: "Speech recognition not available"
-✅ Solution:
-1. Ensure you're using HTTPS or localhost
-2. Check browser permissions for microphone
-3. Try refreshing the page
-4. Use Chrome/Edge for best compatibility
-```
-
-#### Slow Inference
-
-```
-⚠️ Warning: "Inference is slow"
-✅ Solution:
-1. Check if WebGPU is enabled (console logs)
-2. Use a smaller model
-3. Reduce `maxTokens`
-4. Close other applications
-5. Check for browser extensions interfering
-```
-
----
-
-## 📝 Versioning
-
-This project follows **Semantic Versioning 2.0.0** (`MAJOR.MINOR.PATCH`):
-
-- **MAJOR**: Breaking changes, major feature additions
-- **MINOR**: Backwards-compatible new features
-- **PATCH**: Backwards-compatible bug fixes
-
-### Release History
-
-| Version | Date | Description |
-|---------|------|-------------|
-| 1.0.0 | 2026-02-22 | Initial production release. All 3 options implemented: WebGPU acceleration, model management, voice I/O. |
-| 1.1.0 | 2026-09-28 | Chat search, stop-generation, modern UI, code cleanup. |
-| 1.2.0 | 2026-10-03 | Dual-engine (WebLLM + wllama), CDN model loading, conversation history, hidden-parts filtering, KaTeX math, document attachments. |
-| 1.3.0 | 2026-10-03 | 5 new GGUF models, true token streaming for wllama, multimodal image input (Qwen2-VL + mmproj). |
-| 1.3.1 | 2026-10-03 | SmolVLM 500M as compact vision model, image thumbnails with hover-remove, share chat as markdown to clipboard. |
-| 1.4.0 | 2026-10-03 | Removed dead legacy code (~1800 lines), fullscreen image preview modal, automatic WebGPU-to-WASM model fallback. |
-
-### Version Check
+**Zwei Engines:**
+- **WebLLM** (`@mlc-ai/web-llm`): MLC-Modelle über WebGPU — schnell, braucht moderne Browser
+- **wllama** (`@wllama/wllama`): GGUF über WASM/llama.cpp — läuft überall, CPU-basiert
+
+Beide Engines bekommen den System-Prompt des Profils, die letzten 10 Nachrichten
+als Verlauf und die Sampling-Parameter (Temperatur, Top-P, Max Tokens) des
+aktiven Profils.
+
+## Datenschutz
+
+- Keine Telemetrie, kein Analytics, kein Account
+- Inferenz ausschließlich lokal im Browser
+- Chat-Verlauf: IndexedDB (lokal), Profile: localStorage (lokal)
+- Export/Import liegt komplett beim Nutzer
+
+## Changelog
+
+### 2.0.0
+- Komplettes UI-Redesign: Light/Dark-Mode mit Umschalter (persistiert, folgt sonst dem System), Glas-Header, zentrierte Chat-Spalte, moderne Eingabe-Kapsel
+- 3 kuratierte Modelle (LFM 2.5 1.6B, Gemma 2 2B, Qwen 2 0.5B) mit Zweck-Beschreibungen statt Modell-Wüste
+- Self-Hosting der Modelle auf dem eigenen Webspace inkl. HuggingFace-Fallback
+- Download-Anzeige mit Größe („340 MB von 600 MB") und Geschwindigkeit
+- Bestätigungsdialog vor dem ersten Modell-Download (mit Größenangabe)
+- Deutsche Standard-Profile (Standard/Kreativ/Präzise); System-Prompts werden jetzt tatsächlich an die Modelle übergeben
+- Behoben: Nachrichten verschwanden nach der Antwort (Stale-Closure in useChat)
+- Behoben: unlesbare Antworten im Dark-Mode (weiße Blase + heller Text)
+- Behoben: weiße Seite nach Deploys (Service Worker cached jetzt Network-First und nie HTML als Asset)
+- Behoben: falsche WebLLM-Modell-ID für Gemma (Case-Sensitive)
+- Entfernt: Fake-Download-Seite „Modelle" (Auswahl läuft über das Chat-Dropdown, Verwaltung in den Einstellungen)
+
+### 1.x
+- Basis-App mit WebLLM + wllama, Profilen, Chats, Export, Offline-Support
+
+## Mitwirken
 
 ```bash
-# Check current version
-cat package.json | grep version
-
-# Or in code
-import packageJson from '../package.json';
-console.log(packageJson.version);
+npm run lint && npm run type-check && npm run build
 ```
 
----
+Muss alles grün sein vor dem Commit.
 
-## 🤝 Contributing
+## Lizenz
 
-### How to Contribute
-
-1. **Fork** the repository
-2. **Clone** your fork
-3. **Create** a feature branch (`git checkout -b feature/your-feature`)
-4. **Commit** your changes (`git commit -m 'Add some feature'`)
-5. **Push** to the branch (`git push origin feature/your-feature`)
-6. **Open** a Pull Request
-
-### Development Guidelines
-
-- **Code Style:** Follow existing patterns (TypeScript, React hooks)
-- **Testing:** Ensure TypeScript compilation passes (`npm run build`)
-- **Commits:** Use clear, descriptive messages
-- **Documentation:** Update README.md for new features
-
-### Pull Request Template
-
-```markdown
-## Description
-
-[Describe your changes]
-
-## Related Issue
-
-[Link to issue if applicable]
-
-## Changes Made
-
-- [ ] Feature addition
-- [ ] Bug fix
-- [ ] Documentation update
-- [ ] Refactoring
-
-## Testing
-
-- [ ] TypeScript compilation passes
-- [ ] App runs without errors
-- [ ] New features tested manually
-
-## Screenshots (if applicable)
-
-[Add screenshots here]
-```
-
----
-
-## 📜 License
-
-This project is licensed under the **MIT License** — see [LICENSE](LICENSE) for details.
-
----
-
-## 🙏 Acknowledgments
-
-- **Transformers.js** — [Xenova/transformers.js](https://github.com/xenova/transformers.js) — ONNX model inference in browser
-- **MLC Web LLM** — [mlc-ai/web-llm](https://github.com/mlc-ai/web-llm) — WebGPU-accelerated LLM inference
-- **HuggingFace** — [huggingface.co](https://huggingface.co) — Model hosting and CDN
-- **React** — [react.dev](https://react.dev) — UI framework
-- **Tailwind CSS** — [tailwindcss.com](https://tailwindcss.com) — Styling
-- **Vite** — [vitejs.dev](https://vitejs.dev) — Build tool
-
----
-
-## 🆘 Support
-
-For issues, questions, or suggestions:
-
-1. **Check** the [Troubleshooting](#🔍-troubleshooting) section
-2. **Search** existing issues on GitHub
-3. **Open** a new issue with:
-   - Browser version
-   - Operating system
-   - Steps to reproduce
-   - Screenshots (if applicable)
-   - Browser console logs
-
----
-
-## 📊 Telemetry
-
-**None.** This application collects **zero** telemetry, analytics, or user data. Everything runs 100% locally in your browser.
-
----
-
-*Made with ❤️ for privacy and local AI*
+MIT
