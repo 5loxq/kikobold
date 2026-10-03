@@ -16,6 +16,7 @@
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
+import katex from 'katex';
 import { Prism } from 'prism-react-renderer';
 
 // Type assertion for SyntaxHighlighter to work around type issues
@@ -185,6 +186,35 @@ const LIGHT_THEME = {
       },
     },
   ],
+};
+
+const renderKatex = (tex: string, displayMode: boolean): string | null => {
+  try {
+    return katex.renderToString(tex, {
+      displayMode,
+      throwOnError: false,
+      strict: false,
+      output: 'html',
+    });
+  } catch {
+    return null;
+  }
+};
+
+const MathBlock: React.FC<{ tex: string }> = ({ tex }) => {
+  const html = renderKatex(tex, true);
+  if (html === null) {
+    return <Paragraph>{tex}</Paragraph>;
+  }
+  return <div className="math-block my-3 text-center overflow-x-auto" dangerouslySetInnerHTML={{ __html: html }} />;
+};
+
+const MathInline: React.FC<{ tex: string }> = ({ tex }) => {
+  const html = renderKatex(tex, false);
+  if (html === null) {
+    return <>{tex}</>;
+  }
+  return <span className="math-inline" dangerouslySetInnerHTML={{ __html: html }} />;
 };
 
 interface MarkdownRendererProps {
@@ -482,6 +512,11 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
           return <Heading1 key={index}>{block.substring(2)}</Heading1>;
         }
 
+        // Check for display math ($$...$$)
+        const displayMathMatch = block.match(/^\$\$([\s\S]*?)\$\$$/);
+        if (displayMathMatch) {
+          return <MathBlock key={index} tex={displayMathMatch[1].trim()} />;
+        }
         // Check for horizontal rule
         if (/^[-*_]{3,}$/.test(block.trim())) {
           return <HorizontalRule key={index} />;
@@ -631,6 +666,8 @@ const InlineMarkdown: React.FC<InlineMarkdownProps> = ({ content, onLinkClick })
     <Strikethrough key={parts.length}>{text}</Strikethrough>
   ));
 
+  // Process inline math ($...$ or \(...\)) before inline code
+  remaining = processMarkdownMath(remaining, parts);
   // Process inline code (`code`)
   remaining = processMarkdown(remaining, parts, /`([^`]+)`/g, (text) => (
     <InlineCode key={parts.length}>{text}</InlineCode>
@@ -650,6 +687,27 @@ const InlineMarkdown: React.FC<InlineMarkdownProps> = ({ content, onLinkClick })
 
   return <>{parts}</>;
 };
+
+// Helper function to process inline math without breaking other formatting
+function processMarkdownMath(
+  content: string,
+  parts: React.ReactNode[]
+): string {
+  const regex = /(^|[^\w$\\])\$([^$\n]+?)\$(?=$|[^\w$\\])|\\\(([\s\S]*?)\\\)/g;
+  let lastIndex = 0;
+  let match;
+  while ((match = regex.exec(content)) !== null) {
+    const leading = match[1] ?? '';
+    const mathStart = match.index + leading.length;
+    if (mathStart > lastIndex) {
+      parts.push(content.substring(lastIndex, mathStart));
+    }
+    const tex = (match[2] ?? match[3] ?? '').trim();
+    parts.push(<MathInline key={`math-${match.index}`} tex={tex} />);
+    lastIndex = match.index + match[0].length;
+  }
+  return content.substring(lastIndex);
+}
 
 // Helper function to process markdown patterns
 function processMarkdown(
