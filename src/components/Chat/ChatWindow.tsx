@@ -23,6 +23,8 @@ interface ChatWindowProps {
   onStopGeneration?: () => void;
   onSendMessage: (message: string) => void;
   onSendMessageWithDocuments?: (message: string, attachments: import('../../services/attachments').DocumentAttachment[]) => void;
+  supportsImageInput?: boolean;
+  onSendMessageWithImages?: (message: string, images: import('../../services/attachments').ImageAttachment[]) => void;
   onSelectModel: (modelId: string) => void;
   onSelectProfile?: (profileId: string) => void;
   onRenameChat?: (chatId: string, newTitle: string) => void;
@@ -45,6 +47,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   onStopGeneration,
   onSendMessage,
   onSendMessageWithDocuments,
+  supportsImageInput = false,
+  onSendMessageWithImages,
   onSelectModel,
   onSelectProfile,
   onRenameChat,
@@ -299,6 +303,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       <InputBox
         onSendMessage={onSendMessage}
         onSendMessageWithDocuments={onSendMessageWithDocuments}
+        supportsImageInput={supportsImageInput}
+        onSendMessageWithImages={onSendMessageWithImages}
         isLoading={isLoading}
         isModelLoaded={isModelLoaded}
         isGenerating={isGenerating}

@@ -1,6 +1,6 @@
 # Local LLM Chat - WebGPU Browser Application
 
-**Version:** `1.0.0` | **Status:** Production-Ready | **License:** MIT
+**Version:** `1.3.0` | **Status:** Production-Ready | **License:** MIT
 
 A privacy-first web application that allows you to download and run language models locally in your browser using WebGPU for GPU acceleration. All processing happens 100% locally — no data is sent to any server.
 
@@ -32,17 +32,24 @@ A privacy-first web application that allows you to download and run language mod
 
 ### Supported Models
 
-| Model | Size | Recommended | Context Length |
-|-------|------|-------------|----------------|
-| TinyLLaMA 1.1B | ~2.5GB | ✅ Beginner | 2048 |
-| Phi-2 2.7B | ~5GB | ✅ Balanced | 2048 |
-| Neural Chat 7B | ~10GB | ⚠️ Advanced | 4096 |
-| Mistral 7B Instruct | ~10GB | ⚠️ Advanced | 4096 |
-| LLaMA 2 7B Chat | ~10GB | ⚠️ Advanced | 4096 |
-| Qwen1.5 0.5B | ~1GB | ✅ Lightweight | 2048 |
-| Qwen1.5 1.8B | ~3.5GB | ✅ Balanced | 2048 |
-| GPT-2 | ~500MB | ✅ Testing | 1024 |
-| DistilGPT2 | ~250MB | ✅ Testing | 1024 |
+The app ships with two inference engines:
+
+- **WebLLM** (WebGPU): loads MLC-compiled models from the HuggingFace CDN, cached in the browser (OPFS)
+- **wllama** (WASM/CPU): runs GGUF models via llama.cpp compiled to WebAssembly — works on any device, no WebGPU required, with **token streaming**
+
+| Model | Engine | Size | Recommended | Context | Notes |
+|-------|--------|------|-------------|---------|-------|
+| Qwen 2 0.5B | WebGPU | ~400 MB | ✅ | 4096 | Fastest, needs modern browser |
+| TinyLlama 1.1B Chat | GGUF/WASM | ~670 MB | ✅ | 2048 | Runs everywhere |
+| Qwen 2 0.5B Instruct | GGUF/WASM | ~400 MB | — | 2048 | WASM variant of the WebGPU model |
+| Llama 3.2 1B Instruct | GGUF/WASM | ~810 MB | ✅ | 8192 | Good multilingual skills |
+| Qwen 2.5 1.5B Instruct | GGUF/WASM | ~1.1 GB | ✅ | 8192 | Balanced quality/speed |
+| Llama 3.2 3B Instruct | GGUF/WASM | ~2.0 GB | — | 8192 | Stronger, needs more RAM |
+| Phi 3.5 Mini Instruct | GGUF/WASM | ~2.4 GB | — | 4096 | Strong at code/reasoning |
+| Qwen2 VL 2B Instruct | GGUF/WASM | ~1.7 GB | — | 8192 | **Multimodal**: image input (📷 button) |
+
+All GGUF models are downloaded from Hugging Face on first use and cached in the browser (Cache Storage).
+The vision model additionally downloads an `mmproj` projector file so it can understand images.
 
 ### Privacy & Security
 
@@ -536,6 +543,9 @@ This project follows **Semantic Versioning 2.0.0** (`MAJOR.MINOR.PATCH`):
 | Version | Date | Description |
 |---------|------|-------------|
 | 1.0.0 | 2026-02-22 | Initial production release. All 3 options implemented: WebGPU acceleration, model management, voice I/O. |
+| 1.1.0 | 2026-09-28 | Chat search, stop-generation, modern UI, code cleanup. |
+| 1.2.0 | 2026-10-03 | Dual-engine (WebLLM + wllama), CDN model loading, conversation history, hidden-parts filtering, KaTeX math, document attachments. |
+| 1.3.0 | 2026-10-03 | 5 new GGUF models, true token streaming for wllama, multimodal image input (Qwen2-VL + mmproj). |
 
 ### Version Check
 
