@@ -79,7 +79,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
   useEffect(() => {
     scrollToBottom();
-  }, [chat?.messages]);
+  }, [chat?.messages, streamingMessage]);
 
   useEffect(() => {
     if (_activeModel?.id) {
