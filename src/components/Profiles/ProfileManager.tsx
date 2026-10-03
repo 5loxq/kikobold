@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Profile } from '../../types';
 import { ProfileEditor } from './ProfileEditor';
 
@@ -23,6 +24,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
   onExportProfiles,
   onImportProfiles,
 }) => {
+  const { t } = useTranslation();
   const [isCreating, setIsCreating] = useState(false);
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
 
@@ -47,7 +49,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
         try {
           const text = await file.text();
           if (onImportProfiles(text)) {
-            alert('Profiles imported successfully');
+            alert(t('profiles.importSuccess'));
           } else {
             alert('Failed to import profiles - invalid JSON format');
           }
@@ -63,23 +65,23 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
     <div className="flex-1 overflow-auto">
       <div className="p-8 max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-bold text-gray-800">Profiles</h2>
+          <h2 className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{t('sidebar.profiles')}</h2>
           <div className="flex gap-2">
             <button
               onClick={handleExport}
-              className="px-4 py-2 text-sm bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              className="px-4 py-2 text-sm bg-gray-600 text-white rounded-lg hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors"
             >
               Export
             </button>
             <button
               onClick={handleImport}
-              className="px-4 py-2 text-sm bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              className="px-4 py-2 text-sm bg-gray-600 text-white rounded-lg hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors"
             >
               Import
             </button>
             <button
               onClick={() => setIsCreating(!isCreating)}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition-colors"
             >
               {isCreating ? 'Cancel' : '+ New Profile'}
             </button>
@@ -118,16 +120,16 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
               key={profile.id}
               className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
                 activeProfile?.id === profile.id
-                  ? 'border-blue-600 bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-blue-600 bg-indigo-50 dark:bg-indigo-950/40'
+                  : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
               }`}
               onClick={() => onSelectProfile(profile)}
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
-                  <h3 className="font-bold text-gray-800">{profile.name}</h3>
+                  <h3 className="font-bold text-zinc-800 dark:text-zinc-100">{profile.name}</h3>
                   {activeProfile?.id === profile.id && (
-                    <span className="text-xs text-green-600 font-medium">Active</span>
+                    <span className="text-xs text-green-600 dark:text-green-400 font-medium">Active</span>
                   )}
                 </div>
                 <div className="flex gap-2">
@@ -136,7 +138,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
                       e.stopPropagation();
                       setEditingProfile(profile);
                     }}
-                    className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                    className="px-2 py-1 text-xs bg-blue-100 text-indigo-700 dark:text-indigo-300 rounded hover:bg-blue-200 transition-colors"
                   >
                     Edit
                   </button>
@@ -147,18 +149,18 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
                         onDeleteProfile(profile.id);
                       }
                     }}
-                    className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                    className="px-2 py-1 text-xs bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded hover:bg-red-100 dark:hover:bg-red-950/70 transition-colors"
                   >
                     Delete
                   </button>
                 </div>
               </div>
 
-              <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-3 line-clamp-2">
                 {profile.systemPrompt}
               </p>
 
-              <div className="space-y-1 text-xs text-gray-500">
+              <div className="space-y-1 text-xs text-zinc-500 dark:text-zinc-400">
                 <p>Temperature: {profile.temperature.toFixed(1)}</p>
                 <p>Top-P: {profile.topP.toFixed(2)}</p>
                 <p>Max Tokens: {profile.maxTokens}</p>
