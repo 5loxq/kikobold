@@ -92,6 +92,72 @@ npm run build
 npm run preview
 ```
 
+---
+
+## 📦 Deployment (Webspace / Hosting)
+
+Die App läuft als komplett statisches Frontend — nach `npm run build` liegt alles
+bereit in `dist/` und kann direkt auf einen Webspace hochgeladen werden.
+
+### Was hochgeladen wird
+
+Kopiere **den kompletten Inhalt von `dist/`** in das Web-Root-Verzeichnis
+(z. B. `public_html/` oder `htdocs/`) — die Ordnerstruktur muss erhalten bleiben:
+
+```
+dist/
+├── index.html
+├── sw.js                  # Service Worker (für Offline-Modus)
+├── .htaccess             # Apache-Konfiguration (siehe unten)
+├── wllama/
+│   └── wllama.wasm       # WASM-Engine (Pfad wird im Code referenziert!)
+└── assets/                # JS/CSS/Fonts mit Hash-Namen
+```
+
+**Wichtig:** Die Datei `wllama/wllama.wasm` muss exakt unter diesem relativen
+Pfad liegen — der Code lädt `/wllama/wllama.wasm`.
+
+### Voraussetzungen
+
+1. **HTTPS erforderlich** — WebGPU, OPFS, SharedArrayBuffer und Service Worker
+   funktionieren nur in einem Secure Context. Der Webspace muss ein gültiges
+   TLS-Zertifikat haben (z. B. Let's Encrypt).
+2. **Keine zusätzlichen Konfigurationen nötig** — es gibt kein `base`-Setting im
+   Build; die App erwartet, dass sie im Root (`/`) der Domain liegt.
+
+### Server-Header (empfohlen)
+
+Für multi-threaded WASM (SharedArrayBuffer) müssen folgende Header gesetzt sein:
+
+```
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp
+```
+
+- **Apache:** Die mitgelieferte `.htaccess` (in `dist/` enthalten) setzt die
+  Header automatisch — sofern `mod_headers` aktiviert ist.
+- **Nginx:** in der Server-/Location-Config ergänzen:
+  ```nginx
+  add_header Cross-Origin-Opener-Policy same-origin;
+  add_header Cross-Origin-Embedder-Policy require-corp;
+  ```
+- Ohne diese Header läuft die App trotzdem — wllama fällt dann nur auf den
+  langsameren Single-Thread-Modus zurück.
+
+### Modelle
+
+**Es müssen keine Modell-Dateien auf den Webspace hochgeladen werden.** Alle
+Modelle werden beim ersten Laden automatisch vom HuggingFace-CDN heruntergeladen
+und im Browser zwischengespeichert (WebLLM → OPFS, wllama → Cache Storage).
+Bei erneutem Besuch wird das Modell aus dem Browser-Cache geladen.
+
+### Update einer bestehenden Installation
+
+1. `npm run build` ausführen
+2. Alle Dateien in `dist/` hochladen und alte Dateien unter `assets/` **löschen**
+   (die Dateinamen enthalten Hashes)
+3. Fertig — der Service Worker aktualisiert sich beim nächsten Besuch selbst
+
 ### Environment Variables
 
 Create a `.env` file in the project root:
