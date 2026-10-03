@@ -13,8 +13,8 @@
   "chat": {
     "welcome": "Welcome to Local LLM",
     "quickStart": "Quick Start",
-    "step1": "1. Select a model from the top",
-    "step2": "2. Select a profile from below",
+    "step1": "1. Pick a model at the top - it downloads on first use, then loads instantly",
+    "step2": "2. Optionally pick a profile (response style)",
     "step3": "3. Type your message and send",
     "placeholder": "Type your message...",
     "send": "Send",
@@ -54,7 +54,14 @@
     "share": "Share",
     "shareSuccess": "Copied!",
     "shareSharing": "Copying...",
-    "thinking": "Thinking..."
+    "thinking": "Thinking...",
+    "llmThinking": "LLM at work",
+    "isProcessing": "is loading...",
+    "processingRequest": "Processing request...",
+    "downloadingModel": "Downloading model",
+    "downloadStats": "{{loaded}} MB of {{total}} MB · {{speed}} MB/s",
+    "privacyNote": "All responses are generated locally in your browser - your messages never leave your device.",
+    "downloadConfirm": "The model \"{{name}}\" must be downloaded first (approx. {{size}} MB). It will be cached in your browser and load instantly next time. Download now?"
   },
   "models": {
     "available": "Available Models",
@@ -73,6 +80,10 @@
     "quantized": "✓ Quantized (faster)",
     "noModelsDownloaded": "No models downloaded yet",
     "downloadModel": "Download Model",
+    "use": "Use",
+    "activeStatus": "Active",
+    "loadingModel": "Loading...",
+    "modelLoadingBubble": "Downloading model...",
     "rating": "Rating: {{rating}} stars",
     "notRated": "Not rated yet",
     "rate": "Rate with {{rating}} stars",

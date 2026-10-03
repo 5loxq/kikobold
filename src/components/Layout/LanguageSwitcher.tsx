@@ -11,8 +11,8 @@ export const LanguageSwitcher: React.FC<{ isCollapsed?: boolean }> = ({ isCollap
   };
 
   return (
-    <div className="flex gap-1 px-2 py-2 border-t border-gray-700">
-      {!isCollapsed && <span className="text-xs text-gray-400 mr-auto mt-1">Language</span>}
+    <div className="flex gap-1">
+      {!isCollapsed && <span className="text-xs text-zinc-500 mr-auto mt-1">Language</span>}
       <button
         onClick={() => handleLanguageChange('de')}
         className={`px-2 py-1 rounded text-sm transition-colors ${

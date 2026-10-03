@@ -6,7 +6,15 @@ import type {
 import { log, warn } from '../logging';
 
 export interface WllamaLoadCallbacks {
-  onProgress?: (fraction: number, labelText?: string) => void;
+  /** fraction: 0..1; stats: download size/speed while available */
+  onProgress?: (fraction: number, labelText?: string, stats?: DownloadStats) => void;
+}
+
+/** Download size and speed info shown in the UI while a model loads */
+export interface DownloadStats {
+  loadedMB: number;
+  totalMB: number;
+  speedMBps: number;
 }
 
 export interface WllamaImageAttachment {
@@ -18,6 +26,7 @@ export interface WllamaGenerateOptions {
   temperature?: number;
   top_p?: number;
   max_tokens?: number;
+  systemPrompt?: string;
   history?: Array<{ role: 'user' | 'assistant'; content: string }>;
   images?: WllamaImageAttachment[];
 }
@@ -61,6 +70,9 @@ const buildMessages = (
   options: WllamaGenerateOptions
 ): ChatCompletionMessage[] => {
   const messages: ChatCompletionMessage[] = [];
+  if (options.systemPrompt && options.systemPrompt.trim().length > 0) {
+    messages.push({ role: 'system', content: options.systemPrompt });
+  }
   for (const m of options.history ?? []) {
     messages.push({ role: m.role, content: m.content });
   }
@@ -79,7 +91,7 @@ const buildMessages = (
 
 export const loadWllamaModel = async (
   modelId: string,
-  gguf: { repo: string; file: string; mmprojFile?: string },
+  gguf: { repo: string; file: string; mmprojFile?: string; selfHostedPath?: string },
   callbacks?: WllamaLoadCallbacks
 ): Promise<boolean> => {
   try {
@@ -94,17 +106,49 @@ export const loadWllamaModel = async (
     const { Wllama: WllamaClass } = await import('@wllama/wllama');
     const wllama = new WllamaClass(WASM_PATHS, { allowOffline: true });
 
+    const downloadStartedAt = Date.now();
+    const loadParams = {
+      progressCallback: ({ loaded, total }: { loaded: number; total: number }): void => {
+        const fraction = total > 0 ? loaded / total : 0;
+        const elapsedSec = (Date.now() - downloadStartedAt) / 1000;
+        const stats = total > 0
+          ? {
+              loadedMB: loaded / (1024 * 1024),
+              totalMB: total / (1024 * 1024),
+              speedMBps: elapsedSec > 0 ? loaded / (1024 * 1024) / elapsedSec : 0,
+            }
+          : undefined;
+        callbacks?.onProgress?.(
+          fraction,
+          `Downloading model... ${Math.round(fraction * 100)}%`,
+          stats
+        );
+      },
+      n_threads: Math.min(navigator.hardwareConcurrency || 2, 4),
+    };
+
     callbacks?.onProgress?.(0, 'Downloading model...');
-    await wllama.loadModelFromHF(
-      { repo: gguf.repo, file: gguf.file, mmprojFile: gguf.mmprojFile },
-      {
-        progressCallback: ({ loaded, total }) => {
-          const fraction = total > 0 ? loaded / total : 0;
-          callbacks?.onProgress?.(fraction, `Downloading model... ${Math.round(fraction * 100)}%`);
-        },
-        n_threads: Math.min(navigator.hardwareConcurrency || 2, 4),
+
+    // Prefer the copy on our own webspace (same origin, no CDN dependency).
+    // Fall back to HuggingFace if the self-hosted file is unavailable.
+    if (gguf.selfHostedPath) {
+      const selfHostedUrl = new URL(gguf.selfHostedPath, window.location.origin).href;
+      try {
+        await wllama.loadModelFromUrl(selfHostedUrl, loadParams);
+      } catch (selfHostedError) {
+        warn(`wllama: self-hosted model failed (${selfHostedError}), falling back to HuggingFace`);
+        callbacks?.onProgress?.(0, 'Downloading model (HuggingFace)...');
+        await wllama.loadModelFromHF(
+          { repo: gguf.repo, file: gguf.file, mmprojFile: gguf.mmprojFile },
+          loadParams
+        );
       }
-    );
+    } else {
+      await wllama.loadModelFromHF(
+        { repo: gguf.repo, file: gguf.file, mmprojFile: gguf.mmprojFile },
+        loadParams
+      );
+    }
 
     wllamaInstance = wllama;
     loadedModelId = modelId;

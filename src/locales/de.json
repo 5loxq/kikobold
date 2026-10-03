@@ -13,8 +13,8 @@
   "chat": {
     "welcome": "Willkommen zu Lokalem LLM",
     "quickStart": "Schnellstart",
-    "step1": "1. Wähle ein Modell oben aus",
-    "step2": "2. Wähle ein Profil unten aus",
+    "step1": "1. Wähle oben ein Modell aus - beim ersten Start wird es heruntergeladen, danach ist es sofort bereit",
+    "step2": "2. Stelle bei Bedarf ein Profil ein (Antwortstil)",
     "step3": "3. Tippe deine Nachricht ein und sende sie",
     "placeholder": "Schreibe deine Nachricht...",
     "send": "Senden",
@@ -54,7 +54,14 @@
     "share": "Teilen",
     "shareSuccess": "Kopiert!",
     "shareSharing": "Wird kopiert...",
-    "thinking": "Denkt nach..."
+    "thinking": "Denkt nach...",
+    "llmThinking": "LLM arbeitet",
+    "isProcessing": "wird geladen...",
+    "processingRequest": "Anfrage wird verarbeitet...",
+    "downloadingModel": "Modell wird heruntergeladen",
+    "downloadStats": "{{loaded}} MB von {{total}} MB · {{speed}} MB/s",
+    "privacyNote": "Alle Antworten werden lokal in deinem Browser erzeugt - deine Nachrichten verlassen dein Gerät nicht.",
+    "downloadConfirm": "Das Modell \"{{name}}\" muss zuerst heruntergeladen werden (ca. {{size}} MB). Es wird im Browser gecacht und beim nächsten Mal sofort geladen. Jetzt herunterladen?"
   },
   "models": {
     "available": "Verfügbare Modelle",
@@ -73,6 +80,10 @@
     "quantized": "✓ Quantisiert (schneller)",
     "noModelsDownloaded": "Noch keine Modelle heruntergeladen",
     "downloadModel": "Modell herunterladen",
+    "use": "Verwenden",
+    "activeStatus": "Aktiv",
+    "loadingModel": "Wird geladen...",
+    "modelLoadingBubble": "Modell wird heruntergeladen...",
     "rating": "Bewertung: {{rating}} Sterne",
     "notRated": "Noch nicht bewertet",
     "rate": "Mit {{rating}} Sternen bewerten",

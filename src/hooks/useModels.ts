@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { LocalModel, Model, UseModelsReturn } from '../types';
 import { MODELS } from '../services/models/model-registry';
-import { info } from '../services/logging';
 
 // LocalStorage keys for model persistence
 const STORAGE_KEYS = {
@@ -28,7 +27,17 @@ const getEstimatedSizeFromModelSize = (modelSize: string): number => {
 const getDownloadedModelsFromStorage = (): LocalModel[] => {
   try {
     const stored = localStorage.getItem(STORAGE_KEYS.DOWNLOADED_MODELS);
-    return stored ? JSON.parse(stored) : [];
+    if (!stored) {
+      return [];
+    }
+    const parsed = JSON.parse(stored);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    // Drop entries for models that are no longer in the registry (e.g. after
+    // a model ID was fixed/removed) so stale IDs cannot trigger load errors.
+    const knownIds = new Set(MODELS.map(m => m.id));
+    return parsed.filter(m => knownIds.has(m.id));
   } catch {
     return [];
   }
@@ -66,8 +75,6 @@ export const useModels = (): UseModelsReturn => {
   const [availableModels] = useState<Model[]>(MODELS);
   const [downloadedModels, setDownloadedModels] = useState<LocalModel[]>(getDownloadedModelsFromStorage());
   const [activeModel, setActiveModel] = useState<LocalModel | null>(null);
-  const [downloadingModelId, setDownloadingModelId] = useState<string | null>(null);
-  const [downloadProgress, setDownloadProgress] = useState<Record<string, number>>({});
 
   // Load active model on mount
   useEffect(() => {
@@ -93,60 +100,6 @@ export const useModels = (): UseModelsReturn => {
   useEffect(() => {
     setActiveModelToStorage(activeModel?.id ?? null);
   }, [activeModel?.id]);
-
-  const downloadModel = useCallback(
-    async (model: Model): Promise<boolean> => {
-      try {
-        setDownloadingModelId(model.id);
-        setDownloadProgress(prev => ({ ...prev, [model.id]: 0 }));
-
-        // With WebLLM, models are loaded automatically from HuggingFace
-        // We just register the model as "downloaded" for UI purposes
-        // The actual download happens transparently when the model is used
-        
-        // For better UX, simulate a quick progress to indicate registration
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setDownloadProgress(prev => ({ ...prev, [model.id]: 100 }));
-
-        // Estimate model size based on fileSizeMB or modelSize
-        const estSize = model.fileSizeMB 
-          ? model.fileSizeMB * 1024 * 1024 
-          : getEstimatedSizeFromModelSize(model.modelSize);
-
-        const localModel: LocalModel = {
-          id: model.id,
-          name: model.name,
-          path: `webllm:${model.id}`,
-          size: estSize,
-          downloadedAt: Date.now(),
-        };
-
-        setDownloadedModels(prev => [...prev, localModel]);
-
-        await new Promise(resolve => setTimeout(resolve, 300));
-
-        setDownloadingModelId(null);
-        setDownloadProgress(prev => {
-          const newProgress = { ...prev };
-          delete newProgress[model.id];
-          return newProgress;
-        });
-
-        info(`✓ Model ${model.name} registered for WebLLM`);
-        return true;
-      } catch (error) {
-        console.error('Model registration failed:', error);
-        setDownloadingModelId(null);
-        setDownloadProgress(prev => {
-          const newProgress = { ...prev };
-          delete newProgress[model.id];
-          return newProgress;
-        });
-        return false;
-      }
-    },
-    []
-  );
 
   const deleteModel = useCallback(
     (modelId: string) => {
@@ -216,9 +169,6 @@ export const useModels = (): UseModelsReturn => {
     availableModels,
     downloadedModels,
     activeModel,
-    downloadingModelId,
-    downloadProgress,
-    downloadModel,
     deleteModel,
     selectModel,
     getModelInfo,

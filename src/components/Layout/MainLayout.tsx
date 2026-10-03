@@ -1,8 +1,7 @@
-import { FC, lazy, Suspense, useEffect, useState } from 'react';
+import { FC, lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sidebar } from './Sidebar';
 import { ChatWindow } from '../Chat/ChatWindow';
-const ModelManager = lazy(() => import('../Models/ModelManager').then(m => ({ default: m.ModelManager })));
 const ProfileManager = lazy(() => import('../Profiles/ProfileManager').then(m => ({ default: m.ProfileManager })));
 const HelpPage = lazy(() => import('../Help/HelpPage').then(m => ({ default: m.HelpPage })));
 import { Chat } from '../../types';
@@ -11,21 +10,28 @@ import { useModels } from '../../hooks/useModels';
 import { useProfiles } from '../../hooks/useProfiles';
 import { useEnhancedInference } from '../../hooks/useEnhancedInference';
 import * as ChatStorage from '../../services/storage/ChatStorage';
+import { isDarkMode as checkDarkMode, setThemeMode } from '../../services/theme';
 import { error as logError } from '../../services/logging';
 import { buildPromptWithDocuments, type DocumentAttachment, type ImageAttachment } from '../../services/attachments';
 
 
-type ActiveTab = 'chat' | 'models' | 'profiles' | 'settings' | 'help';
+type ActiveTab = 'chat' | 'profiles' | 'settings' | 'help';
 
 export const MainLayout: FC = () => {
   const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState<ActiveTab>('chat');
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  const [darkMode, setDarkMode] = useState<boolean>(checkDarkMode());
+  const handleToggleTheme = (): void => {
+    const next = !darkMode;
+    setThemeMode(next ? 'dark' : 'light');
+    setDarkMode(next);
+  };
   const { chat, chats, loadChats, loadChat, createNewChat, deleteChat, addMessage, renameChat } = useChat();
   const { profiles, activeProfile, selectProfile, createProfile, updateProfile, deleteProfile, exportProfiles, importProfiles } = useProfiles();
-  const { downloadedModels, activeModel, downloadModel, deleteModel: deleteDownloadedModel, selectModel, isModelDownloaded } = useModels();
-  const { 
-    loadModel, 
+  const { downloadedModels, activeModel, deleteModel: deleteDownloadedModel, selectModel, isModelDownloaded, getModelInfo } = useModels();
+  const {
+    loadModel,
     generateStream,
     streamText,
     cancel: stopGeneration,
@@ -35,11 +41,12 @@ export const MainLayout: FC = () => {
     currentModelId,
     refreshStatus,
     error,
-    supportsImageInput
-  } = useEnhancedInference({ modelId: activeModel?.id ?? '' });
+    supportsImageInput,
+    progress: modelLoadProgress,
+    progressStats: modelLoadStats,
+  } = useEnhancedInference({ modelId: activeModel?.id ?? '', autoLoad: false });
   const [localError, setLocalError] = useState<string | null>(null);
   const [streamingMessage, setStreamingMessage] = useState<string | null>(null);
-  const [loadingProgress, setLoadingProgress] = useState(0);
 
   const isModelLoaded = currentModelId === activeModel?.id;
 
@@ -47,6 +54,32 @@ export const MainLayout: FC = () => {
   useEffect(() => {
     refreshStatus();
   }, [activeModel?.id, refreshStatus]);
+
+  // Automatically reload a previously downloaded model on revisit (served
+  // from the browser cache). New models always require an explicit download
+  // confirmation via handleModelSelect.
+  const autoLoadedModelRef = useRef<string | null>(null);
+  useEffect(() => {
+    const modelId = activeModel?.id;
+    if (!modelId || isLoading || currentModelId === modelId || autoLoadedModelRef.current === modelId) {
+      return;
+    }
+    if (!isModelDownloaded(modelId)) {
+      return;
+    }
+    autoLoadedModelRef.current = modelId;
+    loadModel(modelId);
+  }, [activeModel?.id, isLoading, currentModelId, isModelDownloaded, loadModel]);
+
+  // Start directly in a fresh chat on first visit (or when the last chat was
+  // deleted) so the model selector is immediately visible and usable.
+  useEffect(() => {
+    if (!chat && chats.length === 0 && activeProfile) {
+      createNewChat(activeProfile.id).catch((err) => {
+        logError('Failed to create initial chat:', err);
+      });
+    }
+  }, [chat, chats.length, activeProfile, createNewChat]);
 
   // Chat DB initialization and loading is now handled in useChat hook
 
@@ -132,6 +165,7 @@ export const MainLayout: FC = () => {
         temperature: activeProfile.temperature,
         top_p: activeProfile.topP,
         max_tokens: activeProfile.maxTokens,
+        systemPrompt: activeProfile.systemPrompt,
         history,
         images,
       });
@@ -166,25 +200,32 @@ export const MainLayout: FC = () => {
 
   const handleModelSelect = async (modelId: string): Promise<void> => {
     try {
-      setLoadingProgress(0);
       // Clear previous errors
       setLocalError(null);
-      
-      // Load the model via unified inference engine
+
+      // A model that has not been downloaded yet must be fetched from the
+      // HuggingFace CDN first - ask the user before starting the download.
+      if (!isModelDownloaded(modelId)) {
+        const info = getModelInfo(modelId);
+        const sizeMB = info?.fileSizeMB ? Math.round(info.fileSizeMB) : 0;
+        const confirmed = window.confirm(
+          t('chat.downloadConfirm', { name: info?.name ?? modelId, size: sizeMB })
+        );
+        if (!confirmed) {
+          return;
+        }
+      }
+
+      // Load the model via unified inference engine (real download with progress)
       const success = await loadModel(modelId);
-      
+
       if (success) {
-        setLoadingProgress(100);
         // Select and register the model (will save to storage if not already saved)
         selectModel(modelId);
-      } else {
-        setLoadingProgress(0);
-        // Error is already set by loadModel via inferenceError state
       }
     } catch (err) {
       logError('Model selection failed:', err);
       setLocalError(err instanceof Error ? err.message : 'Model selection failed');
-      setLoadingProgress(0);
     }
   };
 
@@ -205,9 +246,15 @@ export const MainLayout: FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="relative flex h-screen overflow-hidden bg-gradient-to-b from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900">
+      {/* Subtle ambient glow */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+        <div className="absolute -top-32 -left-24 w-96 h-96 rounded-full bg-indigo-400/10 dark:bg-indigo-600/10 blur-3xl"></div>
+        <div className="absolute -bottom-40 -right-24 w-[28rem] h-[28rem] rounded-full bg-violet-400/10 dark:bg-violet-600/10 blur-3xl"></div>
+      </div>
+
       {/* Desktop Sidebar */}
-      <div className="hidden lg:flex lg:flex-shrink-0">
+      <div className="hidden lg:flex lg:flex-shrink-0 relative z-10">
         <Sidebar
           chats={chats}
           activeChat={chat}
@@ -216,29 +263,31 @@ export const MainLayout: FC = () => {
           onDeleteChat={deleteChat}
           activeTab={activeTab}
           onTabChange={setActiveTab}
+          darkMode={darkMode}
+          onToggleTheme={handleToggleTheme}
         />
       </div>
 
       {/* Mobile Sidebar Overlay */}
       {showMobileSidebar && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 lg:hidden z-40"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm lg:hidden z-40"
           onClick={() => setShowMobileSidebar(false)}
         >
           <div
-            className="fixed top-0 left-0 h-screen w-64 bg-gray-900 shadow-lg z-50"
+            className="fixed top-0 left-0 h-screen w-72 bg-zinc-950 shadow-2xl z-50 animate-slide-in"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between p-4 border-b border-gray-700">
-              <h1 className="text-lg font-bold text-white">Local LLM</h1>
+            <div className="flex items-center justify-between px-4 py-4 border-b border-zinc-800">
+              <h1 className="text-lg font-semibold text-white">Local LLM</h1>
               <button
                 onClick={() => setShowMobileSidebar(false)}
-                className="text-white p-2 hover:bg-gray-800 rounded"
+                className="text-zinc-400 p-2 hover:bg-zinc-800 hover:text-white rounded-lg transition-colors"
               >
                 ✕
               </button>
             </div>
-            <div className="text-white p-4">
+            <div className="text-white">
               <Sidebar
                 chats={chats}
                 activeChat={chat}
@@ -256,6 +305,8 @@ export const MainLayout: FC = () => {
                   setActiveTab(tab);
                   setShowMobileSidebar(false);
                 }}
+                darkMode={darkMode}
+                onToggleTheme={handleToggleTheme}
               />
             </div>
           </div>
@@ -264,30 +315,42 @@ export const MainLayout: FC = () => {
 
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Mobile Header */}
-        <div className="lg:hidden bg-gray-900 text-white p-4 flex items-center gap-2">
+        <div className="lg:hidden bg-zinc-950 text-white px-4 py-3 flex items-center gap-3 border-b border-zinc-800">
           <button
             onClick={() => setShowMobileSidebar(true)}
-            className="p-2 hover:bg-gray-800 rounded"
+            className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
           >
             ☰
           </button>
-          <h1 className="font-bold flex-1">{t('sidebar.title')}</h1>
+          <h1 className="font-semibold flex-1">{t('sidebar.title')}</h1>
         </div>
 
-        {/* LLM Thinking Animation - shows when model is generating response */}
+        {/* Model Download Overlay - shows while a model is loading/downloading */}
         {isLoading && activeTab === 'chat' && (
-          <div className="fixed inset-0 bg-black bg-opacity-10 flex items-center justify-center z-50 pointer-events-none">
-            <div className="bg-white rounded-lg p-6 shadow-xl max-w-md w-full mx-4">
+          <div className="fixed inset-0 bg-zinc-950/20 dark:bg-black/40 flex items-center justify-center z-50 pointer-events-none backdrop-blur-[2px]">
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-2xl max-w-md w-full mx-4 border border-zinc-100 dark:border-zinc-800">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                <div>
-                  <h3 className="font-semibold text-gray-800">{t('chat.llmThinking')}</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {activeModel ? `${activeModel.name} ${t('chat.isProcessing')}` : t('chat.processingRequest')}
+                <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-zinc-800 dark:text-zinc-100">{t('chat.downloadingModel')}</h3>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+                    {activeModel ? `${activeModel.name}` : t('chat.processingRequest')}
                   </p>
-                  <div className="mt-3 w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-500 h-2 rounded-full animate-pulse" style={{width: '75%'}}></div>
+                  <div className="mt-3 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-indigo-500 to-violet-500 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${Math.max(2, Math.round(modelLoadProgress))}%` }}
+                    ></div>
                   </div>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1.5 tabular-nums">
+                    {modelLoadStats
+                      ? t('chat.downloadStats', {
+                          loaded: Math.round(modelLoadStats.loadedMB),
+                          total: Math.round(modelLoadStats.totalMB),
+                          speed: modelLoadStats.speedMBps.toFixed(1),
+                        })
+                      : `${Math.round(modelLoadProgress)}%`}
+                  </p>
                 </div>
               </div>
             </div>
@@ -304,7 +367,9 @@ export const MainLayout: FC = () => {
             isModelLoaded={isModelLoaded}
             error={localError ?? error}
             webgpuAvailable={webgpuAvailable}
-            loadingProgress={loadingProgress}
+            loadingProgress={modelLoadProgress}
+            loadStats={modelLoadStats}
+            darkMode={darkMode}
             isModelDownloaded={isModelDownloaded}
             isGenerating={isGenerating}
             streamingMessage={streamingMessage ? streamText : null}
@@ -318,18 +383,6 @@ export const MainLayout: FC = () => {
             onRenameChat={renameChat}
             onImportChats={handleImportChats}
           />
-        )}
-
-        {activeTab === 'models' && (
-          <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
-          <ModelManager
-            downloadedModels={downloadedModels}
-            activeModel={activeModel}
-            onDownloadModel={downloadModel}
-            onDeleteModel={deleteDownloadedModel}
-            onSelectModel={selectModel}
-          />
-          </Suspense>
         )}
 
         {activeTab === 'profiles' && (
@@ -349,24 +402,44 @@ export const MainLayout: FC = () => {
 
         {activeTab === 'settings' && (
           <div className="flex-1 p-8 overflow-auto">
-            <h2 className="text-2xl font-bold mb-4">{t('settings.title')}</h2>
-            <div className="bg-white rounded-lg p-6 shadow">
-              <div className="space-y-4">
+            <h2 className="text-2xl font-bold mb-6 text-zinc-800 dark:text-zinc-100">{t('settings.title')}</h2>
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-800 max-w-2xl">
+              <div className="space-y-6">
                 <div>
-                  <h3 className="font-bold text-lg mb-2">{t('settings.storage')}</h3>
-                  <p className="text-gray-600">
+                  <h3 className="font-bold text-lg mb-2 text-zinc-800 dark:text-zinc-100">{t('settings.storage')}</h3>
+                  <p className="text-zinc-600 dark:text-zinc-400">
                     {t('settings.downloadedModels')}: {downloadedModels.length}
                   </p>
-                  <p className="text-gray-600">
+                  <p className="text-zinc-600 dark:text-zinc-400">
                     {t('settings.totalSize')}: {(downloadedModels.reduce((sum, m) => sum + m.size, 0) / (1024 * 1024 * 1024)).toFixed(2)} GB
                   </p>
+                  {downloadedModels.length > 0 && (
+                    <ul className="mt-3 space-y-2">
+                      {downloadedModels.map((m) => (
+                        <li
+                          key={m.id}
+                          className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700"
+                        >
+                          <span className="text-sm text-zinc-700 dark:text-zinc-200 truncate">
+                            {m.name} · {(m.size / (1024 * 1024 * 1024)).toFixed(2)} GB
+                          </span>
+                          <button
+                            onClick={() => deleteDownloadedModel(m.id)}
+                            className="text-xs px-2.5 py-1 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/70 transition-colors whitespace-nowrap"
+                          >
+                            {t('models.delete')}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg mb-2">{t('settings.about')}</h3>
-                  <p className="text-gray-600">
-                    Local LLM Chat v1.4.0
+                  <h3 className="font-bold text-lg mb-2 text-zinc-800 dark:text-zinc-100">{t('settings.about')}</h3>
+                  <p className="text-zinc-600 dark:text-zinc-400">
+                    Local LLM Chat v2.0.0
                   </p>
-                  <p className="text-gray-600">
+                  <p className="text-zinc-600 dark:text-zinc-400">
                     {t('settings.description')}
                   </p>
                 </div>
