@@ -48,7 +48,9 @@
     "searchPlaceholder": "Search messages...",
     "searchClose": "Close search",
     "attachDocument": "Attach document",
-    "attaching": "Attaching..."
+    "attaching": "Attaching...",
+    "attachImage": "Attach image (multimodal model)",
+    "imageAttached": "Image attached"
   },
   "models": {
     "available": "Available Models",
