@@ -375,7 +375,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
       )}
 
       {/* Unified composer: textarea + actions inside one capsule */}
-      <div className="max-w-3xl mx-auto w-full">
+      <div className="max-w-3xl mx-auto w-full" data-tour="message-input">
         <div
           className={`rounded-3xl border shadow-lg shadow-zinc-900/5 dark:shadow-black/20 bg-white dark:bg-zinc-900 transition-all duration-200 ${
             isLoading || !isModelLoaded

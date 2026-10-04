@@ -78,6 +78,26 @@
     "downloadHint": "Tip: During the first model download you will see a progress bar with size, speed and remaining time.",
     "startButton": "Got it, let's go!"
   },
+  "tour": {
+    "ariaLabel": "Quick introduction",
+    "progress": "Step {{current}} of {{total}}",
+    "skip": "Skip",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Done",
+    "step1Title": "Pick a model",
+    "step1Text": "Here you pick your AI model. The first time it is downloaded - with a progress bar. After that it is stored in your browser and ready instantly.",
+    "step2Title": "Set a profile",
+    "step2Text": "Profiles change the style of the answers: 'Precise' for facts, 'Creative' for ideas.",
+    "step3Title": "Import & Export",
+    "step3Text": "Save your chats as a file or restore them - on other devices too. 'Share' copies the chat to your clipboard.",
+    "step4Title": "Search the chat",
+    "step4Text": "Here you can find older messages in the current chat.",
+    "step5Title": "Write a message",
+    "step5Text": "Type your message and send it. Use the microphone to dictate, the paperclip to attach files.",
+    "step6Title": "Menu",
+    "step6Text": "Here you find new chats, the history, profiles, settings and help."
+  },
   "models": {
     "available": "Available Models",
     "downloaded": "Downloaded Models",

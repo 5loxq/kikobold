@@ -2,7 +2,8 @@ import { FC, lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sidebar } from './Sidebar';
 import { ChatWindow } from '../Chat/ChatWindow';
-import { WelcomeScreen } from './WelcomeScreen';
+import { WelcomeScreen, hasSeenWelcome, markWelcomeSeen } from './WelcomeScreen';
+import { GuidedTour, hasSeenTour } from './GuidedTour';
 const ProfileManager = lazy(() => import('../Profiles/ProfileManager').then(m => ({ default: m.ProfileManager })));
 const HelpPage = lazy(() => import('../Help/HelpPage').then(m => ({ default: m.HelpPage })));
 import { Chat } from '../../types';
@@ -49,6 +50,9 @@ export const MainLayout: FC = () => {
   } = useEnhancedInference({ modelId: activeModel?.id ?? '', autoLoad: false });
   const [localError, setLocalError] = useState<string | null>(null);
   const [streamingMessage, setStreamingMessage] = useState<string | null>(null);
+  // Welcome page (first visit) and guided tour (shown right after it)
+  const [welcomeDone, setWelcomeDone] = useState<boolean>(hasSeenWelcome());
+  const [tourDone, setTourDone] = useState<boolean>(hasSeenTour());
   // Model that is currently being downloaded/loaded (may differ from the
   // still-active model while a new one is being fetched)
   const [pendingModelId, setPendingModelId] = useState<string | null>(null);
@@ -344,7 +348,9 @@ export const MainLayout: FC = () => {
         <div className="lg:hidden bg-zinc-950 text-white px-4 py-3 flex items-center gap-3 border-b border-zinc-800">
           <button
             onClick={() => setShowMobileSidebar(true)}
+            data-tour="mobile-menu"
             className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
+            aria-label="Menü öffnen"
           >
             ☰
           </button>
@@ -441,7 +447,7 @@ export const MainLayout: FC = () => {
         )}
 
         {activeTab === 'settings' && (
-          <div className="flex-1 p-8 overflow-auto">
+          <div className="flex-1 p-4 sm:p-8 overflow-auto">
             <h2 className="text-2xl font-bold mb-6 text-zinc-800 dark:text-zinc-100">{t('settings.title')}</h2>
             <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-800 max-w-2xl">
               <div className="space-y-6">
@@ -496,7 +502,20 @@ export const MainLayout: FC = () => {
       </div>
 
       {/* Welcome page with short guide - shown on the very first visit */}
-      <WelcomeScreen />
+      {!welcomeDone && (
+        <WelcomeScreen
+          onDismiss={() => {
+            markWelcomeSeen();
+            setWelcomeDone(true);
+          }}
+        />
+      )}
+
+      {/* Guided tour through the chat UI - starts after the welcome page.
+          Waits for the initial chat so the tour targets exist. */}
+      {welcomeDone && !tourDone && chat && (
+        <GuidedTour onComplete={() => setTourDone(true)} />
+      )}
     </div>
   );
 };

@@ -78,6 +78,26 @@
     "downloadHint": "Tipp: Beim ersten Modell-Download siehst du einen Fortschrittsbalken mit Größe, Geschwindigkeit und Restzeit.",
     "startButton": "Alles klar, los geht's!"
   },
+  "tour": {
+    "ariaLabel": "Kurze Einführung",
+    "progress": "Schritt {{current}} von {{total}}",
+    "skip": "Überspringen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "finish": "Fertig",
+    "step1Title": "Modell wählen",
+    "step1Text": "Hier wählst du dein KI-Modell. Beim ersten Mal wird es heruntergeladen - mit Fortschrittsanzeige. Danach ist es im Browser gespeichert und sofort bereit.",
+    "step2Title": "Profil einstellen",
+    "step2Text": "Profile ändern den Stil der Antworten: 'Präzise' für Fakten, 'Kreativ' für Ideen.",
+    "step3Title": "Import & Export",
+    "step3Text": "Sichere deine Chats als Datei oder stelle sie wieder her - auch auf anderen Geräten. 'Teilen' kopiert den Chat in die Zwischenablage.",
+    "step4Title": "Chat durchsuchen",
+    "step4Text": "Hier findest du alte Nachrichten im aktuellen Chat wieder.",
+    "step5Title": "Nachricht schreiben",
+    "step5Text": "Tippe deine Nachricht und sende sie ab. Mit dem Mikrofon kannst du diktieren, mit der Büroklammer Dateien anhängen.",
+    "step6Title": "Menü",
+    "step6Text": "Hier findest du neue Chats, den Verlauf, Profile, Einstellungen und die Hilfe."
+  },
   "models": {
     "available": "Verfügbare Modelle",
     "downloaded": "Heruntergeladene Modelle",

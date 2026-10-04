@@ -198,7 +198,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 <select
                   value={activeProfile.id}
                   onChange={(e) => onSelectProfile && onSelectProfile(e.target.value)}
-                  className="px-3 py-1.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  data-tour="profile-select"
+                  className="max-w-full px-3 py-1.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   {profiles.map((profile) => (
                     <option key={profile.id} value={profile.id}>
@@ -225,7 +226,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               onSelectModel(e.target.value);
             }}
             disabled={isLoading}
-            className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm disabled:bg-zinc-100 dark:disabled:bg-zinc-800 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 shadow-sm"
+            data-tour="model-select"
+            className="w-full sm:w-auto px-4 py-2 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm disabled:bg-zinc-100 dark:disabled:bg-zinc-800 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 shadow-sm"
           >
             <option value="">{t('chat.selectModel')}...</option>
             {MODELS.map((model) => {
@@ -318,10 +320,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           />
           <button
             onClick={() => setIsSearchOpen((v) => !v)}
+            data-tour="search"
             className="p-2 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-sm flex items-center gap-1"
             title={t('chat.searchInChat')}
           >
-            🔍 {t('chat.searchInChat')}
+            🔍 <span className="hidden sm:inline">{t('chat.searchInChat')}</span>
           </button>
         </div>
       </div>

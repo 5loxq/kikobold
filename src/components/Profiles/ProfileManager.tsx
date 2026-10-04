@@ -63,10 +63,10 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="p-8 max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+      <div className="p-4 sm:p-8 max-w-4xl mx-auto">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <h2 className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{t('sidebar.profiles')}</h2>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={handleExport}
               className="px-4 py-2 text-sm bg-gray-600 text-white rounded-lg hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors"

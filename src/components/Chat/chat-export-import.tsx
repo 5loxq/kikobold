@@ -72,19 +72,19 @@ export const ChatExportImport: React.FC<ChatExportImportProps> = ({
   };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2" data-tour="export-import">
       {/* Export Current Chat */}
       <button
         onClick={handleExportCurrentChat}
         disabled={!chat}
         title={chat ? t('chat.export') : t('chat.noChat')}
-        className={`px-3 py-2 text-sm rounded font-medium transition-colors ${
+        className={`px-2.5 sm:px-3 py-2 text-sm rounded font-medium transition-colors whitespace-nowrap ${
           !chat
             ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed'
             : 'bg-green-100 dark:bg-green-950/40 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-950/70'
         }`}
       >
-        ⬇️ {t('chat.exportChat')}
+        ⬇️ <span className="hidden sm:inline">{t('chat.exportChat')}</span>
       </button>
 
       {/* Export All Chats */}
@@ -92,13 +92,13 @@ export const ChatExportImport: React.FC<ChatExportImportProps> = ({
         onClick={handleExportAllChats}
         disabled={allChats.length === 0}
         title={allChats.length > 0 ? t('chat.exportAll') : t('chat.noChats')}
-        className={`px-3 py-2 text-sm rounded font-medium transition-colors ${
+        className={`px-2.5 sm:px-3 py-2 text-sm rounded font-medium transition-colors whitespace-nowrap ${
           allChats.length === 0
             ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed'
             : 'bg-blue-100 text-indigo-700 dark:text-indigo-300 hover:bg-blue-200'
         }`}
       >
-        ⬇️ {t('chat.exportAll')}
+        ⬇️ <span className="hidden sm:inline">{t('chat.exportAll')}</span>
       </button>
 
       {/* Share Current Chat as Markdown */}
@@ -106,21 +106,25 @@ export const ChatExportImport: React.FC<ChatExportImportProps> = ({
         onClick={() => void handleShareCurrentChat()}
         disabled={!chat || shareStatus === 'sharing'}
         title={chat ? t('chat.share') : t('chat.noChat')}
-        className={`px-3 py-2 text-sm rounded font-medium transition-colors ${
+        className={`px-2.5 sm:px-3 py-2 text-sm rounded font-medium transition-colors whitespace-nowrap ${
           !chat || shareStatus === 'sharing'
             ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed'
             : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
         }`}
       >
-        {shareStatus === 'success' ? '✅' : '🔗'} {shareStatus === 'success' ? t('chat.shareSuccess') : t('chat.share')}
+        {shareStatus === 'success' ? '✅' : '🔗'}{' '}
+        <span className="hidden sm:inline">
+          {shareStatus === 'success' ? t('chat.shareSuccess') : t('chat.share')}
+        </span>
       </button>
 
       {/* Import Chats */}
       <button
         onClick={handleImportClick}
-        className="px-3 py-2 text-sm rounded font-medium transition-colors bg-purple-100 text-purple-700 hover:bg-purple-200"
+        title={t('chat.import')}
+        className="px-2.5 sm:px-3 py-2 text-sm rounded font-medium transition-colors bg-purple-100 text-purple-700 hover:bg-purple-200 whitespace-nowrap"
       >
-        ⬆️ {t('chat.import')}
+        ⬆️ <span className="hidden sm:inline">{t('chat.import')}</span>
       </button>
 
       {/* Hidden File Input */}

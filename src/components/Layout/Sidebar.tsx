@@ -77,7 +77,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-shrink-0 flex flex-col gap-1 px-3 pb-3 border-b border-zinc-800/60">
+      <nav className="flex-shrink-0 flex flex-col gap-1 px-3 pb-3 border-b border-zinc-800/60" data-tour="sidebar-nav">
         {tabs.map((tab) => (
           <button
             key={tab.id}
