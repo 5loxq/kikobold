@@ -7,6 +7,8 @@ import { GuidedTour, hasSeenTour } from './GuidedTour';
 const ProfileManager = lazy(() => import('../Profiles/ProfileManager').then(m => ({ default: m.ProfileManager })));
 const HelpPage = lazy(() => import('../Help/HelpPage').then(m => ({ default: m.HelpPage })));
 const MemoryManager = lazy(() => import('../Memory/MemoryManager').then(m => ({ default: m.MemoryManager })));
+const ContactPage = lazy(() => import('../Contact/ContactPage').then(m => ({ default: m.ContactPage })));
+import { BrowserWarning } from './BrowserWarning';
 import { Chat, MemoryEntry } from '../../types';
 import { version as appVersion } from '../../../package.json';
 import { useChat } from '../../hooks/useChat';
@@ -21,7 +23,7 @@ import { error as logError } from '../../services/logging';
 import { buildPromptWithDocuments, type DocumentAttachment, type ImageAttachment } from '../../services/attachments';
 
 
-type ActiveTab = 'chat' | 'profiles' | 'memory' | 'settings' | 'help';
+type ActiveTab = 'chat' | 'profiles' | 'memory' | 'settings' | 'help' | 'contact';
 
 export const MainLayout: FC = () => {
   const { t, i18n } = useTranslation();
@@ -371,6 +373,9 @@ export const MainLayout: FC = () => {
           <h1 className="font-semibold flex-1">{t('sidebar.title')}</h1>
         </div>
 
+        {/* Performance warning for Firefox users (dismissible) */}
+        <BrowserWarning />
+
         {/* Model Download Overlay - shows while a model is loading/downloading */}
         {isLoading && activeTab === 'chat' && (
           <div className="fixed inset-0 bg-zinc-950/20 dark:bg-black/40 flex items-center justify-center z-50 pointer-events-none backdrop-blur-[2px]">
@@ -523,6 +528,12 @@ export const MainLayout: FC = () => {
         {activeTab === 'help' && (
           <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
             <HelpPage onNavigateBack={() => setActiveTab('chat')} />
+          </Suspense>
+        )}
+
+        {activeTab === 'contact' && (
+          <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
+            <ContactPage onNavigateBack={() => setActiveTab('chat')} />
           </Suspense>
         )}
       </div>

@@ -9,7 +9,8 @@
     "settings": "Einstellungen",
     "history": "Verlauf",
     "noChatYet": "Noch keine Chats",
-    "help": "Hilfe"
+    "help": "Hilfe",
+    "contact": "Kontakt"
   },
   "chat": {
     "welcome": "Willkommen bei KI Kobold",
@@ -97,7 +98,21 @@
     "step5Title": "Nachricht schreiben",
     "step5Text": "Tippe deine Nachricht und sende sie ab. Mit dem Mikrofon kannst du diktieren, mit der Büroklammer Dateien anhängen.",
     "step6Title": "Menü",
-    "step6Text": "Hier findest du neue Chats, den Verlauf, Profile, das Gedächtnis, Einstellungen und die Hilfe."
+    "step6Text": "Hier findest du neue Chats, den Verlauf, Profile, das Gedächtnis, Einstellungen, die Hilfe und den Kontakt."
+  },
+  "contact": {
+    "title": "Kontakt",
+    "introText": "Du hast Fragen zu KI Kobold oder brauchst Hilfe? Dann melde dich gerne bei uns - schreib einfach eine E-Mail an die Adresse unten, wir melden uns zurück.",
+    "emailLabel": "E-Mail",
+    "writeEmail": "E-Mail schreiben",
+    "beforeWritingTitle": "Bevor du schreibst",
+    "beforeWritingText": "Viele Antworten findest du schon auf der Hilfeseite: wie die Modelle funktionieren, was sie können und was nicht, wie Import/Export und das Gedächtnis genutzt werden. Wenn das nicht weiterhilft, freuen wir uns über deine Nachricht. Beschreibe dein Anliegen möglichst genau - etwa welchen Browser du verwendest, welches Modell und was du gemacht hast.",
+    "backToChat": "Zurück zum Chat"
+  },
+  "browserWarning": {
+    "firefoxTitle": "Firefox erkannt: Die KI läuft hier langsamer",
+    "firefoxText": "Die KI-Modelle arbeiten in Firefox deutlich langsamer als in Chrome oder Edge - Antworten erscheinen oft nur Wort für Wort. Für volle Geschwindigkeit verwende bitte Chrome oder Edge.",
+    "firefoxReason": "Grund: Firefox unterstützt kein JSPI (JavaScript Promise Integration). Dadurch muss die Engine für WASM-Modelle wie LFM 2.5 einen langsamen Umweg nehmen. Das ist browserbedingt und lässt sich von dieser Seite aus nicht beheben."
   },
   "memory": {
     "title": "Gedächtnis",
@@ -206,7 +221,7 @@
     "tip3": "Probiere verschiedene Profile: 'Präzise' für Fakten, 'Kreativ' für Ideen",
     "tip4": "Wenn eine Antwort Unsinn ist: Frage neu stellen oder einen neuen Chat starten",
     "needMoreHelp": "Noch Fragen?",
-    "contactSupport": "Am besten probierst du einfach alles aus - genau dafür ist diese Seite da.",
+    "contactSupport": "Am besten probierst du einfach alles aus - genau dafür ist diese Seite da. Wenn du Fragen hast oder Hilfe brauchst, melde dich über die Kontaktseite (Menü → Kontakt).",
     "closeHelp": "Zurück zum Chat"
   },
   "settings": {
