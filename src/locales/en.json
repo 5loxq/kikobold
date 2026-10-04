@@ -40,6 +40,8 @@
     "webgpuRequiredBrowsers": "Please use Chrome 113+, Edge 113+, or Opera 99+ with WebGPU enabled.",
     "modelLoaded": "Model loaded",
     "modelNotLoaded": "Model not loaded",
+    "selectModelHint": "Pick a model at the top to get started - it downloads on first use.",
+    "modelNotLoadedHint": "The model is not active yet - select it at the top to load it.",
     "loadingError": "Loading error",
     "speechRecognitionNotSupported": "Speech Recognition is not supported in this browser",
     "micError": "Microphone Error",
@@ -137,6 +139,11 @@
     "title": "What's new",
     "subtitle": "A few things have changed since your last visit:",
     "closeButton": "Got it!",
+    "v310": {
+      "item1": "Bugfix: the chat no longer shows \"Loading model\" when nothing is loading at all.",
+      "item2": "What's-new dialog: now scrolls cleanly, the close button always stays visible.",
+      "item3": "Returning users now reliably see what changed after an update."
+    },
     "v300": {
       "item1": "Library: store files once and use them in the chat via @Name (menu → Library).",
       "item2": "Memory with ready-made fields: fill in name, work, hobbies and location directly.",

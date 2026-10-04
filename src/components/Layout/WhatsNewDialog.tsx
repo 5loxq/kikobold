@@ -23,17 +23,17 @@ export const WhatsNewDialog: FC<WhatsNewDialogProps> = ({ entries, onClose }) =>
 
   return (
     <div
-      className="fixed inset-0 z-[60] bg-zinc-950/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 z-[60] bg-zinc-950/70 backdrop-blur-sm flex items-center justify-center p-4"
       role="dialog"
       aria-label={t('whatsNew.title')}
     >
-      <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl max-w-2xl w-full border border-zinc-200 dark:border-zinc-800 p-8 my-8">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-2xl shadow-xl shadow-indigo-500/25 flex-shrink-0">
+      <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl max-w-2xl w-full border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 max-h-[85vh] flex flex-col my-4">
+        <div className="flex items-center gap-4 mb-5 flex-shrink-0">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-2xl shadow-xl shadow-indigo-500/25 flex-shrink-0">
             🆕
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">
+            <h2 className="text-xl sm:text-2xl font-bold text-zinc-800 dark:text-zinc-100">
               {t('whatsNew.title')}
             </h2>
             <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-0.5">
@@ -42,7 +42,8 @@ export const WhatsNewDialog: FC<WhatsNewDialogProps> = ({ entries, onClose }) =>
           </div>
         </div>
 
-        <div className="space-y-4">
+        {/* Scrollable entry list - the close button stays visible below */}
+        <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-3">
           {entries.map((entry) => (
             <div
               key={entry.version}
@@ -68,7 +69,7 @@ export const WhatsNewDialog: FC<WhatsNewDialogProps> = ({ entries, onClose }) =>
 
         <button
           onClick={onClose}
-          className="mt-6 w-full px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-semibold shadow-lg shadow-indigo-500/25 hover:opacity-90 transition-opacity"
+          className="mt-5 w-full px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-semibold shadow-lg shadow-indigo-500/25 hover:opacity-90 transition-opacity flex-shrink-0"
         >
           {t('whatsNew.closeButton')}
         </button>

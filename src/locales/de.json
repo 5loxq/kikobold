@@ -40,6 +40,8 @@
     "webgpuRequiredBrowsers": "Bitte verwende Chrome 113+, Edge 113+ oder Opera 99+ mit WebGPU aktiviert.",
     "modelLoaded": "Modell geladen",
     "modelNotLoaded": "Modell nicht geladen",
+    "selectModelHint": "Wähle oben ein Modell aus, um zu starten - beim ersten Mal wird es heruntergeladen.",
+    "modelNotLoadedHint": "Das Modell ist noch nicht aktiv - wähle es oben aus, um es zu laden.",
     "loadingError": "Fehler beim Laden",
     "speechRecognitionNotSupported": "Spracherkennung wird in diesem Browser nicht unterstützt",
     "micError": "Mikrofon-Fehler",
@@ -137,6 +139,11 @@
     "title": "Das ist neu",
     "subtitle": "Seit deinem letzten Besuch hat sich einiges getan:",
     "closeButton": "Alles klar!",
+    "v310": {
+      "item1": "Fehlerbehebung: Der Chat zeigt nicht mehr \"Modell wird geladen\", wenn gar nichts geladen wird.",
+      "item2": "Neuigkeiten-Fenster: jetzt übersichtlich scrollbar, der Schließen-Button bleibt immer sichtbar.",
+      "item3": "Wiederkehrende Nutzer sehen die Neuigkeiten jetzt zuverlässig nach einem Update."
+    },
     "v300": {
       "item1": "Bibliothek: Dateien einmal hinterlegen und im Chat per @Name verwenden (Menü → Bibliothek).",
       "item2": "Gedächtnis mit fertigen Feldern: Name, Arbeit, Hobbys und Wohnort direkt ausfüllen.",

@@ -2,6 +2,14 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [3.1.0] - 2026-10-04
+
+### Behoben
+
+- **"Modell wird geladen" ohne Laden**: Der Chat zeigte "Modell wird geladen...", sobald kein Modell aktiv war - auch direkt nach dem Start, wenn gar nichts geladen wurde. Jetzt wird unterschieden: kein Modell ausgewählt ("Wähle oben ein Modell aus"), Modell ausgewählt aber nicht aktiv, oder tatsächlich am Laden.
+- **Neuigkeiten-Anzeige erschien bei manchen Rückkehrern nie**: Wer die Seite vor Version 2.4.0 besucht hatte, hatte nie eine Version lokal gespeichert und bekam das "Das ist neu"-Fenster deshalb nie zu sehen. Solche Rückkehrer werden jetzt als "zuletzt Version 2.3.0 gesehen" behandelt und holen nach.
+- **Neuigkeiten-Fenster zu groß**: Das Fenster überlagerte sich bei vielen Einträgen und ließ sich schlecht scrollen. Die Eintragsliste hat jetzt eine eigene Scrollfläche (max. 85% Fensterhöhe), Kopf und "Alles klar!"-Button bleiben immer sichtbar.
+
 ## [3.0.0] - 2026-10-04
 
 ### Neu

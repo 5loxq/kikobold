@@ -17,6 +17,8 @@ interface InputBoxProps {
   onSendMessage: (message: string) => void;
   isLoading: boolean;
   isModelLoaded: boolean;
+  /** Whether a model is selected (it may not be loaded yet) */
+  hasModelSelected?: boolean;
   isGenerating?: boolean;
   onStopGeneration?: () => void;
   onSendMessageWithDocuments?: (message: string, attachments: DocumentAttachment[]) => void;
@@ -91,6 +93,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
   onSendMessage,
   isLoading,
   isModelLoaded,
+  hasModelSelected = false,
   isGenerating = false,
   onStopGeneration,
   onSendMessageWithDocuments,
@@ -319,8 +322,14 @@ export const InputBox: React.FC<InputBoxProps> = ({
       {!isModelLoaded && (
         <div className="mb-3 p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-2xl text-sm text-amber-800 dark:text-amber-400">
           <div className="flex items-center gap-2">
-            <span className="text-lg">⏳</span>
-            <span className="font-medium">{t('chat.modelLoading')}</span>
+            <span className="text-lg">{isLoading ? '⏳' : '👆'}</span>
+            <span className="font-medium">
+              {isLoading
+                ? t('chat.modelLoading')
+                : hasModelSelected
+                  ? t('chat.modelNotLoadedHint')
+                  : t('chat.selectModelHint')}
+            </span>
           </div>
         </div>
       )}
