@@ -1,5 +1,5 @@
 import { warn } from '../logging';
-import { sanitizeInput } from '../security';
+import { sanitizeInputLight } from '../security';
 import { ALLOWED_EXTENSIONS, MAX_FILE_SIZE } from '../attachments';
 
 export interface LibraryFile {
@@ -124,9 +124,12 @@ export const saveLibraryFile = async (entry: LibraryFile): Promise<void> => {
     throw new Error('Invalid library file');
   }
 
+  // Only the file NAME is sanitized lightly (HTML tags stripped): the name is
+  // rendered as text by React and used for @references. The full
+  // sanitizeInput() would mangle names containing e.g. "data:".
   const sanitized: LibraryFile = {
     ...entry,
-    name: sanitizeInput(entry.name.trim()),
+    name: sanitizeInputLight(entry.name.trim()),
   };
 
   return new Promise((resolve, reject) => {
@@ -200,7 +203,7 @@ export const resolveLibraryReferences = (message: string, files: LibraryFile[]):
     return message;
   }
 
-  const tokens = message.match(/@([\w.\-]+)/g) ?? [];
+  const tokens = message.match(/@([\w.-]+)/g) ?? [];
   const matched = new Map<string, LibraryFile>();
 
   for (const token of tokens) {

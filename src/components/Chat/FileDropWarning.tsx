@@ -6,60 +6,49 @@ import { useTranslation } from 'react-i18next';
  * opened by the browser instead. This component intercepts file drags over
  * the window, prevents the default browser behavior and shows a warning
  * overlay pointing to the paperclip button instead.
+ *
+ * The overlay hides when no dragover event has arrived for a moment:
+ * dragenter/dragleave do not always fire in pairs (e.g. when the user
+ * releases the file outside the window), so a pure depth counter could
+ * leave the overlay stuck forever.
  */
 export const FileDropWarning: React.FC = () => {
   const { t } = useTranslation();
   const [dragging, setDragging] = useState(false);
 
   useEffect(() => {
-    let dragDepth = 0;
     let hideTimer: number | undefined;
 
     const hasFiles = (event: DragEvent): boolean =>
       Array.from(event.dataTransfer?.types ?? []).includes('Files');
 
-    const onDragEnter = (event: DragEvent): void => {
-      if (!hasFiles(event)) {return;}
-      event.preventDefault();
-      dragDepth++;
-      if (hideTimer) {
-        window.clearTimeout(hideTimer);
-        hideTimer = undefined;
-      }
-      setDragging(true);
-    };
-
+    // dragover fires continuously (~every 100-350ms) while a drag is over
+    // the window - it is the reliable "still dragging" signal.
     const onDragOver = (event: DragEvent): void => {
       if (!hasFiles(event)) {return;}
       // Prevent the browser from opening the file when it is dropped
       event.preventDefault();
-    };
-
-    const onDragLeave = (event: DragEvent): void => {
-      if (!hasFiles(event)) {return;}
-      dragDepth = Math.max(0, dragDepth - 1);
-      if (dragDepth === 0) {
-        // Small delay so the overlay does not flicker between elements
-        hideTimer = window.setTimeout(() => setDragging(false), 150);
+      if (hideTimer) {
+        window.clearTimeout(hideTimer);
       }
+      hideTimer = window.setTimeout(() => setDragging(false), 500);
+      setDragging(true);
     };
 
     const onDrop = (event: DragEvent): void => {
       if (!hasFiles(event)) {return;}
       event.preventDefault();
-      dragDepth = 0;
+      if (hideTimer) {
+        window.clearTimeout(hideTimer);
+      }
       setDragging(false);
     };
 
-    window.addEventListener('dragenter', onDragEnter);
     window.addEventListener('dragover', onDragOver);
-    window.addEventListener('dragleave', onDragLeave);
     window.addEventListener('drop', onDrop);
 
-    return () => {
-      window.removeEventListener('dragenter', onDragEnter);
+    return (): void => {
       window.removeEventListener('dragover', onDragOver);
-      window.removeEventListener('dragleave', onDragLeave);
       window.removeEventListener('drop', onDrop);
       if (hideTimer) {
         window.clearTimeout(hideTimer);
