@@ -2,6 +2,14 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [2.3.0] - 2026-10-04
+
+### Neu
+
+- **Kontaktseite**: Neuer Menüpunkt "Kontakt" mit der E-Mail-Adresse kikobold.kepmu@8alias.com - hier kann sich jeder melden, der Fragen hat oder Hilfe benötigt. Mit Klick-öffnen-Button und Hinweis, dass viele Antworten schon auf der Hilfeseite stehen.
+- **Firefox-Warnung**: Firefox-Nutzer sehen beim Besuch einen wegklickbaren Warnhinweis: Die KI-Modelle laufen dort deutlich langsamer, weil Firefox kein JSPI (JavaScript Promise Integration) unterstützt und die Engine für WASM-Modelle einen langsamen Umweg nehmen muss. Empfehlung: Chrome oder Edge. Der Hinweis lässt sich dauerhaft ausblenden. Eine technische Lösung gibt es nicht - es ist eine Browser-Beschränkung, kein Fehler der Seite.
+- **Tour & Hilfe**: Menü-Tour und "Noch Fragen?"-Sektion verweisen jetzt auch auf den Kontakt.
+
 ## [2.2.0] - 2026-10-04
 
 ### Neu

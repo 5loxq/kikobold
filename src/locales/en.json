@@ -9,7 +9,8 @@
     "settings": "Settings",
     "history": "History",
     "noChatYet": "No chats yet",
-    "help": "Help"
+    "help": "Help",
+    "contact": "Contact"
   },
   "chat": {
     "welcome": "Welcome to KI Kobold",
@@ -97,7 +98,21 @@
     "step5Title": "Write a message",
     "step5Text": "Type your message and send it. Use the microphone to dictate, the paperclip to attach files.",
     "step6Title": "Menu",
-    "step6Text": "Here you find new chats, the history, profiles, the memory, settings and help."
+    "step6Text": "Here you find new chats, the history, profiles, the memory, settings, help and contact."
+  },
+  "contact": {
+    "title": "Contact",
+    "introText": "Do you have questions about KI Kobold or need help? Just get in touch - send an email to the address below and we will get back to you.",
+    "emailLabel": "Email",
+    "writeEmail": "Write an email",
+    "beforeWritingTitle": "Before you write",
+    "beforeWritingText": "You can already find many answers on the help page: how the models work, what they can and cannot do, how to use import/export and the memory. If that does not help, we look forward to your message. Describe your issue as precisely as possible - which browser you use, which model and what you did.",
+    "backToChat": "Back to Chat"
+  },
+  "browserWarning": {
+    "firefoxTitle": "Firefox detected: the AI runs slower here",
+    "firefoxText": "The AI models work noticeably slower in Firefox than in Chrome or Edge - answers often appear word by word. Please use Chrome or Edge for full speed.",
+    "firefoxReason": "Reason: Firefox does not support JSPI (JavaScript Promise Integration). Because of that, the engine has to take a slow detour for WASM models like LFM 2.5. This is a browser limitation and cannot be fixed from this website."
   },
   "memory": {
     "title": "Memory",
@@ -206,7 +221,7 @@
     "tip3": "Try different profiles: 'Precise' for facts, 'Creative' for ideas",
     "tip4": "If an answer is nonsense: rephrase the question or start a new chat",
     "needMoreHelp": "Still Have Questions?",
-    "contactSupport": "The best way is to simply try everything out - that's exactly what this page is for.",
+    "contactSupport": "The best way is to simply try everything out - that's exactly what this page is for. If you have questions or need help, reach out via the contact page (menu → Contact).",
     "closeHelp": "Back to Chat"
   },
   "settings": {
