@@ -159,6 +159,10 @@
     "title": "Das ist neu",
     "subtitle": "Seit deinem letzten Besuch hat sich einiges getan:",
     "closeButton": "Alles klar!",
+    "v321": {
+      "item1": "Kontext-Fehler behoben: Anhänge und lange Unterhaltungen sprengen nicht mehr das Modell-Fenster - der Kontext wurde von 1024 auf 4096 Tokens erhöht, große Anhänge werden gekürzt.",
+      "item2": "Download-Geschwindigkeit: Bei Gemma 2 und Qwen werden jetzt wieder Größe, Geschwindigkeit und Restzeit angezeigt."
+    },
     "v320": {
       "item1": "Daten & Backup: Neuer Menüpunkt mit Übersicht aller lokal gespeicherten Daten, komplettem Backup-Export und -Import.",
       "item2": "Alle Daten löschen: räumt Chats, Gedächtnis und Bibliothek mit einem Klick weg (mit doppelter Sicherheitsfrage)."

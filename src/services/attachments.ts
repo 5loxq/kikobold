@@ -7,6 +7,11 @@ export interface DocumentAttachment {
 
 export const MAX_FILE_SIZE = 512 * 1024;
 const MAX_ATTACHMENTS = 3;
+// Attached documents are injected into the prompt verbatim, so their text must
+// be capped to fit the small context windows of the local models (~4 chars per
+// token, 4096-token context shared with system prompt, memory and history).
+export const MAX_DOC_PROMPT_CHARS = 4000;
+export const MAX_TOTAL_DOC_PROMPT_CHARS = 10000;
 // Also used by the library (LibraryStorage) to decide which files it accepts
 export const ALLOWED_EXTENSIONS = ['txt', 'md', 'json', 'csv', 'tsv', 'log', 'xml', 'yml', 'yaml', 'ini', 'cfg', 'ts', 'tsx', 'js', 'jsx', 'py', 'java', 'c', 'cpp', 'h', 'hpp', 'cs', 'go', 'rs', 'rb', 'php', 'sql', 'sh', 'css', 'html'];
 
@@ -38,8 +43,16 @@ export const createDocumentAttachment = async (file: File): Promise<DocumentAtta
 
 export const buildPromptWithDocuments = (message: string, attachments: DocumentAttachment[]): string => {
   if (attachments.length === 0) {return message;}
+  let budget = MAX_TOTAL_DOC_PROMPT_CHARS;
   const docs = attachments
-    .map((doc) => `--- Document: ${doc.name} ---\n${doc.text}\n--- End of document ---`)
+    .map((doc) => {
+      const limit = Math.min(MAX_DOC_PROMPT_CHARS, budget);
+      budget -= Math.max(0, Math.min(limit, doc.text.length));
+      const text = doc.text.length > limit
+        ? `${doc.text.slice(0, limit)}\n[... document truncated ...]`
+        : doc.text;
+      return `--- Document: ${doc.name} ---\n${text}\n--- End of document ---`;
+    })
     .join('\n\n');
   return `${message}\n\nThe user attached the following documents. Use them as context:\n\n${docs}`;
 };
