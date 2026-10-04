@@ -225,6 +225,30 @@ export const deleteChat = async (id: string): Promise<void> => {
   });
 };
 
+/** Delete ALL chats (used by the "delete everything" action in the data page) */
+export const clearAllChats = async (): Promise<void> => {
+  await initChatDB();
+  if (!db) {throw new Error('Database not initialized');}
+  const database = db;
+
+  return new Promise((resolve, reject) => {
+    try {
+      const transaction = database.transaction([STORE_NAME], 'readwrite');
+      const request = transaction.objectStore(STORE_NAME).clear();
+
+      request.onerror = (): void => {
+        console.error('Failed to clear chats:', request.error);
+        reject(request.error ?? new Error('Failed to clear chats'));
+      };
+
+      request.onsuccess = (): void => resolve();
+    } catch (error) {
+      console.error('Error clearing chats:', error);
+      reject(error);
+    }
+  });
+};
+
 export const updateChatMessages = async (chatId: string, messages: Message[]): Promise<void> => {
   if (typeof chatId !== 'string' || chatId.trim().length === 0) {
     throw new Error('Invalid chat ID');

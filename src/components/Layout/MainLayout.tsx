@@ -12,10 +12,12 @@ const MemoryManager = lazy(() => import('../Memory/MemoryManager').then(m => ({ 
 const ContactPage = lazy(() => import('../Contact/ContactPage').then(m => ({ default: m.ContactPage })));
 const SettingsPage = lazy(() => import('../Settings/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const LibraryManager = lazy(() => import('../Library/LibraryManager').then(m => ({ default: m.LibraryManager })));
+const DataManager = lazy(() => import('../Data/DataManager').then(m => ({ default: m.DataManager })));
 import { BrowserWarning } from './BrowserWarning';
 import { type AppSettings, loadSettings, saveSettings } from '../../services/settings';
 import { useLibrary } from '../../hooks/useLibrary';
 import { type LibraryFile, resolveLibraryReferences } from '../../services/storage/LibraryStorage';
+import * as ChatExport from '../../services/storage/chat-export-import';
 import { Chat, MemoryEntry } from '../../types';
 import { version as appVersion } from '../../../package.json';
 import { useChat } from '../../hooks/useChat';
@@ -30,7 +32,7 @@ import { error as logError } from '../../services/logging';
 import { buildPromptWithDocuments, type DocumentAttachment, type ImageAttachment } from '../../services/attachments';
 
 
-type ActiveTab = 'chat' | 'profiles' | 'memory' | 'library' | 'settings' | 'help' | 'contact';
+type ActiveTab = 'chat' | 'profiles' | 'memory' | 'library' | 'data' | 'settings' | 'help' | 'contact';
 
 export const MainLayout: FC = () => {
   const { t, i18n } = useTranslation();
@@ -56,8 +58,8 @@ export const MainLayout: FC = () => {
   };
   const { chat, chats, loadChats, loadChat, createNewChat, deleteChat, addMessage, renameChat } = useChat();
   const { profiles, activeProfile, selectProfile, createProfile, updateProfile, deleteProfile, exportProfiles, importProfiles } = useProfiles();
-  const { memories, addMemory, setMemoryField, updateMemory, deleteMemory, importMemories } = useMemories();
-  const { libraryFiles, addLibraryFile, deleteLibraryFile, importLibraryFiles } = useLibrary();
+  const { memories, addMemory, setMemoryField, updateMemory, deleteMemory, clearAllMemories, importMemories } = useMemories();
+  const { libraryFiles, addLibraryFile, deleteLibraryFile, clearAllLibraryFiles, importLibraryFiles } = useLibrary();
   const { downloadedModels, activeModel, deleteModel: deleteDownloadedModel, selectModel, isModelDownloaded, getModelInfo } = useModels();
   const {
     loadModel,
@@ -396,7 +398,6 @@ export const MainLayout: FC = () => {
     const latest = [...importedChats].sort((a, b) => b.updatedAt - a.updatedAt)[0];
     if (latest) {
       await loadChat(latest.id);
-      setActiveTab('chat');
     }
   };
 
@@ -417,6 +418,30 @@ export const MainLayout: FC = () => {
   // Show the full "what's new" list from the help page
   const handleShowWhatsNew = (): void => {
     setWhatsNewEntries(ALL_WHATS_NEW_ENTRIES);
+  };
+
+  // Data page: full backup of chats + memories + library files
+  const handleExportAllData = (): void => {
+    ChatExport.exportChats(chats, memories, libraryFiles);
+  };
+
+  // Data page: restore a backup file (chats + memories + library). Stay on
+  // the data page so the success message stays visible.
+  const handleImportBackup = async (file: File): Promise<void> => {
+    const result = await ChatExport.importChats(file);
+    await handleImportChats(result.chats, result.memories, result.library);
+  };
+
+  // Data page: delete all chats, memories and library files. A fresh chat
+  // is created right away so the app stays usable.
+  const handleDeleteAllData = async (): Promise<void> => {
+    await ChatStorage.clearAllChats();
+    await clearAllMemories();
+    await clearAllLibraryFiles();
+    if (activeProfile) {
+      await createNewChat(activeProfile.id);
+    }
+    setLocalError(null);
   };
 
   return (
@@ -551,7 +576,6 @@ export const MainLayout: FC = () => {
         {activeTab === 'chat' && (
           <ChatWindow
             chat={chat}
-            chats={chats}
             activeProfile={activeProfile}
             profiles={profiles}
             activeModel={activeModel}
@@ -573,7 +597,6 @@ export const MainLayout: FC = () => {
             onSelectModel={handleModelSelect}
             onSelectProfile={handleSelectProfile}
             onRenameChat={renameChat}
-            onImportChats={handleImportChats}
             memories={memories}
             library={libraryFiles}
           />
@@ -612,6 +635,20 @@ export const MainLayout: FC = () => {
               files={libraryFiles}
               onAddFile={addLibraryFile}
               onDeleteFile={deleteLibraryFile}
+            />
+          </Suspense>
+        )}
+
+        {activeTab === 'data' && (
+          <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
+            <DataManager
+              chats={chats}
+              memories={memories}
+              libraryFiles={libraryFiles}
+              downloadedModels={downloadedModels}
+              onExportAll={handleExportAllData}
+              onImportBackup={handleImportBackup}
+              onDeleteAll={handleDeleteAllData}
             />
           </Suspense>
         )}

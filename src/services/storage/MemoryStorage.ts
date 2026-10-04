@@ -176,6 +176,29 @@ export const deleteMemory = async (id: string): Promise<void> => {
   });
 };
 
+/** Delete ALL memory entries (used by the "delete everything" action) */
+export const clearAllMemories = async (): Promise<void> => {
+  await initMemoryDB();
+  if (!db) {throw new Error('Database not initialized');}
+  const database = db;
+
+  return new Promise((resolve, reject) => {
+    try {
+      const transaction = database.transaction([STORE_NAME], 'readwrite');
+      const request = transaction.objectStore(STORE_NAME).clear();
+
+      request.onerror = (): void => {
+        console.error('Failed to clear memories:', request.error);
+        reject(request.error ?? new Error('Failed to clear memories'));
+      };
+      request.onsuccess = (): void => resolve();
+    } catch (error) {
+      console.error('Error clearing memories:', error);
+      reject(error);
+    }
+  });
+};
+
 export const createMemoryEntry = (content: string, field?: string): MemoryEntry => {
   if (typeof content !== 'string' || content.trim().length === 0) {
     throw new Error('Memory content must be a non-empty string');

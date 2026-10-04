@@ -10,6 +10,7 @@ export const useMemories = (): {
   setMemoryField: (fieldKey: string, content: string) => Promise<void>;
   updateMemory: (entry: MemoryEntry) => Promise<void>;
   deleteMemory: (id: string) => Promise<void>;
+  clearAllMemories: () => Promise<void>;
   importMemories: (entries: MemoryEntry[]) => Promise<void>;
 } => {
   const [memories, setMemories] = useState<MemoryEntry[]>([]);
@@ -51,6 +52,12 @@ export const useMemories = (): {
     setMemories((prev) => prev.filter((m) => m.id !== id));
   }, []);
 
+  /** Delete all memory entries (data page: "delete everything") */
+  const clearAllMemories = useCallback(async (): Promise<void> => {
+    await MemoryStorage.clearAllMemories();
+    setMemories([]);
+  }, []);
+
   const importMemories = useCallback(async (entries: MemoryEntry[]): Promise<void> => {
     for (const entry of entries) {
       await MemoryStorage.saveMemory(entry);
@@ -65,6 +72,7 @@ export const useMemories = (): {
     setMemoryField,
     updateMemory,
     deleteMemory,
+    clearAllMemories,
     importMemories,
   };
 };

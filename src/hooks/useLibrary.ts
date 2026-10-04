@@ -7,6 +7,7 @@ export const useLibrary = (): {
   libraryFiles: LibraryStorage.LibraryFile[];
   addLibraryFile: (name: string, content: string) => Promise<void>;
   deleteLibraryFile: (id: string) => Promise<void>;
+  clearAllLibraryFiles: () => Promise<void>;
   importLibraryFiles: (files: LibraryStorage.LibraryFile[]) => Promise<void>;
 } => {
   const [libraryFiles, setLibraryFiles] = useState<LibraryStorage.LibraryFile[]>([]);
@@ -28,6 +29,12 @@ export const useLibrary = (): {
     setLibraryFiles((prev) => prev.filter((f) => f.id !== id));
   }, []);
 
+  /** Delete all library files (data page: "delete everything") */
+  const clearAllLibraryFiles = useCallback(async (): Promise<void> => {
+    await LibraryStorage.clearAllLibraryFiles();
+    setLibraryFiles([]);
+  }, []);
+
   const importLibraryFiles = useCallback(async (files: LibraryStorage.LibraryFile[]): Promise<void> => {
     for (const file of files) {
       await LibraryStorage.saveLibraryFile(file);
@@ -40,6 +47,7 @@ export const useLibrary = (): {
     libraryFiles,
     addLibraryFile,
     deleteLibraryFile,
+    clearAllLibraryFiles,
     importLibraryFiles,
   };
 };
