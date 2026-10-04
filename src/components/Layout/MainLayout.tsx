@@ -30,6 +30,7 @@ import { buildMemoryPromptBlock } from '../../services/storage/MemoryStorage';
 import { isDarkMode as checkDarkMode, getSystemPrefersDark, setThemeMode } from '../../services/theme';
 import { error as logError } from '../../services/logging';
 import { buildPromptWithDocuments, type DocumentAttachment, type ImageAttachment } from '../../services/attachments';
+import { trimHistoryToCharBudget } from '../../services/llm/text-processing';
 
 
 type ActiveTab = 'chat' | 'profiles' | 'memory' | 'library' | 'data' | 'settings' | 'help' | 'contact';
@@ -286,10 +287,6 @@ export const MainLayout: FC = () => {
         : message;
       // "@name" references to library files are resolved into the prompt
       const promptWithLibrary = resolveLibraryReferences(prompt, libraryFiles);
-      const history = chat.messages.slice(-10).map((m) => ({
-        role: m.role === 'assistant' ? ('assistant' as const) : ('user' as const),
-        content: m.content,
-      }));
       // Memory entries are prepended to the system prompt so the model knows
       // the stored facts in every chat, not just the current conversation.
       // Predefined fields are rendered as "Label: value" lines.
@@ -305,6 +302,16 @@ export const MainLayout: FC = () => {
       const systemPrompt = [memoryBlock, activeProfile.systemPrompt]
         .filter(Boolean)
         .join('\n\n');
+      // The prompt must fit the model's context window together with the
+      // generated answer - drop the oldest history messages if needed.
+      const history = trimHistoryToCharBudget(
+        chat.messages.slice(-10).map((m) => ({
+          role: m.role === 'assistant' ? ('assistant' as const) : ('user' as const),
+          content: m.content,
+        })),
+        systemPrompt,
+        promptWithLibrary
+      );
       setStreamingMessage('start');
       const result = await generateStream(promptWithLibrary, {
         temperature: activeProfile.temperature,

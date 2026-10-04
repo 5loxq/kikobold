@@ -34,8 +34,17 @@ import {
 /** Download size/speed info shown while a model is being fetched */
 export type ModelLoadStats = DownloadStats;
 
-// WebLLM reports download progress only as text like "250MB/1.4GB"
+// WebLLM reports download progress only as text. Current versions (0.2.79+)
+// use "Fetching param cache[20/38]: 250MB fetched. 18% completed, 12.5 secs
+// elapsed." - the total size has to be derived from the percentage. Older
+// versions used "250MB/1.4GB".
 const parseWebLLMSizeText = (text: string): { loadedMB: number; totalMB: number } | null => {
+  const current = text.match(/(\d+(?:\.\d+)?)\s*MB\s+(?:fetched|loaded)\.\s*(\d+(?:\.\d+)?)%\s+completed/);
+  if (current) {
+    const loadedMB = parseFloat(current[1]);
+    const percent = parseFloat(current[2]);
+    return { loadedMB, totalMB: percent > 0 ? (loadedMB * 100) / percent : 0 };
+  }
   const match = text.match(/(\d+(?:\.\d+)?)(MB|GB)\/(\d+(?:\.\d+)?)(MB|GB)/);
   if (!match) {
     return null;

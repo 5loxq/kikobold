@@ -159,6 +159,10 @@
     "title": "What's new",
     "subtitle": "A few things have changed since your last visit:",
     "closeButton": "Got it!",
+    "v321": {
+      "item1": "Context error fixed: attachments and long conversations no longer exceed the model window - context raised from 1024 to 4096 tokens, large attachments are trimmed.",
+      "item2": "Download speed: Gemma 2 and Qwen now show size, speed and remaining time again."
+    },
     "v320": {
       "item1": "Data & backup: new menu item with an overview of everything stored locally, plus full backup export and import.",
       "item2": "Delete everything: clears chats, memory and library with one click (with a double confirmation)."

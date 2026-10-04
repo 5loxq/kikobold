@@ -134,16 +134,25 @@ export const loadWllamaModel = async (
         );
       },
       n_threads: Math.min(navigator.hardwareConcurrency || 2, 4),
+      // wllama defaults to a tiny 1024-token context, which regular prompts
+      // (system prompt + memory + history + attachments) quickly exceed.
+      n_ctx: 4096,
     };
 
     callbacks?.onProgress?.(0, 'Downloading model...');
 
     // Prefer the copy on our own webspace (same origin, no CDN dependency).
-    // Fall back to HuggingFace if the self-hosted file is unavailable.
+    // Fall back to HuggingFace if the self-hosted file is unavailable. A
+    // failed download can also surface as a resolved promise with no model
+    // loaded (e.g. when a server answers with an HTML error page), so the
+    // load result is verified explicitly.
     if (gguf.selfHostedPath) {
       const selfHostedUrl = new URL(gguf.selfHostedPath, window.location.origin).href;
       try {
         await wllama.loadModelFromUrl(selfHostedUrl, loadParams);
+        if (!wllama.isModelLoaded()) {
+          throw new Error('self-hosted file did not contain a loadable model');
+        }
       } catch (selfHostedError) {
         warn(`wllama: self-hosted model failed (${selfHostedError}), falling back to HuggingFace`);
         callbacks?.onProgress?.(0, 'Downloading model (HuggingFace)...');
@@ -157,6 +166,9 @@ export const loadWllamaModel = async (
         { repo: gguf.repo, file: gguf.file, mmprojFile: gguf.mmprojFile },
         loadParams
       );
+    }
+    if (!wllama.isModelLoaded()) {
+      throw new Error('Model file could not be loaded');
     }
 
     wllamaInstance = wllama;

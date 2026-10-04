@@ -2,6 +2,14 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [3.2.1] - 2026-10-04
+
+### Behoben
+
+- **Kontext-Fehler ("request exceeds the available context size")**: Das WASM-Modell (LFM 2.5) lief mit dem winzigen Standard-Kontext von 1024 Tokens - schon ein System-Prompt mit Gedächtnis plus Verlauf oder ein angehängter Text sprengte das Fenster. Der Kontext wurde auf 4096 Tokens erhöht, angehängte Dokumente werden auf 4000 Zeichen pro Datei (10000 gesamt) gekürzt, und bei langen Unterhaltungen werden die ältesten Verlaufsnachrichten automatisch weggelassen.
+- **Download ohne Geschwindigkeitsanzeige (Gemma 2, Qwen)**: WebLLM hat das Format der Fortschrittsmeldungen geändert; der Parser erkannte das neue Format nicht, deshalb blieben Größe, Geschwindigkeit und Restzeit leer. Der Parser versteht jetzt beide Formate.
+- **Falsche "Modell geladen"-Meldung**: Wenn die eigene Modelldatei nicht abrufbar ist (z.B. Fehlerseite statt Modell), meldete die Engine fälschlich Erfolg. Der Ladevorgang wird jetzt verifiziert und fällt bei Bedarf auf HuggingFace zurück.
+
 ## [3.2.0] - 2026-10-04
 
 ### Neu
