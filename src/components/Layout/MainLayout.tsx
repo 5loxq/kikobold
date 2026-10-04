@@ -6,6 +6,7 @@ import { WelcomeScreen } from './WelcomeScreen';
 const ProfileManager = lazy(() => import('../Profiles/ProfileManager').then(m => ({ default: m.ProfileManager })));
 const HelpPage = lazy(() => import('../Help/HelpPage').then(m => ({ default: m.HelpPage })));
 import { Chat } from '../../types';
+import { version as appVersion } from '../../../package.json';
 import { useChat } from '../../hooks/useChat';
 import { useModels } from '../../hooks/useModels';
 import { useProfiles } from '../../hooks/useProfiles';
@@ -476,7 +477,7 @@ export const MainLayout: FC = () => {
                 <div>
                   <h3 className="font-bold text-lg mb-2 text-zinc-800 dark:text-zinc-100">{t('settings.about')}</h3>
                   <p className="text-zinc-600 dark:text-zinc-400">
-                    KI Kobold v2.0.0
+                    KI Kobold v{appVersion}
                   </p>
                   <p className="text-zinc-600 dark:text-zinc-400">
                     {t('settings.description')}
