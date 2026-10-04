@@ -12,7 +12,6 @@ import { supportsWllamaJspi } from '../../services/inference/wllama-engine';
 
 interface ChatWindowProps {
   chat: Chat | null;
-  chats: Chat[];
   activeProfile: Profile | null;
   profiles: Profile[];
   activeModel: LocalModel | null;
@@ -35,14 +34,12 @@ interface ChatWindowProps {
   onSelectModel: (modelId: string) => void;
   onSelectProfile?: (profileId: string) => void;
   onRenameChat?: (chatId: string, newTitle: string) => void;
-  onImportChats?: (chats: Chat[], memories: MemoryEntry[], library: LibraryFile[]) => Promise<void>;
   memories?: MemoryEntry[];
   library?: LibraryFile[];
 }
 
 export const ChatWindow: React.FC<ChatWindowProps> = ({
   chat,
-  chats,
   activeProfile,
   profiles,
   activeModel: _activeModel,
@@ -64,7 +61,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   onSelectModel,
   onSelectProfile,
   onRenameChat,
-  onImportChats,
   memories = [],
   library = [],
 }) => {
@@ -323,10 +319,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800/60">
           <ChatExportImport
             chat={chat}
-            allChats={chats}
             memories={memories}
             library={library}
-            onImportChats={onImportChats ?? (async (): Promise<void> => {})}
           />
           <button
             onClick={() => setIsSearchOpen((v) => !v)}

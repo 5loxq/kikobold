@@ -175,6 +175,29 @@ export const deleteLibraryFile = async (id: string): Promise<void> => {
   });
 };
 
+/** Delete ALL library files (used by the "delete everything" action) */
+export const clearAllLibraryFiles = async (): Promise<void> => {
+  await initLibraryDB();
+  if (!db) {throw new Error('Database not initialized');}
+  const database = db;
+
+  return new Promise((resolve, reject) => {
+    try {
+      const transaction = database.transaction([STORE_NAME], 'readwrite');
+      const request = transaction.objectStore(STORE_NAME).clear();
+
+      request.onerror = (): void => {
+        console.error('Failed to clear library:', request.error);
+        reject(request.error ?? new Error('Failed to clear library'));
+      };
+      request.onsuccess = (): void => resolve();
+    } catch (error) {
+      console.error('Error clearing library:', error);
+      reject(error);
+    }
+  });
+};
+
 export const createLibraryFile = (name: string, content: string): LibraryFile => {
   if (typeof name !== 'string' || name.trim().length === 0) {
     throw new Error('Library file name must be non-empty');

@@ -2,6 +2,18 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [3.2.0] - 2026-10-04
+
+### Neu
+
+- **Daten & Backup**: Neuer Menüpunkt "Daten" als zentrale Anlaufstelle für alle lokal gespeicherten Daten:
+  - Übersicht: Anzahl Chats (mit Nachrichten), Gedächtnis-Einträge, Bibliotheks-Dateien, heruntergeladene Modelle samt Größe und belegtem Browserspeicher
+  - "Alles exportieren": komplettes Backup aus allen Chats, dem Gedächtnis und der Bibliothek als eine JSON-Datei
+  - "Backup importieren": stellt Chats, Gedächtnis und Bibliothek wieder her (auch auf anderen Geräten)
+  - "Alle Daten löschen": räumt Chats, Gedächtnis und Bibliothek weg (doppelte Sicherheitsfrage); Modelle bleiben und werden in den Einstellungen verwaltet
+- **Chat-Header ausgedünnt**: "Alle exportieren" und "Importieren" sind in die Daten-Seite gezogen; der Chat behält nur die kontextbezogenen Buttons "Chat exportieren" und "Teilen"
+- Hilfe, Tour und Neuigkeiten entsprechend aktualisiert
+
 ## [3.1.0] - 2026-10-04
 
 ### Behoben
