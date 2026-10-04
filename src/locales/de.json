@@ -114,6 +114,31 @@
     "firefoxText": "Die KI-Modelle arbeiten in Firefox deutlich langsamer als in Chrome oder Edge - Antworten erscheinen oft nur Wort für Wort. Für volle Geschwindigkeit verwende bitte Chrome oder Edge.",
     "firefoxReason": "Grund: Firefox unterstützt kein JSPI (JavaScript Promise Integration). Dadurch muss die Engine für WASM-Modelle wie LFM 2.5 einen langsamen Umweg nehmen. Das ist browserbedingt und lässt sich von dieser Seite aus nicht beheben."
   },
+  "whatsNew": {
+    "title": "Das ist neu",
+    "subtitle": "Seit deinem letzten Besuch hat sich einiges getan:",
+    "closeButton": "Alles klar!",
+    "v240": {
+      "item1": "Neuigkeiten-Anzeige: Wenn sich etwas ändert, siehst du beim nächsten Besuch kurz, was neu ist.",
+      "item2": "Hilfeseite: Die Einführung lässt sich jetzt jederzeit erneut starten, alle Neuigkeiten sind dort nachlesbar."
+    },
+    "v230": {
+      "item1": "Kontaktseite: Bei Fragen oder Hilfe kannst du dich jetzt per E-Mail melden (Menü → Kontakt).",
+      "item2": "Firefox-Warnung: Firefox-Nutzer sehen einen Hinweis, warum die KI dort langsamer läuft."
+    },
+    "v220": {
+      "item1": "Gedächtnis: Hinterlege Fakten über dich (Name, Beruf, Vorlieben), die die KI in jedem Chat kennt (Menü → Gedächtnis).",
+      "item2": "Export/Import sichert das Gedächtnis jetzt mit und stellt es beim Import wieder her."
+    },
+    "v210": {
+      "item1": "Willkommensseite und geführte Einführung beim ersten Besuch.",
+      "item2": "Download-Fortschritt mit Größe, Geschwindigkeit und geschätzter Restzeit.",
+      "item3": "Komplett überarbeitete Hilfeseite."
+    },
+    "v200": {
+      "item1": "Neues Design, kuratierte Modelle (LFM 2.5, Gemma 2, Qwen 2) - Modelle werden direkt von dieser Webseite geladen."
+    }
+  },
   "memory": {
     "title": "Gedächtnis",
     "introText": "Hier schreibst du Fakten über dich selbst hinein, die die KI bei jeder Nachricht kennen soll - zum Beispiel deinen Namen, deinen Beruf oder worüber du gern sprichst. Die Einträge gelten für alle Chats und werden beim Export als Backup mitgespeichert. Die KI liest das Gedächtnis mit, speichert aber nichts selbst: Sie merkt sich nicht automatisch, was du erzählst.",
@@ -222,6 +247,10 @@
     "tip4": "Wenn eine Antwort Unsinn ist: Frage neu stellen oder einen neuen Chat starten",
     "needMoreHelp": "Noch Fragen?",
     "contactSupport": "Am besten probierst du einfach alles aus - genau dafür ist diese Seite da. Wenn du Fragen hast oder Hilfe brauchst, melde dich über die Kontaktseite (Menü → Kontakt).",
+    "tourWhatsNewTitle": "Einführung & Neuigkeiten",
+    "tourWhatsNewText": "Du hast die Einführung übersprungen oder willst sie noch einmal sehen? Hier kannst du sie jederzeit erneut starten. Außerdem kannst du hier alle Neuigkeiten der letzten Versionen nachlesen.",
+    "replayTourButton": "Einführung erneut starten",
+    "showWhatsNewButton": "Alle Neuigkeiten ansehen",
     "closeHelp": "Zurück zum Chat"
   },
   "settings": {

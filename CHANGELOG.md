@@ -2,6 +2,14 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [2.4.0] - 2026-10-04
+
+### Neu
+
+- **"Das ist neu"-Anzeige**: Die App merkt sich lokal, welche Version der Nutzer zuletzt gesehen hat. Bei einem Update sehen wiederkehrende Nutzer beim nächsten Besuch ein Fenster mit allen Änderungen seit ihrem letzten Besuch ( gruppiert nach Version, Deutsch/Englisch). Erstbesucher bekommen es nicht - sie sehen weiterhin Willkommensseite und Tour.
+- **Einführung erneut starten**: Auf der Hilfeseite gibt es jetzt den Button "Einführung erneut starten" - die geführte Tour lässt sich jederzeit ansehen.
+- **Alle Neuigkeiten nachlesen**: Ebenfalls auf der Hilfeseite: "Alle Neuigkeiten ansehen" öffnet die komplette Änderungsübersicht aller Versionen.
+
 ## [2.3.0] - 2026-10-04
 
 ### Neu

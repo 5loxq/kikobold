@@ -19,6 +19,15 @@ export const markTourSeen = (): void => {
   }
 };
 
+/** Forget that the tour was seen - the next render starts it again */
+export const resetTourSeen = (): void => {
+  try {
+    localStorage.removeItem(TOUR_SEEN_KEY);
+  } catch {
+    // Ignore storage errors
+  }
+};
+
 interface TourStep {
   /** data-tour attribute of the target element (desktop) */
   selector: string;

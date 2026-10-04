@@ -5,9 +5,13 @@ interface HelpPageProps {
   /** Return to the previous view (e.g. the chat). window.close() only works
    *  for script-opened windows, so without this the button does nothing. */
   onNavigateBack?: () => void;
+  /** Restart the guided tour (from the help page) */
+  onRestartTour?: () => void;
+  /** Show the full "what's new" list (from the help page) */
+  onShowWhatsNew?: () => void;
 }
 
-export const HelpPage: React.FC<HelpPageProps> = ({ onNavigateBack }) => {
+export const HelpPage: React.FC<HelpPageProps> = ({ onNavigateBack, onRestartTour, onShowWhatsNew }) => {
   const { t } = useTranslation();
 
   const canItems = [t('help.modelsCan1'), t('help.modelsCan2'), t('help.modelsCan3')];
@@ -165,6 +169,34 @@ export const HelpPage: React.FC<HelpPageProps> = ({ onNavigateBack }) => {
               </li>
             ))}
           </ul>
+        </section>
+
+        {/* Tour & What's New */}
+        <section className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-800 mb-4">
+          <h2 className="text-xl font-semibold mb-3 text-zinc-700 dark:text-zinc-200">
+            🧭 {t('help.tourWhatsNewTitle')}
+          </h2>
+          <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
+            {t('help.tourWhatsNewText')}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {onRestartTour && (
+              <button
+                onClick={onRestartTour}
+                className="px-4 py-2 text-sm font-semibold rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:opacity-90 transition-opacity"
+              >
+                {t('help.replayTourButton')}
+              </button>
+            )}
+            {onShowWhatsNew && (
+              <button
+                onClick={onShowWhatsNew}
+                className="px-4 py-2 text-sm rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+              >
+                {t('help.showWhatsNewButton')}
+              </button>
+            )}
+          </div>
         </section>
 
         {/* Footer */}
