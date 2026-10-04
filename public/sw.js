@@ -153,6 +153,7 @@ function isStaticAsset(url) {
            path.endsWith('.jpg') ||
            path.endsWith('.jpeg') ||
            path.endsWith('.svg') ||
+           path.endsWith('.webmanifest') ||
            path.endsWith('.woff2') ||
            path.endsWith('.woff') ||
            path.endsWith('.ttf');

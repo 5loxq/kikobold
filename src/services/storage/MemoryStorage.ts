@@ -1,6 +1,6 @@
 import { MemoryEntry } from '../../types';
 import { warn } from '../logging';
-import { sanitizeInput } from '../security';
+import { sanitizeInputLight } from '../security';
 
 // Separate database (not the chat DB) so no version migration of the
 // existing stores is needed. Memories are a small, independent data set.
@@ -121,9 +121,13 @@ export const saveMemory = async (entry: MemoryEntry): Promise<void> => {
     throw new Error('Invalid memory entry');
   }
 
+  // Memory text is only ever used as plain LLM context and rendered as text
+  // by React (auto-escaped). The light sanitizer strips HTML tags so no
+  // markup is stored, but keeps normal sentences intact - the full
+  // sanitizeInput() would mangle everyday text (e.g. "data:", "on x =").
   const sanitized: MemoryEntry = {
     ...entry,
-    content: sanitizeInput(entry.content.trim().slice(0, MEMORY_ENTRY_MAX_CHARS)),
+    content: sanitizeInputLight(entry.content.trim()).slice(0, MEMORY_ENTRY_MAX_CHARS),
   };
   if (sanitized.content.length === 0) {
     throw new Error('Memory content is empty');

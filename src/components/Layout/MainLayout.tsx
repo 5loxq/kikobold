@@ -2,9 +2,9 @@ import { FC, lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sidebar } from './Sidebar';
 import { ChatWindow } from '../Chat/ChatWindow';
-import { WelcomeScreen, hasSeenWelcome, markWelcomeSeen } from './WelcomeScreen';
+import { hasSeenWelcome, markWelcomeSeen, WelcomeScreen } from './WelcomeScreen';
 import { GuidedTour, hasSeenTour, resetTourSeen } from './GuidedTour';
-import { WhatsNewDialog, ALL_WHATS_NEW_ENTRIES } from './WhatsNewDialog';
+import { ALL_WHATS_NEW_ENTRIES, WhatsNewDialog } from './WhatsNewDialog';
 import { getLastSeenVersion, getWhatsNewSince, setLastSeenVersion, type WhatsNewEntry } from '../../services/whats-new';
 const ProfileManager = lazy(() => import('../Profiles/ProfileManager').then(m => ({ default: m.ProfileManager })));
 const HelpPage = lazy(() => import('../Help/HelpPage').then(m => ({ default: m.HelpPage })));
@@ -13,9 +13,9 @@ const ContactPage = lazy(() => import('../Contact/ContactPage').then(m => ({ def
 const SettingsPage = lazy(() => import('../Settings/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const LibraryManager = lazy(() => import('../Library/LibraryManager').then(m => ({ default: m.LibraryManager })));
 import { BrowserWarning } from './BrowserWarning';
-import { loadSettings, saveSettings, type AppSettings } from '../../services/settings';
+import { type AppSettings, loadSettings, saveSettings } from '../../services/settings';
 import { useLibrary } from '../../hooks/useLibrary';
-import { resolveLibraryReferences, type LibraryFile } from '../../services/storage/LibraryStorage';
+import { type LibraryFile, resolveLibraryReferences } from '../../services/storage/LibraryStorage';
 import { Chat, MemoryEntry } from '../../types';
 import { version as appVersion } from '../../../package.json';
 import { useChat } from '../../hooks/useChat';
@@ -25,7 +25,7 @@ import { useMemories } from '../../hooks/useMemories';
 import { useEnhancedInference } from '../../hooks/useEnhancedInference';
 import * as ChatStorage from '../../services/storage/ChatStorage';
 import { buildMemoryPromptBlock } from '../../services/storage/MemoryStorage';
-import { isDarkMode as checkDarkMode, setThemeMode, getSystemPrefersDark } from '../../services/theme';
+import { isDarkMode as checkDarkMode, getSystemPrefersDark, setThemeMode } from '../../services/theme';
 import { error as logError } from '../../services/logging';
 import { buildPromptWithDocuments, type DocumentAttachment, type ImageAttachment } from '../../services/attachments';
 
@@ -129,6 +129,22 @@ export const MainLayout: FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Keep the toggle icon in sync when the OS switches between light and
+  // dark while the app is running with theme "system"
+  useEffect(() => {
+    if (!('matchMedia' in window)) {
+      return;
+    }
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const listener = (e: MediaQueryListEvent): void => {
+      if (settings.theme === 'system') {
+        setDarkMode(e.matches);
+      }
+    };
+    media.addEventListener('change', listener);
+    return (): void => media.removeEventListener('change', listener);
+  }, [settings.theme]);
+
   // Apply the default profile from settings once profiles are loaded
   const defaultProfileAppliedRef = useRef(false);
   useEffect(() => {
@@ -149,7 +165,7 @@ export const MainLayout: FC = () => {
   // download without the user confirming it.
   useEffect(() => {
     const modelId = settings.defaultModelId;
-    if (!modelId || activeModel || !isModelDownloaded(modelId)) {
+    if (!modelId || activeModel !== null || !isModelDownloaded(modelId)) {
       return;
     }
     selectModel(modelId);
@@ -508,15 +524,14 @@ export const MainLayout: FC = () => {
                         })}`
                       : ''}
                   </p>
-                  {(() => {
+                  {((): JSX.Element | null => {
                     const eta = downloadEta(modelLoadStats);
                     return eta ? (
                       <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-0.5">
                         {t('chat.downloadEta', { time: eta })}
                       </p>
                     ) : null;
-                  })()}
-                  <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-2 leading-relaxed">
+                  })()}                  <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-2 leading-relaxed">
                     {t('chat.downloadLocalNote')}
                   </p>
                 </div>

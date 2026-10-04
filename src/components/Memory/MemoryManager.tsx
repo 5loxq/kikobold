@@ -102,7 +102,10 @@ export const MemoryManager: React.FC<MemoryManagerProps> = ({
                   onBlur={(e) => {
                     const value = e.target.value;
                     if (value.trim() !== fieldValue(field.key)) {
-                      void onSetMemoryField(field.key, value);
+                      onSetMemoryField(field.key, value).catch((err) => {
+                        console.error('Failed to save memory field:', err);
+                        setError(err instanceof Error ? err.message : 'Failed to save');
+                      });
                     }
                   }}
                   className="w-full px-3 py-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"

@@ -141,7 +141,7 @@ export const GuidedTour: FC<GuidedTourProps> = ({ onComplete }) => {
 
     window.addEventListener('resize', updatePosition);
     window.addEventListener('scroll', updatePosition, true);
-    return () => {
+    return (): void => {
       window.clearTimeout(settleTimer);
       window.removeEventListener('resize', updatePosition);
       window.removeEventListener('scroll', updatePosition, true);
