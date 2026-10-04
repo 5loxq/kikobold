@@ -1,19 +1,22 @@
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Chat, MemoryEntry } from '../../types';
+import type { LibraryFile } from '../../services/storage/LibraryStorage';
 import * as ChatExport from '../../services/storage/chat-export-import';
 
 interface ChatExportImportProps {
   chat: Chat | null;
   allChats: Chat[];
   memories: MemoryEntry[];
-  onImportChats: (chats: Chat[], memories: MemoryEntry[]) => Promise<void>;
+  library: LibraryFile[];
+  onImportChats: (chats: Chat[], memories: MemoryEntry[], library: LibraryFile[]) => Promise<void>;
 }
 
 export const ChatExportImport: React.FC<ChatExportImportProps> = ({
   chat,
   allChats,
   memories,
+  library,
   onImportChats,
 }) => {
   const { t } = useTranslation();
@@ -25,12 +28,12 @@ export const ChatExportImport: React.FC<ChatExportImportProps> = ({
     if (!chat) {return;}
     // Export as JSON (same format as "export all") so the file can be
     // re-imported later. Markdown output is available via the share button.
-    ChatExport.exportChats([chat], memories);
+    ChatExport.exportChats([chat], memories, library);
   };
 
   const handleExportAllChats = (): void => {
     if (allChats.length === 0) {return;}
-    ChatExport.exportChats(allChats, memories);
+    ChatExport.exportChats(allChats, memories, library);
   };
 
   const handleShareCurrentChat = async (): Promise<void> => {
@@ -57,7 +60,7 @@ export const ChatExportImport: React.FC<ChatExportImportProps> = ({
     try {
       setImportingStatus('importing');
       const result = await ChatExport.importChats(file);
-      await onImportChats(result.chats, result.memories);
+      await onImportChats(result.chats, result.memories, result.library);
       setImportingStatus('success');
       setTimeout(() => setImportingStatus(null), 3000);
     } catch (error) {

@@ -10,7 +10,12 @@ const ProfileManager = lazy(() => import('../Profiles/ProfileManager').then(m =>
 const HelpPage = lazy(() => import('../Help/HelpPage').then(m => ({ default: m.HelpPage })));
 const MemoryManager = lazy(() => import('../Memory/MemoryManager').then(m => ({ default: m.MemoryManager })));
 const ContactPage = lazy(() => import('../Contact/ContactPage').then(m => ({ default: m.ContactPage })));
+const SettingsPage = lazy(() => import('../Settings/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const LibraryManager = lazy(() => import('../Library/LibraryManager').then(m => ({ default: m.LibraryManager })));
 import { BrowserWarning } from './BrowserWarning';
+import { loadSettings, saveSettings, type AppSettings } from '../../services/settings';
+import { useLibrary } from '../../hooks/useLibrary';
+import { resolveLibraryReferences, type LibraryFile } from '../../services/storage/LibraryStorage';
 import { Chat, MemoryEntry } from '../../types';
 import { version as appVersion } from '../../../package.json';
 import { useChat } from '../../hooks/useChat';
@@ -20,26 +25,39 @@ import { useMemories } from '../../hooks/useMemories';
 import { useEnhancedInference } from '../../hooks/useEnhancedInference';
 import * as ChatStorage from '../../services/storage/ChatStorage';
 import { buildMemoryPromptBlock } from '../../services/storage/MemoryStorage';
-import { isDarkMode as checkDarkMode, setThemeMode } from '../../services/theme';
+import { isDarkMode as checkDarkMode, setThemeMode, getSystemPrefersDark } from '../../services/theme';
 import { error as logError } from '../../services/logging';
 import { buildPromptWithDocuments, type DocumentAttachment, type ImageAttachment } from '../../services/attachments';
 
 
-type ActiveTab = 'chat' | 'profiles' | 'memory' | 'settings' | 'help' | 'contact';
+type ActiveTab = 'chat' | 'profiles' | 'memory' | 'library' | 'settings' | 'help' | 'contact';
 
 export const MainLayout: FC = () => {
   const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState<ActiveTab>('chat');
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
   const [darkMode, setDarkMode] = useState<boolean>(checkDarkMode());
+  // Apply settings changes: persist them and update the theme
+  const handleSettingsChange = (next: AppSettings): void => {
+    setSettings(next);
+    saveSettings(next);
+    if (next.theme !== 'system') {
+      setThemeMode(next.theme);
+      setDarkMode(next.theme === 'dark');
+    } else {
+      setThemeMode('system');
+      setDarkMode(getSystemPrefersDark());
+    }
+  };
   const handleToggleTheme = (): void => {
     const next = !darkMode;
-    setThemeMode(next ? 'dark' : 'light');
-    setDarkMode(next);
+    handleSettingsChange({ ...settings, theme: next ? 'dark' : 'light' });
   };
   const { chat, chats, loadChats, loadChat, createNewChat, deleteChat, addMessage, renameChat } = useChat();
   const { profiles, activeProfile, selectProfile, createProfile, updateProfile, deleteProfile, exportProfiles, importProfiles } = useProfiles();
-  const { memories, addMemory, updateMemory, deleteMemory, importMemories } = useMemories();
+  const { memories, addMemory, setMemoryField, updateMemory, deleteMemory, importMemories } = useMemories();
+  const { libraryFiles, addLibraryFile, deleteLibraryFile, importLibraryFiles } = useLibrary();
   const { downloadedModels, activeModel, deleteModel: deleteDownloadedModel, selectModel, isModelDownloaded, getModelInfo } = useModels();
   const {
     loadModel,
@@ -98,6 +116,44 @@ export const MainLayout: FC = () => {
   useEffect(() => {
     refreshStatus();
   }, [activeModel?.id, refreshStatus]);
+
+  // Apply the persisted theme from the app settings on startup
+  useEffect(() => {
+    if (settings.theme !== 'system') {
+      setThemeMode(settings.theme);
+      setDarkMode(settings.theme === 'dark');
+    } else {
+      setDarkMode(getSystemPrefersDark());
+    }
+    // Run once on mount - settings.theme is loaded synchronously above
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Apply the default profile from settings once profiles are loaded
+  const defaultProfileAppliedRef = useRef(false);
+  useEffect(() => {
+    if (defaultProfileAppliedRef.current || profiles.length === 0) {
+      return;
+    }
+    defaultProfileAppliedRef.current = true;
+    const target = settings.defaultProfileId
+      ? profiles.find((p) => p.id === settings.defaultProfileId)
+      : null;
+    if (target) {
+      selectProfile(target);
+    }
+  }, [profiles, settings.defaultProfileId, selectProfile]);
+
+  // Pre-select the default model from settings. Only applied when the model
+  // is already downloaded - otherwise the auto-load effect would start a
+  // download without the user confirming it.
+  useEffect(() => {
+    const modelId = settings.defaultModelId;
+    if (!modelId || activeModel || !isModelDownloaded(modelId)) {
+      return;
+    }
+    selectModel(modelId);
+  }, [settings.defaultModelId, activeModel, isModelDownloaded, selectModel]);
 
   // Automatically reload a previously downloaded model on revisit (served
   // from the browser cache). New models always require an explicit download
@@ -201,18 +257,29 @@ export const MainLayout: FC = () => {
       const prompt = attachments && attachments.length > 0
         ? buildPromptWithDocuments(message, attachments)
         : message;
+      // "@name" references to library files are resolved into the prompt
+      const promptWithLibrary = resolveLibraryReferences(prompt, libraryFiles);
       const history = chat.messages.slice(-10).map((m) => ({
         role: m.role === 'assistant' ? ('assistant' as const) : ('user' as const),
         content: m.content,
       }));
       // Memory entries are prepended to the system prompt so the model knows
       // the stored facts in every chat, not just the current conversation.
-      const memoryBlock = buildMemoryPromptBlock(memories, t('memory.systemPromptHeader'));
+      // Predefined fields are rendered as "Label: value" lines.
+      const memoryFieldLabels: Record<string, string> = {
+        name: t('memory.fieldName'),
+        work: t('memory.fieldWork'),
+        hobbies: t('memory.fieldHobbies'),
+        location: t('memory.fieldLocation'),
+      };
+      const memoryBlock = settings.memoryEnabled
+        ? buildMemoryPromptBlock(memories, t('memory.systemPromptHeader'), memoryFieldLabels)
+        : null;
       const systemPrompt = [memoryBlock, activeProfile.systemPrompt]
         .filter(Boolean)
         .join('\n\n');
       setStreamingMessage('start');
-      const result = await generateStream(prompt, {
+      const result = await generateStream(promptWithLibrary, {
         temperature: activeProfile.temperature,
         top_p: activeProfile.topP,
         max_tokens: activeProfile.maxTokens,
@@ -224,8 +291,10 @@ export const MainLayout: FC = () => {
       if (result && result.trim().length > 0) {
         await addMessage('assistant', result);
 
-        // Auto-speak the response
-        speakResponse(result);
+        // Auto-speak the response (can be disabled in the settings)
+        if (settings.autoSpeak) {
+          speakResponse(result);
+        }
       }
     } catch (err) {
       logError('Failed to send message:', err);
@@ -283,7 +352,7 @@ export const MainLayout: FC = () => {
     }
   };
 
-  const handleImportChats = async (importedChats: Chat[], importedMemories: MemoryEntry[]): Promise<void> => {
+  const handleImportChats = async (importedChats: Chat[], importedMemories: MemoryEntry[], importedLibrary: LibraryFile[]): Promise<void> => {
     // Import each chat into the database
     for (const importedChat of importedChats) {
       await ChatStorage.saveChat(importedChat);
@@ -291,6 +360,10 @@ export const MainLayout: FC = () => {
     // Restore memory entries contained in the export file (if any)
     if (importedMemories.length > 0) {
       await importMemories(importedMemories);
+    }
+    // Restore library files contained in the export file (if any)
+    if (importedLibrary.length > 0) {
+      await importLibraryFiles(importedLibrary);
     }
     // Reload chats to reflect the imported ones
     await loadChats();
@@ -478,6 +551,7 @@ export const MainLayout: FC = () => {
             onRenameChat={renameChat}
             onImportChats={handleImportChats}
             memories={memories}
+            library={libraryFiles}
           />
         )}
 
@@ -501,58 +575,33 @@ export const MainLayout: FC = () => {
             <MemoryManager
               memories={memories}
               onAddMemory={addMemory}
+              onSetMemoryField={setMemoryField}
               onUpdateMemory={updateMemory}
               onDeleteMemory={deleteMemory}
             />
           </Suspense>
         )}
 
+        {activeTab === 'library' && (
+          <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
+            <LibraryManager
+              files={libraryFiles}
+              onAddFile={addLibraryFile}
+              onDeleteFile={deleteLibraryFile}
+            />
+          </Suspense>
+        )}
+
         {activeTab === 'settings' && (
-          <div className="flex-1 p-4 sm:p-8 overflow-auto">
-            <h2 className="text-2xl font-bold mb-6 text-zinc-800 dark:text-zinc-100">{t('settings.title')}</h2>
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-800 max-w-2xl">
-              <div className="space-y-6">
-                <div>
-                  <h3 className="font-bold text-lg mb-2 text-zinc-800 dark:text-zinc-100">{t('settings.storage')}</h3>
-                  <p className="text-zinc-600 dark:text-zinc-400">
-                    {t('settings.downloadedModels')}: {downloadedModels.length}
-                  </p>
-                  <p className="text-zinc-600 dark:text-zinc-400">
-                    {t('settings.totalSize')}: {(downloadedModels.reduce((sum, m) => sum + m.size, 0) / (1024 * 1024 * 1024)).toFixed(2)} GB
-                  </p>
-                  {downloadedModels.length > 0 && (
-                    <ul className="mt-3 space-y-2">
-                      {downloadedModels.map((m) => (
-                        <li
-                          key={m.id}
-                          className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700"
-                        >
-                          <span className="text-sm text-zinc-700 dark:text-zinc-200 truncate">
-                            {m.name} · {(m.size / (1024 * 1024 * 1024)).toFixed(2)} GB
-                          </span>
-                          <button
-                            onClick={() => deleteDownloadedModel(m.id)}
-                            className="text-xs px-2.5 py-1 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/70 transition-colors whitespace-nowrap"
-                          >
-                            {t('models.delete')}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg mb-2 text-zinc-800 dark:text-zinc-100">{t('settings.about')}</h3>
-                  <p className="text-zinc-600 dark:text-zinc-400">
-                    KI Kobold v{appVersion}
-                  </p>
-                  <p className="text-zinc-600 dark:text-zinc-400">
-                    {t('settings.description')}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
+            <SettingsPage
+              settings={settings}
+              onChange={handleSettingsChange}
+              profiles={profiles}
+              downloadedModels={downloadedModels}
+              onDeleteModel={deleteDownloadedModel}
+            />
+          </Suspense>
         )}
 
         {activeTab === 'help' && (

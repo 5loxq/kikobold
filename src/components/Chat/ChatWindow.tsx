@@ -4,6 +4,8 @@ import { Chat, LocalModel, MemoryEntry, Profile } from '../../types';
 import { MessageList } from './MessageList';
 import { InputBox } from './InputBox';
 import { ChatExportImport } from './chat-export-import';
+import { FileDropWarning } from './FileDropWarning';
+import type { LibraryFile } from '../../services/storage/LibraryStorage';
 import { getModelConfig, MODELS } from '../../services/models/model-registry';
 import { supportsWllamaJspi } from '../../services/inference/wllama-engine';
 
@@ -33,8 +35,9 @@ interface ChatWindowProps {
   onSelectModel: (modelId: string) => void;
   onSelectProfile?: (profileId: string) => void;
   onRenameChat?: (chatId: string, newTitle: string) => void;
-  onImportChats?: (chats: Chat[], memories: MemoryEntry[]) => Promise<void>;
+  onImportChats?: (chats: Chat[], memories: MemoryEntry[], library: LibraryFile[]) => Promise<void>;
   memories?: MemoryEntry[];
+  library?: LibraryFile[];
 }
 
 export const ChatWindow: React.FC<ChatWindowProps> = ({
@@ -63,6 +66,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   onRenameChat,
   onImportChats,
   memories = [],
+  library = [],
 }) => {
   const { t } = useTranslation();
   const [selectedModelId, setSelectedModelId] = useState<string>(_activeModel?.id ?? '');
@@ -129,6 +133,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
   return (
     <div className="flex-1 flex flex-col bg-zinc-50 dark:bg-zinc-900 min-h-0">
+      {/* Drag & drop warning overlay (drop itself is not supported) */}
+      <FileDropWarning />
       {/* WebGPU Warning */}
       {webgpuAvailable === false && (
         <div className="bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900 px-4 py-3">
@@ -319,6 +325,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             chat={chat}
             allChats={chats}
             memories={memories}
+            library={library}
             onImportChats={onImportChats ?? (async (): Promise<void> => {})}
           />
           <button

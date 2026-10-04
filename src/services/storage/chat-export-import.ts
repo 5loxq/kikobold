@@ -1,6 +1,7 @@
 import { Chat, MemoryEntry, Message } from '../../types';
 import { info, warn } from '../logging';
 import { validateFileUpload } from '../security';
+import type { LibraryFile } from './LibraryStorage';
 
 export interface ExportedChat {
   version: string;
@@ -8,6 +9,8 @@ export interface ExportedChat {
   chats: Chat[];
   /** Optional memory entries (added in v1.1 of the export format) */
   memories?: MemoryEntry[];
+  /** Optional library files (added in v1.2 of the export format) */
+  library?: LibraryFile[];
 }
 
 // Validate a memory entry for export/import
@@ -19,6 +22,20 @@ function validateMemoryEntry(entry: unknown): entry is MemoryEntry {
     typeof (entry as MemoryEntry).content === 'string' &&
     typeof (entry as MemoryEntry).createdAt === 'number' &&
     typeof (entry as MemoryEntry).updatedAt === 'number'
+  );
+}
+
+// Validate a library file for export/import
+function validateLibraryFile(entry: unknown): entry is LibraryFile {
+  return (
+    typeof entry === 'object' &&
+    entry !== null &&
+    typeof (entry as LibraryFile).id === 'string' &&
+    typeof (entry as LibraryFile).name === 'string' &&
+    typeof (entry as LibraryFile).content === 'string' &&
+    typeof (entry as LibraryFile).size === 'number' &&
+    typeof (entry as LibraryFile).createdAt === 'number' &&
+    typeof (entry as LibraryFile).updatedAt === 'number'
   );
 }
 
@@ -49,9 +66,9 @@ function validateMessage(message: unknown): boolean {
 }
 
 /**
- * Export chats (and optionally memory entries) as JSON file
+ * Export chats (and optionally memory entries / library files) as JSON file
  */
-export const exportChats = (chats: Chat[], memories: MemoryEntry[] = []): void => {
+export const exportChats = (chats: Chat[], memories: MemoryEntry[] = [], library: LibraryFile[] = []): void => {
   try {
     if (!Array.isArray(chats)) {
       throw new Error('Invalid chats array');
@@ -68,11 +85,16 @@ export const exportChats = (chats: Chat[], memories: MemoryEntry[] = []): void =
       ? memories.filter((entry) => validateMemoryEntry(entry))
       : [];
 
+    const validLibrary = Array.isArray(library)
+      ? library.filter((entry) => validateLibraryFile(entry))
+      : [];
+
     const exportData: ExportedChat = {
-      version: '1.1',
+      version: '1.2',
       timestamp: Date.now(),
       chats: validChats,
       ...(validMemories.length > 0 ? { memories: validMemories } : {}),
+      ...(validLibrary.length > 0 ? { library: validLibrary } : {}),
     };
 
     const dataStr = JSON.stringify(exportData, null, 2);
@@ -94,10 +116,11 @@ export const exportChats = (chats: Chat[], memories: MemoryEntry[] = []): void =
 export interface ChatImportResult {
   chats: Chat[];
   memories: MemoryEntry[];
+  library: LibraryFile[];
 }
 
 /**
- * Import chats (and memory entries, if present) from a JSON file
+ * Import chats (and memory entries / library files, if present) from a JSON file
  */
 export const importChats = (file: File): Promise<ChatImportResult> => {
   return new Promise((resolve, reject) => {
@@ -137,7 +160,7 @@ export const importChats = (file: File): Promise<ChatImportResult> => {
         }
 
         // Validate version
-        if (data.version !== '1.0' && data.version !== '1.1') {
+        if (data.version !== '1.0' && data.version !== '1.1' && data.version !== '1.2') {
           warn(`Import file version ${data.version} may not be fully compatible`);
         }
 
@@ -168,8 +191,19 @@ export const importChats = (file: File): Promise<ChatImportResult> => {
             })
           : [];
 
+        // Library files are optional (export formats < 1.2 have none)
+        const validLibrary = Array.isArray(data.library)
+          ? data.library.filter((entry: unknown) => {
+              if (!validateLibraryFile(entry)) {
+                warn('Invalid library file skipped during import');
+                return false;
+              }
+              return true;
+            })
+          : [];
+
         info(`Successfully imported ${validChats.length} chats`);
-        resolve({ chats: validChats, memories: validMemories });
+        resolve({ chats: validChats, memories: validMemories, library: validLibrary });
       } catch (error) {
         console.error('Import error:', error);
         reject(new Error(`Failed to parse import file: ${error instanceof Error ? error.message : 'Unknown error'}`));

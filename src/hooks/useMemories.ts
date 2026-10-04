@@ -7,6 +7,7 @@ import { error as logError } from '../services/logging';
 export const useMemories = (): {
   memories: MemoryEntry[];
   addMemory: (content: string) => Promise<void>;
+  setMemoryField: (fieldKey: string, content: string) => Promise<void>;
   updateMemory: (entry: MemoryEntry) => Promise<void>;
   deleteMemory: (id: string) => Promise<void>;
   importMemories: (entries: MemoryEntry[]) => Promise<void>;
@@ -23,6 +24,20 @@ export const useMemories = (): {
     const entry = MemoryStorage.createMemoryEntry(content);
     await MemoryStorage.saveMemory(entry);
     setMemories((prev) => [...prev, entry]);
+  }, []);
+
+  /** Set (or clear, when content is empty) one of the predefined fields */
+  const setMemoryField = useCallback(async (fieldKey: string, content: string): Promise<void> => {
+    const entryId = MemoryStorage.memoryFieldEntryId(fieldKey);
+    const trimmed = content.trim();
+    if (!trimmed) {
+      await MemoryStorage.deleteMemory(entryId);
+      setMemories((prev) => prev.filter((m) => m.id !== entryId));
+      return;
+    }
+    const entry = MemoryStorage.createMemoryEntry(trimmed, fieldKey);
+    await MemoryStorage.saveMemory(entry);
+    setMemories((prev) => [...prev.filter((m) => m.id !== entryId), entry]);
   }, []);
 
   const updateMemory = useCallback(async (entry: MemoryEntry): Promise<void> => {
@@ -47,6 +62,7 @@ export const useMemories = (): {
   return {
     memories,
     addMemory,
+    setMemoryField,
     updateMemory,
     deleteMemory,
     importMemories,
