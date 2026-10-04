@@ -19,6 +19,9 @@ export interface Chat {
 export interface MemoryEntry {
   id: string;
   content: string;
+  /** Optional predefined field key (e.g. 'name', 'work') - entries with a
+   *  field are rendered as "Label: value" in the injected memory block */
+  field?: string;
   createdAt: number;
   updatedAt: number;
 }

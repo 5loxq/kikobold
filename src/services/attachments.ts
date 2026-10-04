@@ -5,9 +5,10 @@ export interface DocumentAttachment {
   text: string;
 }
 
-const MAX_FILE_SIZE = 512 * 1024;
+export const MAX_FILE_SIZE = 512 * 1024;
 const MAX_ATTACHMENTS = 3;
-const ALLOWED_EXTENSIONS = ['txt', 'md', 'json', 'csv', 'tsv', 'log', 'xml', 'yml', 'yaml', 'ini', 'cfg', 'ts', 'tsx', 'js', 'jsx', 'py', 'java', 'c', 'cpp', 'h', 'hpp', 'cs', 'go', 'rs', 'rb', 'php', 'sql', 'sh', 'css', 'html'];
+// Also used by the library (LibraryStorage) to decide which files it accepts
+export const ALLOWED_EXTENSIONS = ['txt', 'md', 'json', 'csv', 'tsv', 'log', 'xml', 'yml', 'yaml', 'ini', 'cfg', 'ts', 'tsx', 'js', 'jsx', 'py', 'java', 'c', 'cpp', 'h', 'hpp', 'cs', 'go', 'rs', 'rb', 'php', 'sql', 'sh', 'css', 'html'];
 
 export const isAllowedDocument = (file: File): boolean => {
   const ext = file.name.split('.').pop()?.toLowerCase() ?? '';

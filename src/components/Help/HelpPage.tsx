@@ -27,6 +27,16 @@ export const HelpPage: React.FC<HelpPageProps> = ({ onNavigateBack, onRestartTou
     t('help.importExportList3'),
     t('help.importExportList4'),
   ];
+  const attachmentCanItems = [
+    t('help.attachCan1'),
+    t('help.attachCan2'),
+    t('help.attachCan3'),
+  ];
+  const attachmentCannotItems = [
+    t('help.attachCannot1'),
+    t('help.attachCannot2'),
+    t('help.attachCannot3'),
+  ];
   const tips = [t('help.tip1'), t('help.tip2'), t('help.tip3'), t('help.tip4')];
 
   return (
@@ -169,6 +179,56 @@ export const HelpPage: React.FC<HelpPageProps> = ({ onNavigateBack, onRestartTou
               </li>
             ))}
           </ul>
+        </section>
+
+        {/* Attachments & Library */}
+        <section className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-800 mb-4">
+          <h2 className="text-xl font-semibold mb-3 text-zinc-700 dark:text-zinc-200">
+            📎 {t('help.attachmentsTitle')}
+          </h2>
+          <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
+            {t('help.attachmentsIntro')}
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div className="rounded-xl border border-green-200 dark:border-green-900/60 bg-green-50/60 dark:bg-green-950/20 p-4">
+              <h3 className="font-semibold text-green-700 dark:text-green-400 mb-2">
+                ✅ {t('help.attachCanTitle')}
+              </h3>
+              <ul className="space-y-1.5">
+                {attachmentCanItems.map((item) => (
+                  <li key={item} className="text-sm text-zinc-600 dark:text-zinc-400 flex items-start gap-2">
+                    <span className="text-green-600 dark:text-green-500 mt-0.5">•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50/60 dark:bg-red-950/20 p-4">
+              <h3 className="font-semibold text-red-700 dark:text-red-400 mb-2">
+                ⛔ {t('help.attachCannotTitle')}
+              </h3>
+              <ul className="space-y-1.5">
+                {attachmentCannotItems.map((item) => (
+                  <li key={item} className="text-sm text-zinc-600 dark:text-zinc-400 flex items-start gap-2">
+                    <span className="text-red-500 dark:text-red-400 mt-0.5">•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <p className="text-sm text-zinc-500 dark:text-zinc-500 leading-relaxed border-l-4 border-amber-300 dark:border-amber-800 pl-3 mb-4">
+            ⚠️ {t('help.attachDropHint')}
+          </p>
+          <h3 className="font-semibold text-zinc-700 dark:text-zinc-200 mb-2">
+            📚 {t('help.libraryTitle')}
+          </h3>
+          <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-2">
+            {t('help.libraryText')}
+          </p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-500 leading-relaxed border-l-4 border-indigo-300 dark:border-indigo-800 pl-3">
+            💡 {t('help.libraryHint')}
+          </p>
         </section>
 
         {/* Tour & What's New */}

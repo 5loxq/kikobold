@@ -12,6 +12,17 @@ const STORE_NAME = 'memories';
 export const MEMORY_ENTRY_MAX_CHARS = 300;
 export const MEMORY_TOTAL_MAX_CHARS = 1000;
 
+/** Predefined memory fields the user can fill in (Name, Work, ...).
+ *  Each field is a singleton entry with a deterministic id. */
+export const MEMORY_FIELDS: Array<{ key: string; labelKey: string; placeholderKey: string }> = [
+  { key: 'name', labelKey: 'memory.fieldName', placeholderKey: 'memory.fieldNamePlaceholder' },
+  { key: 'work', labelKey: 'memory.fieldWork', placeholderKey: 'memory.fieldWorkPlaceholder' },
+  { key: 'hobbies', labelKey: 'memory.fieldHobbies', placeholderKey: 'memory.fieldHobbiesPlaceholder' },
+  { key: 'location', labelKey: 'memory.fieldLocation', placeholderKey: 'memory.fieldLocationPlaceholder' },
+];
+
+export const memoryFieldEntryId = (fieldKey: string): string => `memory_field_${fieldKey}`;
+
 let db: IDBDatabase | null = null;
 let dbReadyPromise: Promise<void> | null = null;
 
@@ -161,14 +172,16 @@ export const deleteMemory = async (id: string): Promise<void> => {
   });
 };
 
-export const createMemoryEntry = (content: string): MemoryEntry => {
+export const createMemoryEntry = (content: string, field?: string): MemoryEntry => {
   if (typeof content !== 'string' || content.trim().length === 0) {
     throw new Error('Memory content must be a non-empty string');
   }
   const now = Date.now();
   return {
-    id: `memory_${now}_${Math.random().toString(36).substr(2, 9)}`,
+    // Field entries use a deterministic id so re-saving overwrites them
+    id: field ? memoryFieldEntryId(field) : `memory_${now}_${Math.random().toString(36).substr(2, 9)}`,
     content: content.trim().slice(0, MEMORY_ENTRY_MAX_CHARS),
+    ...(field ? { field } : {}),
     createdAt: now,
     updatedAt: now,
   };
@@ -179,8 +192,13 @@ export const totalMemoryChars = (entries: MemoryEntry[]): number =>
   entries.reduce((sum, entry) => sum + entry.content.length, 0);
 
 /** Build the text block that is prepended to the system prompt, or null if
- *  there is nothing to inject. Honors the total character limit. */
-export const buildMemoryPromptBlock = (entries: MemoryEntry[], header: string): string | null => {
+ *  there is nothing to inject. Honors the total character limit. Field
+ *  entries are rendered as "Label: value" using the passed label map. */
+export const buildMemoryPromptBlock = (
+  entries: MemoryEntry[],
+  header: string,
+  fieldLabels: Record<string, string> = {}
+): string | null => {
   const usable = entries.filter((entry) => entry.content.trim().length > 0);
   if (usable.length === 0) {
     return null;
@@ -189,7 +207,8 @@ export const buildMemoryPromptBlock = (entries: MemoryEntry[], header: string): 
   const lines: string[] = [];
   let total = 0;
   for (const entry of usable) {
-    const line = `- ${entry.content.trim()}`;
+    const label = entry.field ? fieldLabels[entry.field] : undefined;
+    const line = `- ${label ? `${label}: ` : ''}${entry.content.trim()}`;
     if (total + line.length > MEMORY_TOTAL_MAX_CHARS) {
       warn('Memory limit reached - older entries were cut off for this request');
       break;

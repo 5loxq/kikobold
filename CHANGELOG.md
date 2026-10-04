@@ -2,6 +2,18 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [3.0.0] - 2026-10-04
+
+### Neu
+
+- **Bibliothek**: Neuer Menüpunkt "Bibliothek" - Textdateien (bis 512 KB) einmal hinterlegen und im Chat per "@Name" referenzieren; die KI erhält den Dateiinhalt als Kontext (max. 4000 Zeichen pro Datei, 12000 gesamt). Falsche Formate werden abgelehnt, Vorschau und Löschen inklusive. Export/Import sichert die Bibliothek mit (Format v1.2).
+- **Gedächtnis mit vordefinierten Feldern**: Fertige Felder für Name, Arbeit, Hobbys und Wohnort (automatisches Speichern beim Verlassen des Feldes, Leeren löscht) plus eigene freie Einträge. Felder werden der KI als "Name: Max" usw. übergeben.
+- **Neue Einstellungsseite**: Theme (System/Hell/Dunkel), Standard-Profil, Standard-Modell (nur wenn bereits heruntergeladen), "Antworten vorlesen" an/aus, "Gedächtnis verwenden" an/aus - alles dauerhaft gespeichert.
+- **PWA**: Die Seite ist als App installierbar (Smartphone und Desktop) - Manifest, Icons (192/512/Apple), Meta-Tags; der bestehende Service Worker liefert die Offline-Fähigkeit.
+- **Drag & Drop-Warnung**: Wer eine Datei ins Fenster zieht, sieht eine Warnung, dass Drag & Drop nicht unterstützt wird - die Datei wird weder geöffnet noch gesendet; Verweis auf die Büroklammer.
+- **Hilfe: Anhänge & Bibliothek**: Neue Sektion erklärt, welche Dateien funktionieren (Textdateien bis 512 KB, max. 3 pro Nachricht; Bilder nur mit multimodalen Modellen) und welche nicht (PDF, Word, Excel, Drag & Drop).
+- **"Das ist neu"-Anzeige** für Version 3.0.0.
+
 ## [2.4.0] - 2026-10-04
 
 ### Neu
