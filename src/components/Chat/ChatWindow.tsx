@@ -358,6 +358,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         onSendMessageWithImages={onSendMessageWithImages}
         isLoading={isLoading}
         isModelLoaded={isModelLoaded}
+        hasModelSelected={!!_activeModel}
         isGenerating={isGenerating}
         onStopGeneration={onStopGeneration}
       />

@@ -95,8 +95,17 @@ export const MainLayout: FC = () => {
       if (entries.length > 0) {
         setWhatsNewEntries(entries);
       }
+    } else if (hasSeenWelcome()) {
+      // Returning visitor from before the version tracking existed (v2.4.0):
+      // no stored version, but the welcome page was already seen. Treat them
+      // as "last seen 2.3.0" so they catch up on everything they missed.
+      const entries = getWhatsNewSince('2.3.0');
+      if (entries.length > 0) {
+        setWhatsNewEntries(entries);
+      }
     }
     setLastSeenVersion(appVersion);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const isModelLoaded = currentModelId === activeModel?.id;
