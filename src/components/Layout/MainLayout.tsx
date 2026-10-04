@@ -2,6 +2,7 @@ import { FC, lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sidebar } from './Sidebar';
 import { ChatWindow } from '../Chat/ChatWindow';
+import { WelcomeScreen } from './WelcomeScreen';
 const ProfileManager = lazy(() => import('../Profiles/ProfileManager').then(m => ({ default: m.ProfileManager })));
 const HelpPage = lazy(() => import('../Help/HelpPage').then(m => ({ default: m.HelpPage })));
 import { Chat } from '../../types';
@@ -47,8 +48,22 @@ export const MainLayout: FC = () => {
   } = useEnhancedInference({ modelId: activeModel?.id ?? '', autoLoad: false });
   const [localError, setLocalError] = useState<string | null>(null);
   const [streamingMessage, setStreamingMessage] = useState<string | null>(null);
+  // Model that is currently being downloaded/loaded (may differ from the
+  // still-active model while a new one is being fetched)
+  const [pendingModelId, setPendingModelId] = useState<string | null>(null);
 
   const isModelLoaded = currentModelId === activeModel?.id;
+
+  // Remaining time for the current download, derived from size/speed stats
+  const downloadEta = (stats: { loadedMB: number; totalMB: number; speedMBps: number } | null): string | null => {
+    if (!stats || stats.speedMBps <= 0 || stats.totalMB <= stats.loadedMB) {
+      return null;
+    }
+    const remainingSec = Math.max(0, (stats.totalMB - stats.loadedMB) / stats.speedMBps);
+    const min = Math.floor(remainingSec / 60);
+    const sec = Math.round(remainingSec % 60);
+    return min > 0 ? `${min} min ${sec} s` : `${sec} s`;
+  };
 
   // Refresh inference status when active model changes
   useEffect(() => {
@@ -68,7 +83,8 @@ export const MainLayout: FC = () => {
       return;
     }
     autoLoadedModelRef.current = modelId;
-    loadModel(modelId);
+    setPendingModelId(modelId);
+    loadModel(modelId).finally(() => setPendingModelId(null));
   }, [activeModel?.id, isLoading, currentModelId, isModelDownloaded, loadModel]);
 
   // Start directly in a fresh chat on first visit (or when the last chat was
@@ -217,13 +233,16 @@ export const MainLayout: FC = () => {
       }
 
       // Load the model via unified inference engine (real download with progress)
+      setPendingModelId(modelId);
       const success = await loadModel(modelId);
+      setPendingModelId(null);
 
       if (success) {
         // Select and register the model (will save to storage if not already saved)
         selectModel(modelId);
       }
     } catch (err) {
+      setPendingModelId(null);
       logError('Model selection failed:', err);
       setLocalError(err instanceof Error ? err.message : 'Model selection failed');
     }
@@ -236,6 +255,12 @@ export const MainLayout: FC = () => {
     }
     // Reload chats to reflect the imported ones
     await loadChats();
+    // Open the most recently updated imported chat so the result is visible
+    const latest = [...importedChats].sort((a, b) => b.updatedAt - a.updatedAt)[0];
+    if (latest) {
+      await loadChat(latest.id);
+      setActiveTab('chat');
+    }
   };
 
   const handleSelectProfile = (profileId: string): void => {
@@ -279,7 +304,7 @@ export const MainLayout: FC = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-4 py-4 border-b border-zinc-800">
-              <h1 className="text-lg font-semibold text-white">Local LLM</h1>
+              <h1 className="text-lg font-semibold text-white">KI Kobold</h1>
               <button
                 onClick={() => setShowMobileSidebar(false)}
                 className="text-zinc-400 p-2 hover:bg-zinc-800 hover:text-white rounded-lg transition-colors"
@@ -334,7 +359,9 @@ export const MainLayout: FC = () => {
                 <div className="flex-1">
                   <h3 className="font-semibold text-zinc-800 dark:text-zinc-100">{t('chat.downloadingModel')}</h3>
                   <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-                    {activeModel ? `${activeModel.name}` : t('chat.processingRequest')}
+                    {getModelInfo(pendingModelId ?? activeModel?.id ?? '')?.name
+                      ?? activeModel?.name
+                      ?? t('chat.processingRequest')}
                   </p>
                   <div className="mt-3 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
                     <div
@@ -343,13 +370,25 @@ export const MainLayout: FC = () => {
                     ></div>
                   </div>
                   <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1.5 tabular-nums">
+                    {Math.round(modelLoadProgress)}%
                     {modelLoadStats
-                      ? t('chat.downloadStats', {
+                      ? ` · ${t('chat.downloadStats', {
                           loaded: Math.round(modelLoadStats.loadedMB),
                           total: Math.round(modelLoadStats.totalMB),
                           speed: modelLoadStats.speedMBps.toFixed(1),
-                        })
-                      : `${Math.round(modelLoadProgress)}%`}
+                        })}`
+                      : ''}
+                  </p>
+                  {(() => {
+                    const eta = downloadEta(modelLoadStats);
+                    return eta ? (
+                      <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-0.5">
+                        {t('chat.downloadEta', { time: eta })}
+                      </p>
+                    ) : null;
+                  })()}
+                  <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-2 leading-relaxed">
+                    {t('chat.downloadLocalNote')}
                   </p>
                 </div>
               </div>
@@ -437,7 +476,7 @@ export const MainLayout: FC = () => {
                 <div>
                   <h3 className="font-bold text-lg mb-2 text-zinc-800 dark:text-zinc-100">{t('settings.about')}</h3>
                   <p className="text-zinc-600 dark:text-zinc-400">
-                    Local LLM Chat v2.0.0
+                    KI Kobold v2.0.0
                   </p>
                   <p className="text-zinc-600 dark:text-zinc-400">
                     {t('settings.description')}
@@ -450,10 +489,13 @@ export const MainLayout: FC = () => {
 
         {activeTab === 'help' && (
           <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
-            <HelpPage />
+            <HelpPage onNavigateBack={() => setActiveTab('chat')} />
           </Suspense>
         )}
       </div>
+
+      {/* Welcome page with short guide - shown on the very first visit */}
+      <WelcomeScreen />
     </div>
   );
 };

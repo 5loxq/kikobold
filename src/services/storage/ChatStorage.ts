@@ -6,6 +6,11 @@ const DB_NAME = 'LocalLLMDB';
 const STORE_NAME = 'chats';
 
 let db: IDBDatabase | null = null;
+// Resolved once the database connection is established. All storage helpers
+// await this so callers can never race ahead of the async initialization
+// (previously e.g. the initial chat creation failed with "Database not
+// initialized" when it ran before initChatDB had completed).
+let dbReadyPromise: Promise<void> | null = null;
 
 // Validate chat object
 function validateChat(chat: unknown): chat is Chat {
@@ -33,7 +38,14 @@ function validateMessage(message: unknown): message is Message {
   );
 }
 
-export const initChatDB = async (): Promise<void> => {
+export const initChatDB = (): Promise<void> => {
+  if (!dbReadyPromise) {
+    dbReadyPromise = openChatDB();
+  }
+  return dbReadyPromise;
+};
+
+const openChatDB = (): Promise<void> => {
   return new Promise((resolve, reject) => {
     try {
       if (!window.indexedDB) {
@@ -73,6 +85,7 @@ export const initChatDB = async (): Promise<void> => {
 };
 
 export const saveChat = async (chat: Chat): Promise<void> => {
+  await initChatDB();
   if (!db) {throw new Error('Database not initialized');}
   const database = db;
 
@@ -118,6 +131,7 @@ export const saveChat = async (chat: Chat): Promise<void> => {
 };
 
 export const getChat = async (id: string): Promise<Chat | null> => {
+  await initChatDB();
   if (!db) {throw new Error('Database not initialized');}
   const database = db;
 
@@ -153,6 +167,7 @@ export const getChat = async (id: string): Promise<Chat | null> => {
 };
 
 export const getAllChats = async (): Promise<Chat[]> => {
+  await initChatDB();
   if (!db) {throw new Error('Database not initialized');}
   const database = db;
 
@@ -183,6 +198,7 @@ export const getAllChats = async (): Promise<Chat[]> => {
 };
 
 export const deleteChat = async (id: string): Promise<void> => {
+  await initChatDB();
   if (!db) {throw new Error('Database not initialized');}
   const database = db;
 

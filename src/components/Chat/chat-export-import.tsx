@@ -21,7 +21,9 @@ export const ChatExportImport: React.FC<ChatExportImportProps> = ({
 
   const handleExportCurrentChat = (): void => {
     if (!chat) {return;}
-    ChatExport.exportChatAsMarkdown(chat);
+    // Export as JSON (same format as "export all") so the file can be
+    // re-imported later. Markdown output is available via the share button.
+    ChatExport.exportChats([chat]);
   };
 
   const handleExportAllChats = (): void => {
