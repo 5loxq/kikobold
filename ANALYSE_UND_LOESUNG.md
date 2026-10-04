@@ -91,7 +91,6 @@ Ensu (https://ensu.ente.com/chat) verwendet **WebLLM** - eine speziell für Brow
 | TinyLlama-1.1B | ~300MB | ~350MB | ⚡⚡⚡ | ✅ Schnelle Tests |
 | Phi-2 | ~700MB | ~800MB | ⚡⚡⚡⚡ | ✅ Gute Balance |
 | Llama-3.1-8B | ~1.5GB | ~1.8GB | ⚡⚡ | ⚠️ Nur für starke PCs |
-| Mistral-7B | ~1.8GB | ~1.8GB | ⚡⚡ | ⚠️ Nur für starke PCs |
 
 ---
 
@@ -815,7 +814,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 | `TinyLlama-1.1B-q4f16_1-MLC` | TinyLlama 1.1B | ~300MB | ~350MB | ⚡⚡⚡ | [HuggingFace](https://huggingface.co/mlc-ai/TinyLlama-1.1B-q4f16_1-MLC) |
 | `Phi-2-q4f16_1-MLC` | Phi 2 | ~700MB | ~800MB | ⚡⚡⚡⚡ | [HuggingFace](https://huggingface.co/mlc-ai/Phi-2-q4f16_1-MLC) |
 | `Llama-3.1-8B-Instruct-q4f32_1-MLC` | Llama 3.1 8B | ~1.5GB | ~1.8GB | ⚡⚡ | [HuggingFace](https://huggingface.co/mlc-ai/Llama-3.1-8B-Instruct-q4f32_1-MLC) |
-| `Mistral-7B-Instruct-v0.3-q4f32_1-MLC` | Mistral 7B | ~1.8GB | ~1.8GB | ⚡⚡ | [HuggingFace](https://huggingface.co/mlc-ai/Mistral-7B-Instruct-v0.3-q4f32_1-MLC) |
 
 ### 6.2 Eigene Modelle hosten
 

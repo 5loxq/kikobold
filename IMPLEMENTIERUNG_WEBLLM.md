@@ -52,7 +52,6 @@ Die App wurde erfolgreich von `@xenova/transformers` auf `@mlc-ai/web-llm` umges
 ### 5. src/services/models/model-registry.ts
 **Änderungen:**
 - Alle Modelle auf MLC-Format umgestellt
-- Neue Modelle: Qwen2-0.5B, TinyLlama-1.1B, Phi-2, Llama-3.1-8B, Mistral-7B (alle MLC)
 - `provider: 'mlc-ai'` Feld hinzugefügt
 - `modelPath` zeigt jetzt auf MLC-Modell-IDs
 
@@ -141,7 +140,6 @@ const customAppConfig = {
 | TinyLlama-1.1B | 1.1B | ~300MB | ~350MB | ✅ Schnelle Tests |
 | Phi-2 | 2.7B | ~700MB | ~800MB | ✅ Gute Balance |
 | Llama-3.1-8B | 8B | ~1.5GB | ~1.8GB | ⚠️ Nur starke PCs |
-| Mistral-7B | 7B | ~1.8GB | ~1.8GB | ⚠️ Nur starke PCs |
 
 ---
 

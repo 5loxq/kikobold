@@ -587,11 +587,11 @@ export const getRecommendedModels = (useCase: string): Model[] => {
   const useCaseModels: Record<string, string[]> = {
     'general': ['qwen-0.5b', 'phi-2', 'tinyllama-1.1b'],
     'coding': ['code-llama-7b', 'phi-2', 'qwen-1.8b'],
-    'creative': ['qwen-1.8b', 'neural-chat-7b', 'mistral-7b'],
-    'analysis': ['mistral-7b', 'neural-chat-7b'],
+    'creative': ['qwen-1.8b', 'neural-chat-7b'],
+    'analysis': ['neural-chat-7b'],
     'small': ['qwen-0.5b', 'gpt-2', 'distilgpt2'],
     'medium': ['phi-2', 'qwen-1.8b'],
-    'large': ['neural-chat-7b', 'mistral-7b', 'llama-2-7b'],
+    'large': ['neural-chat-7b', 'llama-2-7b'],
   };
 
   const recommendedIds = useCaseModels[useCase.toLowerCase()] || [];
@@ -621,12 +621,12 @@ export const getCommunityRecommendations = (): Array<{
     {
       useCase: 'creative',
       description: 'Models for creative writing, storytelling, and brainstorming',
-      modelIds: ['qwen-1.8b', 'neural-chat-7b', 'mistral-7b'],
+      modelIds: ['qwen-1.8b', 'neural-chat-7b'],
     },
     {
       useCase: 'analysis',
       description: 'Models for data analysis, reasoning, and complex tasks',
-      modelIds: ['mistral-7b', 'neural-chat-7b'],
+      modelIds: ['neural-chat-7b'],
     },
     {
       useCase: 'small',
@@ -641,7 +641,7 @@ export const getCommunityRecommendations = (): Array<{
     {
       useCase: 'large',
       description: 'Powerful models for complex tasks (require more resources)',
-      modelIds: ['neural-chat-7b', 'mistral-7b', 'llama-2-7b'],
+      modelIds: ['neural-chat-7b', 'llama-2-7b'],
     },
     {
       useCase: 'beginner',
@@ -651,7 +651,7 @@ export const getCommunityRecommendations = (): Array<{
     {
       useCase: 'expert',
       description: 'Advanced models for experienced users',
-      modelIds: ['mistral-7b', 'neural-chat-7b', 'llama-2-7b'],
+      modelIds: ['neural-chat-7b', 'llama-2-7b'],
     },
   ];
 
@@ -732,7 +732,7 @@ export const getSystemRecommendedModels = (
   
   // If we have enough memory, recommend even larger models
   if (totalMemoryMB >= 16000) { // 16GB+
-    const largeModels = ['neural-chat-7b', 'mistral-7b', 'llama-2-7b'];
+    const largeModels = ['neural-chat-7b', 'llama-2-7b'];
     largeModels.forEach(modelId => {
       const model = MODELS.find(m => m.id === modelId);
       if (model) {
