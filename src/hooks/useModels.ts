@@ -17,7 +17,7 @@ const getEstimatedSizeFromModelSize = (modelSize: string): number => {
     '1.1B': 300 * 1024 * 1024,   // ~300MB (MLC TinyLlama)
     '1.8B': 1200 * 1024 * 1024,  // ~1.2GB
     '2.7B': 700 * 1024 * 1024,   // ~700MB (MLC Phi-2)
-    '7B': 1800 * 1024 * 1024,   // ~1.8GB (MLC Mistral)
+    '7B': 1800 * 1024 * 1024,   // ~1.8GB
     '8B': 1500 * 1024 * 1024,   // ~1.5GB (MLC Llama 8B)
   };
   return sizeMap[modelSize] || 500 * 1024 * 1024; // Default 500MB
