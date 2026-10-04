@@ -114,6 +114,31 @@
     "firefoxText": "The AI models work noticeably slower in Firefox than in Chrome or Edge - answers often appear word by word. Please use Chrome or Edge for full speed.",
     "firefoxReason": "Reason: Firefox does not support JSPI (JavaScript Promise Integration). Because of that, the engine has to take a slow detour for WASM models like LFM 2.5. This is a browser limitation and cannot be fixed from this website."
   },
+  "whatsNew": {
+    "title": "What's new",
+    "subtitle": "A few things have changed since your last visit:",
+    "closeButton": "Got it!",
+    "v240": {
+      "item1": "What's-new display: when something changes, you see a short summary on your next visit.",
+      "item2": "Help page: the introduction can now be restarted at any time, and all past changes are listed there."
+    },
+    "v230": {
+      "item1": "Contact page: if you have questions or need help, you can now reach out via email (menu → Contact).",
+      "item2": "Firefox warning: Firefox users see a notice explaining why the AI is slower there."
+    },
+    "v220": {
+      "item1": "Memory: store facts about yourself (name, job, preferences) that the AI knows in every chat (menu → Memory).",
+      "item2": "Export/import now backs up the memory and restores it on import."
+    },
+    "v210": {
+      "item1": "Welcome page and guided introduction on your first visit.",
+      "item2": "Download progress with size, speed and estimated time remaining.",
+      "item3": "Completely redesigned help page."
+    },
+    "v200": {
+      "item1": "New design, curated models (LFM 2.5, Gemma 2, Qwen 2) - models are downloaded directly from this website."
+    }
+  },
   "memory": {
     "title": "Memory",
     "introText": "Write down facts about yourself that the AI should know with every message - for example your name, your job or what you like to talk about. The entries apply to all chats and are included in exports as a backup. The AI reads the memory but does not store anything itself: it does not automatically remember what you tell it.",
@@ -222,6 +247,10 @@
     "tip4": "If an answer is nonsense: rephrase the question or start a new chat",
     "needMoreHelp": "Still Have Questions?",
     "contactSupport": "The best way is to simply try everything out - that's exactly what this page is for. If you have questions or need help, reach out via the contact page (menu → Contact).",
+    "tourWhatsNewTitle": "Introduction & What's New",
+    "tourWhatsNewText": "Did you skip the introduction or want to see it again? Here you can restart it at any time. You can also review all changes from the last versions.",
+    "replayTourButton": "Restart the introduction",
+    "showWhatsNewButton": "Show all what's new",
     "closeHelp": "Back to Chat"
   },
   "settings": {

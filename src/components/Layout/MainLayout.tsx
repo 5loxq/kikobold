@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { Sidebar } from './Sidebar';
 import { ChatWindow } from '../Chat/ChatWindow';
 import { WelcomeScreen, hasSeenWelcome, markWelcomeSeen } from './WelcomeScreen';
-import { GuidedTour, hasSeenTour } from './GuidedTour';
+import { GuidedTour, hasSeenTour, resetTourSeen } from './GuidedTour';
+import { WhatsNewDialog, ALL_WHATS_NEW_ENTRIES } from './WhatsNewDialog';
+import { getLastSeenVersion, getWhatsNewSince, setLastSeenVersion, type WhatsNewEntry } from '../../services/whats-new';
 const ProfileManager = lazy(() => import('../Profiles/ProfileManager').then(m => ({ default: m.ProfileManager })));
 const HelpPage = lazy(() => import('../Help/HelpPage').then(m => ({ default: m.HelpPage })));
 const MemoryManager = lazy(() => import('../Memory/MemoryManager').then(m => ({ default: m.MemoryManager })));
@@ -62,6 +64,22 @@ export const MainLayout: FC = () => {
   // Model that is currently being downloaded/loaded (may differ from the
   // still-active model while a new one is being fetched)
   const [pendingModelId, setPendingModelId] = useState<string | null>(null);
+  // "What's new" entries to show (auto on version change, or opened from help)
+  const [whatsNewEntries, setWhatsNewEntries] = useState<WhatsNewEntry[]>([]);
+
+  // Returning users get a summary of changes since their last visit.
+  // First-time visitors get nothing here - they see the welcome page and
+  // the guided tour instead. The current version is stored either way.
+  useEffect(() => {
+    const lastSeen = getLastSeenVersion();
+    if (lastSeen) {
+      const entries = getWhatsNewSince(lastSeen);
+      if (entries.length > 0) {
+        setWhatsNewEntries(entries);
+      }
+    }
+    setLastSeenVersion(appVersion);
+  }, []);
 
   const isModelLoaded = currentModelId === activeModel?.id;
 
@@ -289,6 +307,18 @@ export const MainLayout: FC = () => {
     if (selectedProfile) {
       selectProfile(selectedProfile);
     }
+  };
+
+  // Restart the guided tour from the help page
+  const handleRestartTour = (): void => {
+    resetTourSeen();
+    setTourDone(false);
+    setActiveTab('chat');
+  };
+
+  // Show the full "what's new" list from the help page
+  const handleShowWhatsNew = (): void => {
+    setWhatsNewEntries(ALL_WHATS_NEW_ENTRIES);
   };
 
   return (
@@ -527,7 +557,11 @@ export const MainLayout: FC = () => {
 
         {activeTab === 'help' && (
           <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
-            <HelpPage onNavigateBack={() => setActiveTab('chat')} />
+            <HelpPage
+              onNavigateBack={() => setActiveTab('chat')}
+              onRestartTour={handleRestartTour}
+              onShowWhatsNew={handleShowWhatsNew}
+            />
           </Suspense>
         )}
 
@@ -552,6 +586,14 @@ export const MainLayout: FC = () => {
           Waits for the initial chat so the tour targets exist. */}
       {welcomeDone && !tourDone && chat && (
         <GuidedTour onComplete={() => setTourDone(true)} />
+      )}
+
+      {/* "What's new" summary for returning users (or opened from the help page) */}
+      {whatsNewEntries.length > 0 && (
+        <WhatsNewDialog
+          entries={whatsNewEntries}
+          onClose={() => setWhatsNewEntries([])}
+        />
       )}
     </div>
   );
