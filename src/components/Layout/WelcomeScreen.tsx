@@ -1,10 +1,10 @@
-import { FC, useState } from 'react';
+import { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // LocalStorage flag: once the user has seen the welcome guide, it stays closed
 const WELCOME_SEEN_KEY = 'webgui_welcome_seen_v1';
 
-const hasSeenWelcome = (): boolean => {
+export const hasSeenWelcome = (): boolean => {
   try {
     return localStorage.getItem(WELCOME_SEEN_KEY) === '1';
   } catch {
@@ -12,7 +12,7 @@ const hasSeenWelcome = (): boolean => {
   }
 };
 
-const markWelcomeSeen = (): void => {
+export const markWelcomeSeen = (): void => {
   try {
     localStorage.setItem(WELCOME_SEEN_KEY, '1');
   } catch {
@@ -20,22 +20,21 @@ const markWelcomeSeen = (): void => {
   }
 };
 
+interface WelcomeScreenProps {
+  /** Called when the user dismisses the welcome page */
+  onDismiss: () => void;
+}
+
 /**
  * Full-screen welcome page shown on the very first visit.
  * Explains in three short steps how the app works: everything runs
  * locally, one model must be downloaded once, then you can chat.
  */
-export const WelcomeScreen: FC = () => {
+export const WelcomeScreen: FC<WelcomeScreenProps> = ({ onDismiss }) => {
   const { t } = useTranslation();
-  const [visible, setVisible] = useState<boolean>(!hasSeenWelcome());
-
-  if (!visible) {
-    return null;
-  }
 
   const handleStart = (): void => {
-    markWelcomeSeen();
-    setVisible(false);
+    onDismiss();
   };
 
   const steps = [
