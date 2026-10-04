@@ -6,19 +6,22 @@ import { WelcomeScreen, hasSeenWelcome, markWelcomeSeen } from './WelcomeScreen'
 import { GuidedTour, hasSeenTour } from './GuidedTour';
 const ProfileManager = lazy(() => import('../Profiles/ProfileManager').then(m => ({ default: m.ProfileManager })));
 const HelpPage = lazy(() => import('../Help/HelpPage').then(m => ({ default: m.HelpPage })));
-import { Chat } from '../../types';
+const MemoryManager = lazy(() => import('../Memory/MemoryManager').then(m => ({ default: m.MemoryManager })));
+import { Chat, MemoryEntry } from '../../types';
 import { version as appVersion } from '../../../package.json';
 import { useChat } from '../../hooks/useChat';
 import { useModels } from '../../hooks/useModels';
 import { useProfiles } from '../../hooks/useProfiles';
+import { useMemories } from '../../hooks/useMemories';
 import { useEnhancedInference } from '../../hooks/useEnhancedInference';
 import * as ChatStorage from '../../services/storage/ChatStorage';
+import { buildMemoryPromptBlock } from '../../services/storage/MemoryStorage';
 import { isDarkMode as checkDarkMode, setThemeMode } from '../../services/theme';
 import { error as logError } from '../../services/logging';
 import { buildPromptWithDocuments, type DocumentAttachment, type ImageAttachment } from '../../services/attachments';
 
 
-type ActiveTab = 'chat' | 'profiles' | 'settings' | 'help';
+type ActiveTab = 'chat' | 'profiles' | 'memory' | 'settings' | 'help';
 
 export const MainLayout: FC = () => {
   const { t, i18n } = useTranslation();
@@ -32,6 +35,7 @@ export const MainLayout: FC = () => {
   };
   const { chat, chats, loadChats, loadChat, createNewChat, deleteChat, addMessage, renameChat } = useChat();
   const { profiles, activeProfile, selectProfile, createProfile, updateProfile, deleteProfile, exportProfiles, importProfiles } = useProfiles();
+  const { memories, addMemory, updateMemory, deleteMemory, importMemories } = useMemories();
   const { downloadedModels, activeModel, deleteModel: deleteDownloadedModel, selectModel, isModelDownloaded, getModelInfo } = useModels();
   const {
     loadModel,
@@ -181,12 +185,18 @@ export const MainLayout: FC = () => {
         role: m.role === 'assistant' ? ('assistant' as const) : ('user' as const),
         content: m.content,
       }));
+      // Memory entries are prepended to the system prompt so the model knows
+      // the stored facts in every chat, not just the current conversation.
+      const memoryBlock = buildMemoryPromptBlock(memories, t('memory.systemPromptHeader'));
+      const systemPrompt = [memoryBlock, activeProfile.systemPrompt]
+        .filter(Boolean)
+        .join('\n\n');
       setStreamingMessage('start');
       const result = await generateStream(prompt, {
         temperature: activeProfile.temperature,
         top_p: activeProfile.topP,
         max_tokens: activeProfile.maxTokens,
-        systemPrompt: activeProfile.systemPrompt,
+        systemPrompt,
         history,
         images,
       });
@@ -253,10 +263,14 @@ export const MainLayout: FC = () => {
     }
   };
 
-  const handleImportChats = async (importedChats: Chat[]): Promise<void> => {
+  const handleImportChats = async (importedChats: Chat[], importedMemories: MemoryEntry[]): Promise<void> => {
     // Import each chat into the database
     for (const importedChat of importedChats) {
       await ChatStorage.saveChat(importedChat);
+    }
+    // Restore memory entries contained in the export file (if any)
+    if (importedMemories.length > 0) {
+      await importMemories(importedMemories);
     }
     // Reload chats to reflect the imported ones
     await loadChats();
@@ -428,6 +442,7 @@ export const MainLayout: FC = () => {
             onSelectProfile={handleSelectProfile}
             onRenameChat={renameChat}
             onImportChats={handleImportChats}
+            memories={memories}
           />
         )}
 
@@ -443,6 +458,17 @@ export const MainLayout: FC = () => {
             onExportProfiles={exportProfiles}
             onImportProfiles={importProfiles}
           />
+          </Suspense>
+        )}
+
+        {activeTab === 'memory' && (
+          <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
+            <MemoryManager
+              memories={memories}
+              onAddMemory={addMemory}
+              onUpdateMemory={updateMemory}
+              onDeleteMemory={deleteMemory}
+            />
           </Suspense>
         )}
 
