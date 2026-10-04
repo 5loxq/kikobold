@@ -9,8 +9,8 @@ interface SidebarProps {
   onSelectChat: (chat: Chat) => void;
   onNewChat: () => void;
   onDeleteChat: (chatId: string) => void;
-  activeTab: 'chat' | 'profiles' | 'settings' | 'help';
-  onTabChange: (tab: 'chat' | 'profiles' | 'settings' | 'help') => void;
+  activeTab: 'chat' | 'profiles' | 'memory' | 'settings' | 'help';
+  onTabChange: (tab: 'chat' | 'profiles' | 'memory' | 'settings' | 'help') => void;
   darkMode: boolean;
   onToggleTheme: () => void;
 }
@@ -29,11 +29,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { t } = useTranslation();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  type TabId = 'chat' | 'profiles' | 'settings' | 'help';
+  type TabId = 'chat' | 'profiles' | 'memory' | 'settings' | 'help';
   const tabs: Array<{ id: TabId; icon: string; label: string }> = [
     { id: 'chat', icon: '💬', label: t('sidebar.chat') },
 
     { id: 'profiles', icon: '👤', label: t('sidebar.profiles') },
+    { id: 'memory', icon: '🧠', label: t('sidebar.memory') },
     { id: 'settings', icon: '⚙️', label: t('sidebar.settings') },
     { id: 'help', icon: '❓', label: t('sidebar.help') },
   ];

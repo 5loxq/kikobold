@@ -1,4 +1,4 @@
-import { Chat, Message } from '../../types';
+import { Chat, MemoryEntry, Message } from '../../types';
 import { info, warn } from '../logging';
 import { validateFileUpload } from '../security';
 
@@ -6,6 +6,20 @@ export interface ExportedChat {
   version: string;
   timestamp: number;
   chats: Chat[];
+  /** Optional memory entries (added in v1.1 of the export format) */
+  memories?: MemoryEntry[];
+}
+
+// Validate a memory entry for export/import
+function validateMemoryEntry(entry: unknown): entry is MemoryEntry {
+  return (
+    typeof entry === 'object' &&
+    entry !== null &&
+    typeof (entry as MemoryEntry).id === 'string' &&
+    typeof (entry as MemoryEntry).content === 'string' &&
+    typeof (entry as MemoryEntry).createdAt === 'number' &&
+    typeof (entry as MemoryEntry).updatedAt === 'number'
+  );
 }
 
 // Validate chat object for export/import
@@ -35,9 +49,9 @@ function validateMessage(message: unknown): boolean {
 }
 
 /**
- * Export chats as JSON file
+ * Export chats (and optionally memory entries) as JSON file
  */
-export const exportChats = (chats: Chat[]): void => {
+export const exportChats = (chats: Chat[], memories: MemoryEntry[] = []): void => {
   try {
     if (!Array.isArray(chats)) {
       throw new Error('Invalid chats array');
@@ -45,15 +59,20 @@ export const exportChats = (chats: Chat[]): void => {
 
     // Filter out invalid chats
     const validChats = chats.filter(chat => validateChat(chat));
-    
+
     if (validChats.length === 0) {
       throw new Error('No valid chats to export');
     }
 
+    const validMemories = Array.isArray(memories)
+      ? memories.filter((entry) => validateMemoryEntry(entry))
+      : [];
+
     const exportData: ExportedChat = {
-      version: '1.0',
+      version: '1.1',
       timestamp: Date.now(),
       chats: validChats,
+      ...(validMemories.length > 0 ? { memories: validMemories } : {}),
     };
 
     const dataStr = JSON.stringify(exportData, null, 2);
@@ -72,10 +91,15 @@ export const exportChats = (chats: Chat[]): void => {
   }
 };
 
+export interface ChatImportResult {
+  chats: Chat[];
+  memories: MemoryEntry[];
+}
+
 /**
- * Import chats from JSON file
+ * Import chats (and memory entries, if present) from a JSON file
  */
-export const importChats = (file: File): Promise<Chat[]> => {
+export const importChats = (file: File): Promise<ChatImportResult> => {
   return new Promise((resolve, reject) => {
     // Validate file input using security utilities
     const fileValidation = validateFileUpload(file, 10, ['.json']); // 10MB max size, only .json
@@ -113,7 +137,7 @@ export const importChats = (file: File): Promise<Chat[]> => {
         }
 
         // Validate version
-        if (data.version !== '1.0') {
+        if (data.version !== '1.0' && data.version !== '1.1') {
           warn(`Import file version ${data.version} may not be fully compatible`);
         }
 
@@ -123,7 +147,7 @@ export const importChats = (file: File): Promise<Chat[]> => {
             warn(`Invalid chat skipped during import: ${(chat as Chat).id || 'unknown'}`);
             return false;
           }
-          
+
           // Validate all messages in the chat
           return chat.messages.every(message => validateMessage(message));
         });
@@ -133,8 +157,19 @@ export const importChats = (file: File): Promise<Chat[]> => {
           return;
         }
 
+        // Memory entries are optional (export format 1.0 has none)
+        const validMemories = Array.isArray(data.memories)
+          ? data.memories.filter((entry: unknown) => {
+              if (!validateMemoryEntry(entry)) {
+                warn('Invalid memory entry skipped during import');
+                return false;
+              }
+              return true;
+            })
+          : [];
+
         info(`Successfully imported ${validChats.length} chats`);
-        resolve(validChats);
+        resolve({ chats: validChats, memories: validMemories });
       } catch (error) {
         console.error('Import error:', error);
         reject(new Error(`Failed to parse import file: ${error instanceof Error ? error.message : 'Unknown error'}`));

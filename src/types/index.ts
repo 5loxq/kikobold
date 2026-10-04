@@ -15,6 +15,14 @@ export interface Chat {
   updatedAt: number;
 }
 
+// Memory types
+export interface MemoryEntry {
+  id: string;
+  content: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 // Profile types
 export interface Profile {
   id: string;

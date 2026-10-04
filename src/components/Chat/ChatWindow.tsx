@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Chat, LocalModel, Profile } from '../../types';
+import { Chat, LocalModel, MemoryEntry, Profile } from '../../types';
 import { MessageList } from './MessageList';
 import { InputBox } from './InputBox';
 import { ChatExportImport } from './chat-export-import';
@@ -33,7 +33,8 @@ interface ChatWindowProps {
   onSelectModel: (modelId: string) => void;
   onSelectProfile?: (profileId: string) => void;
   onRenameChat?: (chatId: string, newTitle: string) => void;
-  onImportChats?: (chats: Chat[]) => Promise<void>;
+  onImportChats?: (chats: Chat[], memories: MemoryEntry[]) => Promise<void>;
+  memories?: MemoryEntry[];
 }
 
 export const ChatWindow: React.FC<ChatWindowProps> = ({
@@ -61,6 +62,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   onSelectProfile,
   onRenameChat,
   onImportChats,
+  memories = [],
 }) => {
   const { t } = useTranslation();
   const [selectedModelId, setSelectedModelId] = useState<string>(_activeModel?.id ?? '');
@@ -316,6 +318,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           <ChatExportImport
             chat={chat}
             allChats={chats}
+            memories={memories}
             onImportChats={onImportChats ?? (async (): Promise<void> => {})}
           />
           <button

@@ -108,6 +108,19 @@ export const HelpPage: React.FC<HelpPageProps> = ({ onNavigateBack }) => {
           </p>
         </section>
 
+        {/* Memory */}
+        <section className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-800 mb-4">
+          <h2 className="text-xl font-semibold mb-3 text-zinc-700 dark:text-zinc-200">
+            🧠 {t('help.memoryTitle')}
+          </h2>
+          <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
+            {t('help.memoryText')}
+          </p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-500 leading-relaxed border-l-4 border-indigo-300 dark:border-indigo-800 pl-3">
+            💡 {t('help.memoryHowTo')}
+          </p>
+        </section>
+
         {/* Import / Export */}
         <section className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-800 mb-4">
           <h2 className="text-xl font-semibold mb-3 text-zinc-700 dark:text-zinc-200">
