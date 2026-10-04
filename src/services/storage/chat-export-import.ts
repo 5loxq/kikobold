@@ -1,6 +1,6 @@
 import { Chat, Message } from '../../types';
 import { info, warn } from '../logging';
-import { validateFileUpload, validateJsonContent } from '../security';
+import { validateFileUpload } from '../security';
 
 export interface ExportedChat {
   version: string;
@@ -99,13 +99,11 @@ export const importChats = (file: File): Promise<Chat[]> => {
           return;
         }
 
-        // Validate JSON content for security
-        const contentValidation = validateJsonContent(content);
-        if (!contentValidation.valid) {
-          reject(new Error(`Invalid content: ${contentValidation.error ?? 'Unknown error'}`));
-          return;
-        }
-
+        // Note: the raw file content is NOT scanned for code patterns here.
+        // Chat messages are data and may legitimately contain code snippets
+        // ("require(", "eval(", "import ... from ..." etc.) - scanning for
+        // those rejected valid exports. Security is handled by the structural
+        // validation below plus sanitizeInput() when the chat is saved.
         const data: ExportedChat = JSON.parse(content);
 
         // Validate format
@@ -203,55 +201,5 @@ export const shareChatToClipboard = async (chat: Chat): Promise<void> => {
   document.body.removeChild(textarea);
   if (!ok) {
     throw new Error('Clipboard copy not supported in this browser');
-  }
-};
-
-/**
- * Export single chat as markdown
- */
-export const exportChatAsMarkdown = (chat: Chat): void => {
-  try {
-    if (!validateChat(chat)) {
-      throw new Error('Invalid chat object');
-    }
-
-    if (chat.messages.length === 0) {
-      throw new Error('Chat has no messages to export');
-    }
-
-    let markdown = `# ${chat.title}\n\n`;
-    markdown += `*Created: ${new Date(chat.createdAt).toLocaleString()}*\n\n`;
-
-    chat.messages.forEach((message) => {
-      if (!validateMessage(message)) {
-        warn('Skipping invalid message in markdown export');
-        return;
-      }
-      
-      const sender = message.role === 'user' ? '👤 You' : '🤖 Assistant';
-      // Escape special markdown characters in content
-      const safeContent = message.content
-        .replace(/\*/g, '\\*')
-        .replace(/_/g, '\\_')
-        .replace(/`/g, '\\`');
-      markdown += `## ${sender}\n\n${safeContent}\n\n---\n\n`;
-    });
-
-    const blob = new Blob([markdown], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    
-    // Create safe filename
-    const safeTitle = chat.title.replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').substring(0, 50);
-    link.download = `${safeTitle}-${new Date().toISOString().split('T')[0]}.md`;
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  } catch (error) {
-    console.error('Failed to export chat as markdown:', error);
-    throw new Error(`Markdown export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };

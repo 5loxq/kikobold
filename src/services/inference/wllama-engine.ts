@@ -49,6 +49,15 @@ export const wllamaIsActive = (): boolean => {
   return wllamaInstance !== null;
 };
 
+/**
+ * JSPI (JavaScript Promise Integration) makes WASM inference dramatically
+ * faster. Chrome/Edge support it; Firefox does not and falls back to the
+ * much slower Asyncify, which is why generation feels sluggish there.
+ */
+export const supportsWllamaJspi = (): boolean => {
+  return !!(WebAssembly as unknown as { Suspending?: unknown }).Suspending;
+};
+
 const isAbortError = (err: unknown): boolean => {
   return err instanceof Error && (err.name === 'AbortError' || /abort/i.test(err.message));
 };
