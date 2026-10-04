@@ -6,6 +6,12 @@
   Header always set Cross-Origin-Embedder-Policy "require-corp"
   Header always set X-Content-Type-Options "nosniff"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+  # The service worker must always be revalidated so new deployments are
+  # picked up immediately instead of being served from the HTTP cache.
+  <FilesMatch "sw\.js$">
+    Header always set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
 </IfModule>
 
 # Correct MIME type for WebAssembly files

@@ -5,6 +5,7 @@ import { MessageList } from './MessageList';
 import { InputBox } from './InputBox';
 import { ChatExportImport } from './chat-export-import';
 import { getModelConfig, MODELS } from '../../services/models/model-registry';
+import { supportsWllamaJspi } from '../../services/inference/wllama-engine';
 
 
 interface ChatWindowProps {
@@ -240,6 +241,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           {selectedModelId && getModelConfig(selectedModelId)?.description && !isLoading && (
             <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-md leading-relaxed">
               {getModelConfig(selectedModelId)?.description}
+            </p>
+          )}
+
+          {selectedModelId && getModelConfig(selectedModelId)?.engine === 'wllama' && !supportsWllamaJspi() && !isLoading && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 max-w-md leading-relaxed">
+              ⚠️ {t('chat.jspiHint')}
             </p>
           )}
 

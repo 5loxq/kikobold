@@ -3,14 +3,13 @@
  * 
  * Features:
  * - Caches static assets for offline use
- * - Implements cache-first strategy for models and assets
+ * - Model downloads pass through untouched (engines cache in OPFS)
  * - Provides fallback responses when offline
  * 
  * Inspired by Ensu's service worker implementation
  */
 
 const CACHE_NAME = 'llm-webgui-v3';
-const MODEL_CACHE_NAME = 'llm-models-v1';
 
 // Static assets to cache
 const STATIC_ASSETS = [
@@ -47,7 +46,10 @@ self.addEventListener('activate', (event) => {
             .then((cacheNames) => {
                 return Promise.all(
                     cacheNames.map((cacheName) => {
-                        if (cacheName !== CACHE_NAME && cacheName !== MODEL_CACHE_NAME) {
+                        // Also purges the legacy 'llm-models-v1' cache - model
+                        // files are cached by the inference engines in OPFS,
+                        // not by this service worker.
+                        if (cacheName !== CACHE_NAME) {
                             console.log(`[SW] Deleting old cache: ${cacheName}`);
                             return caches.delete(cacheName);
                         }
@@ -110,22 +112,11 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Handle model files with cache-first strategy
-    if (isModelFile(url)) {
-        event.respondWith(
-            caches.match(request)
-                .then((response) => {
-                    if (response) {
-                        console.log(`[SW] Serving model from cache: ${url.pathname}`);
-                        return response;
-                    }
-                    
-                    // Cache and return from network
-                    return fetchAndCache(request, MODEL_CACHE_NAME);
-                })
-        );
-        return;
-    }
+    // Model files (.gguf, MLC .bin shards) are deliberately NOT intercepted:
+    // both inference engines (wllama, WebLLM) cache models in OPFS themselves.
+    // Routing the huge downloads through caches.match()/cache.put() here
+    // would hold the response back from the page until the entire file has
+    // been buffered, which breaks download progress reporting completely.
 
     // Default: network-first
     event.respondWith(
@@ -167,32 +158,25 @@ function isStaticAsset(url) {
            path.endsWith('.ttf');
 }
 
-function isModelFile(url) {
-    const path = url.pathname.toLowerCase();
-    return path.endsWith('.gguf') ||
-           path.endsWith('.bin') ||
-           path.endsWith('.onnx') ||
-           path.endsWith('.safetensors') ||
-           path.includes('huggingface.co') ||
-           path.includes('github.com') ||
-           path.includes('cdn.jsdelivr.net');
-}
-
 async function fetchAndCache(request, cacheName) {
     try {
         const response = await fetch(request);
-        
+
         // Only cache successful, non-HTML responses. The SPA fallback serves
         // index.html for missing files - caching that as a .js/.css response
         // would permanently break the page (white screen).
         if (response.ok) {
             const contentType = response.headers.get('content-type') || '';
             if (!contentType.includes('text/html')) {
-                const cache = await caches.open(cacheName);
-                await cache.put(request, response.clone());
+                // Cache in the background. Awaiting cache.put() would delay the
+                // response until the full body has been buffered, which blocks
+                // the page and breaks progress reporting for large files.
+                caches.open(cacheName)
+                    .then((cache) => cache.put(request, response.clone()))
+                    .catch(() => {});
             }
         }
-        
+
         return response;
     } catch (error) {
         console.error(`[SW] Failed to fetch and cache ${request.url}:`, error);
