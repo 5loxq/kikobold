@@ -115,6 +115,24 @@ export const loadWllamaModel = async (
     const { Wllama: WllamaClass } = await import('@wllama/wllama');
     const wllama = new WllamaClass(WASM_PATHS, { allowOffline: true });
 
+    // If the model file is already in the browser cache, there is no download
+    // phase: wllama goes straight to initializing the model in memory. Report
+    // full progress upfront so the UI shows "loading" instead of a misleading
+    // "downloading 100%".
+    try {
+      const { CacheManager } = await import('@wllama/wllama');
+      const cacheManager = new CacheManager();
+      const entries = await cacheManager.list();
+      const isCached = entries.some((entry) => entry.name.endsWith(`_${gguf.file}`));
+      if (isCached) {
+        callbacks?.onProgress?.(1, 'Loading model from browser cache...');
+      } else {
+        callbacks?.onProgress?.(0, 'Downloading model...');
+      }
+    } catch {
+      callbacks?.onProgress?.(0, 'Downloading model...');
+    }
+
     const downloadStartedAt = Date.now();
     const loadParams = {
       progressCallback: ({ loaded, total }: { loaded: number; total: number }): void => {
@@ -138,8 +156,6 @@ export const loadWllamaModel = async (
       // (system prompt + memory + history + attachments) quickly exceed.
       n_ctx: 4096,
     };
-
-    callbacks?.onProgress?.(0, 'Downloading model...');
 
     // Prefer the copy on our own webspace (same origin, no CDN dependency).
     // Fall back to HuggingFace if the self-hosted file is unavailable. A
@@ -216,6 +232,7 @@ export const generateWithWllama = async (
     const response = await wllamaInstance.createChatCompletion({
       messages,
       temperature: options.temperature ?? 0.7,
+      ...(options.top_p !== undefined ? { top_p: options.top_p } : {}),
       max_tokens: options.max_tokens ?? 512,
       abortSignal: activeAbortController.signal,
     });
@@ -252,6 +269,7 @@ export const generateWithWllamaStream = async (
       messages,
       stream: true,
       temperature: options.temperature ?? 0.7,
+      ...(options.top_p !== undefined ? { top_p: options.top_p } : {}),
       max_tokens: options.max_tokens ?? 512,
       abortSignal: activeAbortController.signal,
       onData: (chunk) => {
