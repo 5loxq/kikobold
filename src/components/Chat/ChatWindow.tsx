@@ -22,6 +22,8 @@ interface ChatWindowProps {
   loadingProgress?: number;
   /** Download size/speed while a model is being fetched */
   loadStats?: { loadedMB: number; totalMB: number; speedMBps: number } | null;
+  /** 'downloading' = fetching files, 'preparing' = initializing in memory */
+  loadingPhase?: 'downloading' | 'preparing';
   darkMode?: boolean;
   isModelDownloaded?: (modelId: string) => boolean;
   isGenerating?: boolean;
@@ -50,6 +52,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   loadingProgress = 0,
   darkMode = false,
   loadStats = null,
+  loadingPhase = 'downloading',
   isModelDownloaded,
   isGenerating = false,
   streamingMessage = null,
@@ -261,21 +264,29 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               {isLoading && (
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-indigo-600 dark:text-indigo-400 font-medium">🌀 {t('chat.loading')}</span>
-                  <div className="w-32 h-2 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-300"
-                      style={{ width: `${Math.max(2, loadingProgress)}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-xs text-indigo-600 dark:text-indigo-400 font-medium tabular-nums">
-                    {loadStats
-                      ? t('chat.downloadStats', {
-                          loaded: Math.round(loadStats.loadedMB),
-                          total: Math.round(loadStats.totalMB),
-                          speed: loadStats.speedMBps.toFixed(1),
-                        })
-                      : `${Math.round(loadingProgress)}%`}
-                  </span>
+                  {loadingPhase === 'preparing' ? (
+                    <span className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">
+                      {t('chat.preparingModel')}
+                    </span>
+                  ) : (
+                    <>
+                      <div className="w-32 h-2 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-300"
+                          style={{ width: `${Math.max(2, loadingProgress)}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-xs text-indigo-600 dark:text-indigo-400 font-medium tabular-nums">
+                        {loadStats
+                          ? t('chat.downloadStats', {
+                              loaded: Math.round(loadStats.loadedMB),
+                              total: Math.round(loadStats.totalMB),
+                              speed: loadStats.speedMBps.toFixed(1),
+                            })
+                          : `${Math.round(loadingProgress)}%`}
+                      </span>
+                    </>
+                  )}
                 </div>
               )}
               {isModelLoaded && !isLoading && (
