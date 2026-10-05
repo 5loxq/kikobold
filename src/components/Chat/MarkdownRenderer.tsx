@@ -657,9 +657,11 @@ const InlineMarkdown: React.FC<InlineMarkdownProps> = ({ content, onLinkClick })
   ));
 
   // Process italic (*text* or _text_)
-  remaining = processMarkdown(remaining, parts, /([^*])\*([^*]+)\*|_([^_]+)_/g, (text) => (
+  // Group 1 captures the character before the asterisk (so `**` is not
+  // matched as italic); it is re-emitted as plain text by processMarkdown.
+  remaining = processMarkdown(remaining, parts, /(^|[^*])\*([^*]+)\*|_([^_]+)_/g, (text) => (
     <Emphasis key={parts.length}>{text}</Emphasis>
-  ));
+  ), [2, 3], 1);
 
   // Process strikethrough (~~text~~)
   remaining = processMarkdown(remaining, parts, /~~(.*?)~~/g, (text) => (
@@ -714,9 +716,11 @@ function processMarkdown(
   content: string,
   parts: React.ReactNode[],
   regex: RegExp,
-  replacer: (text: string, ...args: string[]) => React.ReactNode
+  replacer: (text: string, ...args: string[]) => React.ReactNode,
+  contentGroups: number[] = [1, 2, 3],
+  prefixGroup?: number
 ): string {
-  let match;
+  let match: RegExpExecArray | null;
   let lastIndex = 0;
 
   while ((match = regex.exec(content)) !== null) {
@@ -725,8 +729,14 @@ function processMarkdown(
       parts.push(content.substring(lastIndex, match.index));
     }
 
+    // Patterns with a prefix group (e.g. italic) consume a leading character
+    // to anchor the match; re-emit it as plain text so nothing is lost.
+    if (prefixGroup !== undefined && match[prefixGroup]) {
+      parts.push(match[prefixGroup]);
+    }
+
     // Add the formatted text
-    const text = match[1] || match[2] || match[3] || '';
+    const text = contentGroups.map((g) => match?.[g] ?? '').find(Boolean) ?? '';
     parts.push(replacer(text, ...match.slice(1)));
 
     lastIndex = match.index + match[0].length;
