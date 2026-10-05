@@ -5,8 +5,6 @@
  * - Service worker registration
  * - Offline detection
  * - Cache management
- * 
- * Inspired by Ensu's offline implementation
  */
 
 // Service worker file path
@@ -85,13 +83,19 @@ export const checkForUpdates = async (): Promise<boolean> => {
             return false;
         }
 
-        const update = await serviceWorkerRegistration.update();
-        
-        if (update) {
+        const registration = await serviceWorkerRegistration.update();
+
+        // update() always resolves with a registration; an update was only
+        // found when a newly installed worker is waiting to take over.
+        const hasUpdate = Boolean(
+            registration.waiting && registration.active && registration.waiting !== registration.active
+        );
+
+        if (hasUpdate) {
             console.log('✓ Service Worker update found');
             return true;
         }
-        
+
         return false;
     } catch (error) {
         console.error('✗ Failed to check for Service Worker updates:', error);
@@ -193,45 +197,4 @@ export const onOfflineStateChange = (listener: (offline: boolean) => void): (() 
             offlineListeners.splice(index, 1);
         }
     };
-};
-
-/**
- * Get the current service worker registration
- */
-export const getServiceWorkerRegistration = (): ServiceWorkerRegistration | null => {
-    return serviceWorkerRegistration;
-};
-
-/**
- * Check if service worker is supported
- */
-export const isServiceWorkerSupported = (): boolean => {
-    return 'serviceWorker' in navigator;
-};
-
-/**
- * Initialize offline support
- */
-export const initOfflineSupport = async (): Promise<void> => {
-    try {
-        // Register service worker
-        await registerServiceWorker();
-        
-        console.log('✓ Offline support initialized');
-    } catch (error) {
-        console.error('✗ Failed to initialize offline support:', error);
-    }
-};
-
-export default {
-    registerServiceWorker,
-    unregisterServiceWorker,
-    checkForUpdates,
-    skipWaiting,
-    cleanupCaches,
-    getIsOffline,
-    onOfflineStateChange,
-    getServiceWorkerRegistration,
-    isServiceWorkerSupported,
-    initOfflineSupport,
 };
