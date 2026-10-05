@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { LocalModel, Model, UseModelsReturn } from '../types';
 import { MODELS } from '../services/models/model-registry';
+import { deleteModelCacheFiles } from '../services/models/model-cache';
 
 // LocalStorage keys for model persistence
 const STORAGE_KEYS = {
@@ -103,13 +104,23 @@ export const useModels = (): UseModelsReturn => {
 
   const deleteModel = useCallback(
     (modelId: string) => {
+      // Remove the registration first so the UI reacts immediately, then
+      // free the cached files in the background.
       setDownloadedModels(prev => prev.filter(m => m.id !== modelId));
 
       if (activeModel?.id === modelId) {
         setActiveModel(null);
       }
+
+      const model = availableModels.find(m => m.id === modelId);
+      if (model) {
+        void deleteModelCacheFiles(model).catch(() => {
+          // Already logged in deleteModelCacheFiles; the registration was
+          // removed regardless so the model can be re-downloaded cleanly.
+        });
+      }
     },
-    [activeModel]
+    [activeModel, availableModels]
   );
 
   const selectModel = useCallback(

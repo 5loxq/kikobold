@@ -277,13 +277,16 @@ export const updateChatMessages = async (chatId: string, messages: Message[]): P
   await saveChat(chat);
 };
 
-export const createChat = (profileId: string, title: string = 'New Chat'): Chat => {
+// Default title for new chats; also used to detect "not yet renamed" chats
+export const DEFAULT_CHAT_TITLE = 'New Chat';
+
+export const createChat = (profileId: string, title: string = DEFAULT_CHAT_TITLE): Chat => {
   if (typeof profileId !== 'string' || profileId.trim().length === 0) {
     throw new Error('Invalid profile ID');
   }
 
   if (typeof title !== 'string' || title.trim().length === 0) {
-    title = 'New Chat';
+    title = DEFAULT_CHAT_TITLE;
   }
 
   const now = Date.now();
