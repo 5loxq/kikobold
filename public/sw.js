@@ -5,8 +5,6 @@
  * - Caches static assets for offline use
  * - Model downloads pass through untouched (engines cache in OPFS)
  * - Provides fallback responses when offline
- * 
- * Inspired by Ensu's service worker implementation
  */
 
 const CACHE_NAME = 'llm-webgui-v3';
@@ -224,7 +222,7 @@ function createFallbackResponse(url) {
 
 async function cleanupCache() {
     try {
-        const cacheNames = [CACHE_NAME, MODEL_CACHE_NAME];
+        const cacheNames = [CACHE_NAME];
         
         for (const cacheName of cacheNames) {
             const cache = await caches.open(cacheName);

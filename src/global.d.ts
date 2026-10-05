@@ -69,12 +69,6 @@ declare module '@tauri-apps/plugin-updater' {
     export function installUpdate(options?: InstallUpdateOptions): Promise<void>;
 }
 
-// WASM module for ente-wasm
-declare module 'ente-wasm/load' {
-    export function loadEnteWasm(): Promise<WebAssembly.Module>;
-    export function initWasm(module: WebAssembly.Module): Promise<void>;
-}
-
 // Global types for WebGPU and other browser APIs
 declare global {
     interface Navigator {
@@ -125,75 +119,4 @@ declare module '@xenova-transformers-stub' {
     };
     export const AutoTokenizer: Record<string, unknown>;
     export type TextGenerationPipeline = (text: string, options?: Record<string, unknown>) => Promise<Record<string, unknown>>;
-}
-
-// WebLLM types
-declare module '@mlc-ai/web-llm' {
-    export interface ChatCompletionMessage {
-        role: string;
-        content: string;
-    }
-
-    export interface ChatCompletionChoice {
-        message?: ChatCompletionMessage;
-    }
-
-    export interface ChatCompletionUsage {
-        prompt_tokens?: number;
-        completion_tokens?: number;
-        total_tokens?: number;
-    }
-
-    export interface ChatCompletionResult {
-        choices: ChatCompletionChoice[];
-        usage?: ChatCompletionUsage;
-    }
-
-    export interface ChatCompletionChunk {
-        choices?: Array<{ delta?: { content?: string } }>;
-    }
-
-    export interface ChatCompletionCreateOptions {
-        messages: Array<{ role: string; content: string }>;
-        stream?: boolean;
-        temperature?: number;
-        top_p?: number;
-        max_tokens?: number;
-    }
-
-    export interface MLCEngineInterface {
-        chat: {
-            completions: {
-                create: (options: ChatCompletionCreateOptions) => Promise<ChatCompletionResult | AsyncIterable<ChatCompletionChunk>>;
-            };
-        };
-        getCurrentModelId?: () => string | null;
-        reload: (modelId: string) => Promise<void>;
-        interruptGenerate: () => void;
-        unload: () => Promise<void>;
-    }
-
-    export interface AppConfig {
-        model_list?: Array<{
-            model_id: string;
-            model: string;
-            model_lib?: string;
-            integrity?: Record<string, unknown>;
-        }>;
-        cacheBackend?: 'cache' | 'indexeddb' | 'opfs' | 'cross-origin';
-    }
-
-    export interface EngineConfig {
-        appConfig?: AppConfig;
-        initProgressCallback?: (progress: { text?: string; progress: number }) => void;
-    }
-
-    export function CreateMLCEngine(
-        modelId: string,
-        config?: EngineConfig
-    ): Promise<MLCEngineInterface>;
-
-    export const prebuiltAppConfig: AppConfig;
-
-    export function setLogLevel(level: 'debug' | 'info' | 'warn' | 'error' | 'silent'): void;
 }
