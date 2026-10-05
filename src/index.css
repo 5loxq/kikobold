@@ -129,11 +129,26 @@ html {
   animation: slideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Indeterminate progress bar for the model "preparing" phase */
+@keyframes progressSlide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+.animate-progress-slide {
+  animation: progressSlide 1.4s infinite ease-in-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in,
   .animate-slide-in,
   .animate-typing-bounce,
-  .animate-gentle-pulse {
+  .animate-gentle-pulse,
+  .animate-progress-slide {
     animation: none;
 }
 }
