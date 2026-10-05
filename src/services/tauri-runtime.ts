@@ -1,7 +1,6 @@
 /**
  * Tauri Runtime Detection Service
  * 
- * Inspired by ente-io/ensu's tauri-runtime.ts
  * Detects if the application is running in Tauri environment
  */
 
