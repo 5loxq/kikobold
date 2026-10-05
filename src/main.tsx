@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import 'katex/dist/katex.min.css'
-import { initOfflineSupport } from './services/offline';
+import { registerServiceWorker } from './services/offline/sw-registration';
 import { initThemeService } from './services/theme';
 import { getSystemInfo } from './services/system-info';
 import { info, log } from './services/logging';
@@ -11,8 +11,8 @@ import { info, log } from './services/logging';
 // Initialize services before rendering the app
 const initializeServices = async (): Promise<void> => {
     try {
-        // Initialize offline support (service worker, etc.)
-        await initOfflineSupport();
+        // Register service worker for offline support
+        await registerServiceWorker();
         log('✓ Offline support initialized');
 
         // Initialize theme service

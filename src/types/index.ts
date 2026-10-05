@@ -77,30 +77,8 @@ export interface LocalModel {
   downloadedAt: number;
 }
 
-// Inference types
-export interface InferenceOptions {
-  temperature: number;
-  topP: number;
-  maxTokens: number;
-  systemPrompt?: string;
-  language?: string;
-  topK?: number;
-  repeatPenalty?: number;
-  frequencyPenalty?: number;
-  presencePenalty?: number;
-  seed?: number;
-  stopSequences?: string[];
-}
-
-export interface InferenceResult {
-  text: string;
-  tokens: number;
-  duration: number;
-}
-
 // Re-export hook types
 export type {
-  UseInferenceReturn,
   UseModelsReturn,
   UseChatReturn,
   UseProfilesReturn,

@@ -91,10 +91,6 @@ export const getModelConfig = (modelId: string): EngineModelConfig | undefined =
   return MODEL_CONFIGS[modelId];
 };
 
-export const isMultimodalModel = (modelId: string): boolean => {
-  return MODEL_CONFIGS[modelId]?.multimodal === true;
-};
-
 // Find a WASM (GGUF/wllama) model to use when a WebGPU model cannot run.
 // With only one WASM model in the registry, every WebGPU model falls back
 // to it (LFM 2.5, the recommended model).
@@ -117,10 +113,4 @@ export const getWasmFallbackModelId = (webllmModelId: string): string | undefine
   return recommended?.id;
 };
 
-export const getModelById = (id: string): Model | undefined => {
-  return MODELS.find(m => m.id === id);
-};
 
-export const getRecommendedModels = (): Model[] => {
-  return MODELS.filter(m => m.recommended);
-};

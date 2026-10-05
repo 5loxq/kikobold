@@ -1,9 +1,8 @@
 /**
  * Offline Support Services
- * 
+ *
  * Exports all offline-related functionality
  */
-
 export {
     registerServiceWorker,
     unregisterServiceWorker,
@@ -12,7 +11,4 @@ export {
     cleanupCaches,
     getIsOffline,
     onOfflineStateChange,
-    getServiceWorkerRegistration,
-    isServiceWorkerSupported,
-    initOfflineSupport,
 } from './sw-registration';

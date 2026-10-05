@@ -214,40 +214,6 @@ export const unloadWllamaModel = async (): Promise<void> => {
   loadedModelId = null;
 };
 
-export const generateWithWllama = async (
-  prompt: string,
-  options: WllamaGenerateOptions = {}
-): Promise<string> => {
-  if (!wllamaInstance) {
-    throw new Error('No wllama model loaded');
-  }
-  if (options.images && options.images.length > 0 && !supportsWllamaImageInput()) {
-    throw new Error('The loaded model does not support image input');
-  }
-
-  const messages = buildMessages(prompt, options);
-
-  activeAbortController = new AbortController();
-  try {
-    const response = await wllamaInstance.createChatCompletion({
-      messages,
-      temperature: options.temperature ?? 0.7,
-      ...(options.top_p !== undefined ? { top_p: options.top_p } : {}),
-      max_tokens: options.max_tokens ?? 512,
-      abortSignal: activeAbortController.signal,
-    });
-    const text = response.choices[0]?.message?.content ?? '';
-    return text.trim();
-  } catch (err) {
-    if (isAbortError(err)) {
-      return '';
-    }
-    throw err;
-  } finally {
-    activeAbortController = null;
-  }
-};
-
 export const generateWithWllamaStream = async (
   prompt: string,
   options: WllamaGenerateOptions = {},

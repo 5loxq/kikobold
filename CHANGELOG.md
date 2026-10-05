@@ -2,6 +2,14 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [3.2.2] - 2026-10-05
+
+### Entfernt (Interne Aufräumarbeiten)
+- **Toter Infrastruktur-Code**: Vier nie benutzte Platzhalter-Hooks (`useBatchInference`, `useConversationInference`, `useInferencePerformance`, `useModelPreloader`), der Platzhalter `preloadModel`, der nicht benutzte nicht-streamende `generate`-Pfad (WebLLM und wllama) sowie ungenutzte Registry-Exporte und Typen entfernt.
+- **Veraltete Modell-Download-Skripte**: `download_models.py` und `download-mlc-models.sh` luden Modelle (TinyLlama, Phi-2), die längst nicht mehr in der Registry sind, nach `public/models/` - obwohl die Modelle direkt auf dem Webspace unter `/models/` liegen und nicht Teil des Git-Repositories/des Builds sind.
+- **Ungültige Offline-Exporte behoben**: `src/services/offline/index.ts` exportierte drei nicht existierende Funktionen, was `npm run type-check` fehlschlagen liess; `main.tsx` registriert den Service Worker jetzt direkt ueber die tatsaechlich vorhandene API.
+
+
 ## [3.2.1] - 2026-10-04
 
 ### Behoben

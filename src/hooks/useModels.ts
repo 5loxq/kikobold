@@ -9,21 +9,6 @@ const STORAGE_KEYS = {
   ACTIVE_MODEL: 'webllm_active_model',
 };
 
-// Helper function to estimate model size from modelSize string
-const getEstimatedSizeFromModelSize = (modelSize: string): number => {
-  const sizeMap: Record<string, number> = {
-    '82M': 120 * 1024 * 1024,    // ~120MB
-    '124M': 500 * 1024 * 1024,   // ~500MB
-    '0.5B': 400 * 1024 * 1024,   // ~400MB (MLC models are larger)
-    '1.1B': 300 * 1024 * 1024,   // ~300MB (MLC TinyLlama)
-    '1.8B': 1200 * 1024 * 1024,  // ~1.2GB
-    '2.7B': 700 * 1024 * 1024,   // ~700MB (MLC Phi-2)
-    '7B': 1800 * 1024 * 1024,   // ~1.8GB
-    '8B': 1500 * 1024 * 1024,   // ~1.5GB (MLC Llama 8B)
-  };
-  return sizeMap[modelSize] || 500 * 1024 * 1024; // Default 500MB
-};
-
 // Helper functions for LocalStorage
 const getDownloadedModelsFromStorage = (): LocalModel[] => {
   try {
@@ -131,9 +116,7 @@ export const useModels = (): UseModelsReturn => {
       if (!model) {
         const modelInfo = availableModels.find(m => m.id === modelId);
         if (modelInfo) {
-          const estSize = modelInfo.fileSizeMB 
-            ? modelInfo.fileSizeMB * 1024 * 1024 
-            : getEstimatedSizeFromModelSize(modelInfo.modelSize);
+          const estSize = (modelInfo.fileSizeMB ?? 500) * 1024 * 1024;
           
           model = {
             id: modelId,

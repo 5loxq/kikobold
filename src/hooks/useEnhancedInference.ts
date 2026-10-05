@@ -1,16 +1,15 @@
 /**
- * Enhanced Inference Hook with WebLLM
- * 
- * Provides React hooks for browser-based LLM inference using WebLLM:
- * - WebGPU acceleration
- * - WASM-optimized models (MLC format)
- * - Streaming responses
- * - Model preloading and caching
- * - OPFS (Origin Private File System) support
+ * Inference hook for browser-based LLM generation.
+ *
+ * Two engines:
+ * - WebLLM (WebGPU, MLC models) when the browser supports it
+ * - wllama (WASM, GGUF models) as universal fallback
+ *
+ * Model files live on our own webspace (/models/) and are cached in the
+ * browser (OPFS); the HuggingFace CDN is only a fallback source.
  */
-
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { type AppConfig, type ChatCompletion, type ChatCompletionChunk, type MLCEngineInterface } from "@mlc-ai/web-llm";
+import { type AppConfig, type ChatCompletionChunk, type MLCEngineInterface } from "@mlc-ai/web-llm";
 import { handleErrorSilent } from '../utils/errors';
 import { log, warn } from '../services/logging';
 import { stripHiddenPartsText } from '../services/llm/text-processing';
@@ -19,7 +18,6 @@ import { getCustomAppConfig } from '../services/models/webllm-config';
 import {
   cancelWllamaGeneration,
   type DownloadStats,
-  generateWithWllama,
   generateWithWllamaStream,
   isWllamaModelLoaded,
   loadWllamaModel,
@@ -64,65 +62,33 @@ export interface WebLLMGenerateOptions {
   images?: Array<{ name: string; data: ArrayBuffer }>;
 }
 
-export interface WebLLMGenerateResult {
-  text: string;
-  usage?: unknown;
-}
-
 export interface UseEnhancedInferenceOptions {
   modelId: string;
   defaultOptions?: WebLLMGenerateOptions;
-  engineConfig?: Record<string, unknown>;
-  autoRetry?: boolean;
   appConfig?: AppConfig;
   /** Automatically load `modelId` on mount. Set to false when the caller
    *  wants to control model loading itself (e.g. ask the user first). */
   autoLoad?: boolean;
 }
 
-export interface InferenceState {
-  // Status
+/** 'downloading' = fetching model files, 'preparing' = initializing in memory */
+export type ModelLoadPhase = 'downloading' | 'preparing';
+
+export interface EnhancedInferenceReturn {
   isLoading: boolean;
-  isStreaming: boolean;
   isGenerating: boolean;
-  
-  // Results
-  result: string;
+  error: string | null;
   streamText: string;
-  
-  // Progress
   progress: number;
   progressStats: ModelLoadStats | null;
-  /** 'downloading' = fetching model files, 'preparing' = initializing in memory */
-  modelLoadPhase: 'downloading' | 'preparing';
-  tokensGenerated: number;
-  tokensPerSecond: number;
-  
-  // Error
-  error: string | null;
-  
-  // Timing
-  duration: number;
-  
-  // Model info
+  modelLoadPhase: ModelLoadPhase;
   currentModelId: string | null;
   webgpuAvailable: boolean | null;
-}
+  supportsImageInput: boolean;
 
-export interface EnhancedInferenceReturn extends InferenceState {
-  // Actions
-  generate: (prompt: string, options?: WebLLMGenerateOptions) => Promise<WebLLMGenerateResult | null>;
   generateStream: (prompt: string, options?: WebLLMGenerateOptions, onChunk?: (text: string) => void) => Promise<string>;
   cancel: () => void;
-  activeEngine: 'webllm' | 'wllama' | null;
-  supportsImageInput: boolean;
-  
-  // Model management
   loadModel: (modelId: string) => Promise<boolean>;
-  unloadModel: (modelId: string) => Promise<boolean>;
-  preloadModel: (modelId: string, priority?: number) => Promise<void>;
-  
-  // Status
   refreshStatus: () => void;
 }
 
@@ -130,9 +96,6 @@ export interface EnhancedInferenceReturn extends InferenceState {
 // Main Hook
 // ============================================================================
 
-/**
- * Enhanced inference hook using WebLLM for browser-based LLM inference
- */
 export const useEnhancedInference = (
   options: UseEnhancedInferenceOptions
 ): EnhancedInferenceReturn => {
@@ -143,42 +106,28 @@ export const useEnhancedInference = (
     autoLoad = true,
   } = options;
 
-  // State
   const [isLoading, setIsLoading] = useState(false);
-  const [isStreaming, setIsStreaming] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [result, setResult] = useState('');
   const [streamText, setStreamText] = useState('');
   const [progress, setProgress] = useState(0);
   const [progressStats, setProgressStats] = useState<ModelLoadStats | null>(null);
-  const [modelLoadPhase, setModelLoadPhase] = useState<'downloading' | 'preparing'>('downloading');
-  const [tokensGenerated, setTokensGenerated] = useState(0);
-  const [tokensPerSecond, setTokensPerSecond] = useState(0);
+  const [modelLoadPhase, setModelLoadPhase] = useState<ModelLoadPhase>('downloading');
   const [error, setError] = useState<string | null>(null);
-  const [duration, setDuration] = useState(0);
   const [currentModelId, setCurrentModelId] = useState<string | null>(null);
-  const [activeEngine, setActiveEngine] = useState<'webllm' | 'wllama' | null>(null);
-  const activeEngineRef = useRef<'webllm' | 'wllama' | null>(null);
-  const setEngine = useCallback((engine: 'webllm' | 'wllama' | null): void => {
-    activeEngineRef.current = engine;
-    setActiveEngine(engine);
-  }, []);
   const [webgpuAvailable, setWebgpuAvailable] = useState<boolean | null>(null);
   const [supportsImageInput, setSupportsImageInput] = useState(false);
 
-  // Refs
+  const activeEngineRef = useRef<'webllm' | 'wllama' | null>(null);
   const engineRef = useRef<MLCEngineInterface | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const startTimeRef = useRef<number>(0);
-  const tokenCountRef = useRef<number>(0);
 
-  // Load model using WebLLM
+  // Load model using WebLLM or wllama
   const loadModel = useCallback(async (modelId: string): Promise<boolean> => {
     try {
       if (!modelId) {
         throw new Error('No model ID provided');
       }
-
       setIsLoading(true);
       setError(null);
       setProgress(0);
@@ -210,7 +159,7 @@ export const useEnhancedInference = (
           return false;
         }
         setCurrentModelId(modelId);
-        setEngine('wllama');
+        activeEngineRef.current = 'wllama';
         setSupportsImageInput(supportsWllamaImageInput());
         setIsLoading(false);
         return true;
@@ -255,7 +204,6 @@ export const useEnhancedInference = (
 
       // Use custom config or default
       const effectiveAppConfig = customAppConfig ?? getCustomAppConfig();
-
       log(`Loading model: ${modelId} with WebLLM`);
       log(`Using WebGPU: ${hasWebGPU ? 'Yes' : 'No'}`);
       log(`Using WASM: ${typeof WebAssembly !== 'undefined' ? 'Yes' : 'No'}`);
@@ -310,17 +258,15 @@ export const useEnhancedInference = (
 
       engineRef.current = engine;
       setCurrentModelId(modelId);
-      setEngine('webllm');
+      activeEngineRef.current = 'webllm';
       setSupportsImageInput(false);
       setWebgpuAvailable(true); // WebLLM uses WebGPU
       setIsLoading(false);
-      
+
       log(`Model ${modelId} loaded successfully with WebLLM`);
       return true;
-
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : String(err);
-
       // Runtime limit errors (e.g. maxStorageBuffersPerShaderStage) surface
       // only at engine init - automatically fall back to the WASM variant.
       if (/maxStorageBuffersPerShaderStage|exceeds limit/i.test(errorMessage) && getEngineType(modelId) === 'webllm') {
@@ -331,14 +277,11 @@ export const useEnhancedInference = (
           return loadModel(fallbackModelId);
         }
       }
-
-      const appError = handleErrorSilent(err);
-      setError(appError.userMessage);
+      handleErrorSilent(err);
       setIsLoading(false);
       setProgress(0);
       setProgressStats(null);
       warn(`Failed to load model ${modelId}: ${err}`);
-
       // Enhanced error messages for common issues
       if (errorMessage.includes('CORS') || errorMessage.includes('cross-origin')) {
         setError('⚠️ CORS-Fehler beim Laden vom HuggingFace-CDN. Bitte prüfe deine Internetverbindung und versuche es erneut.');
@@ -351,116 +294,10 @@ export const useEnhancedInference = (
       } else {
         setError(`⚠️ Fehler beim Laden des Modells: ${errorMessage}`);
       }
-      
+
       return false;
     }
-  }, [customAppConfig, setEngine]);
-
-  // Unload model
-  const unloadModel = useCallback(async (modelId: string): Promise<boolean> => {
-    try {
-      if (activeEngineRef.current === 'wllama') {
-        await unloadWllamaModel();
-        setCurrentModelId(null);
-        setEngine(null);
-        setSupportsImageInput(false);
-        return true;
-      }
-      if (engineRef.current && currentModelId === modelId) {
-        // WebLLM doesn't have a direct unload method in the current API
-        // We can nullify the reference and reset state
-        engineRef.current = null;
-        setCurrentModelId(null);
-        setEngine(null);
-        setWebgpuAvailable(null);
-        return true;
-      }
-      return false;
-    } catch (err: unknown) {
-      warn('Failed to unload model:', err);
-      return false;
-    }
-  }, [currentModelId, setEngine]);
-
-  // Generate text (non-streaming)
-  const generate = useCallback(async (
-    prompt: string,
-    options: WebLLMGenerateOptions = {}
-  ): Promise<WebLLMGenerateResult | null> => {
-    try {
-      setIsGenerating(true);
-      setError(null);
-      setResult('');
-      startTimeRef.current = Date.now();
-      tokenCountRef.current = 0;
-
-      const mergedOptions = {
-        temperature: 0.7,
-        top_p: 0.9,
-        max_tokens: 512,
-        ...defaultOptions,
-        ...options
-      };
-
-      if (activeEngineRef.current === 'wllama') {
-        if (!currentModelId || !isWllamaModelLoaded(currentModelId)) {
-          throw new Error('Model not loaded. Please load a model first.');
-        }
-        const rawText = await generateWithWllama(prompt, {
-          temperature: mergedOptions.temperature,
-          top_p: mergedOptions.top_p,
-          max_tokens: mergedOptions.max_tokens,
-          systemPrompt: mergedOptions.systemPrompt,
-          history: mergedOptions.history,
-          images: mergedOptions.images,
-        });
-        const responseText = stripHiddenPartsText(rawText);
-        setResult(responseText);
-        setIsGenerating(false);
-        setDuration(Date.now() - startTimeRef.current);
-        return { text: responseText, usage: undefined };
-      }
-
-      if (!engineRef.current) {
-        throw new Error('Model not loaded. Please load a model first.');
-      }
-
-      const messages = [
-        ...(mergedOptions.systemPrompt
-          ? [{ role: 'system' as const, content: mergedOptions.systemPrompt }]
-          : []),
-        ...(mergedOptions.history ?? []).map((m) => ({ role: m.role, content: m.content })),
-        { role: "user" as const, content: prompt },
-      ];
-
-      const reply = await engineRef.current.chat.completions.create({
-        messages,
-        ...mergedOptions
-      });
-
-      if (typeof (reply as unknown as AsyncIterable<unknown>)[Symbol.asyncIterator] === 'function') {
-        throw new Error('Unexpected streaming response for non-streaming request');
-      }
-      const completion = reply as ChatCompletion;
-      const responseText = completion.choices[0]?.message?.content ?? '';
-      
-      setResult(responseText);
-      setTokensGenerated(tokenCountRef.current);
-      setDuration(Date.now() - startTimeRef.current);
-      setIsGenerating(false);
-
-      return {
-        text: responseText,
-        usage: completion.usage
-      };
-
-    } catch (err: unknown) {
-      const appError = handleErrorSilent(err);
-      setError(appError.userMessage);
-      setIsGenerating(false);
-      throw err;
-    }
-  }, [defaultOptions, currentModelId]);
+  }, [customAppConfig]);
 
   // Generate text with streaming
   const generateStream = useCallback(async (
@@ -473,17 +310,12 @@ export const useEnhancedInference = (
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
-
       const newAbortController = new AbortController();
       abortControllerRef.current = newAbortController;
-
       setIsGenerating(true);
-      setIsStreaming(true);
       setError(null);
       setStreamText('');
       startTimeRef.current = Date.now();
-      tokenCountRef.current = 0;
-
       const mergedOptions = {
         temperature: 0.7,
         top_p: 0.9,
@@ -491,9 +323,7 @@ export const useEnhancedInference = (
         ...defaultOptions,
         ...options
       };
-
       let fullText = '';
-
       if (activeEngineRef.current === 'wllama') {
         if (!currentModelId || !isWllamaModelLoaded(currentModelId)) {
           throw new Error('Model not loaded. Please load a model first.');
@@ -510,12 +340,7 @@ export const useEnhancedInference = (
           },
           (delta) => {
             fullText += delta;
-            tokenCountRef.current++;
             setStreamText(fullText);
-            const elapsed = (Date.now() - startTimeRef.current) / 1000;
-            if (elapsed > 0) {
-              setTokensPerSecond(tokenCountRef.current / elapsed);
-            }
             if (onChunk) {
               onChunk(delta);
             }
@@ -525,9 +350,7 @@ export const useEnhancedInference = (
         if (!engineRef.current) {
           throw new Error('Model not loaded. Please load a model first.');
         }
-
         const historyMessages = (mergedOptions.history ?? []).map((m) => ({ role: m.role, content: m.content }));
-
         const response = await engineRef.current.chat.completions.create({
           messages: [
             ...(mergedOptions.systemPrompt
@@ -543,44 +366,26 @@ export const useEnhancedInference = (
           throw new Error('Expected streaming response but received a single completion');
         }
         const chunks = response as AsyncIterable<ChatCompletionChunk>;
-
         for await (const chunk of chunks) {
           if (newAbortController.signal.aborted) {
             break;
           }
-
           const delta = chunk.choices?.[0]?.delta?.content ?? '';
           fullText += delta;
-          tokenCountRef.current++;
-
           setStreamText(fullText);
-
-          // Calculate tokens per second
-          const elapsed = (Date.now() - startTimeRef.current) / 1000;
-          if (elapsed > 0) {
-            setTokensPerSecond(tokenCountRef.current / elapsed);
-          }
-
           if (onChunk) {
             onChunk(delta);
           }
         }
       }
-
       const visibleText = stripHiddenPartsText(fullText);
-      setResult(visibleText);
-      setTokensGenerated(tokenCountRef.current);
-      setDuration(Date.now() - startTimeRef.current);
       setIsGenerating(false);
-      setIsStreaming(false);
-      
-      return visibleText;
 
+      return visibleText;
     } catch (err: unknown) {
       const appError = handleErrorSilent(err);
       setError(appError.userMessage);
       setIsGenerating(false);
-      setIsStreaming(false);
       throw err;
     } finally {
       abortControllerRef.current = null;
@@ -596,7 +401,6 @@ export const useEnhancedInference = (
     cancelWllamaGeneration();
     engineRef.current?.interruptGenerate?.();
     setIsGenerating(false);
-    setIsStreaming(false);
   }, []);
 
   // Refresh status
@@ -614,18 +418,6 @@ export const useEnhancedInference = (
       }
     }
   }, []);
-
-  // Preload model (placeholder - WebLLM handles preloading automatically)
-  const preloadModel = useCallback(async (modelId: string, priority?: number): Promise<void> => {
-    // WebLLM doesn't expose a direct preload API in the current current version
-    // Preloading is handled automatically when models are used
-    log(`Preload requested for model: ${modelId} (priority: ${priority})`);
-    // For now, we can trigger a background load if needed
-    if (modelId && modelId !== currentModelId) {
-      // Don't actually load yet, just log
-      log(`Model ${modelId} marked for preloading`);
-    }
-  }, [currentModelId]);
 
   // Auto-load model when modelId changes (unless the caller opts out)
   useEffect(() => {
@@ -649,189 +441,19 @@ export const useEnhancedInference = (
   }, []);
 
   return {
-    // Status
     isLoading,
-    isStreaming,
     isGenerating,
-    
-    // Results
-    result,
+    error,
     streamText,
-    
-    // Progress
     progress,
     progressStats,
     modelLoadPhase,
-    tokensGenerated,
-    tokensPerSecond,
-    
-    // Error
-    error,
-    
-    // Timing
-    duration,
-    
-    // Model info
     currentModelId,
     webgpuAvailable,
-    
-    // Actions
-    generate,
+    supportsImageInput,
     generateStream,
     cancel,
-    
-    // Model management
     loadModel,
-    unloadModel,
-    preloadModel,
-    activeEngine,
-    supportsImageInput,
-    
-    // Status
     refreshStatus,
   };
 };
-
-// ============================================================================
-// Specialized Hooks (simplified versions for compatibility)
-// ============================================================================
-
-/**
- * Hook for batch inference operations
- */
-export const useBatchInference = (options: UseEnhancedInferenceOptions): {
-  generateBatch: (prompts: string[], batchOptions?: WebLLMGenerateOptions) => Promise<WebLLMGenerateResult[]>;
-} => {
-  const { generate } = useEnhancedInference(options);
-
-  const generateBatch = useCallback(async (
-    prompts: string[],
-    batchOptions?: WebLLMGenerateOptions
-  ): Promise<WebLLMGenerateResult[]> => {
-    const results: WebLLMGenerateResult[] = [];
-    
-    for (const prompt of prompts) {
-      const result = await generate(prompt, batchOptions);
-      if (result) {
-        results.push(result);
-      }
-    }
-    
-    return results;
-  }, [generate]);
-
-  return { generateBatch };
-};
-
-/**
- * Hook for conversation-based inference with context caching
- */
-export const useConversationInference = (
-  options: UseEnhancedInferenceOptions & {
-    conversationId: string;
-  }
-): EnhancedInferenceReturn => {
-  const baseOptions = options;
-  const { generate, generateStream, ...baseReturn } = useEnhancedInference(baseOptions);
-
-  const generateWithContext = useCallback(async (
-    prompt: string,
-    options?: WebLLMGenerateOptions,
-    messages?: Array<{ role: string; content: string }>
-  ): Promise<WebLLMGenerateResult | null> => {
-    try {
-      // For WebLLM, context is handled via the messages array
-      if (messages && messages.length > 0) {
-        // Prepend context messages to the prompt
-        const contextPrompt = messages.map(m => `${m.role}: ${m.content}`).join('\n');
-        const fullPrompt = `${contextPrompt}\n\nUser: ${prompt}`;
-        return generate(fullPrompt, options);
-      }
-      return generate(prompt, options);
-    } catch (err: unknown) {
-      warn('Failed to generate with context:', err);
-      return null;
-    }
-  }, [generate]);
-
-  return {
-    ...baseReturn,
-    generate: generateWithContext,
-    generateStream,
-  };
-};
-
-/**
- * Hook for monitoring inference performance
- */
-export const useInferencePerformance = (): {
-  metrics: Record<string, unknown>;
-  memoryUsage: { usedMB: number; totalMB: number; usagePercent: number };
-} => {
-  const [metrics, setMetrics] = useState<Record<string, unknown>>({});
-  const [memoryUsage, setMemoryUsage] = useState<{
-    usedMB: number;
-    totalMB: number;
-    usagePercent: number;
-  }>({ usedMB: 0, totalMB: 0, usagePercent: 0 });
-
-  // WebLLM doesn't expose detailed metrics in the current API
-  // This is a placeholder for future implementation
-  useEffect(() => {
-    // For now, just return empty metrics
-    setMetrics({});
-    setMemoryUsage({ usedMB: 0, totalMB: 0, usagePercent: 0 });
-  }, []);
-
-  return { metrics, memoryUsage };
-};
-
-/**
- * Hook for preloading models in the background
- */
-export const useModelPreloader = (options: {
-  modelIds: string[];
-}): {
-  preloadStatus: Record<string, {
-    status: 'pending' | 'loading' | 'loaded' | 'failed';
-    progress: number;
-    error?: string;
-  }>;
-} => {
-  const { modelIds } = options;
-  const [preloadStatus, setPreloadStatus] = useState<Record<string, {
-    status: 'pending' | 'loading' | 'loaded' | 'failed';
-    progress: number;
-    error?: string;
-  }>>({});
-
-  useEffect((): void => {
-    const preload = async (): Promise<void> => {
-      // Initialize status
-      const initialStatus: typeof preloadStatus = {};
-      for (const modelId of modelIds) {
-        initialStatus[modelId] = { status: 'pending', progress: 0 };
-      }
-      setPreloadStatus(initialStatus);
-
-      // WebLLM handles preloading automatically
-      // For now, mark all as loaded
-      for (const modelId of modelIds) {
-        setPreloadStatus(prev => ({
-          ...prev,
-          [modelId]: { ...prev[modelId], status: 'loaded', progress: 100 }
-        }));
-      }
-    };
-
-    preload();
-  }, [modelIds]);
-
-  return { preloadStatus };
-};
-
-// ============================================================================
-// Exports
-// ============================================================================
-
-export default useEnhancedInference;
