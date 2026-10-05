@@ -10,11 +10,12 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { type AppConfig, type ChatCompletionChunk, type ChatCompletionResult, type MLCEngineInterface, prebuiltAppConfig } from "@mlc-ai/web-llm";
+import { type AppConfig, type ChatCompletion, type ChatCompletionChunk, type MLCEngineInterface } from "@mlc-ai/web-llm";
 import { handleErrorSilent } from '../utils/errors';
 import { log, warn } from '../services/logging';
 import { stripHiddenPartsText } from '../services/llm/text-processing';
 import { getEngineType, getModelConfig, getWasmFallbackModelId } from '../services/models/model-registry';
+import { getCustomAppConfig } from '../services/models/webllm-config';
 import {
   cancelWllamaGeneration,
   type DownloadStats,
@@ -92,6 +93,8 @@ export interface InferenceState {
   // Progress
   progress: number;
   progressStats: ModelLoadStats | null;
+  /** 'downloading' = fetching model files, 'preparing' = initializing in memory */
+  modelLoadPhase: 'downloading' | 'preparing';
   tokensGenerated: number;
   tokensPerSecond: number;
   
@@ -124,34 +127,6 @@ export interface EnhancedInferenceReturn extends InferenceState {
 }
 
 // ============================================================================
-// Custom AppConfig for WebLLM with MLC models
-// ============================================================================
-
-// App config for WebLLM: keep the official prebuilt model list (HF CDN sources)
-// and only switch the cache backend to OPFS. For models that we host on our
-// own webspace, the model URL is rewritten to the same-origin copy (no CDN
-// dependency); everything else (model_lib, metadata) stays untouched.
-const getCustomAppConfig = (useSelfHosted = true): AppConfig => {
-  const model_list = (prebuiltAppConfig.model_list ?? []).map((record) => {
-    if (!useSelfHosted) {
-      return record;
-    }
-    const config = getModelConfig(record.model_id);
-    if (config?.selfHostedPath) {
-      return {
-        ...record,
-        model: new URL(config.selfHostedPath, window.location.origin).href,
-      };
-    }
-    return record;
-  });
-  return {
-    cacheBackend: 'opfs', // Use Origin Private File System for best caching
-    model_list,
-  };
-};
-
-// ============================================================================
 // Main Hook
 // ============================================================================
 
@@ -176,6 +151,7 @@ export const useEnhancedInference = (
   const [streamText, setStreamText] = useState('');
   const [progress, setProgress] = useState(0);
   const [progressStats, setProgressStats] = useState<ModelLoadStats | null>(null);
+  const [modelLoadPhase, setModelLoadPhase] = useState<'downloading' | 'preparing'>('downloading');
   const [tokensGenerated, setTokensGenerated] = useState(0);
   const [tokensPerSecond, setTokensPerSecond] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -207,6 +183,7 @@ export const useEnhancedInference = (
       setError(null);
       setProgress(0);
       setProgressStats(null);
+      setModelLoadPhase('downloading');
       const engineType = getEngineType(modelId);
       if (engineType === 'wllama') {
         const config = getModelConfig(modelId);
@@ -220,6 +197,10 @@ export const useEnhancedInference = (
           onProgress: (fraction, label, stats) => {
             setProgress(fraction * 100);
             setProgressStats(stats ?? null);
+            // Once the file is fully fetched, wllama initializes the model in
+            // memory (allocate context, load tensors) - that phase has no
+            // progress events, so switch the label to "preparing".
+            setModelLoadPhase(fraction >= 0.999 ? 'preparing' : 'downloading');
             log(`Loading: ${label ?? ''}`);
           },
         });
@@ -285,9 +266,14 @@ export const useEnhancedInference = (
         // start), which the engine config type does not declare.
         const report = p as { text?: string; progress: number; timeElapsed?: number };
         setProgress(report.progress * 100); // Convert to percentage
+        // After the files are fetched, WebLLM compiles GPU shaders and copies
+        // the weights into graphics memory - no download progress anymore.
+        const isPreparing =
+          report.progress >= 0.999 || /shader|Loading GPU/i.test(report.text ?? '');
+        setModelLoadPhase(isPreparing ? 'preparing' : 'downloading');
         const size = report.text ? parseWebLLMSizeText(report.text) : null;
         const elapsed = report.timeElapsed ?? 0;
-        if (size && elapsed > 0) {
+        if (size && elapsed > 0 && !isPreparing) {
           setProgressStats({
             ...size,
             speedMBps: size.loadedMB / elapsed,
@@ -452,10 +438,10 @@ export const useEnhancedInference = (
         ...mergedOptions
       });
 
-      if (typeof (reply as AsyncIterable<unknown>)[Symbol.asyncIterator] === 'function') {
+      if (typeof (reply as unknown as AsyncIterable<unknown>)[Symbol.asyncIterator] === 'function') {
         throw new Error('Unexpected streaming response for non-streaming request');
       }
-      const completion = reply as ChatCompletionResult;
+      const completion = reply as ChatCompletion;
       const responseText = completion.choices[0]?.message?.content ?? '';
       
       setResult(responseText);
@@ -631,7 +617,7 @@ export const useEnhancedInference = (
 
   // Preload model (placeholder - WebLLM handles preloading automatically)
   const preloadModel = useCallback(async (modelId: string, priority?: number): Promise<void> => {
-    // WebLLM doesn't expose a direct preload API in the current version
+    // WebLLM doesn't expose a direct preload API in the current current version
     // Preloading is handled automatically when models are used
     log(`Preload requested for model: ${modelId} (priority: ${priority})`);
     // For now, we can trigger a background load if needed
@@ -675,6 +661,7 @@ export const useEnhancedInference = (
     // Progress
     progress,
     progressStats,
+    modelLoadPhase,
     tokensGenerated,
     tokensPerSecond,
     
