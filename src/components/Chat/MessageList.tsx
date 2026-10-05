@@ -133,7 +133,7 @@ function areMessagesEqual(
     return false;
   }
   // Only re-render if messages array reference changes or length changes
-  // This prevents unnecessary re-renders when only other props change
+  // This prevents unnecessary re-re-renders when only other props change
   if (prevProps.messages === nextProps.messages) {
     return true;
   }
@@ -142,19 +142,15 @@ function areMessagesEqual(
   if (prevProps.messages.length !== nextProps.messages.length) {
     return false;
   }
-  
-  // Check if the last message is the same (most common case for chat)
-  const prevLast = prevProps.messages[prevProps.messages.length - 1];
-  const nextLast = nextProps.messages[nextProps.messages.length - 1];
-  
-  if (!prevLast || !nextLast || prevLast.id !== nextLast.id) {
-    return false;
-  }
-  
-  // For simplicity, we'll re-render if the last message changed
-  // This could be optimized further with deep comparison if needed
-  return prevLast.content === nextLast.content && 
-         prevLast.timestamp === nextLast.timestamp;
+
+  // Compare all messages: a change in the middle of the list (e.g. after a
+  // backup import) must re-render too, not just a changed last message.
+  return prevProps.messages.every(
+    (message, index) =>
+      message.id === nextProps.messages[index].id &&
+      message.content === nextProps.messages[index].content &&
+      message.timestamp === nextProps.messages[index].timestamp
+  );
 }
 
 const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, isModelLoading, streamingMessage, messagesEndRef, isDarkMode, searchQuery }) => {
