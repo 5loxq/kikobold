@@ -1,4 +1,4 @@
-import { FC, lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { FC, lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sidebar } from './Sidebar';
 import { ChatWindow } from '../Chat/ChatWindow';
@@ -26,6 +26,7 @@ import { useProfiles } from '../../hooks/useProfiles';
 import { useMemories } from '../../hooks/useMemories';
 import { useEnhancedInference } from '../../hooks/useEnhancedInference';
 import * as ChatStorage from '../../services/storage/ChatStorage';
+import { DEFAULT_CHAT_TITLE } from '../../services/storage/ChatStorage';
 import { buildMemoryPromptBlock } from '../../services/storage/MemoryStorage';
 import { isDarkMode as checkDarkMode, getSystemPrefersDark, setThemeMode } from '../../services/theme';
 import { error as logError } from '../../services/logging';
@@ -58,6 +59,11 @@ export const MainLayout: FC = () => {
     handleSettingsChange({ ...settings, theme: next ? 'dark' : 'light' });
   };
   const { chat, chats, loadChats, loadChat, createNewChat, deleteChat, addMessage, renameChat } = useChat();
+  // deleteChat logs and re-throws DB errors; swallow them here so a failed
+  // delete does not surface as an unhandled promise rejection in the onClick handler.
+  const handleDeleteChat = useCallback((chatId: string): void => {
+    void deleteChat(chatId).catch(() => undefined);
+  }, [deleteChat]);
   const { profiles, activeProfile, selectProfile, createProfile, updateProfile, deleteProfile, exportProfiles, importProfiles } = useProfiles();
   const { memories, addMemory, setMemoryField, updateMemory, deleteMemory, clearAllMemories, importMemories } = useMemories();
   const { libraryFiles, addLibraryFile, deleteLibraryFile, clearAllLibraryFiles, importLibraryFiles } = useLibrary();
@@ -76,12 +82,16 @@ export const MainLayout: FC = () => {
     supportsImageInput,
     progress: modelLoadProgress,
     progressStats: modelLoadStats,
+    modelLoadPhase,
   } = useEnhancedInference({ modelId: activeModel?.id ?? '', autoLoad: false });
   const [localError, setLocalError] = useState<string | null>(null);
   const [streamingMessage, setStreamingMessage] = useState<string | null>(null);
   // Welcome page (first visit) and guided tour (shown right after it)
   const [welcomeDone, setWelcomeDone] = useState<boolean>(hasSeenWelcome());
   const [tourDone, setTourDone] = useState<boolean>(hasSeenTour());
+  const handleTourComplete = useCallback((): void => {
+    setTourDone(true);
+  }, []);
   // Model that is currently being downloaded/loaded (may differ from the
   // still-active model while a new one is being fetched)
   const [pendingModelId, setPendingModelId] = useState<string | null>(null);
@@ -267,8 +277,8 @@ export const MainLayout: FC = () => {
         throw new Error('Message cannot be empty');
       }
 
-      // Auto-rename chat on first message if still "New Chat"
-      if (chat.messages.length === 0 && chat.title === 'New Chat') {
+      // Auto-rename chat on first message if still the default title
+      if (chat.messages.length === 0 && chat.title === DEFAULT_CHAT_TITLE) {
         // Extract first meaningful words (remove common prefixes)
         const words = message.split(/\s+/).filter((word) => word.length > 0);
         const title = words.slice(0, 5).join(' ').substring(0, 50); // First 5 words, max 50 chars
@@ -466,7 +476,7 @@ export const MainLayout: FC = () => {
           activeChat={chat}
           onSelectChat={handleSelectChat}
           onNewChat={handleNewChat}
-          onDeleteChat={deleteChat}
+          onDeleteChat={handleDeleteChat}
           activeTab={activeTab}
           onTabChange={setActiveTab}
           darkMode={darkMode}
@@ -505,7 +515,7 @@ export const MainLayout: FC = () => {
                   handleNewChat();
                   setShowMobileSidebar(false);
                 }}
-                onDeleteChat={deleteChat}
+                onDeleteChat={handleDeleteChat}
                 activeTab={activeTab}
                 onTabChange={(tab) => {
                   setActiveTab(tab);
@@ -543,38 +553,58 @@ export const MainLayout: FC = () => {
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-zinc-800 dark:text-zinc-100">{t('chat.downloadingModel')}</h3>
+                  <h3 className="font-semibold text-zinc-800 dark:text-zinc-100">
+                    {modelLoadPhase === 'preparing'
+                      ? t('chat.preparingModel')
+                      : t('chat.downloadingModel')}
+                  </h3>
                   <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
                     {getModelInfo(pendingModelId ?? activeModel?.id ?? '')?.name
                       ?? activeModel?.name
                       ?? t('chat.processingRequest')}
                   </p>
-                  <div className="mt-3 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
-                    <div
-                      className="bg-gradient-to-r from-indigo-500 to-violet-500 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${Math.max(2, Math.round(modelLoadProgress))}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1.5 tabular-nums">
-                    {Math.round(modelLoadProgress)}%
-                    {modelLoadStats
-                      ? ` · ${t('chat.downloadStats', {
-                          loaded: Math.round(modelLoadStats.loadedMB),
-                          total: Math.round(modelLoadStats.totalMB),
-                          speed: modelLoadStats.speedMBps.toFixed(1),
-                        })}`
-                      : ''}
-                  </p>
-                  {((): JSX.Element | null => {
-                    const eta = downloadEta(modelLoadStats);
-                    return eta ? (
-                      <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-0.5">
-                        {t('chat.downloadEta', { time: eta })}
+                  {modelLoadPhase === 'preparing' ? (
+                    <>
+                      {/* Indeterminate bar: the files are complete, the model
+                          is being initialized in memory without progress events */}
+                      <div className="mt-3 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
+                        <div className="h-2 w-1/3 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full animate-progress-slide"></div>
+                      </div>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1.5">
+                        {t('chat.preparingNote')}
                       </p>
-                    ) : null;
-                  })()}                  <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-2 leading-relaxed">
-                    {t('chat.downloadLocalNote')}
-                  </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="mt-3 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="bg-gradient-to-r from-indigo-500 to-violet-500 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${Math.max(2, Math.round(modelLoadProgress))}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1.5 tabular-nums">
+                        {Math.round(modelLoadProgress)}%
+                        {modelLoadStats
+                          ? ` · ${t('chat.downloadStats', {
+                              loaded: Math.round(modelLoadStats.loadedMB),
+                              total: Math.round(modelLoadStats.totalMB),
+                              speed: modelLoadStats.speedMBps.toFixed(1),
+                            })}`
+                          : ''}
+                      </p>
+                      {((): JSX.Element | null => {
+                        const eta = downloadEta(modelLoadStats);
+                        return eta ? (
+                          <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-0.5">
+                            {t('chat.downloadEta', { time: eta })}
+                          </p>
+                        ) : null;
+                      })()}
+                      <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-2 leading-relaxed">
+                        {t('chat.downloadLocalNote')}
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -592,6 +622,7 @@ export const MainLayout: FC = () => {
             webgpuAvailable={webgpuAvailable}
             loadingProgress={modelLoadProgress}
             loadStats={modelLoadStats}
+            loadingPhase={modelLoadPhase}
             darkMode={darkMode}
             isModelDownloaded={isModelDownloaded}
             isGenerating={isGenerating}
@@ -702,7 +733,7 @@ export const MainLayout: FC = () => {
       {/* Guided tour through the chat UI - starts after the welcome page.
           Waits for the initial chat so the tour targets exist. */}
       {welcomeDone && !tourDone && chat && (
-        <GuidedTour onComplete={() => setTourDone(true)} />
+        <GuidedTour onComplete={handleTourComplete} />
       )}
 
       {/* "What's new" summary for returning users (or opened from the help page) */}
