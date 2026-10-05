@@ -5,8 +5,6 @@
  * - Service worker registration
  * - Offline detection
  * - Cache management
- * 
- * Inspired by Ensu's offline implementation
  */
 
 // Service worker file path
@@ -85,13 +83,19 @@ export const checkForUpdates = async (): Promise<boolean> => {
             return false;
         }
 
-        const update = await serviceWorkerRegistration.update();
-        
-        if (update) {
+        const registration = await serviceWorkerRegistration.update();
+
+        // update() always resolves with a registration; an update was only
+        // found when a newly installed worker is waiting to take over.
+        const hasUpdate = Boolean(
+            registration.waiting && registration.active && registration.waiting !== registration.active
+        );
+
+        if (hasUpdate) {
             console.log('✓ Service Worker update found');
             return true;
         }
-        
+
         return false;
     } catch (error) {
         console.error('✗ Failed to check for Service Worker updates:', error);

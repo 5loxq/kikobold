@@ -8,7 +8,7 @@
  * - System preference detection
  */
 
-import { CustomizationSettings, ThemeMode, ThemeSettings } from '../types/ensu-types';
+import { CustomizationSettings, ThemeMode, ThemeSettings } from '../types/kikobold-types';
 
 // ============================================================================
 // Constants

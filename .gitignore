@@ -57,3 +57,9 @@ coverage
 
 # Security
 npm-audit.json
+
+# Server-Zugangsdaten (niemals committen)
+server-zugangsdaten.txt
+
+# Modelle (zu gross fuer Git, liegen lokal in public/models und auf dem Server)
+public/models/

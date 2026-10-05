@@ -8,7 +8,7 @@
  * - Storage information
  */
 
-import { GPUInfo, MemoryInfo, SystemInfo } from '../types/ensu-types';
+import { GPUInfo, MemoryInfo, SystemInfo } from '../types/kikobold-types';
 import { checkWASMSupport, checkWebGPUSupport } from './security';
 
 // ============================================================================
@@ -24,22 +24,23 @@ interface BrowserInfo {
 const detectBrowser = (): BrowserInfo => {
   const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
   
-  // Chrome
-  if (userAgent.includes('Chrome') && !userAgent.includes('Edge')) {
-    const versionMatch = userAgent.match(/Chrome\/(\d+\.\d+)/);
+  // Edge (modern UAs contain "Edg/", older ones "Edge" - both also contain
+  // "Chrome", so this must be checked before Chrome)
+  if (userAgent.includes('Edg')) {
+    const versionMatch = userAgent.match(/Edg(?:e)?\/(\d+\.\d+)/);
     return {
-      name: 'Chrome',
+      name: 'Edge',
       version: versionMatch ? versionMatch[1] : 'Unknown',
       userAgent,
     };
   }
 
-  // Edge
-  if (userAgent.includes('Edge') || userAgent.includes('Edg')) {
-    const versionMatch = userAgent.match(/(Edge|Edg)\/(\d+\.\d+)/);
+  // Chrome
+  if (userAgent.includes('Chrome')) {
+    const versionMatch = userAgent.match(/Chrome\/(\d+\.\d+)/);
     return {
-      name: 'Edge',
-      version: versionMatch ? versionMatch[2] : 'Unknown',
+      name: 'Chrome',
+      version: versionMatch ? versionMatch[1] : 'Unknown',
       userAgent,
     };
   }
@@ -130,17 +131,23 @@ const detectOS = (): OSInfo => {
     return { name: 'macOS', version, architecture: 'x64' };
   }
 
-  // Linux
-  if (platform.includes('Linux') || userAgent.includes('Linux')) {
-    const architecture = platform.includes('64') ? 'x64' : 
-                       platform.includes('ARM') ? 'ARM' : 'x86';
-    return { name: 'Linux', version: 'Unknown', architecture };
-  }
-
-  // Android
+  // Android (its UA contains "Linux", so this must be checked before Linux)
   if (userAgent.includes('Android')) {
     const versionMatch = userAgent.match(/Android (\d+\.\d+)/);
     return { name: 'Android', version: versionMatch ? versionMatch[1] : 'Unknown', architecture: 'ARM' };
+  }
+
+  // Chrome OS (navigator.platform reports "Linux x86_64" there, so check
+  // the UA's "CrOS" marker before the generic Linux check)
+  if (userAgent.includes('CrOS')) {
+    return { name: 'Chrome OS', version: 'Unknown', architecture: 'x64' };
+  }
+
+  // Linux
+  if (platform.includes('Linux') || userAgent.includes('Linux')) {
+    const architecture = platform.includes('64') ? 'x64' :
+                       platform.includes('ARM') ? 'ARM' : 'x86';
+    return { name: 'Linux', version: 'Unknown', architecture };
   }
 
   // iOS
@@ -150,15 +157,8 @@ const detectOS = (): OSInfo => {
     return { name: 'iOS', version, architecture: 'ARM' };
   }
 
-  // Chrome OS
-  if (userAgent.includes('CrOS')) {
-    return { name: 'Chrome OS', version: 'Unknown', architecture: 'x64' };
-  }
-
   return { name: 'Unknown', version: 'Unknown', architecture: 'Unknown' };
-};
-
-// ============================================================================
+};// ============================================================================
 // GPU Detection
 // ============================================================================
 
