@@ -66,6 +66,7 @@ interface SpeechRecognitionResultList {
 
 interface SpeechRecognitionResult {
   [0]: SpeechRecognitionAlternative;
+  isFinal: boolean;
 }
 
 interface SpeechRecognitionAlternative {
@@ -180,9 +181,11 @@ export const InputBox: React.FC<InputBoxProps> = ({
         return;
       }
 
-      // Request microphone permission
+      // Request microphone permission (the stream is only needed for the
+      // permission prompt and must be released immediately afterwards)
       try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
+        const permissionStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        permissionStream.getTracks().forEach((track) => track.stop());
       } catch (permissionError) {
         error('Microphone permission denied:', permissionError);
         alert(t('chat.micPermissionDenied'));
@@ -216,17 +219,18 @@ export const InputBox: React.FC<InputBoxProps> = ({
       };
 
       recognition.onresult = (event: SpeechRecognitionEvent): void => {
-        let transcript = '';
+        // Only append finalized segments. Interim results are re-delivered on
+        // every event with growing content, so appending them would duplicate
+        // words and phrases in the input.
+        let finalTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
-          transcript += event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          }
         }
-        
-        // Clean up transcript - remove duplicate words and normalize spaces
-        const cleanedTranscript = transcript
-          .trim()
-          .replace(/\s+/g, ' ') // Normalize multiple spaces
-          .replace(/(\b\w+\b)\s+\1\b/gi, '$1'); // Remove duplicate words
-        
+
+        const cleanedTranscript = finalTranscript.trim().replace(/\s+/g, ' ');
+
         if (cleanedTranscript) {
           setInput((prev) => prev + (prev ? ' ' : '') + cleanedTranscript);
         }
@@ -271,10 +275,8 @@ export const InputBox: React.FC<InputBoxProps> = ({
       }
       setInput('');
       setDocuments([]);
-      setImages((prev) => {
-        prev.forEach((img) => URL.revokeObjectURL(img.previewUrl));
-        return [];
-      });
+      images.forEach((img) => URL.revokeObjectURL(img.previewUrl));
+      setImages([]);
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
       }
