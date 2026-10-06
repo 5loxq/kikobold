@@ -1,4 +1,4 @@
-import { type AppConfig, prebuiltAppConfig } from '@mlc-ai/web-llm';
+import { type AppConfig } from '@mlc-ai/web-llm';
 import { getModelConfig } from './model-registry';
 
 /**
@@ -10,8 +10,13 @@ import { getModelConfig } from './model-registry';
  * The same config must be used for loading AND for cache operations
  * (e.g. deleteModelAllInfoInCache), because the cache is keyed by the model
  * URL it contains.
+ *
+ * @mlc-ai/web-llm is imported dynamically so the (large) engine bundle is
+ * only fetched when a model is actually being loaded or its cache managed -
+ * it never lands in the initial app chunk.
  */
-export const getCustomAppConfig = (useSelfHosted = true): AppConfig => {
+export const getCustomAppConfig = async (useSelfHosted = true): Promise<AppConfig> => {
+  const { prebuiltAppConfig } = await import('@mlc-ai/web-llm');
   const model_list = (prebuiltAppConfig.model_list ?? []).map((record) => {
     if (!useSelfHosted) {
       return record;
