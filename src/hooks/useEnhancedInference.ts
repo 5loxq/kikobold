@@ -617,7 +617,7 @@ export const useEnhancedInference = (
 
   // Preload model (placeholder - WebLLM handles preloading automatically)
   const preloadModel = useCallback(async (modelId: string, priority?: number): Promise<void> => {
-    // WebLLM doesn't expose a direct preload API in the current current version
+    // WebLLM doesn't expose a direct preload API in the current version
     // Preloading is handled automatically when models are used
     log(`Preload requested for model: ${modelId} (priority: ${priority})`);
     // For now, we can trigger a background load if needed

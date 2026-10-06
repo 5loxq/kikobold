@@ -92,3 +92,4 @@ export interface CustomizationSettings {
   soundEnabled: boolean;
   notificationsEnabled: boolean;
 }
+

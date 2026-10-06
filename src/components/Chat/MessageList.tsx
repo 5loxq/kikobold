@@ -133,7 +133,7 @@ function areMessagesEqual(
     return false;
   }
   // Only re-render if messages array reference changes or length changes
-  // This prevents unnecessary re-re-renders when only other props change
+  // This prevents unnecessary re-renders when only other props change
   if (prevProps.messages === nextProps.messages) {
     return true;
   }
