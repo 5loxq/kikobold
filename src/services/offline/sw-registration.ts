@@ -198,3 +198,44 @@ export const onOfflineStateChange = (listener: (offline: boolean) => void): (() 
         }
     };
 };
+
+/**
+ * Get the current service worker registration
+ */
+export const getServiceWorkerRegistration = (): ServiceWorkerRegistration | null => {
+    return serviceWorkerRegistration;
+};
+
+/**
+ * Check if service worker is supported
+ */
+export const isServiceWorkerSupported = (): boolean => {
+    return 'serviceWorker' in navigator;
+};
+
+/**
+ * Initialize offline support
+ */
+export const initOfflineSupport = async (): Promise<void> => {
+    try {
+        // Register service worker
+        await registerServiceWorker();
+        
+        console.log('✓ Offline support initialized');
+    } catch (error) {
+        console.error('✗ Failed to initialize offline support:', error);
+    }
+};
+
+export default {
+    registerServiceWorker,
+    unregisterServiceWorker,
+    checkForUpdates,
+    skipWaiting,
+    cleanupCaches,
+    getIsOffline,
+    onOfflineStateChange,
+    getServiceWorkerRegistration,
+    isServiceWorkerSupported,
+    initOfflineSupport,
+};
