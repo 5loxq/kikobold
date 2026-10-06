@@ -54,20 +54,25 @@ const STEPS: TourStep[] = [
     textKey: 'tour.step3Text',
   },
   {
-    selector: 'search',
+    selector: 'chat-tag',
     titleKey: 'tour.step4Title',
     textKey: 'tour.step4Text',
   },
   {
-    selector: 'message-input',
+    selector: 'search',
     titleKey: 'tour.step5Title',
     textKey: 'tour.step5Text',
   },
   {
-    selector: 'sidebar-nav',
-    mobileSelector: 'mobile-menu',
+    selector: 'message-input',
     titleKey: 'tour.step6Title',
     textKey: 'tour.step6Text',
+  },
+  {
+    selector: 'sidebar-nav',
+    mobileSelector: 'mobile-menu',
+    titleKey: 'tour.step7Title',
+    textKey: 'tour.step7Text',
   },
 ];
 

@@ -111,12 +111,14 @@
     "step2Text": "Profiles change the style of the answers: 'Precise' for facts, 'Creative' for ideas.",
     "step3Title": "Export & Share",
     "step3Text": "'Export Chat' saves the current chat as a file, 'Share' copies it to your clipboard. Full backup and import live under menu → Data.",
-    "step4Title": "Search the chat",
-    "step4Text": "Here you can find older messages in the current chat.",
-    "step5Title": "Write a message",
-    "step5Text": "Type your message and send it. Use the microphone to dictate, the paperclip to attach files.",
-    "step6Title": "Menu",
-    "step6Text": "Here you find new chats, the history, profiles, the memory, the library, data & backup, settings, help and contact."
+    "step4Title": "Tag your chat",
+    "step4Text": "Give the chat a colored tag (Work, Personal, Idea, Archive) - the sidebar shows a colored dot.",
+    "step5Title": "Search the chat",
+    "step5Text": "Here you can find older messages in the current chat. Faster with Ctrl+K (Cmd+K on Mac).",
+    "step6Title": "Write a message",
+    "step6Text": "Type your message and send it. Use the microphone to dictate, the paperclip to attach files. Esc stops the running answer.",
+    "step7Title": "Menu",
+    "step7Text": "Here you find new chats, history, profiles, memory, library, data & backup, settings, help and contact."
   },
   "data": {
     "title": "Data & Backup",
@@ -172,6 +174,12 @@
   "whatsNew": {
     "title": "What's new",
     "subtitle": "A few things have changed since your last visit:",
+    "v322": {
+      "item1": "Chat tags: Label chats with a colored tag in the chat header (Work, Personal, Idea, Archive) - the sidebar shows a colored dot.",
+      "item2": "Answers survive a reload: while the answer is being generated, the text so far is continuously saved. A tab crash or reload keeps everything that was already written.",
+      "item3": "\"Try again\": if an answer fails (e.g. memory or network error), a retry button appears next to the error message - without duplicating your question in the chat.",
+      "item4": "Keyboard shortcuts: Ctrl+K (or Cmd+K) opens the chat search, Esc stops the running answer. You also get a hint when older messages are trimmed because of the context window."
+    },
     "closeButton": "Got it!",
     "v321": {
       "item1": "Context error fixed: attachments and long conversations no longer exceed the model window - context raised from 1024 to 4096 tokens, large attachments are trimmed.",

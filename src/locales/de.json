@@ -111,12 +111,14 @@
     "step2Text": "Profile ändern den Stil der Antworten: 'Präzise' für Fakten, 'Kreativ' für Ideen.",
     "step3Title": "Export & Teilen",
     "step3Text": "'Chat exportieren' sichert den aktuellen Chat als Datei, 'Teilen' kopiert ihn in die Zwischenablage. Komplettes Backup und Import findest du unter Menü → Daten.",
-    "step4Title": "Chat durchsuchen",
-    "step4Text": "Hier findest du alte Nachrichten im aktuellen Chat wieder.",
-    "step5Title": "Nachricht schreiben",
-    "step5Text": "Tippe deine Nachricht und sende sie ab. Mit dem Mikrofon kannst du diktieren, mit der Büroklammer Dateien anhängen.",
-    "step6Title": "Menü",
-    "step6Text": "Hier findest du neue Chats, den Verlauf, Profile, das Gedächtnis, die Bibliothek, Daten & Backup, Einstellungen, die Hilfe und den Kontakt."
+    "step4Title": "Chat kennzeichnen",
+    "step4Text": "Gib dem Chat einen farbigen Tag (Arbeit, Privat, Idee, Archiv) - in der Sidebar erkennst du ihn am Farbpunkt.",
+    "step5Title": "Chat durchsuchen",
+    "step5Text": "Hier findest du alte Nachrichten im aktuellen Chat wieder. Schneller geht es mit Strg+K (Cmd+K auf dem Mac).",
+    "step6Title": "Nachricht schreiben",
+    "step6Text": "Tippe deine Nachricht und sende sie ab. Mit dem Mikrofon kannst du diktieren, mit der Büroklammer Dateien anhängen. Esc stoppt die laufende Antwort.",
+    "step7Title": "Menü",
+    "step7Text": "Hier findest du neue Chats, den Verlauf, Profile, das Gedächtnis, die Bibliothek, Daten & Backup, Einstellungen, die Hilfe und den Kontakt."
   },
   "data": {
     "title": "Daten & Backup",
@@ -172,6 +174,12 @@
   "whatsNew": {
     "title": "Das ist neu",
     "subtitle": "Seit deinem letzten Besuch hat sich einiges getan:",
+    "v322": {
+      "item1": "Chat-Tags: Kennzeichne Chats im Chat-Header mit einem farbigen Tag (Arbeit, Privat, Idee, Archiv) - in der Sidebar siehst du den Farbpunkt.",
+      "item2": "Antworten überleben einen Neuladen: Während die Antwort entsteht, wird der bisherige Text laufend gesichert. Bei einem Tab-Crash oder Reload bleibt alles erhalten, was schon geschrieben wurde.",
+      "item3": "\"Erneut versuchen\": Schlägt eine Antwort fehl (z.B. Speicher- oder Netzwerkfehler), erscheint neben der Fehlermeldung ein Retry-Button - ohne dass deine Frage doppelt im Chat landet.",
+      "item4": "Tastaturkürzel: Strg+K (bzw. Cmd+K) öffnet die Chat-Suche, Esc stoppt die laufende Antwort. Außerdem siehst du einen Hinweis, wenn ältere Nachrichten wegen des Kontextfensters gekürzt wurden."
+    },
     "closeButton": "Alles klar!",
     "v321": {
       "item1": "Kontext-Fehler behoben: Anhänge und lange Unterhaltungen sprengen nicht mehr das Modell-Fenster - der Kontext wurde von 1024 auf 4096 Tokens erhöht, große Anhänge werden gekürzt.",

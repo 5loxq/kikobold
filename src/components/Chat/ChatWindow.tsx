@@ -238,6 +238,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 </button>
                 {onSetChatTag && (
                   <select
+                    data-tour="chat-tag"
                     value={chat.tag ?? ''}
                     onChange={(e) => onSetChatTag(chat.id, e.target.value || null)}
                     className="px-2 py-1 border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
