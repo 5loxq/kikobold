@@ -26,7 +26,7 @@ import { useProfiles } from '../../hooks/useProfiles';
 import { useMemories } from '../../hooks/useMemories';
 import { useEnhancedInference } from '../../hooks/useEnhancedInference';
 import * as ChatStorage from '../../services/storage/ChatStorage';
-import { DEFAULT_CHAT_TITLE } from '../../services/storage/ChatStorage';
+import { DEFAULT_CHAT_TITLE, updateChatStreamingDraft } from '../../services/storage/ChatStorage';
 import { buildMemoryPromptBlock } from '../../services/storage/MemoryStorage';
 import { isDarkMode as checkDarkMode, getSystemPrefersDark, setThemeMode } from '../../services/theme';
 import { error as logError } from '../../services/logging';
@@ -58,7 +58,7 @@ export const MainLayout: FC = () => {
     const next = !darkMode;
     handleSettingsChange({ ...settings, theme: next ? 'dark' : 'light' });
   };
-  const { chat, chats, loadChats, loadChat, createNewChat, deleteChat, addMessage, renameChat } = useChat();
+  const { chat, chats, loadChats, loadChat, createNewChat, deleteChat, addMessage, renameChat, setChatTag } = useChat();
   // deleteChat logs and re-throws DB errors; swallow them here so a failed
   // delete does not surface as an unhandled promise rejection in the onClick handler.
   const handleDeleteChat = useCallback((chatId: string): void => {
@@ -368,14 +368,32 @@ export const MainLayout: FC = () => {
       // dropped, the model no longer sees the whole conversation.
       setHistoryTrimmed(history.length < recentMessages.length);
       setStreamingMessage('start');
-      const result = await generateStream(promptWithLibrary, {
-        temperature: activeProfile.temperature,
-        top_p: activeProfile.topP,
-        max_tokens: activeProfile.maxTokens,
-        systemPrompt,
-        history,
-        images,
-      });
+      // Persist the partial answer while streaming (throttled) so a reload
+      // or tab crash does not lose the text generated so far. The draft is
+      // cleared once the finished message has been saved.
+      let streamedSoFar = '';
+      let lastDraftSave = 0;
+      const result = await generateStream(
+        promptWithLibrary,
+        {
+          temperature: activeProfile.temperature,
+          top_p: activeProfile.topP,
+          max_tokens: activeProfile.maxTokens,
+          systemPrompt,
+          history,
+          images,
+        },
+        (delta) => {
+          streamedSoFar += delta;
+          const now = Date.now();
+          if (now - lastDraftSave >= 2000) {
+            lastDraftSave = now;
+            updateChatStreamingDraft(chat.id, streamedSoFar).catch(() => {
+              // Draft persistence is best-effort; never break generation.
+            });
+          }
+        }
+      );
 
       if (result && result.trim().length > 0) {
         await addMessage('assistant', result);
@@ -385,12 +403,17 @@ export const MainLayout: FC = () => {
           speakResponse(result);
         }
       }
+      await updateChatStreamingDraft(chat.id, null).catch(() => {
+        // Best-effort cleanup of the draft checkpoint.
+      });
       setRetryPending(null);
       setLocalError(null);
     } catch (err) {
       logError('Failed to generate response:', err);
       setLocalError(err instanceof Error ? err.message : 'Failed to generate response');
       setRetryPending({ prompt: promptWithLibrary, images });
+      // Keep the draft on error: it is the partial answer generated so far.
+      // It is cleared by the retry or the next successful generation.
     } finally {
       setStreamingMessage(null);
     }
@@ -669,7 +692,7 @@ export const MainLayout: FC = () => {
             darkMode={darkMode}
             isModelDownloaded={isModelDownloaded}
             isGenerating={isGenerating}
-            streamingMessage={streamingMessage ? streamText : null}
+            streamingMessage={streamingMessage ? streamText : (chat?.streamingDraft ?? null)}
             onStopGeneration={stopGeneration}
             onRetryGeneration={retryPending && !isGenerating ? handleRetryGeneration : undefined}
             historyTrimmed={historyTrimmed}
@@ -680,6 +703,7 @@ export const MainLayout: FC = () => {
             onSelectModel={handleModelSelect}
             onSelectProfile={handleSelectProfile}
             onRenameChat={renameChat}
+            onSetChatTag={setChatTag}
             memories={memories}
             library={libraryFiles}
           />

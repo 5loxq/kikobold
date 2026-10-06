@@ -6,6 +6,8 @@ export interface Message {
   timestamp: number;
 }
 
+export type ChatTag = 'work' | 'personal' | 'idea' | 'archive';
+
 export interface Chat {
   id: string;
   title: string;
@@ -13,6 +15,11 @@ export interface Chat {
   profileId: string;
   createdAt: number;
   updatedAt: number;
+  /** Optional color tag shown in the sidebar for orientation */
+  tag?: ChatTag;
+  /** Survives a reload during generation: the partial assistant text
+   *  streamed so far. Cleared when the message is finished and saved. */
+  streamingDraft?: string;
 }
 
 // Memory types

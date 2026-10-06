@@ -5,6 +5,8 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 ## [3.2.2] - 2026-10-05
 
 ### Neu
+- **Streaming überlebt einen Reload**: Während der Antwortgenerierung wird der bisherige Text (gedrosselt, alle 2 Sekunden) als Entwurf in der IndexedDB gesichert. Bei einem Tab-Crash oder Reload bleibt der Teiltext erhalten und wird beim Öffnen des Chats angezeigt - erst der erfolgreiche Abschluss der Antwort löscht den Entwurf. Exporte enthalten den Entwurf nie.
+- **Chat-Tags**: Chats lassen sich im Chat-Header mit einem farbigen Tag kennzeichnen (Arbeit/Privat/Idee/Archiv); in der Sidebar erscheint ein Farbpunkt. Tags werden im Export/Import mitgenommen.
 - **"Erneut versuchen" bei fehlgeschlagener Antwort**: Schlägt die Generierung fehl (z.B. Speicher- oder Netzwerkfehler), bietet die Fehlermeldung jetzt einen Retry-Button. Der letzte Prompt wird ohne Duplikat der User-Nachricht erneut an das Modell geschickt.
 - **Tastaturkürzel**: Strg/Cmd+K öffnet/schließt die Chat-Suche, Esc stoppt die laufende Generierung (oder schließt die Suche bzw. bricht die Titel-Bearbeitung ab).
 - **Hinweis bei gekürztem Kontext**: Werden ältere Verlaufsnachrichten wegen des begrenzten Kontextfensters aus dem Modellprompt entfernt, zeigt der Chat jetzt einen dezenten Hinweis.

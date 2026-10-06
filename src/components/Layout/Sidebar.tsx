@@ -119,9 +119,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
               >
                 <div
                   onClick={() => onSelectChat(chat)}
-                  className="flex-1 px-3 py-2.5 truncate text-sm text-zinc-300"
+                  className="flex-1 px-3 py-2.5 truncate text-sm text-zinc-300 flex items-center gap-2"
                 >
-                  {chat.title}
+                  {chat.tag && (
+                    <span
+                      className={`w-2 h-2 rounded-full shrink-0 ${
+                        chat.tag === 'work'
+                          ? 'bg-blue-400'
+                          : chat.tag === 'personal'
+                            ? 'bg-green-400'
+                            : chat.tag === 'idea'
+                              ? 'bg-amber-400'
+                              : 'bg-zinc-400'
+                      }`}
+                      title={chat.tag}
+                    />
+                  )}
+                  <span className="truncate">{chat.title}</span>
                 </div>
                 <button
                   onClick={(e) => {

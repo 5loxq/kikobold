@@ -143,6 +143,30 @@ export const useChat = (): UseChatReturn => {
     }
   }, [chat, loadChats]);
 
+  const setChatTag = useCallback(async (id: string, tag: string | null) => {
+    try {
+      if (typeof id !== 'string' || id.trim().length === 0) {
+        throw new Error('Invalid chat ID');
+      }
+      const chatToUpdate = await ChatStorage.getChat(id);
+      if (chatToUpdate) {
+        if (tag === null) {
+          delete chatToUpdate.tag;
+        } else {
+          chatToUpdate.tag = tag as Chat['tag'];
+        }
+        chatToUpdate.updatedAt = Date.now();
+        await ChatStorage.saveChat(chatToUpdate);
+        if (chat?.id === id) {
+          setChat(chatToUpdate);
+        }
+        await loadChats();
+      }
+    } catch (error) {
+      console.error('Failed to set chat tag:', error instanceof Error ? error : new Error(String(error)));
+      throw error;
+    }
+  }, [chat, loadChats]);
   const createNewChat = useCallback(async (profileId: string, title?: string) => {
     try {
       if (typeof profileId !== 'string' || profileId.trim().length === 0) {
@@ -169,6 +193,7 @@ export const useChat = (): UseChatReturn => {
     addMessage,
     deleteChat,
     renameChat,
+    setChatTag,
     createNewChat,
   };
 };

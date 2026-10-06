@@ -78,7 +78,13 @@
     "downloadLocalNote": "Der Download läuft direkt von dieser Webseite und wird in deinem Browser gecacht - alles bleibt lokal.",
     "jspiHint": "Dieser Browser unterstützt kein JSPI - das Modell läuft dadurch deutlich langsamer. Für volle Geschwindigkeit verwende Chrome oder Edge.",
     "retry": "Erneut versuchen",
-    "historyTrimmed": "ℹ️ Ältere Nachrichten wurden aus dem Modellkontext entfernt (Kontextfenster überschritten)."
+    "historyTrimmed": "ℹ️ Ältere Nachrichten wurden aus dem Modellkontext entfernt (Kontextfenster überschritten).",
+    "setTag": "Chat kennzeichnen",
+    "tagNone": "Kein Tag",
+    "tagWork": "Arbeit",
+    "tagPersonal": "Privat",
+    "tagIdea": "Idee",
+    "tagArchive": "Archiv"
   },
   "welcome": {
     "title": "Hallo & willkommen!",

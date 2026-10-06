@@ -27,6 +27,7 @@ export interface UseChatReturn {
   addMessage: (role: 'user' | 'assistant', content: string) => Promise<void>;
   deleteChat: (id: string) => Promise<void>;
   renameChat: (id: string, newTitle: string) => Promise<void>;
+  setChatTag: (id: string, tag: string | null) => Promise<void>;
   createNewChat: (profileId: string, title?: string) => Promise<Chat>;
 }
 

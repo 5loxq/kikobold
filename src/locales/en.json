@@ -78,7 +78,13 @@
     "downloadLocalNote": "The download runs directly from this website and is cached in your browser - everything stays local.",
     "jspiHint": "This browser does not support JSPI - the model runs significantly slower. Use Chrome or Edge for full speed.",
     "retry": "Try again",
-    "historyTrimmed": "ℹ️ Older messages were removed from the model context (context window exceeded)."
+    "historyTrimmed": "ℹ️ Older messages were removed from the model context (context window exceeded).",
+    "setTag": "Tag chat",
+    "tagNone": "No tag",
+    "tagWork": "Work",
+    "tagPersonal": "Personal",
+    "tagIdea": "Idea",
+    "tagArchive": "Archive"
   },
   "welcome": {
     "title": "Hello & welcome!",

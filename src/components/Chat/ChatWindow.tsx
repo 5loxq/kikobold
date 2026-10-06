@@ -40,6 +40,8 @@ interface ChatWindowProps {
   onSelectModel: (modelId: string) => void;
   onSelectProfile?: (profileId: string) => void;
   onRenameChat?: (chatId: string, newTitle: string) => void;
+  /** Set or remove the color tag of the active chat */
+  onSetChatTag?: (chatId: string, tag: string | null) => void;
   memories?: MemoryEntry[];
   library?: LibraryFile[];
 }
@@ -70,6 +72,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   onSelectModel,
   onSelectProfile,
   onRenameChat,
+  onSetChatTag,
   memories = [],
   library = [],
 }) => {
@@ -233,6 +236,20 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 >
                   ✏️
                 </button>
+                {onSetChatTag && (
+                  <select
+                    value={chat.tag ?? ''}
+                    onChange={(e) => onSetChatTag(chat.id, e.target.value || null)}
+                    className="px-2 py-1 border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                    title={t('chat.setTag')}
+                  >
+                    <option value="">{t('chat.tagNone')}</option>
+                    <option value="work">{t('chat.tagWork')}</option>
+                    <option value="personal">{t('chat.tagPersonal')}</option>
+                    <option value="idea">{t('chat.tagIdea')}</option>
+                    <option value="archive">{t('chat.tagArchive')}</option>
+                  </select>
+                )}
               </div>
             )}
             {activeProfile && (

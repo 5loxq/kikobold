@@ -1,4 +1,4 @@
-import { Chat, Message } from '../../types';
+import { Chat, ChatTag, Message } from '../../types';
 import { warn } from '../logging';
 import { sanitizeInput } from '../security';
 
@@ -13,6 +13,11 @@ let db: IDBDatabase | null = null;
 let dbReadyPromise: Promise<void> | null = null;
 
 // Validate chat object
+const CHAT_TAGS: ChatTag[] = ['work', 'personal', 'idea', 'archive'];
+
+const isValidTag = (tag: unknown): tag is ChatTag =>
+  typeof tag === 'string' && (CHAT_TAGS as string[]).includes(tag);
+
 function validateChat(chat: unknown): chat is Chat {
   return (
     typeof chat === 'object' &&
@@ -22,7 +27,9 @@ function validateChat(chat: unknown): chat is Chat {
     Array.isArray((chat as Chat).messages) &&
     typeof (chat as Chat).profileId === 'string' &&
     typeof (chat as Chat).createdAt === 'number' &&
-    typeof (chat as Chat).updatedAt === 'number'
+    typeof (chat as Chat).updatedAt === 'number' &&
+    ((chat as Chat).tag === undefined || isValidTag((chat as Chat).tag)) &&
+    ((chat as Chat).streamingDraft === undefined || typeof (chat as Chat).streamingDraft === 'string')
   );
 }
 
@@ -273,6 +280,22 @@ export const updateChatMessages = async (chatId: string, messages: Message[]): P
   if (!chat) {throw new Error('Chat not found');}
 
   chat.messages = sanitizedMessages;
+  chat.updatedAt = Date.now();
+  await saveChat(chat);
+};
+
+/** Persist the partial assistant text while it is being streamed so a page
+ *  reload or tab crash does not lose what has been generated so far. Called
+ *  throttled during generation and with null once the message is complete. */
+export const updateChatStreamingDraft = async (chatId: string, draft: string | null): Promise<void> => {
+  if (typeof chatId !== 'string' || chatId.trim().length === 0) {
+    throw new Error('Invalid chat ID');
+  }
+  const chat = await getChat(chatId);
+  if (!chat) {
+    throw new Error('Chat not found');
+  }
+  chat.streamingDraft = draft ?? undefined;
   chat.updatedAt = Date.now();
   await saveChat(chat);
 };

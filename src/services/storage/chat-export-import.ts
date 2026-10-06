@@ -49,7 +49,8 @@ function validateChat(chat: unknown): chat is Chat {
     Array.isArray((chat as Chat).messages) &&
     typeof (chat as Chat).profileId === 'string' &&
     typeof (chat as Chat).createdAt === 'number' &&
-    typeof (chat as Chat).updatedAt === 'number'
+    typeof (chat as Chat).updatedAt === 'number' &&
+    ((chat as Chat).tag === undefined || typeof (chat as Chat).tag === 'string')
   );
 }
 
@@ -92,7 +93,9 @@ export const exportChats = (chats: Chat[], memories: MemoryEntry[] = [], library
     const exportData: ExportedChat = {
       version: '1.2',
       timestamp: Date.now(),
-      chats: validChats,
+      // streamingDraft is a transient reload checkpoint, not chat content -
+      // never carry it into a backup file.
+      chats: validChats.map(({ streamingDraft: _streamingDraft, ...chat }) => chat),
       ...(validMemories.length > 0 ? { memories: validMemories } : {}),
       ...(validLibrary.length > 0 ? { library: validLibrary } : {}),
     };
