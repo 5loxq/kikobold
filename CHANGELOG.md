@@ -4,6 +4,14 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 
 ## [3.2.2] - 2026-10-05
 
+### Neu
+- **"Erneut versuchen" bei fehlgeschlagener Antwort**: Schlägt die Generierung fehl (z.B. Speicher- oder Netzwerkfehler), bietet die Fehlermeldung jetzt einen Retry-Button. Der letzte Prompt wird ohne Duplikat der User-Nachricht erneut an das Modell geschickt.
+- **Tastaturkürzel**: Strg/Cmd+K öffnet/schließt die Chat-Suche, Esc stoppt die laufende Generierung (oder schließt die Suche bzw. bricht die Titel-Bearbeitung ab).
+- **Hinweis bei gekürztem Kontext**: Werden ältere Verlaufsnachrichten wegen des begrenzten Kontextfensters aus dem Modellprompt entfernt, zeigt der Chat jetzt einen dezenten Hinweis.
+
+### Verbessert
+- **Auto-Titel**: Chats werden jetzt auch dann nach der ersten Nachricht benannt, wenn sie den Standardtitel tragen (z.B. nach Import oder wenn die erste Umbenennung fehlschlug) - nicht mehr nur direkt nach dem Anlegen.
+
 ### Entfernt (Interne Aufräumarbeiten)
 - **Toter Infrastruktur-Code**: Vier nie benutzte Platzhalter-Hooks (`useBatchInference`, `useConversationInference`, `useInferencePerformance`, `useModelPreloader`), der Platzhalter `preloadModel`, der nicht benutzte nicht-streamende `generate`-Pfad (WebLLM und wllama) sowie ungenutzte Registry-Exporte und Typen entfernt.
 - **Veraltete Modell-Download-Skripte**: `download_models.py` und `download-mlc-models.sh` luden Modelle (TinyLlama, Phi-2), die längst nicht mehr in der Registry sind, nach `public/models/` - obwohl die Modelle direkt auf dem Webspace unter `/models/` liegen und nicht Teil des Git-Repositories/des Builds sind.

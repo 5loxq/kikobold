@@ -85,6 +85,15 @@ export const MainLayout: FC = () => {
     modelLoadPhase,
   } = useEnhancedInference({ modelId: activeModel?.id ?? '', autoLoad: false });
   const [localError, setLocalError] = useState<string | null>(null);
+  // Pending retry after a failed generation: re-runs the last prompt without
+  // re-adding the user message to the chat.
+  const [retryPending, setRetryPending] = useState<null | {
+    prompt: string;
+    images?: ImageAttachment[];
+  }>(null);
+  // True when history messages were dropped from the model context because
+  // the prompt exceeded the character budget (context window).
+  const [historyTrimmed, setHistoryTrimmed] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState<string | null>(null);
   // Welcome page (first visit) and guided tour (shown right after it)
   const [welcomeDone, setWelcomeDone] = useState<boolean>(hasSeenWelcome());
@@ -244,6 +253,10 @@ export const MainLayout: FC = () => {
       }
 
       await loadChat(selectedChat.id);
+      // Reset per-chat generation state - the hint belongs to the previous
+      // conversation, not the newly opened one.
+      setHistoryTrimmed(false);
+      setRetryPending(null);
       setActiveTab('chat');
     } catch (err) {
       logError('Failed to select chat:', err);
@@ -278,7 +291,7 @@ export const MainLayout: FC = () => {
       }
 
       // Auto-rename chat on first message if still the default title
-      if (chat.messages.length === 0 && chat.title === DEFAULT_CHAT_TITLE) {
+      if (chat.title === DEFAULT_CHAT_TITLE) {
         // Extract first meaningful words (remove common prefixes)
         const words = message.split(/\s+/).filter((word) => word.length > 0);
         const title = words.slice(0, 5).join(' ').substring(0, 50); // First 5 words, max 50 chars
@@ -287,16 +300,44 @@ export const MainLayout: FC = () => {
         }
       }
 
-      // Add user message
-      await addMessage('user', message);
-
-      // Generate response with language setting and correct system prompt
-      // Note: WebLLM uses top_p and max_tokens (snake_case)
+      // The prompt sent to the model: documents and "@name" library
+      // references are already resolved here; runGeneration only consumes it.
       const prompt = attachments && attachments.length > 0
         ? buildPromptWithDocuments(message, attachments)
         : message;
-      // "@name" references to library files are resolved into the prompt
       const promptWithLibrary = resolveLibraryReferences(prompt, libraryFiles);
+      // Add user message
+      await addMessage('user', message);
+      await runGeneration(promptWithLibrary, images);
+    } catch (err) {
+      logError('Failed to send message:', err);
+      setLocalError(err instanceof Error ? err.message : 'Failed to send message');
+    } finally {
+      setStreamingMessage(null);
+    }
+  };
+  const speakResponse = useCallback((text: string): void => {
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    // Use current i18n language instead of hardcoded de-DE
+    utterance.lang = i18n.language === 'de' ? 'de-DE' : 'en-US';
+    utterance.rate = 0.9;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+
+    window.speechSynthesis.speak(utterance);
+  }, [i18n.language]);
+
+  // Runs the model generation for a prompt that is already stored in the
+  // chat. Shared by the normal send flow and the retry after an error; the
+  // prompt is expected to be fully assembled (documents/library resolved).
+  const runGeneration = useCallback(async (promptWithLibrary: string, images?: ImageAttachment[]): Promise<void> => {
+    if (!chat || !activeProfile || !activeModel) {
+      return;
+    }
+    try {
       // Memory entries are prepended to the system prompt so the model knows
       // the stored facts in every chat, not just the current conversation.
       // Predefined fields are rendered as "Label: value" lines.
@@ -314,14 +355,18 @@ export const MainLayout: FC = () => {
         .join('\n\n');
       // The prompt must fit the model's context window together with the
       // generated answer - drop the oldest history messages if needed.
+      const recentMessages = chat.messages.slice(-10);
       const history = trimHistoryToCharBudget(
-        chat.messages.slice(-10).map((m) => ({
+        recentMessages.map((m) => ({
           role: m.role === 'assistant' ? ('assistant' as const) : ('user' as const),
           content: m.content,
         })),
         systemPrompt,
         promptWithLibrary
       );
+      // Surface silent context trimming: if older history messages were
+      // dropped, the model no longer sees the whole conversation.
+      setHistoryTrimmed(history.length < recentMessages.length);
       setStreamingMessage('start');
       const result = await generateStream(promptWithLibrary, {
         temperature: activeProfile.temperature,
@@ -340,27 +385,25 @@ export const MainLayout: FC = () => {
           speakResponse(result);
         }
       }
+      setRetryPending(null);
+      setLocalError(null);
     } catch (err) {
-      logError('Failed to send message:', err);
-      setLocalError(err instanceof Error ? err.message : 'Failed to send message');
+      logError('Failed to generate response:', err);
+      setLocalError(err instanceof Error ? err.message : 'Failed to generate response');
+      setRetryPending({ prompt: promptWithLibrary, images });
     } finally {
       setStreamingMessage(null);
     }
-  };
-
-  const speakResponse = (text: string): void => {
-    // Cancel any ongoing speech
-    window.speechSynthesis.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    // Use current i18n language instead of hardcoded de-DE
-    utterance.lang = i18n.language === 'de' ? 'de-DE' : 'en-US';
-    utterance.rate = 0.9;
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
-
-    window.speechSynthesis.speak(utterance);
-  };
+  }, [chat, activeProfile, activeModel, settings.memoryEnabled, settings.autoSpeak, memories, t, addMessage, generateStream, speakResponse]);
+  // Retry the last failed generation (e.g. after an OOM or network error)
+  // without duplicating the user message in the chat.
+  const handleRetryGeneration = useCallback((): void => {
+    if (!retryPending || isGenerating) {
+      return;
+    }
+    setLocalError(null);
+    void runGeneration(retryPending.prompt, retryPending.images);
+  }, [retryPending, isGenerating, runGeneration]);
 
   const handleModelSelect = async (modelId: string): Promise<void> => {
     try {
@@ -628,6 +671,8 @@ export const MainLayout: FC = () => {
             isGenerating={isGenerating}
             streamingMessage={streamingMessage ? streamText : null}
             onStopGeneration={stopGeneration}
+            onRetryGeneration={retryPending && !isGenerating ? handleRetryGeneration : undefined}
+            historyTrimmed={historyTrimmed}
             onSendMessage={handleSendMessage}
             onSendMessageWithDocuments={handleSendMessageWithDocuments}
             supportsImageInput={supportsImageInput}

@@ -29,6 +29,10 @@ interface ChatWindowProps {
   isGenerating?: boolean;
   streamingMessage?: string | null;
   onStopGeneration?: () => void;
+  /** Retry the last failed generation (shown next to the error message) */
+  onRetryGeneration?: () => void;
+  /** True when older history messages were dropped from the model context */
+  historyTrimmed?: boolean;
   onSendMessage: (message: string) => void;
   onSendMessageWithDocuments?: (message: string, attachments: import('../../services/attachments').DocumentAttachment[]) => void;
   supportsImageInput?: boolean;
@@ -57,6 +61,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   isGenerating = false,
   streamingMessage = null,
   onStopGeneration,
+  onRetryGeneration,
+  historyTrimmed = false,
   onSendMessage,
   onSendMessageWithDocuments,
   supportsImageInput = false,
@@ -97,6 +103,36 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       setSelectedModelId(_activeModel.id);
     }
   }, [_activeModel?.id]);
+  // Keyboard shortcuts: Ctrl/Cmd+K toggles the in-chat search, Escape
+  // stops a running generation (or closes the search, or cancels title
+  // editing). Only when the chat tab is focused - no global conflicts.
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setIsSearchOpen((v) => !v);
+        return;
+      }
+      if (event.key === 'Escape') {
+        if (isGenerating) {
+          onStopGeneration?.();
+          return;
+        }
+        if (isSearchOpen) {
+          setSearchQuery('');
+          setIsSearchOpen(false);
+          return;
+        }
+        if (isEditingTitle) {
+          setIsEditingTitle(false);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return (): void => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isGenerating, isSearchOpen, isEditingTitle, onStopGeneration]);
 
   if (!chat) {
     return (
@@ -218,8 +254,23 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             )}
           </div>
           {error && (
-            <div className="text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-950/40 px-4 py-2 rounded-xl border border-red-100 dark:border-red-900 max-w-sm">
-              {error}
+            <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-950/40 px-4 py-2 rounded-xl border border-red-100 dark:border-red-900 max-w-sm">
+              <span>{error}</span>
+              {onRetryGeneration && (
+                <button
+                  type="button"
+                  onClick={onRetryGeneration}
+                  disabled={isGenerating}
+                  className="shrink-0 underline underline-offset-2 hover:text-red-700 dark:hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {t('chat.retry')}
+                </button>
+              )}
+            </div>
+          )}
+          {historyTrimmed && !error && (
+            <div className="text-zinc-500 dark:text-zinc-400 text-xs bg-zinc-100 dark:bg-zinc-800/60 px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 max-w-md">
+              ℹ️ {t('chat.historyTrimmed')}
             </div>
           )}
         </div>

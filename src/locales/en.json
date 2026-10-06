@@ -76,7 +76,9 @@
     "downloadConfirm": "The model \"{{name}}\" must be downloaded first (approx. {{size}} MB). It will be cached in your browser and load instantly next time. Download now?",
     "downloadEta": "About {{time}} remaining",
     "downloadLocalNote": "The download runs directly from this website and is cached in your browser - everything stays local.",
-    "jspiHint": "This browser does not support JSPI - the model runs significantly slower. Use Chrome or Edge for full speed."
+    "jspiHint": "This browser does not support JSPI - the model runs significantly slower. Use Chrome or Edge for full speed.",
+    "retry": "Try again",
+    "historyTrimmed": "ℹ️ Older messages were removed from the model context (context window exceeded)."
   },
   "welcome": {
     "title": "Hello & welcome!",
