@@ -172,7 +172,8 @@
     "v330": {
       "item1": "Neue Modelle: Qwen 3.5 2B, Qwen 3 1.7B und Qwen 3 0.6B ersetzen Gemma 2 und Qwen 2. Alle drei denken sichtbar nach - der Gedankengang erscheint aufklappbar in der Antwort.",
       "item2": "Neue Modellseite (Menü → Modelle): Stärken und Schwächen aller Modelle, Erscheinungsdatum, Download-Größe und Engine im Überblick.",
-      "item3": "Neue Roadmap (Menü → Roadmap): geplante Verbesserungen - ausdrücklich ohne zeitliche Abfolge."
+      "item3": "Neue Roadmap (Menü → Roadmap): geplante Verbesserungen - ausdrücklich ohne zeitliche Abfolge.",
+      "item4": "Aufgeräumt: Die alten Modelle (Gemma 2 2B, Qwen 2 0.5B) sind entfernt - auch vom Server. Wer sie noch heruntergeladen hatte, dessen Browser-Speicher wird beim nächsten Start automatisch befreit."
     },
     "v321": {
       "item1": "Kontext-Fehler behoben: Anhänge und lange Unterhaltungen sprengen nicht mehr das Modell-Fenster - der Kontext wurde von 1024 auf 4096 Tokens erhöht, große Anhänge werden gekürzt.",

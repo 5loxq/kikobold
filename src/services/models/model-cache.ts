@@ -49,3 +49,49 @@ export const deleteModelCacheFiles = async (model: Model): Promise<void> => {
     throw err;
   }
 };
+
+/**
+ * Best-effort removal of cached files for models that are no longer in the
+ * registry (e.g. after a model was replaced). The cache is keyed by the URL
+ * the model was downloaded from, so both known locations are tried: our own
+ * webspace (/models/<id>) and the official HuggingFace record from the
+ * web-llm prebuilt list. A failing deletion (nothing cached, API change)
+ * is logged but never thrown - orphaned cache data is not worth breaking
+ * the app start for.
+ */
+export const purgeRemovedModelCaches = async (removedIds: string[]): Promise<void> => {
+  if (removedIds.length === 0) {
+    return;
+  }
+  const { prebuiltAppConfig, deleteModelAllInfoInCache } = await import('@mlc-ai/web-llm');
+  const baseConfig = getCustomAppConfig();
+
+  for (const id of removedIds) {
+    const prebuilt = (prebuiltAppConfig.model_list ?? []).find(
+      (record) => record.model_id === id
+    );
+    const candidateUrls = [
+      new URL(`/models/${id}`, window.location.origin).href,
+      prebuilt?.model,
+    ].filter((url): url is string => typeof url === 'string' && url.length > 0);
+    const uniqueUrls = [...new Set(candidateUrls)];
+
+    for (const modelUrl of uniqueUrls) {
+      try {
+        await deleteModelAllInfoInCache(id, {
+          ...baseConfig,
+          model_list: [
+            {
+              model: modelUrl,
+              model_id: id,
+              model_lib: prebuilt?.model_lib ?? '',
+            },
+          ],
+        });
+        log(`Purged cache of removed model: ${id} (${modelUrl})`);
+      } catch (err) {
+        warn(`Could not purge cache of removed model ${id} (${modelUrl}):`, err);
+      }
+    }
+  }
+};
