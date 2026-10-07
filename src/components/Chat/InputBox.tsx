@@ -100,7 +100,7 @@ const SpeechRecognition = getSpeechRecognition();
  */
 const detectMention = (value: string, caret: number): { query: string; startIndex: number } | null => {
   const before = value.slice(0, caret);
-  const match = before.match(/(?:^|\s)@([\w.-]*)$/);
+  const match = before.match(/(?:^|\s)@([^\s@]*)$/);
   if (!match) {
     return null;
   }
@@ -140,10 +140,14 @@ export const InputBox: React.FC<InputBoxProps> = ({
   // Start index of the @token the user dismissed with Escape - the popup
   // stays closed for this token until a different one is started.
   const dismissedMentionRef = useRef<number | null>(null);
+  // Library picker opened via the 📚 button: shows all files, no query
+  const [pickerOpen, setPickerOpen] = useState(false);
 
-  // Only file names the resolver can match are offered (no spaces etc.)
+  // Only file names the resolver can match are offered: no spaces (a
+  // reference ends at whitespace) and no "@" - everything else (umlauts,
+  // accents, punctuation) is fine.
   const mentionableFiles = useMemo(() => {
-    return libraryFiles.filter((file) => /^[\w.-]+$/.test(file.name));
+    return libraryFiles.filter((file) => /^[^\s@]+$/.test(file.name));
   }, [libraryFiles]);
 
   const mentionSuggestions = useMemo(() => {
@@ -161,23 +165,47 @@ export const InputBox: React.FC<InputBoxProps> = ({
       .slice(0, 8);
   }, [mention, mentionableFiles]);
 
-  const applyMentionSuggestion = useCallback(
+  // All files for the 📚 picker mode (no query filter, sorted by name)
+  const pickerSuggestions = useMemo(() => {
+    if (!pickerOpen) {
+      return [];
+    }
+    return [...mentionableFiles].sort((a, b) => a.name.localeCompare(b.name));
+  }, [pickerOpen, mentionableFiles]);
+
+  // Whatever the popup currently shows: @-filtered files or the picker list
+  const activeSuggestions = mention ? mentionSuggestions : pickerSuggestions;
+
+  // Insert a file reference. With an active @token it replaces the token;
+  // from the picker it inserts at the caret (with a separating space when
+  // the caret is in the middle of a word).
+  const insertFileReference = useCallback(
     (file: LibraryFile): void => {
-      if (!mention) {
-        return;
-      }
-      const before = input.slice(0, mention.startIndex);
-      const after = input.slice(mention.startIndex + 1 + mention.query.length);
       const token = `@${file.name} `;
-      setInput(before + token + after);
-      setMention(null);
+      let next: string;
+      let caretTarget: number;
+      if (mention) {
+        const before = input.slice(0, mention.startIndex);
+        const after = input.slice(mention.startIndex + 1 + mention.query.length);
+        next = before + token + after;
+        caretTarget = (before + token).length;
+        setMention(null);
+      } else {
+        const el = textareaRef.current;
+        const caret = el ? el.selectionStart ?? input.length : input.length;
+        const needsSpace = caret > 0 && !/\s$/.test(input.slice(0, caret));
+        const insertion = (needsSpace ? ' ' : '') + token;
+        next = input.slice(0, caret) + insertion + input.slice(caret);
+        caretTarget = caret + insertion.length;
+        setPickerOpen(false);
+      }
+      setInput(next);
       setMentionIndex(0);
       requestAnimationFrame(() => {
         const el = textareaRef.current;
         if (el) {
-          const pos = (before + token).length;
           el.focus();
-          el.setSelectionRange(pos, pos);
+          el.setSelectionRange(caretTarget, caretTarget);
         }
       });
     },
@@ -357,30 +385,39 @@ export const InputBox: React.FC<InputBoxProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent): void => {
-    // "@" mention autocomplete navigation: while the popup is open, arrows
-    // move, Enter/Tab pick, Escape closes - Enter must NOT send in that case.
-    if (mention && mentionSuggestions.length > 0) {
+    // Suggestion popup (both @mentions and the 📚 picker): arrows move,
+    // Enter/Tab pick, Escape closes - Enter must NOT send while it is open.
+    if ((mention !== null || pickerOpen) && activeSuggestions.length > 0) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setMentionIndex((i) => (i + 1) % mentionSuggestions.length);
+        setMentionIndex((i) => (i + 1) % activeSuggestions.length);
         return;
       }
       if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setMentionIndex((i) => (i - 1 + mentionSuggestions.length) % mentionSuggestions.length);
+        setMentionIndex((i) => (i - 1 + activeSuggestions.length) % activeSuggestions.length);
         return;
       }
       if (e.key === 'Enter' || e.key === 'Tab') {
         e.preventDefault();
-        applyMentionSuggestion(mentionSuggestions[mentionIndex] ?? mentionSuggestions[0]);
+        insertFileReference(activeSuggestions[mentionIndex] ?? activeSuggestions[0]);
         return;
       }
       if (e.key === 'Escape') {
         e.preventDefault();
-        dismissedMentionRef.current = mention.startIndex;
-        setMention(null);
+        if (mention) {
+          dismissedMentionRef.current = mention.startIndex;
+          setMention(null);
+        } else {
+          setPickerOpen(false);
+        }
         return;
       }
+    }
+    if (e.key === 'Escape' && pickerOpen) {
+      e.preventDefault();
+      setPickerOpen(false);
+      return;
     }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -500,8 +537,8 @@ export const InputBox: React.FC<InputBoxProps> = ({
 
       {/* Unified composer: textarea + actions inside one capsule */}
       <div className="relative max-w-3xl mx-auto w-full" data-tour="message-input">
-        {/* "@" mention autocomplete popup */}
-        {mention && (
+        {/* Suggestion popup: "@" mention autocomplete + 📚 library picker */}
+        {(mention !== null || pickerOpen) && (
           <div
             className="absolute bottom-full left-0 right-0 mb-2 z-20 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl overflow-hidden"
             role="listbox"
@@ -511,13 +548,13 @@ export const InputBox: React.FC<InputBoxProps> = ({
               <p className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">
                 📚 {t('chat.mentionNoFiles')}
               </p>
-            ) : mentionSuggestions.length === 0 ? (
+            ) : activeSuggestions.length === 0 ? (
               <p className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">
                 🔍 {t('chat.mentionNoMatches')}
               </p>
             ) : (
               <ul className="max-h-52 overflow-y-auto py-1">
-                {mentionSuggestions.map((file, index) => (
+                {activeSuggestions.map((file, index) => (
                   <li key={file.id}>
                     <button
                       type="button"
@@ -525,7 +562,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
                       aria-selected={index === mentionIndex}
                       onMouseDown={(e) => {
                         e.preventDefault();
-                        applyMentionSuggestion(file);
+                        insertFileReference(file);
                       }}
                       onMouseEnter={() => setMentionIndex(index)}
                       className={`w-full flex items-center gap-2 px-4 py-2 text-left text-sm transition-colors ${
@@ -558,7 +595,10 @@ export const InputBox: React.FC<InputBoxProps> = ({
             onKeyDown={handleKeyDown}
             placeholder={isModelLoaded ? t('chat.placeholder') : t('chat.selectModel')}
             disabled={isLoading || !isModelLoaded}
-            onBlur={() => setMention(null)}
+            onBlur={() => {
+              setMention(null);
+              setPickerOpen(false);
+            }}
             className="w-full px-5 pt-4 pb-2 bg-transparent border-0 resize-none focus:outline-none focus:ring-0 disabled:cursor-not-allowed text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 text-sm leading-relaxed"
             rows={1}
             style={{ minHeight: '28px', maxHeight: '150px' }}
@@ -605,6 +645,32 @@ export const InputBox: React.FC<InputBoxProps> = ({
             >
               📎
             </button>
+            {/* Library Mention Button (only with files in the library) */}
+            {libraryFiles.length > 0 && (
+              <button
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  setMention(null);
+                  setPickerOpen((v) => {
+                    if (!v) {
+                      setMentionIndex(0);
+                    }
+                    return !v;
+                  });
+                  requestAnimationFrame(() => textareaRef.current?.focus());
+                }}
+                disabled={isVoiceDisabled}
+                className={`w-9 h-9 rounded-xl text-sm transition-all ${
+                  pickerOpen
+                    ? 'bg-indigo-100 dark:bg-indigo-950/60'
+                    : 'bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                } ${isVoiceDisabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+                title={t('chat.libraryButton')}
+                aria-label={t('chat.libraryButton')}
+              >
+                📚
+              </button>
+            )}
             {/* Voice Input Button */}
             <button
               onClick={isListening ? stopListening : startListening}

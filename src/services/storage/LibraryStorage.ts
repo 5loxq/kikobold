@@ -226,7 +226,9 @@ export const resolveLibraryReferences = (message: string, files: LibraryFile[]):
     return message;
   }
 
-  const tokens = message.match(/@([\w.-]+)/g) ?? [];
+  // A reference ends at the next whitespace; every other character is
+  // allowed so that umlauts, accents etc. in file names work too.
+  const tokens = message.match(/@([^\s@]+)/g) ?? [];
   const matched = new Map<string, LibraryFile>();
 
   for (const token of tokens) {
