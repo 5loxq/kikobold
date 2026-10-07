@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Message } from '../../types';
 import MarkdownRenderer from './MarkdownRenderer';
+import { splitThinking, ThinkingBlock } from './ThinkingBlock';
 
 interface MessageListProps {
   messages: Message[];
@@ -53,6 +54,8 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, isDarkMode,
 
   // Use useMemo for the content to prevent re-renders when content hasn't changed
   const content = React.useMemo(() => message.content, [message.content]);
+  // Split a possible thinking block (`` ... ``) from the answer
+  const { thinking, answer } = React.useMemo(() => splitThinking(content), [content]);
   const [copied, setCopied] = React.useState(false);
   const handleCopy = React.useCallback((): void => {
     void navigator.clipboard.writeText(message.content).then(() => {
@@ -71,11 +74,12 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, isDarkMode,
         }`}
       >
         <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+          {!isUser && thinking !== null && <ThinkingBlock thinking={thinking} />}
           {searchQuery?.trim() && !isUser ? (
-            <HighlightedText text={content} query={searchQuery} isUser={isUser} />
+            <HighlightedText text={answer} query={searchQuery} isUser={isUser} />
           ) : (
             <MarkdownRenderer
-              content={content}
+              content={answer}
               isDarkMode={isDarkMode}
               className="markdown-message"
             />
@@ -153,6 +157,23 @@ function areMessagesEqual(
   );
 }
 
+const StreamingBubble: React.FC<{ content: string; isDarkMode?: boolean }> = ({ content, isDarkMode }) => {
+  const { thinking, answer, isThinkingActive } = splitThinking(content);
+  return (
+    <div className="flex justify-start">
+      <div className={`px-5 py-3.5 rounded-3xl rounded-bl-lg border shadow-sm ${
+        isDarkMode ? 'bg-zinc-800 text-zinc-100 border-zinc-700' : 'bg-white text-zinc-800 border-zinc-100'
+      }`}>
+        <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+          {thinking !== null && <ThinkingBlock thinking={thinking} isActive={isThinkingActive} />}
+          {answer}
+          <span className="animate-pulse">▍</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, isModelLoading, streamingMessage, messagesEndRef, isDarkMode, searchQuery }) => {
     const { t } = useTranslation();
 
@@ -174,13 +195,7 @@ const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, isM
         )}
 
         {streamingMessage && (
-          <div className="flex justify-start">
-            <div className={`px-5 py-3.5 rounded-3xl rounded-bl-lg border shadow-sm ${
-              isDarkMode ? 'bg-zinc-800 text-zinc-100 border-zinc-700' : 'bg-white text-zinc-800 border-zinc-100'
-            }`}>
-              <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">{streamingMessage}<span className="animate-pulse">▍</span></div>
-            </div>
-          </div>
+          <StreamingBubble content={streamingMessage} isDarkMode={isDarkMode} />
         )}
 
         {isModelLoading && (

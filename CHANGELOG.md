@@ -2,6 +2,16 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [3.3.0] - 2026-10-07
+
+### Neu
+
+- **Neue Modelle mit Thinking**: Qwen 3.5 2B (beste Qualität, Kontext 262.144 Zeichen), Qwen 3 1.7B (Denk-Spezialist) und Qwen 3 0.6B (schnellstes Modell) ersetzen Gemma 2 2B und Qwen 2 0.5B. Alle drei Modelle sind auf dem eigenen Webspace gehostet. LFM 2.5 1.6B bleibt als universelles WASM-Modell mit Bildverständnis erhalten.
+- **Sichtbares Thinking**: Modelle mit Denkmodus zeigen ihren Gedankengang (``-Block) als aufklappbaren Bereich direkt in der Antwort - standardmäßig zugeklappt, auch während der Generierung live.
+- **Modellseite**: Neuer Menüpunkt "Modelle" stellt alle Modelle vor: Stärken und Schwächen, Erscheinungsdatum (mit Monat), Download-Größe, Engine und Kontextlänge.
+- **Roadmap**: Neuer Menüpunkt "Roadmap" (unter Hilfe) mit geplanten Verbesserungen - ausdrücklich ohne zeitliche Abfolge oder Zusagen.
+- Tour und Neuigkeiten entsprechend erweitert.
+
 ## [3.2.1] - 2026-10-04
 
 ### Behoben

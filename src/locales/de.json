@@ -7,6 +7,7 @@
     "profiles": "Profile",
     "memory": "Gedächtnis",
     "library": "Bibliothek",
+    "models": "Modelle",
     "data": "Daten",
     "settings": "Einstellungen",
     "history": "Verlauf",
@@ -56,6 +57,8 @@
     "copied": "Kopiert!",
     "voiceInputTooltip": "Klicken um Sprachingabe zu starten/stoppen",
     "searchInChat": "Im Chat suchen",
+    "thinkingProcess": "Gedankengang",
+    "thinkingActive": "Denkt nach ...",
     "searchPlaceholder": "Nachrichten durchsuchen...",
     "searchClose": "Suche schließen",
     "attachDocument": "Dokument anhängen",
@@ -99,7 +102,7 @@
     "next": "Weiter",
     "finish": "Fertig",
     "step1Title": "Modell wählen",
-    "step1Text": "Hier wählst du dein KI-Modell. Beim ersten Mal wird es heruntergeladen - mit Fortschrittsanzeige. Danach ist es im Browser gespeichert und sofort bereit.",
+    "step1Text": "Hier wählst du dein KI-Modell. Beim ersten Mal wird es heruntergeladen - mit Fortschrittsanzeige. Danach ist es im Browser gespeichert und sofort bereit. Manche Modelle denken sichtbar nach - welche das sind und wo jedes Modell stark ist, findest du unter Menü → Modelle.",
     "step2Title": "Profil einstellen",
     "step2Text": "Profile ändern den Stil der Antworten: 'Präzise' für Fakten, 'Kreativ' für Ideen.",
     "step3Title": "Export & Teilen",
@@ -109,7 +112,7 @@
     "step5Title": "Nachricht schreiben",
     "step5Text": "Tippe deine Nachricht und sende sie ab. Mit dem Mikrofon kannst du diktieren, mit der Büroklammer Dateien anhängen.",
     "step6Title": "Menü",
-    "step6Text": "Hier findest du neue Chats, den Verlauf, Profile, das Gedächtnis, die Bibliothek, Daten & Backup, Einstellungen, die Hilfe und den Kontakt."
+    "step6Text": "Hier findest du neue Chats, den Verlauf, Profile, das Gedächtnis, die Bibliothek, die Modellseite mit Stärken und Schwächen aller Modelle, Daten & Backup, Einstellungen, die Hilfe, die Roadmap und den Kontakt."
   },
   "data": {
     "title": "Daten & Backup",
@@ -166,6 +169,11 @@
     "title": "Das ist neu",
     "subtitle": "Seit deinem letzten Besuch hat sich einiges getan:",
     "closeButton": "Alles klar!",
+    "v330": {
+      "item1": "Neue Modelle: Qwen 3.5 2B, Qwen 3 1.7B und Qwen 3 0.6B ersetzen Gemma 2 und Qwen 2. Alle drei denken sichtbar nach - der Gedankengang erscheint aufklappbar in der Antwort.",
+      "item2": "Neue Modellseite (Menü → Modelle): Stärken und Schwächen aller Modelle, Erscheinungsdatum, Download-Größe und Engine im Überblick.",
+      "item3": "Neue Roadmap (Menü → Roadmap): geplante Verbesserungen - ausdrücklich ohne zeitliche Abfolge."
+    },
     "v321": {
       "item1": "Kontext-Fehler behoben: Anhänge und lange Unterhaltungen sprengen nicht mehr das Modell-Fenster - der Kontext wurde von 1024 auf 4096 Tokens erhöht, große Anhänge werden gekürzt.",
       "item2": "Download-Geschwindigkeit: Bei Gemma 2 und Qwen werden jetzt wieder Größe, Geschwindigkeit und Restzeit angezeigt."
@@ -368,6 +376,70 @@
     "storage2": "Ein dezenter Hinweis \"Als App installieren\" für wiederkehrende Besucher.",
     "storage3": "Verbesserte Offline-Anzeige, damit der Status immer sichtbar ist.",
     "closeRoadmap": "Zurück zum Chat"
+  },
+  "modelsPage": {
+    "title": "Modelle",
+    "intro": "Hier findest du alle Modelle, die in KI Kobold verfügbar sind. Jedes Modell läuft komplett lokal in deinem Browser - es wird einmal heruntergeladen und danach auch ohne Internetverbindung ausgeführt. Die Modelle unterscheiden sich in Größe, Tempo und Können.",
+    "thinkingHint": "Modelle mit dem 💭-Zeichen denken sichtbar nach: Der Gedankengang erscheint in der Antwort als aufklappbarer Bereich - standardmäßig zugeklappt.",
+    "released": "Erschienen",
+    "downloadSize": "Download",
+    "engine": "Engine",
+    "engineWebgpu": "WebGPU (Chrome/Edge)",
+    "engineWasm": "WASM (jeder Browser)",
+    "context": "Kontext",
+    "strengths": "Stärken",
+    "weaknesses": "Schwächen",
+    "thinkingBadge": "Thinking",
+    "recommendedBadge": "Empfohlen",
+    "fastBadge": "Schnell",
+    "closeModels": "Zurück zum Chat",
+    "qwen35": {
+      "name": "Qwen 3.5 2B",
+      "released": "Februar 2026",
+      "s1": "Beste allgemeine Qualität aller Modelle - längere Texte, bessere Erklärungen",
+      "s2": "Neueste Modellgeneration (Februar 2026)",
+      "s3": "Denkt bei schwierigen Aufgaben sichtbar nach",
+      "s4": "Riesiger Kontext (262.144 Zeichen) für ausgedehnte Gespräche",
+      "w1": "Größter Download der WebGPU-Modelle (ca. 1 GB)",
+      "w2": "Braucht zwingend Chrome/Edge mit WebGPU",
+      "w3": "Thinking verbraucht zusätzliche Zeit und Rechenleistung",
+      "summary": "Das Modell für anspruchsvolle Aufgaben: Schreiben, Erklären und lange Gespräche. Wer ein Gerät mit WebGPU hat, sollte hier anfangen."
+    },
+    "qwen17": {
+      "name": "Qwen 3 1.7B",
+      "released": "April 2025",
+      "s1": "Spezialist für Mathe, Logik und Schritt-für-Schritt-Aufgaben",
+      "s2": "Sichtbarer, aufklappbarer Gedankengang",
+      "s3": "Gutes Verhältnis von Größe zu Denkqualität",
+      "w1": "Allgemeine Textqualität unter Qwen 3.5 2B",
+      "w2": "Thinking macht Antworten langsamer",
+      "w3": "Braucht Chrome/Edge mit WebGPU",
+      "summary": "Der Denker: Bei Rechenaufgaben und Logikrätseln zeigt das Modell seinen Gedankengang - aufklappbar direkt in der Antwort."
+    },
+    "qwen06": {
+      "name": "Qwen 3 0.6B",
+      "released": "April 2025",
+      "s1": "Kleinster Download (335 MB) und schnellste Antworten",
+      "s2": "Auch auf älteren Geräten flott",
+      "s3": "Thinking möglich",
+      "w1": "Deutlich begrenztes Weltwissen",
+      "w2": "Thinking ist auf dieser Größe schwach",
+      "w3": "Für längere Texte und komplexe Themen ungeeignet",
+      "summary": "Zum Ausprobieren und für kurze Fragen: lädt am schnellsten und antwortet am schnellsten - bei einfachen Aufgaben völlig ausreichend."
+    },
+    "lfm": {
+      "name": "LFM 2.5 1.6B",
+      "released": "Januar 2026",
+      "s1": "Läuft in jedem Browser - auch ohne WebGPU, in Firefox und Safari",
+      "s2": "Versteht Bilder (Vision)",
+      "s3": "Ausgewogene Qualität für Alltag, Wissen und Texte",
+      "s4": "Automatischer Fallback, wenn WebGPU fehlt",
+      "w1": "Geringeres Wissen als die größeren Modelle",
+      "w2": "Kein Thinking",
+      "w3": "Vergleichsweise kurzer Kontext (8.192 Zeichen)",
+      "w4": "Bei sehr anspruchsvollen Aufgaben schwächer",
+      "summary": "Der Allrounder für alle Browser: Das einzige Modell, das auch ohne WebGPU läuft - und das einzige mit Bildverständnis."
+    }
   },
   "settings": {
     "title": "Einstellungen",
