@@ -61,5 +61,8 @@ npm-audit.json
 # Server-Zugangsdaten (niemals committen)
 server-zugangsdaten.txt
 
+# Lokale Ideensammlung (nur lokal, nicht committen)
+VERBESSERUNGS-IDEEN.md
+
 # Modelle (zu gross fuer Git, liegen lokal in public/models und auf dem Server)
 public/models/

@@ -12,6 +12,7 @@
     "history": "Verlauf",
     "noChatYet": "Noch keine Chats",
     "help": "Hilfe",
+    "roadmap": "Roadmap",
     "contact": "Kontakt"
   },
   "chat": {
@@ -343,6 +344,30 @@
     "replayTourButton": "Einführung erneut starten",
     "showWhatsNewButton": "Alle Neuigkeiten ansehen",
     "closeHelp": "Zurück zum Chat"
+  },
+  "roadmap": {
+    "title": "Roadmap",
+    "intro": "Hier kannst du nachlesen, welche Verbesserungen und Features für KI Kobold geplant sind. Die Liste zeigt die Richtung, in die es gehen soll - zum Ausprobieren, Mitsprechen und Vorfreuen.",
+    "noTimeline": "Wichtig: Diese Roadmap hat keine zeitliche Abfolge. Es gibt keine Termine, keine Reihenfolge und keine Zusagen - die Punkte sind Ideen, an denen gearbeitet werden soll. Manches kommt vielleicht bald, manches später, und die Liste kann sich jederzeit ändern.",
+    "speedTitle": "Geschwindigkeit & Ladezeit",
+    "speed1": "Die App soll generell schneller laden - unter anderem durch kleinere Datenpakete und effizienter geladene Schriftarten.",
+    "speed2": "Lange Chat-Verläufe sollen auch mit hunderten Nachrichten flüssig bleiben.",
+    "stabilityTitle": "Stabilität",
+    "stability1": "Fehler-Schutz: Wenn etwas Unerwartetes passiert, soll die Oberfläche eine verständliche Fehlermeldung zeigen, statt einfach weiß zu bleiben.",
+    "stability2": "Hängende Downloads sollen abbrechen und neu gestartet werden können, statt endlos zu warten.",
+    "downloadsTitle": "Modell-Downloads",
+    "downloads1": "Ein Übersichts-Dashboard für Modell-Downloads mit Geschwindigkeit und geschätzter Restzeit.",
+    "downloads2": "Unterbrochene Modell-Downloads sollen sich fortsetzen lassen, statt komplett neu zu starten.",
+    "downloads3": "Anzeige, welche Engine (WebGPU oder der Fallback) gerade aktiv ist.",
+    "comfortTitle": "Bedienung & Komfort",
+    "comfort1": "Tastatur-Shortcuts, z.B. Suche mit Strg+K und Abbrechen der Antwort mit Esc.",
+    "comfort2": "Chat-Suche: Auch die eigenen Nachrichten sollen bei der Suche hervorgehoben werden.",
+    "comfort3": "Der Browser-Tab-Titel soll den aktuellen Zustand zeigen (z.B. laufende Antwort oder aktives Modell).",
+    "storageTitle": "Speicher & Installation",
+    "storage1": "Eine Speicher-Übersicht: was Modelle, Chats und Caches belegen - mit Aufräum-Buttons.",
+    "storage2": "Ein dezenter Hinweis \"Als App installieren\" für wiederkehrende Besucher.",
+    "storage3": "Verbesserte Offline-Anzeige, damit der Status immer sichtbar ist.",
+    "closeRoadmap": "Zurück zum Chat"
   },
   "settings": {
     "title": "Einstellungen",
