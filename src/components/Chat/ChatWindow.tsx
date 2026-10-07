@@ -361,6 +361,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         onSendMessageWithDocuments={onSendMessageWithDocuments}
         supportsImageInput={supportsImageInput}
         onSendMessageWithImages={onSendMessageWithImages}
+        libraryFiles={library}
         isLoading={isLoading}
         isModelLoaded={isModelLoaded}
         hasModelSelected={!!_activeModel}

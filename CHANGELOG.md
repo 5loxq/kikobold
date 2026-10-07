@@ -11,6 +11,7 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 - **Modellseite**: Neuer Menüpunkt "Modelle" stellt alle Modelle vor: Stärken und Schwächen, Erscheinungsdatum (mit Monat), Download-Größe, Engine und Kontextlänge.
 - **Roadmap**: Neuer Menüpunkt "Roadmap" (unter Hilfe) mit geplanten Verbesserungen - ausdrücklich ohne zeitliche Abfolge oder Zusagen.
 - **Alte Modelle entfernt**: Gemma 2 2B und Qwen 2 0.5B sind von der Webseite gelöscht und aus der Auswahl entfernt. Bereits heruntergeladene alte Modelle werden beim nächsten Start automatisch aus dem Browser-Speicher gelöscht (Best-Effort, beide Download-Quellen).
+- **@-Erwähnungen mit Autovervollständigung**: Tippt man @ im Chatfeld, erscheinen sofort die Dateien aus der Bibliothek als Vorschlagsliste - live gefiltert während des Tippens, auswählbar mit Pfeiltasten/Enter oder Maus. Bei leerer Bibliothek gibt die Liste einen Hinweis, wo Dateien hochgeladen werden können.
 - Tour und Neuigkeiten entsprechend erweitert.
 
 ## [3.2.1] - 2026-10-04

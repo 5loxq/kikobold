@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { error, log } from '../../services/logging';
 import { sanitizeInputLight } from '../../services/security';
+import { type LibraryFile } from '../../services/storage/LibraryStorage';
 import {
   ATTACHMENT_LIMITS,
   createDocumentAttachment,
@@ -24,6 +25,8 @@ interface InputBoxProps {
   onSendMessageWithDocuments?: (message: string, attachments: DocumentAttachment[]) => void;
   supportsImageInput?: boolean;
   onSendMessageWithImages?: (message: string, images: ImageAttachment[]) => void;
+  /** Library files offered in the "@" mention autocomplete */
+  libraryFiles?: LibraryFile[];
 }
 
 // Type definition for SpeechRecognition API
@@ -90,6 +93,21 @@ const getSpeechRecognition = (): SpeechRecognitionType | null => {
 
 const SpeechRecognition = getSpeechRecognition();
 
+/**
+ * Detect an active "@" mention token: the caret must sit right after an
+ * @token that starts the text or follows whitespace. Returns the query
+ * typed after the "@" and the index of the "@" itself, or null.
+ */
+const detectMention = (value: string, caret: number): { query: string; startIndex: number } | null => {
+  const before = value.slice(0, caret);
+  const match = before.match(/(?:^|\s)@([\w.-]*)$/);
+  if (!match) {
+    return null;
+  }
+  const query = match[1];
+  return { query, startIndex: caret - query.length - 1 };
+};
+
 export const InputBox: React.FC<InputBoxProps> = ({
   onSendMessage,
   isLoading,
@@ -100,6 +118,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
   onSendMessageWithDocuments,
   supportsImageInput = false,
   onSendMessageWithImages,
+  libraryFiles = [],
 }) => {
   const { t, i18n } = useTranslation();
   const [input, setInput] = useState('');
@@ -112,6 +131,58 @@ export const InputBox: React.FC<InputBoxProps> = ({
   const [images, setImages] = useState<ImageAttachment[]>([]);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [previewImage, setPreviewImage] = useState<ImageAttachment | null>(null);
+
+  // "@" mention autocomplete: active while the caret is right after an
+  // @token (at the start of the text or after whitespace). `startIndex`
+  // points at the "@" itself; `query` is what the user typed after it.
+  const [mention, setMention] = useState<ReturnType<typeof detectMention>>(null);
+  const [mentionIndex, setMentionIndex] = useState(0);
+  // Start index of the @token the user dismissed with Escape - the popup
+  // stays closed for this token until a different one is started.
+  const dismissedMentionRef = useRef<number | null>(null);
+
+  // Only file names the resolver can match are offered (no spaces etc.)
+  const mentionableFiles = useMemo(() => {
+    return libraryFiles.filter((file) => /^[\w.-]+$/.test(file.name));
+  }, [libraryFiles]);
+
+  const mentionSuggestions = useMemo(() => {
+    if (!mention) {
+      return [];
+    }
+    const query = mention.query.toLowerCase();
+    return mentionableFiles
+      .filter((file) => {
+        const name = file.name.toLowerCase();
+        const stem = name.replace(/\.[^.]+$/, '');
+        return name.startsWith(query) || stem.startsWith(query);
+      })
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .slice(0, 8);
+  }, [mention, mentionableFiles]);
+
+  const applyMentionSuggestion = useCallback(
+    (file: LibraryFile): void => {
+      if (!mention) {
+        return;
+      }
+      const before = input.slice(0, mention.startIndex);
+      const after = input.slice(mention.startIndex + 1 + mention.query.length);
+      const token = `@${file.name} `;
+      setInput(before + token + after);
+      setMention(null);
+      setMentionIndex(0);
+      requestAnimationFrame(() => {
+        const el = textareaRef.current;
+        if (el) {
+          const pos = (before + token).length;
+          el.focus();
+          el.setSelectionRange(pos, pos);
+        }
+      });
+    },
+    [input, mention]
+  );
 
   const removeDocument = (id: string): void => {
     setDocuments((prev) => prev.filter((d) => d.id !== id));
@@ -275,6 +346,8 @@ export const InputBox: React.FC<InputBoxProps> = ({
       }
       setInput('');
       setDocuments([]);
+      setMention(null);
+      setMentionIndex(0);
       images.forEach((img) => URL.revokeObjectURL(img.previewUrl));
       setImages([]);
       if (textareaRef.current) {
@@ -284,6 +357,31 @@ export const InputBox: React.FC<InputBoxProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent): void => {
+    // "@" mention autocomplete navigation: while the popup is open, arrows
+    // move, Enter/Tab pick, Escape closes - Enter must NOT send in that case.
+    if (mention && mentionSuggestions.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setMentionIndex((i) => (i + 1) % mentionSuggestions.length);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setMentionIndex((i) => (i - 1 + mentionSuggestions.length) % mentionSuggestions.length);
+        return;
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        applyMentionSuggestion(mentionSuggestions[mentionIndex] ?? mentionSuggestions[0]);
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        dismissedMentionRef.current = mention.startIndex;
+        setMention(null);
+        return;
+      }
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -301,6 +399,21 @@ export const InputBox: React.FC<InputBoxProps> = ({
     // Only removes HTML tags to prevent XSS
     const sanitizedInput = sanitizeInputLight(rawInput);
     setInput(sanitizedInput);
+    // "@" mention detection: the caret must sit right after the @token.
+    // If sanitization changed the text, the caret position may no longer be
+    // accurate - fall back to "closed" in that rare case.
+    const caret = sanitizedInput === rawInput ? e.target.selectionStart : sanitizedInput.length;
+    const nextMention = detectMention(sanitizedInput, caret ?? sanitizedInput.length);
+    if (nextMention && dismissedMentionRef.current !== nextMention.startIndex) {
+      setMention(nextMention);
+      setMentionIndex(0);
+    } else {
+      setMention(null);
+      if (!nextMention) {
+        // A new token can open the popup again
+        dismissedMentionRef.current = null;
+      }
+    }
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${Math.min(
@@ -386,7 +499,51 @@ export const InputBox: React.FC<InputBoxProps> = ({
       )}
 
       {/* Unified composer: textarea + actions inside one capsule */}
-      <div className="max-w-3xl mx-auto w-full" data-tour="message-input">
+      <div className="relative max-w-3xl mx-auto w-full" data-tour="message-input">
+        {/* "@" mention autocomplete popup */}
+        {mention && (
+          <div
+            className="absolute bottom-full left-0 right-0 mb-2 z-20 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl overflow-hidden"
+            role="listbox"
+            aria-label={t('chat.mentionAriaLabel')}
+          >
+            {mentionableFiles.length === 0 ? (
+              <p className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">
+                📚 {t('chat.mentionNoFiles')}
+              </p>
+            ) : mentionSuggestions.length === 0 ? (
+              <p className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">
+                🔍 {t('chat.mentionNoMatches')}
+              </p>
+            ) : (
+              <ul className="max-h-52 overflow-y-auto py-1">
+                {mentionSuggestions.map((file, index) => (
+                  <li key={file.id}>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={index === mentionIndex}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        applyMentionSuggestion(file);
+                      }}
+                      onMouseEnter={() => setMentionIndex(index)}
+                      className={`w-full flex items-center gap-2 px-4 py-2 text-left text-sm transition-colors ${
+                        index === mentionIndex
+                          ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-800 dark:text-indigo-200'
+                          : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                      }`}
+                    >
+                      <span>📄</span>
+                      <span className="flex-1 truncate font-medium">{file.name}</span>
+                      <span className="text-xs text-zinc-400">{formatBytes(file.size)}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
         <div
           className={`rounded-3xl border shadow-lg shadow-zinc-900/5 dark:shadow-black/20 bg-white dark:bg-zinc-900 transition-all duration-200 ${
             isLoading || !isModelLoaded
@@ -401,6 +558,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
             onKeyDown={handleKeyDown}
             placeholder={isModelLoaded ? t('chat.placeholder') : t('chat.selectModel')}
             disabled={isLoading || !isModelLoaded}
+            onBlur={() => setMention(null)}
             className="w-full px-5 pt-4 pb-2 bg-transparent border-0 resize-none focus:outline-none focus:ring-0 disabled:cursor-not-allowed text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 text-sm leading-relaxed"
             rows={1}
             style={{ minHeight: '28px', maxHeight: '150px' }}
