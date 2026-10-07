@@ -21,7 +21,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   theme: 'system',
   defaultProfileId: null,
   defaultModelId: null,
-  autoSpeak: true,
+  // Off by default: reading answers aloud surprised more users than it
+  // helped - it can be enabled in the settings.
+  autoSpeak: false,
   memoryEnabled: true,
 };
 
