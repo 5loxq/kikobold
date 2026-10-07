@@ -217,27 +217,60 @@ export const createLibraryFile = (name: string, content: string): LibraryFile =>
 };
 
 /**
- * Resolve "@name" references in a chat message: for every token that matches
- * a library file (with or without extension), the file's content is appended
- * to the prompt. Unknown tokens are left untouched.
+ * Resolve "@name" references in a chat message: for every reference that
+ * matches a library file (with or without extension), the file's content is
+ * appended to the prompt. Unknown references are left untouched.
+ *
+ * A reference is matched by longest-name comparison against the text after
+ * the "@" (case-insensitive), so file names with spaces ("BB SYSTEM.txt")
+ * work without quoting. The "@" must start the text or follow whitespace;
+ * the reference must end at the end of the text, whitespace or punctuation.
  */
 export const resolveLibraryReferences = (message: string, files: LibraryFile[]): string => {
   if (files.length === 0 || !message.includes('@')) {
     return message;
   }
 
-  // A reference ends at the next whitespace; every other character is
-  // allowed so that umlauts, accents etc. in file names work too.
-  const tokens = message.match(/@([^\s@]+)/g) ?? [];
+  const lowerMessage = message.toLowerCase();
   const matched = new Map<string, LibraryFile>();
 
-  for (const token of tokens) {
-    const needle = token.slice(1).toLowerCase();
-    const file = files.find(
-      (f) => f.name.toLowerCase() === needle || f.name.toLowerCase().replace(/\.[^.]+$/, '') === needle
-    );
-    if (file && !matched.has(file.id)) {
-      matched.set(file.id, file);
+  // An "@" starts a reference at the beginning of the text, after
+  // whitespace, or after an opening bracket/quote - but never mid-word
+  // (so "max@AUFGABEN" in an e-mail address does not match).
+  const isAtTokenStart = (at: number): boolean =>
+    at === 0 || /[\s([{"']/.test(message[at - 1] ?? '');
+
+  const isReferenceEnd = (after: number): boolean => {
+    const char = message[after];
+    return char === undefined || /[.,;:!?)"'…]/.test(char) || /\s/.test(char);
+  };
+
+  // Longest names first: "BB SYSTEM extra.txt" must win over "BB SYSTEM.txt".
+  const candidates = [...files]
+    .filter((f) => f.name.length > 0 && !f.name.includes('@'))
+    .sort((a, b) => b.name.length - a.name.length);
+
+  for (const file of candidates) {
+    if (matched.has(file.id)) {
+      continue;
+    }
+    const name = file.name.toLowerCase();
+    const stem = name.replace(/\.[^.]+$/, '');
+    const variants = stem !== name ? [name, stem] : [name];
+
+    for (const variant of variants) {
+      const needle = `@${variant}`;
+      let at = lowerMessage.indexOf(needle);
+      while (at !== -1) {
+        if (isAtTokenStart(at) && isReferenceEnd(at + needle.length)) {
+          matched.set(file.id, file);
+          break;
+        }
+        at = lowerMessage.indexOf(needle, at + 1);
+      }
+      if (matched.has(file.id)) {
+        break;
+      }
     }
   }
 

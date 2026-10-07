@@ -60,7 +60,6 @@
     "thinkingProcess": "Thinking process",
     "thinkingActive": "Thinking ...",
     "mentionNoFiles": "No files in the library yet - you can upload some under Menu → Library.",
-    "mentionNoMatches": "No matching file found.",
     "mentionAriaLabel": "Suggest library files",
     "libraryButton": "Mention a library file",
     "searchPlaceholder": "Search messages...",

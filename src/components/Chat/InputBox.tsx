@@ -94,18 +94,22 @@ const getSpeechRecognition = (): SpeechRecognitionType | null => {
 const SpeechRecognition = getSpeechRecognition();
 
 /**
- * Detect an active "@" mention token: the caret must sit right after an
- * @token that starts the text or follows whitespace. Returns the query
- * typed after the "@" and the index of the "@" itself, or null.
+ * Detect an active "@" mention: the caret must sit after an "@" that starts
+ * the text or follows whitespace. The query is everything between the "@"
+ * and the caret and may contain spaces - file names can too. Scans backwards
+ * from the caret so earlier "@" occurrences do not shadow the current token.
  */
 const detectMention = (value: string, caret: number): { query: string; startIndex: number } | null => {
   const before = value.slice(0, caret);
-  const match = before.match(/(?:^|\s)@([^\s@]*)$/);
-  if (!match) {
-    return null;
+  for (let i = before.length - 1; i >= 0; i--) {
+    if (before[i] === '@') {
+      if (i === 0 || /\s/.test(before[i - 1])) {
+        return { query: before.slice(i + 1), startIndex: i };
+      }
+      return null;
+    }
   }
-  const query = match[1];
-  return { query, startIndex: caret - query.length - 1 };
+  return null;
 };
 
 export const InputBox: React.FC<InputBoxProps> = ({
@@ -143,11 +147,11 @@ export const InputBox: React.FC<InputBoxProps> = ({
   // Library picker opened via the 📚 button: shows all files, no query
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  // Only file names the resolver can match are offered: no spaces (a
-  // reference ends at whitespace) and no "@" - everything else (umlauts,
-  // accents, punctuation) is fine.
+  // Only file names the resolver can handle are offered: no "@" inside the
+  // name (spaces, umlauts, accents and punctuation are all fine - the
+  // resolver matches by longest file name).
   const mentionableFiles = useMemo(() => {
-    return libraryFiles.filter((file) => /^[^\s@]+$/.test(file.name));
+    return libraryFiles.filter((file) => file.name.length > 0 && !file.name.includes('@'));
   }, [libraryFiles]);
 
   const mentionSuggestions = useMemo(() => {
@@ -175,6 +179,14 @@ export const InputBox: React.FC<InputBoxProps> = ({
 
   // Whatever the popup currently shows: @-filtered files or the picker list
   const activeSuggestions = mention ? mentionSuggestions : pickerSuggestions;
+
+  // The popup is only visible while it has something to show: matching
+  // suggestions, the empty-library hint, or the picker opened via the button.
+  // While the user keeps typing a sentence after an "@", the query stops
+  // matching and the popup closes instead of blocking the view.
+  const suggestionsVisible =
+    pickerOpen ||
+    (mention !== null && (mentionableFiles.length === 0 || mentionSuggestions.length > 0));
 
   // Insert a file reference. With an active @token it replaces the token;
   // from the picker it inserts at the caret (with a separating space when
@@ -387,7 +399,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
   const handleKeyDown = (e: React.KeyboardEvent): void => {
     // Suggestion popup (both @mentions and the 📚 picker): arrows move,
     // Enter/Tab pick, Escape closes - Enter must NOT send while it is open.
-    if ((mention !== null || pickerOpen) && activeSuggestions.length > 0) {
+    if (suggestionsVisible && activeSuggestions.length > 0) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         setMentionIndex((i) => (i + 1) % activeSuggestions.length);
@@ -538,7 +550,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
       {/* Unified composer: textarea + actions inside one capsule */}
       <div className="relative max-w-3xl mx-auto w-full" data-tour="message-input">
         {/* Suggestion popup: "@" mention autocomplete + 📚 library picker */}
-        {(mention !== null || pickerOpen) && (
+        {suggestionsVisible && (
           <div
             className="absolute bottom-full left-0 right-0 mb-2 z-20 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl overflow-hidden"
             role="listbox"
@@ -547,10 +559,6 @@ export const InputBox: React.FC<InputBoxProps> = ({
             {mentionableFiles.length === 0 ? (
               <p className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">
                 📚 {t('chat.mentionNoFiles')}
-              </p>
-            ) : activeSuggestions.length === 0 ? (
-              <p className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">
-                🔍 {t('chat.mentionNoMatches')}
               </p>
             ) : (
               <ul className="max-h-52 overflow-y-auto py-1">
