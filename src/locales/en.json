@@ -7,6 +7,7 @@
     "profiles": "Profiles",
     "memory": "Memory",
     "library": "Library",
+    "models": "Models",
     "data": "Data",
     "settings": "Settings",
     "history": "History",
@@ -56,6 +57,8 @@
     "copied": "Copied!",
     "voiceInputTooltip": "Click to start/stop voice input",
     "searchInChat": "Search in chat",
+    "thinkingProcess": "Thinking process",
+    "thinkingActive": "Thinking ...",
     "searchPlaceholder": "Search messages...",
     "searchClose": "Close search",
     "attachDocument": "Attach document",
@@ -99,7 +102,7 @@
     "next": "Next",
     "finish": "Done",
     "step1Title": "Pick a model",
-    "step1Text": "Here you pick your AI model. The first time it is downloaded - with a progress bar. After that it is stored in your browser and ready instantly.",
+    "step1Text": "Here you pick your AI model. The first time it is downloaded - with a progress bar. After that it is stored in your browser and ready instantly. Some models think visibly - which ones those are and where each model shines is explained under Menu → Models.",
     "step2Title": "Set a profile",
     "step2Text": "Profiles change the style of the answers: 'Precise' for facts, 'Creative' for ideas.",
     "step3Title": "Export & Share",
@@ -109,7 +112,7 @@
     "step5Title": "Write a message",
     "step5Text": "Type your message and send it. Use the microphone to dictate, the paperclip to attach files.",
     "step6Title": "Menu",
-    "step6Text": "Here you find new chats, the history, profiles, the memory, the library, data & backup, settings, help and contact."
+    "step6Text": "Here you find new chats, the history, profiles, the memory, the library, the models page with strengths and weaknesses of every model, data & backup, settings, help, the roadmap and contact."
   },
   "data": {
     "title": "Data & Backup",
@@ -166,6 +169,11 @@
     "title": "What's new",
     "subtitle": "A few things have changed since your last visit:",
     "closeButton": "Got it!",
+    "v330": {
+      "item1": "New models: Qwen 3.5 2B, Qwen 3 1.7B and Qwen 3 0.6B replace Gemma 2 and Qwen 2. All three think visibly - the reasoning appears collapsible in the answer.",
+      "item2": "New models page (Menu → Models): strengths and weaknesses of every model, release date, download size and engine at a glance.",
+      "item3": "New roadmap (Menu → Roadmap): planned improvements - explicitly without any timeline."
+    },
     "v321": {
       "item1": "Context error fixed: attachments and long conversations no longer exceed the model window - context raised from 1024 to 4096 tokens, large attachments are trimmed.",
       "item2": "Download speed: Gemma 2 and Qwen now show size, speed and remaining time again."
@@ -368,6 +376,70 @@
     "storage2": "A subtle \"Install as app\" hint for returning visitors.",
     "storage3": "An improved offline indicator so the status is always visible.",
     "closeRoadmap": "Back to Chat"
+  },
+  "modelsPage": {
+    "title": "Models",
+    "intro": "Here you find all models available in KI Kobold. Every model runs entirely locally in your browser - it is downloaded once and then works even without an internet connection. The models differ in size, speed and capability.",
+    "thinkingHint": "Models marked with 💭 think visibly: their reasoning appears in the answer as a collapsible section - collapsed by default.",
+    "released": "Released",
+    "downloadSize": "Download",
+    "engine": "Engine",
+    "engineWebgpu": "WebGPU (Chrome/Edge)",
+    "engineWasm": "WASM (any browser)",
+    "context": "Context",
+    "strengths": "Strengths",
+    "weaknesses": "Weaknesses",
+    "thinkingBadge": "Thinking",
+    "recommendedBadge": "Recommended",
+    "fastBadge": "Fast",
+    "closeModels": "Back to Chat",
+    "qwen35": {
+      "name": "Qwen 3.5 2B",
+      "released": "February 2026",
+      "s1": "Best overall quality of all models - longer texts, better explanations",
+      "s2": "Newest model generation (February 2026)",
+      "s3": "Thinks visibly on hard tasks",
+      "s4": "Huge context (262,144 characters) for extended conversations",
+      "w1": "Largest download of the WebGPU models (about 1 GB)",
+      "w2": "Strictly requires Chrome/Edge with WebGPU",
+      "w3": "Thinking costs extra time and compute",
+      "summary": "The model for demanding tasks: writing, explaining and long conversations. If your device has WebGPU, start here."
+    },
+    "qwen17": {
+      "name": "Qwen 3 1.7B",
+      "released": "April 2025",
+      "s1": "Specialist for math, logic and step-by-step tasks",
+      "s2": "Visible, collapsible thinking process",
+      "s3": "Good ratio of size to reasoning quality",
+      "w1": "General text quality below Qwen 3.5 2B",
+      "w2": "Thinking makes answers slower",
+      "w3": "Requires Chrome/Edge with WebGPU",
+      "summary": "The thinker: on math problems and logic puzzles the model shows its reasoning - collapsible right in the answer."
+    },
+    "qwen06": {
+      "name": "Qwen 3 0.6B",
+      "released": "April 2025",
+      "s1": "Smallest download (335 MB) and fastest answers",
+      "s2": "Quick even on older devices",
+      "s3": "Thinking available",
+      "w1": "Clearly limited world knowledge",
+      "w2": "Thinking is weak at this size",
+      "w3": "Not suited for long texts and complex topics",
+      "summary": "For trying things out and short questions: fastest to download and fastest to answer - fully sufficient for simple tasks."
+    },
+    "lfm": {
+      "name": "LFM 2.5 1.6B",
+      "released": "January 2026",
+      "s1": "Runs in any browser - even without WebGPU, in Firefox and Safari",
+      "s2": "Understands images (vision)",
+      "s3": "Balanced quality for everyday tasks, knowledge and texts",
+      "s4": "Automatic fallback when WebGPU is missing",
+      "w1": "Less knowledge than the larger models",
+      "w2": "No thinking",
+      "w3": "Comparatively short context (8,192 characters)",
+      "w4": "Weaker on very demanding tasks",
+      "summary": "The all-rounder for every browser: the only model that runs without WebGPU - and the only one with image understanding."
+    }
   },
   "settings": {
     "title": "Settings",

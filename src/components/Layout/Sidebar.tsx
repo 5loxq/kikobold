@@ -9,8 +9,8 @@ interface SidebarProps {
   onSelectChat: (chat: Chat) => void;
   onNewChat: () => void;
   onDeleteChat: (chatId: string) => void;
-  activeTab: 'chat' | 'profiles' | 'memory' | 'library' | 'data' | 'settings' | 'help' | 'roadmap' | 'contact';
-  onTabChange: (tab: 'chat' | 'profiles' | 'memory' | 'library' | 'data' | 'settings' | 'help' | 'roadmap' | 'contact') => void;
+  activeTab: 'chat' | 'profiles' | 'memory' | 'library' | 'models' | 'data' | 'settings' | 'help' | 'roadmap' | 'contact';
+  onTabChange: (tab: 'chat' | 'profiles' | 'memory' | 'library' | 'models' | 'data' | 'settings' | 'help' | 'roadmap' | 'contact') => void;
   darkMode: boolean;
   onToggleTheme: () => void;
 }
@@ -29,13 +29,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { t } = useTranslation();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  type TabId = 'chat' | 'profiles' | 'memory' | 'library' | 'data' | 'settings' | 'help' | 'roadmap' | 'contact';
+  type TabId = 'chat' | 'profiles' | 'memory' | 'library' | 'models' | 'data' | 'settings' | 'help' | 'roadmap' | 'contact';
   const tabs: Array<{ id: TabId; icon: string; label: string }> = [
     { id: 'chat', icon: '💬', label: t('sidebar.chat') },
 
     { id: 'profiles', icon: '👤', label: t('sidebar.profiles') },
     { id: 'memory', icon: '🧠', label: t('sidebar.memory') },
     { id: 'library', icon: '📚', label: t('sidebar.library') },
+    { id: 'models', icon: '🤖', label: t('sidebar.models') },
     { id: 'data', icon: '💾', label: t('sidebar.data') },
     { id: 'settings', icon: '⚙️', label: t('sidebar.settings') },
     { id: 'help', icon: '❓', label: t('sidebar.help') },

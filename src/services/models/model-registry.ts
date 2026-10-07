@@ -8,11 +8,13 @@ export interface EngineModelConfig extends ModelConfig {
   gguf?: { repo: string; file: string; mmprojFile?: string; selfHostedPath?: string };
   multimodal?: boolean;
   badge?: 'recommended' | 'fast';
+  /** Model can produce a visible thinking process (`` blocks) */
+  thinking?: boolean;
   /** Path prefix on our own webspace; falls back to HuggingFace if missing/unavailable */
   selfHostedPath?: string;
 }
 
-// Curated selection of 3 models - kept small on purpose so the choice stays
+// Curated selection of 4 models - kept small on purpose so the choice stays
 // clear. Every WebGPU model automatically falls back to the WASM model (LFM)
 // when the browser has no WebGPU support.
 export const MODEL_CONFIGS: Record<string, EngineModelConfig> = {
@@ -36,37 +38,55 @@ export const MODEL_CONFIGS: Record<string, EngineModelConfig> = {
       file: 'LFM2.5-VL-1.6B-Q4_0.gguf',
     },
   },
-  'gemma-2-2b-it-q4f16_1-MLC': {
-    id: 'gemma-2-2b-it-q4f16_1-MLC',
-    name: 'Gemma 2 2B',
-    modelPath: 'gemma-2-2b-it-q4f16_1-MLC',
+  'Qwen3.5-2B-q4f16_1-MLC': {
+    id: 'Qwen3.5-2B-q4f16_1-MLC',
+    name: 'Qwen 3.5 2B',
+    modelPath: 'Qwen3.5-2B-q4f16_1-MLC',
     engine: 'webllm',
     type: 'chat',
-    description: 'Für anspruchsvollere Aufgaben: längere Texte, bessere Erklärungen und solidere Qualität beim Schreiben. Braucht Chrome/Edge mit WebGPU.',
+    description: 'Das stärkste Modell: längere Texte, bessere Erklärungen und die beste Qualität beim Schreiben. Denkt bei schwierigen Aufgaben sichtbar nach. Braucht Chrome/Edge mit WebGPU.',
     modelSize: '2B',
-    fileSizeMB: 1403,
+    fileSizeMB: 1032,
+    quantized: true,
+    recommended: true,
+    contextLength: 262144,
+    provider: 'webllm-hf-cdn',
+    selfHostedPath: '/models/Qwen3.5-2B-q4f16_1-MLC',
+    badge: 'recommended',
+    thinking: true,
+  },
+  'Qwen3-1.7B-q4f16_1-MLC': {
+    id: 'Qwen3-1.7B-q4f16_1-MLC',
+    name: 'Qwen 3 1.7B',
+    modelPath: 'Qwen3-1.7B-q4f16_1-MLC',
+    engine: 'webllm',
+    type: 'chat',
+    description: 'Der Denker: löst Mathe- und Logikaufgaben Schritt für Schritt - der Gedankengang ist aufklappbar. Braucht Chrome/Edge mit WebGPU.',
+    modelSize: '1.7B',
+    fileSizeMB: 939,
     quantized: true,
     recommended: false,
-    contextLength: 4096,
+    contextLength: 40960,
     provider: 'webllm-hf-cdn',
-    selfHostedPath: '/models/gemma-2-2b-it-q4f16_1-MLC',
-    badge: 'recommended',
+    selfHostedPath: '/models/Qwen3-1.7B-q4f16_1-MLC',
+    thinking: true,
   },
-  'Qwen2-0.5B-Instruct-q4f16_1-MLC': {
-    id: 'Qwen2-0.5B-Instruct-q4f16_1-MLC',
-    name: 'Qwen 2 0.5B',
-    modelPath: 'Qwen2-0.5B-Instruct-q4f16_1-MLC',
+  'Qwen3-0.6B-q4f16_1-MLC': {
+    id: 'Qwen3-0.6B-q4f16_1-MLC',
+    name: 'Qwen 3 0.6B',
+    modelPath: 'Qwen3-0.6B-q4f16_1-MLC',
     engine: 'webllm',
     type: 'chat',
     description: 'Für kurze Fragen und schnelle Antworten - ideal zum Ausprobieren, für kleine Aufgaben und ältere Geräte. Braucht Chrome/Edge mit WebGPU.',
-    modelSize: '0.5B',
-    fileSizeMB: 400,
+    modelSize: '0.6B',
+    fileSizeMB: 335,
     quantized: true,
     recommended: false,
-    contextLength: 4096,
+    contextLength: 40960,
     provider: 'webllm-hf-cdn',
-    selfHostedPath: '/models/Qwen2-0.5B-Instruct-q4f16_1-MLC',
+    selfHostedPath: '/models/Qwen3-0.6B-q4f16_1-MLC',
     badge: 'fast',
+    thinking: true,
   },
 };
 

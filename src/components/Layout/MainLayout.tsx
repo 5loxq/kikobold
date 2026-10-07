@@ -9,6 +9,7 @@ import { getLastSeenVersion, getWhatsNewSince, setLastSeenVersion, type WhatsNew
 const ProfileManager = lazy(() => import('../Profiles/ProfileManager').then(m => ({ default: m.ProfileManager })));
 const HelpPage = lazy(() => import('../Help/HelpPage').then(m => ({ default: m.HelpPage })));
 const RoadmapPage = lazy(() => import('../Help/RoadmapPage').then(m => ({ default: m.RoadmapPage })));
+const ModelsPage = lazy(() => import('../Models/ModelsPage').then(m => ({ default: m.ModelsPage })));
 const MemoryManager = lazy(() => import('../Memory/MemoryManager').then(m => ({ default: m.MemoryManager })));
 const ContactPage = lazy(() => import('../Contact/ContactPage').then(m => ({ default: m.ContactPage })));
 const SettingsPage = lazy(() => import('../Settings/SettingsPage').then(m => ({ default: m.SettingsPage })));
@@ -35,7 +36,7 @@ import { buildPromptWithDocuments, type DocumentAttachment, type ImageAttachment
 import { trimHistoryToCharBudget } from '../../services/llm/text-processing';
 
 
-type ActiveTab = 'chat' | 'profiles' | 'memory' | 'library' | 'data' | 'settings' | 'help' | 'roadmap' | 'contact';
+type ActiveTab = 'chat' | 'profiles' | 'memory' | 'library' | 'models' | 'data' | 'settings' | 'help' | 'roadmap' | 'contact';
 
 export const MainLayout: FC = () => {
   const { t, i18n } = useTranslation();
@@ -711,6 +712,12 @@ export const MainLayout: FC = () => {
               onRestartTour={handleRestartTour}
               onShowWhatsNew={handleShowWhatsNew}
             />
+          </Suspense>
+        )}
+
+        {activeTab === 'models' && (
+          <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
+            <ModelsPage onNavigateBack={() => setActiveTab('chat')} />
           </Suspense>
         )}
 
