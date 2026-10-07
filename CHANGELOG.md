@@ -10,6 +10,7 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 - **Sichtbares Thinking**: Modelle mit Denkmodus zeigen ihren Gedankengang (``-Block) als aufklappbaren Bereich direkt in der Antwort - standardmäßig zugeklappt, auch während der Generierung live.
 - **Modellseite**: Neuer Menüpunkt "Modelle" stellt alle Modelle vor: Stärken und Schwächen, Erscheinungsdatum (mit Monat), Download-Größe, Engine und Kontextlänge.
 - **Roadmap**: Neuer Menüpunkt "Roadmap" (unter Hilfe) mit geplanten Verbesserungen - ausdrücklich ohne zeitliche Abfolge oder Zusagen.
+- **Alte Modelle entfernt**: Gemma 2 2B und Qwen 2 0.5B sind von der Webseite gelöscht und aus der Auswahl entfernt. Bereits heruntergeladene alte Modelle werden beim nächsten Start automatisch aus dem Browser-Speicher gelöscht (Best-Effort, beide Download-Quellen).
 - Tour und Neuigkeiten entsprechend erweitert.
 
 ## [3.2.1] - 2026-10-04

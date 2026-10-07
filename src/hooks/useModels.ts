@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { LocalModel, Model, UseModelsReturn } from '../types';
 import { MODELS } from '../services/models/model-registry';
-import { deleteModelCacheFiles } from '../services/models/model-cache';
+import { deleteModelCacheFiles, purgeRemovedModelCaches } from '../services/models/model-cache';
 
 // LocalStorage keys for model persistence
 const STORAGE_KEYS = {
@@ -91,6 +91,34 @@ export const useModels = (): UseModelsReturn => {
       console.error('Failed to load active model:', error);
     }
   }, [downloadedModels]);
+
+  // One-time cleanup: free the browser cache of models that were removed
+  // from the registry (e.g. Gemma 2 / Qwen 2 after the v3.3.0 model refresh).
+  // getDownloadedModelsFromStorage already hides them from the UI; this also
+  // deletes their files. Must run BEFORE the save effect below, which would
+  // otherwise overwrite the stored list (and the removed IDs) first.
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEYS.DOWNLOADED_MODELS);
+      if (!stored) {
+        return;
+      }
+      const parsed = JSON.parse(stored);
+      if (!Array.isArray(parsed)) {
+        return;
+      }
+      const knownIds = new Set(MODELS.map(m => m.id));
+      const removedIds = parsed
+        .map(m => (m && typeof m.id === 'string' ? m.id : null))
+        .filter((id): id is string => id !== null && !knownIds.has(id));
+      if (removedIds.length === 0) {
+        return;
+      }
+      void purgeRemovedModelCaches(removedIds).catch(() => undefined);
+    } catch {
+      // Ignore storage errors - cleanup can happen on the next start
+    }
+  }, []);
 
   // Save downloaded models to storage when they change
   useEffect(() => {

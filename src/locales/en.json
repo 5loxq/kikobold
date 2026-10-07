@@ -172,7 +172,8 @@
     "v330": {
       "item1": "New models: Qwen 3.5 2B, Qwen 3 1.7B and Qwen 3 0.6B replace Gemma 2 and Qwen 2. All three think visibly - the reasoning appears collapsible in the answer.",
       "item2": "New models page (Menu → Models): strengths and weaknesses of every model, release date, download size and engine at a glance.",
-      "item3": "New roadmap (Menu → Roadmap): planned improvements - explicitly without any timeline."
+      "item3": "New roadmap (Menu → Roadmap): planned improvements - explicitly without any timeline.",
+      "item4": "Cleaned up: The old models (Gemma 2 2B, Qwen 2 0.5B) are gone - from the server as well. If you still had them downloaded, your browser storage is freed automatically on the next start."
     },
     "v321": {
       "item1": "Context error fixed: attachments and long conversations no longer exceed the model window - context raised from 1024 to 4096 tokens, large attachments are trimmed.",
