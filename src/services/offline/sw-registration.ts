@@ -144,9 +144,18 @@ export const cleanupCaches = async (): Promise<void> => {
 };
 
 /**
- * Set up offline detection
+ * Set up offline detection. Guarded so a second call of
+ * registerServiceWorker() cannot attach duplicate online/offline listeners
+ * to the window.
  */
+let offlineDetectionSetup = false;
+
 const setupOfflineDetection = (): void => {
+    if (offlineDetectionSetup) {
+        return;
+    }
+    offlineDetectionSetup = true;
+
     // Listen for online/offline events
     window.addEventListener('online', () => {
         isOffline = false;

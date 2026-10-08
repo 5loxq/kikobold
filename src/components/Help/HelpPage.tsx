@@ -231,6 +231,29 @@ export const HelpPage: React.FC<HelpPageProps> = ({ onNavigateBack, onRestartTou
           </p>
         </section>
 
+        {/* Keyboard shortcuts */}
+        <section className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-800 mb-4">
+          <h2 className="text-xl font-semibold mb-3 text-zinc-700 dark:text-zinc-200">
+            ⌨️ {t('help.shortcutsTitle')}
+          </h2>
+          <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
+            {t('help.shortcutsIntro')}
+          </p>
+          <ul className="space-y-1.5">
+            {[
+              t('help.shortcutSearch'),
+              t('help.shortcutCancel'),
+              t('help.shortcutSend'),
+              t('help.shortcutNewline'),
+            ].map((item) => (
+              <li key={item} className="text-sm text-zinc-600 dark:text-zinc-400 flex items-start gap-2">
+                <span className="text-indigo-500 dark:text-indigo-400 mt-0.5">•</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
         {/* Tour & What's New */}
         <section className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-800 mb-4">
           <h2 className="text-xl font-semibold mb-3 text-zinc-700 dark:text-zinc-200">

@@ -11,6 +11,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { type AppConfig, type ChatCompletion, type ChatCompletionChunk, type MLCEngineInterface } from "@mlc-ai/web-llm";
+import i18n from '../config/i18n';
 import { handleErrorSilent } from '../utils/errors';
 import { log, warn } from '../services/logging';
 import { stripHiddenPartsText } from '../services/llm/text-processing';
@@ -205,7 +206,7 @@ export const useEnhancedInference = (
           },
         });
         if (!ok) {
-          setError('Failed to load GGUF model. Check your connection and try again.');
+          setError(i18n.t('chat.errorLoadGguf'));
           setIsLoading(false);
           return false;
         }
@@ -339,17 +340,17 @@ export const useEnhancedInference = (
       setProgressStats(null);
       warn(`Failed to load model ${modelId}: ${err}`);
 
-      // Enhanced error messages for common issues
+      // Enhanced error messages for common issues (translated via i18next)
       if (errorMessage.includes('CORS') || errorMessage.includes('cross-origin')) {
-        setError('⚠️ CORS-Fehler beim Laden vom HuggingFace-CDN. Bitte prüfe deine Internetverbindung und versuche es erneut.');
+        setError(i18n.t('chat.errorCors'));
       } else if (errorMessage.includes('404') || errorMessage.includes('not found')) {
-        setError('⚠️ Modell nicht auf dem HuggingFace-CDN gefunden. Bitte prüfe die Modell-ID in der Registry.');
+        setError(i18n.t('chat.errorNotFound'));
       } else if (errorMessage.includes('WebGPU')) {
-        setError('⚠️ WebGPU nicht verfügbar. Bitte verwende einen modernen Browser: Chrome, Firefox 113+, Edge oder Safari 16.4+.');
+        setError(i18n.t('chat.errorWebgpu'));
       } else if (errorMessage.includes('WASM')) {
-        setError('⚠️ WebAssembly-Fehler. Bitte stelle sicher, dass dein Browser WASM unterstützt und HTTPS verwendet wird.');
+        setError(i18n.t('chat.errorWasm'));
       } else {
-        setError(`⚠️ Fehler beim Laden des Modells: ${errorMessage}`);
+        setError(i18n.t('chat.errorGeneric', { message: errorMessage }));
       }
       
       return false;
@@ -776,75 +777,6 @@ export const useConversationInference = (
     generate: generateWithContext,
     generateStream,
   };
-};
-
-/**
- * Hook for monitoring inference performance
- */
-export const useInferencePerformance = (): {
-  metrics: Record<string, unknown>;
-  memoryUsage: { usedMB: number; totalMB: number; usagePercent: number };
-} => {
-  const [metrics, setMetrics] = useState<Record<string, unknown>>({});
-  const [memoryUsage, setMemoryUsage] = useState<{
-    usedMB: number;
-    totalMB: number;
-    usagePercent: number;
-  }>({ usedMB: 0, totalMB: 0, usagePercent: 0 });
-
-  // WebLLM doesn't expose detailed metrics in the current API
-  // This is a placeholder for future implementation
-  useEffect(() => {
-    // For now, just return empty metrics
-    setMetrics({});
-    setMemoryUsage({ usedMB: 0, totalMB: 0, usagePercent: 0 });
-  }, []);
-
-  return { metrics, memoryUsage };
-};
-
-/**
- * Hook for preloading models in the background
- */
-export const useModelPreloader = (options: {
-  modelIds: string[];
-}): {
-  preloadStatus: Record<string, {
-    status: 'pending' | 'loading' | 'loaded' | 'failed';
-    progress: number;
-    error?: string;
-  }>;
-} => {
-  const { modelIds } = options;
-  const [preloadStatus, setPreloadStatus] = useState<Record<string, {
-    status: 'pending' | 'loading' | 'loaded' | 'failed';
-    progress: number;
-    error?: string;
-  }>>({});
-
-  useEffect((): void => {
-    const preload = async (): Promise<void> => {
-      // Initialize status
-      const initialStatus: typeof preloadStatus = {};
-      for (const modelId of modelIds) {
-        initialStatus[modelId] = { status: 'pending', progress: 0 };
-      }
-      setPreloadStatus(initialStatus);
-
-      // WebLLM handles preloading automatically
-      // For now, mark all as loaded
-      for (const modelId of modelIds) {
-        setPreloadStatus(prev => ({
-          ...prev,
-          [modelId]: { ...prev[modelId], status: 'loaded', progress: 100 }
-        }));
-      }
-    };
-
-    preload();
-  }, [modelIds]);
-
-  return { preloadStatus };
 };
 
 // ============================================================================

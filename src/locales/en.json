@@ -83,7 +83,28 @@
     "downloadConfirm": "The model \"{{name}}\" must be downloaded first (approx. {{size}} MB). It will be cached in your browser and load instantly next time. Download now?",
     "downloadEta": "About {{time}} remaining",
     "downloadLocalNote": "The download runs directly from this website and is cached in your browser - everything stays local.",
-    "jspiHint": "This browser does not support JSPI - the model runs significantly slower. Use Chrome or Edge for full speed."
+    "jspiHint": "This browser does not support JSPI - the model runs significantly slower. Use Chrome or Edge for full speed.",
+    "errorLoadGguf": "Failed to load the GGUF model. Check your internet connection and try again.",
+    "errorCors": "⚠️ CORS error while loading from the HuggingFace CDN. Please check your internet connection and try again.",
+    "errorNotFound": "⚠️ Model not found on the HuggingFace CDN. Please check the model ID in the registry.",
+    "errorWebgpu": "⚠️ WebGPU not available. Please use a modern browser: Chrome, Firefox 113+, Edge or Safari 16.4+.",
+    "errorWasm": "⚠️ WebAssembly error. Please make sure your browser supports WASM and the site is served over HTTPS.",
+    "errorGeneric": "⚠️ Failed to load the model: {{message}}"
+  },
+  "tab": {
+    "generating": "AI is thinking…",
+    "loading": "Loading model…"
+  },
+  "errorBoundary": {
+    "title": "Oops, something went wrong",
+    "text": "The interface hit an unexpected error. Your chats and data are safely stored. Reload the page to continue.",
+    "reload": "Reload page"
+  },
+  "install": {
+    "title": "Install as app",
+    "text": "KI Kobold can be installed as an app - it then opens in its own window without a browser bar and can be started offline.",
+    "installButton": "Install app",
+    "laterButton": "Later"
   },
   "welcome": {
     "title": "Hello & welcome!",
@@ -172,6 +193,14 @@
     "title": "What's new",
     "subtitle": "A few things have changed since your last visit:",
     "closeButton": "Got it!",
+    "v340": {
+      "item1": "Crash protection: when an unexpected error occurs, the interface stays visible instead of turning white - your data is safe, one click reloads.",
+      "item2": "Keyboard shortcuts: Ctrl+K (or Cmd+K) opens and closes the chat search, Esc cancels the running generation.",
+      "item3": "The browser tab title now shows what is currently happening - handy with multiple tabs.",
+      "item4": "The chat search now highlights matches in your own messages too.",
+      "item5": "New subtle hint to install the site as an app (where the browser supports it).",
+      "item6": "Error messages while loading a model are now bilingual (German/English)."
+    },
     "v330": {
       "item1": "New models: Qwen 3.5 2B, Qwen 3 1.7B and Qwen 3 0.6B replace Gemma 2 and Qwen 2. All three think visibly - the reasoning appears collapsible in the answer.",
       "item2": "New models page (Menu → Models): strengths and weaknesses of every model, release date, download size and engine at a glance.",
@@ -350,6 +379,12 @@
     "tip2": "Break complex tasks into several small messages",
     "tip3": "Try different profiles: 'Precise' for facts, 'Creative' for ideas",
     "tip4": "If an answer is nonsense: rephrase the question or start a new chat",
+    "shortcutsTitle": "Keyboard shortcuts",
+    "shortcutsIntro": "These shortcuts save you trips to the mouse:",
+    "shortcutSearch": "Ctrl+K / Cmd+K: open and close the chat search",
+    "shortcutCancel": "Esc: cancel the running generation (and close open popups)",
+    "shortcutSend": "Enter: send message",
+    "shortcutNewline": "Shift+Enter: insert a line break",
     "needMoreHelp": "Still Have Questions?",
     "contactSupport": "The best way is to simply try everything out - that's exactly what this page is for. If you have questions or need help, reach out via the contact page (menu → Contact).",
     "tourWhatsNewTitle": "Introduction & What's New",

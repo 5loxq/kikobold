@@ -98,6 +98,18 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     }
   }, [_activeModel?.id]);
 
+  // Keyboard shortcut: Ctrl/Cmd+K opens and closes the chat search
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent): void => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearchOpen((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return (): void => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   if (!chat) {
     return (
       <div className="flex-1 flex items-center justify-center p-8 bg-zinc-50 dark:bg-zinc-900">

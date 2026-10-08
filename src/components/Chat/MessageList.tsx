@@ -75,7 +75,10 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, isDarkMode,
       >
         <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
           {!isUser && thinking !== null && <ThinkingBlock thinking={thinking} />}
-          {searchQuery?.trim() && !isUser ? (
+          {/* While searching, matches are highlighted in user AND assistant
+              messages; markdown formatting is skipped then so the hits stay
+              visible as plain text. */}
+          {searchQuery?.trim() ? (
             <HighlightedText text={answer} query={searchQuery} isUser={isUser} />
           ) : (
             <MarkdownRenderer

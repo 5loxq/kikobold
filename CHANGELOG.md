@@ -2,6 +2,30 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [3.4.0] - 2026-10-08
+
+### Neu
+
+- **Absturz-Schutz (ErrorBoundary)**: Ein unerwarteter Fehler in der Oberfläche zeigt jetzt eine verständliche Meldung mit „Seite neu laden"-Button statt einer weißen Seite. Chats und Daten liegen in IndexedDB/localStorage und bleiben erhalten.
+- **Tastatur-Shortcuts**: Strg+K bzw. Cmd+K öffnet und schließt die Chat-Suche; Esc bricht die laufende Generierung ab (offene Popups wie die @-Vorschläge werden dabei nicht gestört). Alle Shortcuts sind in der Hilfe dokumentiert.
+- **Dynamischer Tab-Titel**: Der Browser-Tab zeigt jetzt den aktuellen Zustand - „Modell wird geladen…", „KI denkt nach…" oder den Namen des aktiven Modells. Praktisch, wenn die Seite in mehreren Tabs offen ist.
+- **Chat-Suche in eigenen Nachrichten**: Suchtreffer werden jetzt auch in den Nachrichten des Nutzers hervorgehoben, nicht nur in den Antworten der KI.
+- **Hinweis „Als App installieren"**: Wiederkehrende Besucher bekommen (wo der Browser es unterstützt, z.B. Chrome/Edge) einen dezente Aufforderung, die Seite als App zu installieren - mit eigenem Fenster und Offline-Start. „Später" schließt den Hinweis dauerhaft.
+- **Fehlermeldungen zweisprachig**: Die Meldungen beim Modell-Laden (CORS, 404, WebGPU, WASM) laufen jetzt über i18next statt hardcoded auf Deutsch.
+- **i18n-Paritäts-Check automatisiert**: Neues Skript `npm run check:i18n` prüft, dass de.json und en.json deckungsgleich sind und jeder im Code benutzte Key existiert; läuft zusätzlich in der CI-Pipeline.
+
+### Behoben (aus dem Code-Review vor dieser Version)
+
+- **Code-Antworten wurden beim Speichern verstümmelt**: Die Voll-Sanitizing löschte Muster wie „data:", „on x =" oder „javascript:" aus normalem Text - Code-Antworten der Modelle kamen beschädigt aus der Datenbank zurück. Nachrichten werden jetzt wie Gedächtnis und Bibliothek nur von HTML-Tags befreit; Markdown-Links und -Bilder akzeptieren ausschließlich sichere Protokolle (http/https/mailto/relativ).
+- **Codeblöcke mit Leerzeilen wurden zerrissen**: Der Markdown-Renderer zerschnitt Codeblöcke am Absatz-Splitter - sie erschienen als kaputte Absätze mit Backtick-Resten. Der Splitter kennt jetzt Code-Fences.
+- **Fehlender Text im Lade-Hinweis**: „chat.modelLoadingBubble" existierte nicht in den Sprachdateien - im UI wäre der rote Key erschienen.
+- **Anhänge über dem Limit**: Mehrere Dateien auf einmal konnten das Limit von 3 Anhängen überschreiten; jetzt gekappt.
+- **Bibliotheks-Picker nach dem Senden**: Der 📚-Picker blieb nach dem Absenden offen und blockierte die @-Autocomplete für die nächste Nachricht.
+
+### Intern
+
+- Tote Platzhalter-Hooks entfernt (`useInferencePerformance`, `useModelPreloader`), doppelt registrierte Offline-Listener verhindert, nur API-Feldparameter an die WebLLM-Engine übergeben.
+
 ## [3.3.0] - 2026-10-07
 
 ### Neu

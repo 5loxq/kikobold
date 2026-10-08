@@ -16,6 +16,7 @@ const SettingsPage = lazy(() => import('../Settings/SettingsPage').then(m => ({ 
 const LibraryManager = lazy(() => import('../Library/LibraryManager').then(m => ({ default: m.LibraryManager })));
 const DataManager = lazy(() => import('../Data/DataManager').then(m => ({ default: m.DataManager })));
 import { BrowserWarning } from './BrowserWarning';
+import { InstallPrompt } from './InstallPrompt';
 import { type AppSettings, loadSettings, saveSettings } from '../../services/settings';
 import { useLibrary } from '../../hooks/useLibrary';
 import { type LibraryFile, resolveLibraryReferences } from '../../services/storage/LibraryStorage';
@@ -140,6 +141,38 @@ export const MainLayout: FC = () => {
   useEffect(() => {
     refreshStatus();
   }, [activeModel?.id, refreshStatus]);
+
+  // Dynamic tab title: shows what is happening - useful when the app runs
+  // in several tabs next to each other.
+  useEffect(() => {
+    const base = 'KI Kobold';
+    if (isGenerating) {
+      document.title = `${t('tab.generating')} · ${base}`;
+    } else if (isLoading) {
+      document.title = `${t('tab.loading')} · ${base}`;
+    } else if (activeModel) {
+      document.title = `${activeModel.name} · ${base}`;
+    } else {
+      document.title = base;
+    }
+  }, [isGenerating, isLoading, activeModel, t]);
+
+  // Keyboard shortcut: Escape cancels a running generation. Events that a
+  // component already handled (e.g. closing the @-mention popup) are
+  // prevented and ignored here.
+  useEffect(() => {
+    if (!isGenerating) {
+      return;
+    }
+    const onKeyDown = (e: KeyboardEvent): void => {
+      if (e.key !== 'Escape' || e.defaultPrevented) {
+        return;
+      }
+      stopGeneration();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return (): void => window.removeEventListener('keydown', onKeyDown);
+  }, [isGenerating, stopGeneration]);
 
   // Apply the persisted theme from the app settings on startup
   useEffect(() => {
@@ -547,6 +580,9 @@ export const MainLayout: FC = () => {
 
         {/* Performance warning for Firefox users (dismissible) */}
         <BrowserWarning />
+
+        {/* PWA install hint for returning visitors (dismissible) */}
+        {welcomeDone && <InstallPrompt />}
 
         {/* Model Download Overlay - shows while a model is loading/downloading */}
         {isLoading && activeTab === 'chat' && (

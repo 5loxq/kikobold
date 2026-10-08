@@ -7,6 +7,7 @@ import { initOfflineSupport } from './services/offline';
 import { initThemeService } from './services/theme';
 import { getSystemInfo } from './services/system-info';
 import { info, log } from './services/logging';
+import { ErrorBoundary } from './components/Layout/ErrorBoundary';
 
 // Initialize services before rendering the app
 const initializeServices = async (): Promise<void> => {
@@ -36,7 +37,9 @@ const initializeServices = async (): Promise<void> => {
 initializeServices().then(() => {
     ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         <React.StrictMode>
-            <App />
+            <ErrorBoundary>
+                <App />
+            </ErrorBoundary>
         </React.StrictMode>,
     );
 });

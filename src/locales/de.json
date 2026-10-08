@@ -83,7 +83,28 @@
     "downloadConfirm": "Das Modell \"{{name}}\" muss zuerst heruntergeladen werden (ca. {{size}} MB). Es wird im Browser gecacht und beim nächsten Mal sofort geladen. Jetzt herunterladen?",
     "downloadEta": "Noch ca. {{time}} übrig",
     "downloadLocalNote": "Der Download läuft direkt von dieser Webseite und wird in deinem Browser gecacht - alles bleibt lokal.",
-    "jspiHint": "Dieser Browser unterstützt kein JSPI - das Modell läuft dadurch deutlich langsamer. Für volle Geschwindigkeit verwende Chrome oder Edge."
+    "jspiHint": "Dieser Browser unterstützt kein JSPI - das Modell läuft dadurch deutlich langsamer. Für volle Geschwindigkeit verwende Chrome oder Edge.",
+    "errorLoadGguf": "GGUF-Modell konnte nicht geladen werden. Prüfe deine Internetverbindung und versuche es erneut.",
+    "errorCors": "⚠️ CORS-Fehler beim Laden vom HuggingFace-CDN. Bitte prüfe deine Internetverbindung und versuche es erneut.",
+    "errorNotFound": "⚠️ Modell nicht auf dem HuggingFace-CDN gefunden. Bitte prüfe die Modell-ID in der Registry.",
+    "errorWebgpu": "⚠️ WebGPU nicht verfügbar. Bitte verwende einen modernen Browser: Chrome, Firefox 113+, Edge oder Safari 16.4+.",
+    "errorWasm": "⚠️ WebAssembly-Fehler. Bitte stelle sicher, dass dein Browser WASM unterstützt und die Seite über HTTPS geladen wird.",
+    "errorGeneric": "⚠️ Fehler beim Laden des Modells: {{message}}"
+  },
+  "tab": {
+    "generating": "KI denkt nach…",
+    "loading": "Modell wird geladen…"
+  },
+  "errorBoundary": {
+    "title": "Ups, da ist etwas schiefgelaufen",
+    "text": "Die Oberfläche hat einen unerwarteten Fehler gemeldet. Deine Chats und Daten sind sicher gespeichert. Lade die Seite neu, um weiterzumachen.",
+    "reload": "Seite neu laden"
+  },
+  "install": {
+    "title": "Als App installieren",
+    "text": "KI Kobold lässt sich als App installieren - dann öffnet es sich in einem eigenen Fenster ohne Browser-Leiste und ist auch offline startbar.",
+    "installButton": "App installieren",
+    "laterButton": "Später"
   },
   "welcome": {
     "title": "Hallo & willkommen!",
@@ -172,6 +193,14 @@
     "title": "Das ist neu",
     "subtitle": "Seit deinem letzten Besuch hat sich einiges getan:",
     "closeButton": "Alles klar!",
+    "v340": {
+      "item1": "Absturz-Schutz: Bei einem unerwarteten Fehler bleibt die Oberfläche jetzt sichtbar statt weiß - deine Daten sind sicher, ein Klick lädt neu.",
+      "item2": "Tastatur-Shortcuts: Strg+K (bzw. Cmd+K) öffnet und schließt die Chat-Suche, Esc bricht die laufende Generierung ab.",
+      "item3": "Der Browser-Tab-Titel zeigt jetzt, was gerade passiert - praktisch bei mehreren Tabs.",
+      "item4": "Die Chat-Suche hebt Treffer jetzt auch in deinen eigenen Nachrichten hervor.",
+      "item5": "Neuer dezenter Hinweis, die Seite als App zu installieren (wo der Browser es unterstützt).",
+      "item6": "Fehlermeldungen beim Modell-Laden sind jetzt zweisprachig (Deutsch/Englisch)."
+    },
     "v330": {
       "item1": "Neue Modelle: Qwen 3.5 2B, Qwen 3 1.7B und Qwen 3 0.6B ersetzen Gemma 2 und Qwen 2. Alle drei denken sichtbar nach - der Gedankengang erscheint aufklappbar in der Antwort.",
       "item2": "Neue Modellseite (Menü → Modelle): Stärken und Schwächen aller Modelle, Erscheinungsdatum, Download-Größe und Engine im Überblick.",
@@ -350,6 +379,12 @@
     "tip2": "Teile komplexe Aufgaben in mehrere kleine Nachrichten auf",
     "tip3": "Probiere verschiedene Profile: 'Präzise' für Fakten, 'Kreativ' für Ideen",
     "tip4": "Wenn eine Antwort Unsinn ist: Frage neu stellen oder einen neuen Chat starten",
+    "shortcutsTitle": "Tastatur-Shortcuts",
+    "shortcutsIntro": "Diese Shortcuts ersparen dir Wege mit der Maus:",
+    "shortcutSearch": "Strg+K bzw. Cmd+K: Chat-Suche öffnen und schließen",
+    "shortcutCancel": "Esc: laufende Generierung abbrechen (und offene Popups schließen)",
+    "shortcutSend": "Enter: Nachricht senden",
+    "shortcutNewline": "Shift+Enter: Zeilenumbruch einfügen",
     "needMoreHelp": "Noch Fragen?",
     "contactSupport": "Am besten probierst du einfach alles aus - genau dafür ist diese Seite da. Wenn du Fragen hast oder Hilfe brauchst, melde dich über die Kontaktseite (Menü → Kontakt).",
     "tourWhatsNewTitle": "Einführung & Neuigkeiten",
