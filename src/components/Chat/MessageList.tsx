@@ -205,7 +205,7 @@ const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, isM
             }`}>
               <div className="flex gap-2.5 items-center">
                 <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-zinc-500 dark:text-zinc-400 text-sm">{t('chat.modelLoadingBubble')}</span>
+                <span className="text-zinc-500 dark:text-zinc-400 text-sm">{t('chat.modelLoading')}</span>
               </div>
             </div>
           </div>

@@ -98,11 +98,12 @@ export const sanitizeForDisplay = (text: string): string => {
   // First apply full sanitization
   let sanitized = sanitizeInput(text);
 
-  // Then allow safe line breaks and basic formatting
+  // Then allow safe line breaks and basic formatting. Bold pairs (*text*)
+  // must be replaced in one pass - a second `*` replace would run on the
+  // already-replaced text and find nothing left.
   sanitized = sanitized
     .replace(/\n/g, '<br/>')
-    .replace(/\*/g, '<strong>')
-    .replace(/\*/g, '</strong>')
+    .replace(/\*([^*]+)\*/g, '<strong>$1</strong>')
     .replace(/_([^_]+)_/g, '<em>$1</em>');
 
   return sanitized;

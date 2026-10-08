@@ -201,6 +201,12 @@ const renderKatex = (tex: string, displayMode: boolean): string | null => {
   }
 };
 
+// Only these URL schemes are rendered as clickable links / image sources.
+// Everything else (javascript:, vbscript:, data:, ...) is dropped so
+// markdown in a message can never turn into a script URL.
+const SAFE_URL = /^(https?:\/\/|mailto:|\/|#)/i;
+const isSafeUrl = (url: string): boolean => SAFE_URL.test(url.trim());
+
 const MathBlock: React.FC<{ tex: string }> = ({ tex }) => {
   const html = renderKatex(tex, true);
   if (html === null) {
@@ -268,16 +274,19 @@ const Strikethrough: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 );
 
 const Link: React.FC<{ href?: string; children: React.ReactNode; onClick?: (url: string) => void }> = ({ href, children, onClick }) => {
+  // Drop unsafe schemes (javascript:, vbscript:, ...) instead of rendering them
+  const safeHref = href !== undefined && isSafeUrl(href) ? href : undefined;
+
   const handleClick = useCallback((e: React.MouseEvent) => {
-    if (href && onClick) {
+    if (safeHref && onClick) {
       e.preventDefault();
-      onClick(href);
+      onClick(safeHref);
     }
-  }, [href, onClick]);
+  }, [safeHref, onClick]);
 
   return (
     <a
-      href={href}
+      href={safeHref}
       onClick={handleClick}
       className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline transition-colors"
       target="_blank"
@@ -297,7 +306,7 @@ const Image: React.FC<{ src?: string; alt?: string; onClick?: (src: string) => v
     }
   }, [src, onClick]);
 
-  if (!src) {return null;}
+  if (!src || !isSafeUrl(src)) {return null;}
 
   return (
     <div className="my-4">
@@ -444,10 +453,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   onImageClick,
   maxCodeBlockHeight,
 }) => {
-  // Memoize the content to prevent unnecessary re-renders
-  const memoizedContent = useMemo(() => content, [content]);
-
-  if (!memoizedContent || memoizedContent.trim().length === 0) {
+  if (!content || content.trim().length === 0) {
     return <p className="text-gray-500 dark:text-gray-400 italic">No content</p>;
   }
 
@@ -455,7 +461,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     <div className={`markdown-content ${className}`}>
       {/* We'll use a simple approach: parse markdown manually for basic formatting */}
       <MarkdownContent
-        content={memoizedContent}
+        content={content}
         isDarkMode={isDarkMode}
         onLinkClick={onLinkClick}
         onImageClick={onImageClick}
@@ -463,6 +469,44 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       />
     </div>
   );
+};
+
+/**
+ * Split content into blocks on blank lines. Fenced code blocks are kept
+ * intact: their content may contain blank lines, which must not cut the
+ * block in half (the code would otherwise render as broken paragraphs).
+ */
+const splitBlocks = (content: string): string[] => {
+  const blocks: string[] = [];
+  let current: string[] = [];
+  let fence: string | null = null;
+
+  const flush = (): void => {
+    const text = current.join('\n');
+    if (text.trim()) {
+      blocks.push(text);
+    }
+    current = [];
+  };
+
+  for (const line of content.split('\n')) {
+    const fenceMatch = line.match(/^\s{0,3}(`{3,}|~{3,})/);
+    if (fenceMatch) {
+      if (fence === null) {
+        fence = fenceMatch[1];
+      } else if (fenceMatch[1].startsWith(fence)) {
+        fence = null;
+      }
+      current.push(line);
+    } else if (fence === null && line.trim() === '') {
+      flush();
+    } else {
+      current.push(line);
+    }
+  }
+  flush();
+
+  return blocks;
 };
 
 // Internal component to render markdown content
@@ -482,7 +526,7 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
   maxCodeBlockHeight,
 }) => {
   // Split content by double newlines to get paragraphs/blocks
-  const blocks = content.split(/\n\n+/);
+  const blocks = splitBlocks(content);
 
   return (
     <>

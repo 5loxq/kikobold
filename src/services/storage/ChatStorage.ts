@@ -1,6 +1,6 @@
 import { Chat, Message } from '../../types';
 import { warn } from '../logging';
-import { sanitizeInput } from '../security';
+import { sanitizeInputLight } from '../security';
 
 const DB_NAME = 'LocalLLMDB';
 const STORE_NAME = 'chats';
@@ -99,10 +99,14 @@ export const saveChat = async (chat: Chat): Promise<void> => {
     if (!validateMessage(message)) {
       throw new Error('Invalid message in chat');
     }
-    // Sanitize message content before saving
+    // Message content is data: it is rendered as escaped text by React (the
+    // markdown renderer never injects raw HTML). The full sanitizeInput()
+    // would mangle everyday text and code answers (it strips "data:",
+    // "on x =", "javascript:" etc. from normal words), so only HTML tags are
+    // stripped here - same policy as the memory and the library.
     return {
       ...message,
-      content: sanitizeInput(message.content),
+      content: sanitizeInputLight(message.content),
     };
   });
 
@@ -258,14 +262,14 @@ export const updateChatMessages = async (chatId: string, messages: Message[]): P
     throw new Error('Invalid messages array');
   }
 
-  // Validate and sanitize messages
+  // Validate and sanitize messages (see saveChat for the sanitizer choice)
   const sanitizedMessages = messages.map(message => {
     if (!validateMessage(message)) {
       throw new Error('Invalid message in array');
     }
     return {
       ...message,
-      content: sanitizeInput(message.content),
+      content: sanitizeInputLight(message.content),
     };
   });
 

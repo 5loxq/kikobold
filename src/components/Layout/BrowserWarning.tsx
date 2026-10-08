@@ -34,7 +34,7 @@ const markWarningSeen = (): void => {
  * Dismissible performance warning for Firefox users. Firefox does not support
  * JSPI (JavaScript Promise Integration), so WASM models (LFM 2.5) have to use
  * the slow "asyncify" fallback - text then appears word by word. The WebGPU
- * models (Gemma 2, Qwen 2) need Chrome/Edge anyway. This cannot be fixed on
+ * models (Qwen 3.x) need Chrome/Edge anyway. This cannot be fixed on
  * our side; the recommendation is Chrome or Edge.
  */
 export const BrowserWarning: React.FC = () => {

@@ -251,7 +251,9 @@ export const InputBox: React.FC<InputBoxProps> = ({
         accepted.push(await createImageAttachment(file));
       }
       if (accepted.length > 0) {
-        setImages((prev) => [...prev, ...accepted]);
+        // Cap the total: existing images plus the new ones must not exceed
+        // the attachment limit.
+        setImages((prev) => [...prev, ...accepted].slice(0, ATTACHMENT_LIMITS.MAX_ATTACHMENTS));
       }
     } finally {
       setIsAttaching(false);
@@ -271,7 +273,9 @@ export const InputBox: React.FC<InputBoxProps> = ({
         accepted.push(await createDocumentAttachment(file));
       }
       if (accepted.length > 0) {
-        setDocuments((prev) => [...prev, ...accepted]);
+        // Cap the total: existing documents plus the new ones must not
+        // exceed the attachment limit.
+        setDocuments((prev) => [...prev, ...accepted].slice(0, ATTACHMENT_LIMITS.MAX_ATTACHMENTS));
       }
     } finally {
       setIsAttaching(false);
@@ -388,6 +392,10 @@ export const InputBox: React.FC<InputBoxProps> = ({
       setDocuments([]);
       setMention(null);
       setMentionIndex(0);
+      // Also close the library picker and re-enable the @autocomplete for
+      // the (empty) next message.
+      setPickerOpen(false);
+      dismissedMentionRef.current = null;
       images.forEach((img) => URL.revokeObjectURL(img.previewUrl));
       setImages([]);
       if (textareaRef.current) {

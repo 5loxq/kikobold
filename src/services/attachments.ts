@@ -46,7 +46,9 @@ export const buildPromptWithDocuments = (message: string, attachments: DocumentA
   let budget = MAX_TOTAL_DOC_PROMPT_CHARS;
   const docs = attachments
     .map((doc) => {
-      const limit = Math.min(MAX_DOC_PROMPT_CHARS, budget);
+      // Once the budget is used up, the limit clamps to 0 instead of going
+      // negative (a negative slice() would cut text from the end).
+      const limit = Math.max(0, Math.min(MAX_DOC_PROMPT_CHARS, budget));
       budget -= Math.max(0, Math.min(limit, doc.text.length));
       const text = doc.text.length > limit
         ? `${doc.text.slice(0, limit)}\n[... document truncated ...]`

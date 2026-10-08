@@ -425,6 +425,15 @@ export const useEnhancedInference = (
         throw new Error('Model not loaded. Please load a model first.');
       }
 
+      // Only pass the parameters the WebLLM chat API understands; the
+      // prompt-building fields (systemPrompt, history, images) are already
+      // part of `messages`.
+      const apiOptions = {
+        temperature: mergedOptions.temperature,
+        top_p: mergedOptions.top_p,
+        max_tokens: mergedOptions.max_tokens,
+      };
+
       const messages = [
         ...(mergedOptions.systemPrompt
           ? [{ role: 'system' as const, content: mergedOptions.systemPrompt }]
@@ -435,7 +444,7 @@ export const useEnhancedInference = (
 
       const reply = await engineRef.current.chat.completions.create({
         messages,
-        ...mergedOptions
+        ...apiOptions
       });
 
       if (typeof (reply as unknown as AsyncIterable<unknown>)[Symbol.asyncIterator] === 'function') {
@@ -528,6 +537,14 @@ export const useEnhancedInference = (
 
         const historyMessages = (mergedOptions.history ?? []).map((m) => ({ role: m.role, content: m.content }));
 
+        // Only pass the parameters the WebLLM chat API understands; the
+        // prompt-building fields are already part of `messages`.
+        const apiOptions = {
+          temperature: mergedOptions.temperature,
+          top_p: mergedOptions.top_p,
+          max_tokens: mergedOptions.max_tokens,
+        };
+
         const response = await engineRef.current.chat.completions.create({
           messages: [
             ...(mergedOptions.systemPrompt
@@ -537,7 +554,7 @@ export const useEnhancedInference = (
             { role: "user", content: prompt }
           ],
           stream: true,
-          ...mergedOptions
+          ...apiOptions
         });
         if (typeof (response as AsyncIterable<unknown>)[Symbol.asyncIterator] !== 'function') {
           throw new Error('Expected streaming response but received a single completion');
