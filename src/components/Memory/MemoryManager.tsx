@@ -8,6 +8,7 @@ import {
   memoryFieldEntryId,
   totalMemoryChars,
 } from '../../services/storage/MemoryStorage';
+import { error as logError } from '../../services/logging';
 
 interface MemoryManagerProps {
   memories: MemoryEntry[];
@@ -103,7 +104,7 @@ export const MemoryManager: React.FC<MemoryManagerProps> = ({
                     const value = e.target.value;
                     if (value.trim() !== fieldValue(field.key)) {
                       onSetMemoryField(field.key, value).catch((err) => {
-                        console.error('Failed to save memory field:', err);
+                        logError('Failed to save memory field:', err);
                         setError(err instanceof Error ? err.message : 'Failed to save');
                       });
                     }

@@ -1,5 +1,5 @@
 import { Chat, Message } from '../../types';
-import { warn } from '../logging';
+import { error as logError, warn } from '../logging';
 import { sanitizeInputLight } from '../security';
 
 const DB_NAME = 'LocalLLMDB';
@@ -55,7 +55,7 @@ const openChatDB = (): Promise<void> => {
       const request = indexedDB.open(DB_NAME, 1);
 
       request.onerror = (): void => {
-        console.error('IndexedDB error:', request.error);
+        logError('IndexedDB error:', request.error);
         reject(request.error ?? new Error('Failed to open database'));
       };
 
@@ -73,12 +73,12 @@ const openChatDB = (): Promise<void> => {
             store.createIndex('profileId', 'profileId', { unique: false });
           }
         } catch (error) {
-          console.error('Database upgrade error:', error);
+          logError('Database upgrade error:', error);
           reject(error);
         }
       };
     } catch (error) {
-      console.error('Database initialization error:', error);
+      logError('Database initialization error:', error);
       reject(error);
     }
   });
@@ -122,13 +122,13 @@ export const saveChat = async (chat: Chat): Promise<void> => {
       const request = store.put(sanitizedChat);
 
       request.onerror = (): void => {
-        console.error('Failed to save chat:', request.error);
+        logError('Failed to save chat:', request.error);
         reject(request.error ?? new Error('Failed to save chat'));
       };
 
       request.onsuccess = (): void => resolve();
     } catch (error) {
-      console.error('Error saving chat:', error);
+      logError('Error saving chat:', error);
       reject(error);
     }
   });
@@ -150,7 +150,7 @@ export const getChat = async (id: string): Promise<Chat | null> => {
       const request = store.get(id);
 
       request.onerror = (): void => {
-        console.error('Failed to get chat:', request.error);
+        logError('Failed to get chat:', request.error);
         reject(request.error ?? new Error('Failed to get chat'));
       };
 
@@ -164,7 +164,7 @@ export const getChat = async (id: string): Promise<Chat | null> => {
         }
       };
     } catch (error) {
-      console.error('Error getting chat:', error);
+      logError('Error getting chat:', error);
       reject(error);
     }
   });
@@ -182,7 +182,7 @@ export const getAllChats = async (): Promise<Chat[]> => {
       const request = store.getAll();
 
       request.onerror = (): void => {
-        console.error('Failed to get all chats:', request.error);
+        logError('Failed to get all chats:', request.error);
         reject(request.error ?? new Error('Failed to get all chats'));
       };
 
@@ -195,7 +195,7 @@ export const getAllChats = async (): Promise<Chat[]> => {
         resolve(validChats);
       };
     } catch (error) {
-      console.error('Error getting all chats:', error);
+      logError('Error getting all chats:', error);
       reject(error);
     }
   });
@@ -217,13 +217,13 @@ export const deleteChat = async (id: string): Promise<void> => {
       const request = store.delete(id);
 
       request.onerror = (): void => {
-        console.error('Failed to delete chat:', request.error);
+        logError('Failed to delete chat:', request.error);
         reject(request.error ?? new Error('Failed to delete chat'));
       };
 
       request.onsuccess = (): void => resolve();
     } catch (error) {
-      console.error('Error deleting chat:', error);
+      logError('Error deleting chat:', error);
       reject(error);
     }
   });
@@ -241,13 +241,13 @@ export const clearAllChats = async (): Promise<void> => {
       const request = transaction.objectStore(STORE_NAME).clear();
 
       request.onerror = (): void => {
-        console.error('Failed to clear chats:', request.error);
+        logError('Failed to clear chats:', request.error);
         reject(request.error ?? new Error('Failed to clear chats'));
       };
 
       request.onsuccess = (): void => resolve();
     } catch (error) {
-      console.error('Error clearing chats:', error);
+      logError('Error clearing chats:', error);
       reject(error);
     }
   });

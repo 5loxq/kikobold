@@ -124,42 +124,6 @@ const MessageBubble = React.memo(MessageBubbleInner, (prevProps, nextProps) => {
   );
 });
 
-// Custom equality function for messages array
-function areMessagesEqual(
-  prevProps: MessageListProps,
-  nextProps: MessageListProps
-): boolean {
-  // Streaming message, loading state, search and theme always force a re-render
-  if (
-    prevProps.streamingMessage !== nextProps.streamingMessage ||
-    prevProps.isLoading !== nextProps.isLoading ||
-    prevProps.isModelLoading !== nextProps.isModelLoading ||
-    prevProps.searchQuery !== nextProps.searchQuery ||
-    prevProps.isDarkMode !== nextProps.isDarkMode
-  ) {
-    return false;
-  }
-  // Only re-render if messages array reference changes or length changes
-  // This prevents unnecessary re-renders when only other props change
-  if (prevProps.messages === nextProps.messages) {
-    return true;
-  }
-  
-  // If lengths are different, we need to re-render
-  if (prevProps.messages.length !== nextProps.messages.length) {
-    return false;
-  }
-
-  // Compare all messages: a change in the middle of the list (e.g. after a
-  // backup import) must re-render too, not just a changed last message.
-  return prevProps.messages.every(
-    (message, index) =>
-      message.id === nextProps.messages[index].id &&
-      message.content === nextProps.messages[index].content &&
-      message.timestamp === nextProps.messages[index].timestamp
-  );
-}
-
 const StreamingBubble: React.FC<{ content: string; isDarkMode?: boolean }> = ({ content, isDarkMode }) => {
   const { thinking, answer, isThinkingActive } = splitThinking(content);
   return (
@@ -288,7 +252,12 @@ const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, isM
     );
 };
 
-export const MessageList = React.memo(MessageListInner, areMessagesEqual);
+// The list is memoized with a shallow comparison: every prop is either a
+// primitive or a stable ref except `messages`, and a changed message list
+// always arrives as a new array reference - exactly what the shallow check
+// needs. The previous deep comparison saved nothing in practice.
+export const MessageList = React.memo(MessageListInner);
+MessageList.displayName = 'MessageList';
 MessageList.displayName = 'MessageList';
 
 export default MessageList;

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Chat, LocalModel, MemoryEntry } from '../../types';
 import type { LibraryFile } from '../../services/storage/LibraryStorage';
 import { formatBytes } from '../../services/attachments';
+import { error as logError } from '../../services/logging';
 
 interface DataManagerProps {
   chats: Chat[];
@@ -68,7 +69,7 @@ export const DataManager: React.FC<DataManagerProps> = ({
     const second = window.confirm(t('data.deleteAllConfirm2'));
     if (!second) {return;}
     void onDeleteAll().catch((err) => {
-      console.error('Failed to delete all data:', err);
+      logError('Failed to delete all data:', err);
     });
   };
 

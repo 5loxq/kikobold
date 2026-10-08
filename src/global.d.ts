@@ -4,6 +4,15 @@
 // CSS modules (static and dynamic imports, e.g. the lazily loaded KaTeX CSS)
 declare module '*.css';
 
+// Vite build-time environment (replaced at compile time, no runtime object)
+interface ImportMetaEnv {
+  readonly PROD: boolean;
+  readonly DEV: boolean;
+}
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
 // Tauri API modules - loaded dynamically, types not needed for compilation
 declare module '@tauri-apps/api/core' {
     export function invoke(command: string, args?: Record<string, unknown>): Promise<unknown>;

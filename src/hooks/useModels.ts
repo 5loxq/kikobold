@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { LocalModel, Model, UseModelsReturn } from '../types';
 import { MODELS } from '../services/models/model-registry';
 import { deleteModelCacheFiles, purgeRemovedModelCaches } from '../services/models/model-cache';
+import { error as logError } from '../services/logging';
 
 // LocalStorage keys for model persistence
 const STORAGE_KEYS = {
@@ -88,7 +89,7 @@ export const useModels = (): UseModelsReturn => {
         }
       }
     } catch (error) {
-      console.error('Failed to load active model:', error);
+      logError('Failed to load active model:', error);
     }
   }, [downloadedModels]);
 

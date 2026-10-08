@@ -10,7 +10,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { type AppConfig, type ChatCompletion, type ChatCompletionChunk, type MLCEngineInterface } from "@mlc-ai/web-llm";
+import { type AppConfig, type ChatCompletionChunk, type MLCEngineInterface } from "@mlc-ai/web-llm";
 import i18n from '../config/i18n';
 import { handleErrorSilent } from '../utils/errors';
 import { log, warn } from '../services/logging';
@@ -55,6 +55,16 @@ const parseWebLLMSizeText = (text: string): { loadedMB: number; totalMB: number 
     unit === 'GB' ? parseFloat(value) * 1024 : parseFloat(value);
   return { loadedMB: toMB(match[1], match[2]), totalMB: toMB(match[3], match[4]) };
 };
+
+/**
+ * web-llm's create() resolves to a single completion or to an async chunk
+ * stream depending on the `stream` flag. This guard narrows that union
+ * without `as unknown as` casts.
+ */
+const isChunkStream = (value: unknown): value is AsyncIterable<ChatCompletionChunk> =>
+  typeof value === 'object' &&
+  value !== null &&
+  typeof (value as Record<symbol, unknown>)[Symbol.asyncIterator] === 'function';
 
 export interface WebLLMGenerateOptions {
   temperature?: number;
@@ -368,8 +378,10 @@ export const useEnhancedInference = (
         return true;
       }
       if (engineRef.current && currentModelId === modelId) {
-        // WebLLM doesn't have a direct unload method in the current API
-        // We can nullify the reference and reset state
+        // web-llm offers unload(): it waits for the GPU device to finish all
+        // submitted work and destroys itself - graphics memory is actually
+        // released, not just the JS reference dropped.
+        await engineRef.current.unload();
         engineRef.current = null;
         setCurrentModelId(null);
         setEngine(null);
@@ -448,10 +460,10 @@ export const useEnhancedInference = (
         ...apiOptions
       });
 
-      if (typeof (reply as unknown as AsyncIterable<unknown>)[Symbol.asyncIterator] === 'function') {
+      if (isChunkStream(reply)) {
         throw new Error('Unexpected streaming response for non-streaming request');
       }
-      const completion = reply as ChatCompletion;
+      const completion = reply;
       const responseText = completion.choices[0]?.message?.content ?? '';
       
       setResult(responseText);
@@ -557,10 +569,10 @@ export const useEnhancedInference = (
           stream: true,
           ...apiOptions
         });
-        if (typeof (response as AsyncIterable<unknown>)[Symbol.asyncIterator] !== 'function') {
+        if (!isChunkStream(response)) {
           throw new Error('Expected streaming response but received a single completion');
         }
-        const chunks = response as AsyncIterable<ChatCompletionChunk>;
+        const chunks = response;
 
         for await (const chunk of chunks) {
           if (newAbortController.signal.aborted) {

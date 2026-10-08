@@ -3,6 +3,8 @@
  * Provides input sanitization, validation, and security checks
  */
 
+import { error as logError, warn as logWarn } from './logging';
+
 // Whitelist of trusted domains for model loading
 const TRUSTED_DOMAINS = [
   'huggingface.co',
@@ -547,7 +549,7 @@ export const sanitizeMessageContent = (content: string): string => {
 
     // Limit message length
     if (content.length > 50000) {
-        console.warn(`Message too long (${content.length} chars), truncating to 50000`);
+        logWarn(`Message too long (${content.length} chars), truncating to 50000`);
         content = content.substring(0, 50000);
     }
 
@@ -595,7 +597,7 @@ export const checkWASMSupport = (): boolean => {
         
         return true;
     } catch (err) {
-        console.warn('WASM check failed:', err);
+        logWarn('WASM check failed:', err);
         return false;
     }
 };
@@ -718,7 +720,7 @@ export const secureSessionStorage = {
             const item = sessionStorage.getItem(key);
             return item ? JSON.parse(item) as T : null;
         } catch (err) {
-            console.warn(`Failed to get item from sessionStorage: ${key}`, err);
+            logWarn(`Failed to get item from sessionStorage: ${key}`, err);
             return null;
         }
     },
@@ -736,7 +738,7 @@ export const secureSessionStorage = {
 
             sessionStorage.setItem(key, stringValue);
         } catch (err) {
-            console.error(`Failed to set item in sessionStorage: ${key}`, err);
+            logError(`Failed to set item in sessionStorage: ${key}`, err);
             throw err;
         }
     },
@@ -749,7 +751,7 @@ export const secureSessionStorage = {
 
             sessionStorage.removeItem(key);
         } catch (err) {
-            console.warn(`Failed to remove item from sessionStorage: ${key}`, err);
+            logWarn(`Failed to remove item from sessionStorage: ${key}`, err);
         }
     },
 };

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Profile, UseProfilesReturn } from '../types';
 import * as ProfileStorage from '../services/storage/ProfileStorage';
+import { error as logError } from '../services/logging';
 
 
 export const useProfiles = (): UseProfilesReturn => {
@@ -17,7 +18,7 @@ export const useProfiles = (): UseProfilesReturn => {
         }
       }
     } catch (error) {
-      console.error('Failed to load profiles:', error);
+      logError('Failed to load profiles:', error);
     }
   }, []);
 
@@ -36,7 +37,7 @@ export const useProfiles = (): UseProfilesReturn => {
       setProfiles([...profiles, newProfile]);
       return newProfile;
     } catch (error) {
-      console.error('Failed to create profile:', error);
+      logError('Failed to create profile:', error);
       throw error;
     }
   }, [profiles]);
@@ -54,7 +55,7 @@ export const useProfiles = (): UseProfilesReturn => {
         setActiveProfile(profile);
       }
     } catch (error) {
-      console.error('Failed to update profile:', error);
+      logError('Failed to update profile:', error);
       throw error;
     }
   }, [profiles, activeProfile]);
@@ -72,7 +73,7 @@ export const useProfiles = (): UseProfilesReturn => {
         setActiveProfile(remaining.length > 0 ? remaining[0] : null);
       }
     } catch (error) {
-      console.error('Failed to delete profile:', error);
+      logError('Failed to delete profile:', error);
       throw error;
     }
   }, [profiles, activeProfile]);
@@ -84,7 +85,7 @@ export const useProfiles = (): UseProfilesReturn => {
       }
       setActiveProfile(profile);
     } catch (error) {
-      console.error('Failed to select profile:', error);
+      logError('Failed to select profile:', error);
       throw error;
     }
   }, []);
@@ -99,7 +100,7 @@ export const useProfiles = (): UseProfilesReturn => {
         }
       }
     } catch (error) {
-      console.error('Failed to load profiles:', error);
+      logError('Failed to load profiles:', error);
       throw error;
     }
   }, []);
@@ -111,7 +112,7 @@ export const useProfiles = (): UseProfilesReturn => {
       }
       return JSON.stringify(profiles, null, 2);
     } catch (error) {
-      console.error('Failed to export profiles:', error);
+      logError('Failed to export profiles:', error);
       throw new Error(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }, [profiles]);
@@ -139,7 +140,7 @@ export const useProfiles = (): UseProfilesReturn => {
       setProfiles([...profiles, ...newProfiles]);
       return true;
     } catch (error) {
-      console.error('Failed to import profiles:', error);
+      logError('Failed to import profiles:', error);
       return false;
     }
   }, [profiles]);

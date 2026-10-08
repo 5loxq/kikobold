@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Chat, Message, UseChatReturn } from '../types';
 import * as ChatStorage from '../services/storage/ChatStorage';
+import { error as logError } from '../services/logging';
 
 
 export const useChat = (): UseChatReturn => {
@@ -23,7 +24,7 @@ export const useChat = (): UseChatReturn => {
         setChats(allChats.sort((a, b) => b.updatedAt - a.updatedAt));
       }
     } catch (error) {
-      console.error('Failed to load chats:', error instanceof Error ? error : new Error(String(error)));
+      logError('Failed to load chats:', error instanceof Error ? error : new Error(String(error)));
     }
   }, []);
 
@@ -33,7 +34,7 @@ export const useChat = (): UseChatReturn => {
         await ChatStorage.initChatDB();
         await loadChats();
       } catch (error) {
-        console.error('Failed to initialize chat database:', error instanceof Error ? error : new Error(String(error)));
+        logError('Failed to initialize chat database:', error instanceof Error ? error : new Error(String(error)));
       }
     };
     initDB();
@@ -51,7 +52,7 @@ export const useChat = (): UseChatReturn => {
         setChat(loadedChat);
       }
     } catch (error) {
-      console.error('Failed to load chat:', error instanceof Error ? error : new Error(String(error)));
+      logError('Failed to load chat:', error instanceof Error ? error : new Error(String(error)));
     } finally {
       setLoading(false);
     }
@@ -95,7 +96,7 @@ export const useChat = (): UseChatReturn => {
 
       await loadChats();
     } catch (error) {
-      console.error('Failed to add message:', error instanceof Error ? error : new Error(String(error)));
+      logError('Failed to add message:', error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }, [loadChats]);
@@ -112,7 +113,7 @@ export const useChat = (): UseChatReturn => {
       }
       await loadChats();
     } catch (error) {
-      console.error('Failed to delete chat:', error instanceof Error ? error : new Error(String(error)));
+      logError('Failed to delete chat:', error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }, [chat, loadChats]);
@@ -138,7 +139,7 @@ export const useChat = (): UseChatReturn => {
         await loadChats();
       }
     } catch (error) {
-      console.error('Failed to rename chat:', error instanceof Error ? error : new Error(String(error)));
+      logError('Failed to rename chat:', error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }, [chat, loadChats]);
@@ -155,7 +156,7 @@ export const useChat = (): UseChatReturn => {
       await loadChats();
       return newChat;
     } catch (error) {
-      console.error('Failed to create new chat:', error instanceof Error ? error : new Error(String(error)));
+      logError('Failed to create new chat:', error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }, [loadChats]);

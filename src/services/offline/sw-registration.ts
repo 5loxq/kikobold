@@ -1,11 +1,13 @@
 /**
  * Service Worker Registration and Offline Support
- * 
+ *
  * Features:
  * - Service worker registration
  * - Offline detection
  * - Cache management
  */
+
+import { log, error as logError, warn as logWarn } from '../logging';
 
 // Service worker file path
 const SW_PATH = '/sw.js';
@@ -33,7 +35,7 @@ export const registerServiceWorker = async (): Promise<ServiceWorkerRegistration
     try {
         // Check if service worker is supported
         if (!('serviceWorker' in navigator)) {
-            console.warn('Service Worker not supported in this browser');
+            logWarn('Service Worker not supported in this browser');
             return null;
         }
 
@@ -42,11 +44,11 @@ export const registerServiceWorker = async (): Promise<ServiceWorkerRegistration
             scope: '/',
         });
 
-        console.log('✓ Service Worker registered with scope:', serviceWorkerRegistration.scope);
+        log('✓ Service Worker registered with scope:', serviceWorkerRegistration.scope);
 
         // Set up update handler
         serviceWorkerRegistration.addEventListener('updatefound', () => {
-            console.log('✓ Service Worker update found');
+            log('✓ Service Worker update found');
         });
 
         // Set up offline detection
@@ -54,7 +56,7 @@ export const registerServiceWorker = async (): Promise<ServiceWorkerRegistration
 
         return serviceWorkerRegistration;
     } catch (error) {
-        console.error('✗ Failed to register Service Worker:', error);
+        logError('✗ Failed to register Service Worker:', error);
         return null;
     }
 };
@@ -67,10 +69,10 @@ export const unregisterServiceWorker = async (): Promise<void> => {
         if (serviceWorkerRegistration) {
             await serviceWorkerRegistration.unregister();
             serviceWorkerRegistration = null;
-            console.log('✓ Service Worker unregistered');
+            log('✓ Service Worker unregistered');
         }
     } catch (error) {
-        console.error('✗ Failed to unregister Service Worker:', error);
+        logError('✗ Failed to unregister Service Worker:', error);
     }
 };
 
@@ -92,13 +94,13 @@ export const checkForUpdates = async (): Promise<boolean> => {
         );
 
         if (hasUpdate) {
-            console.log('✓ Service Worker update found');
+            log('✓ Service Worker update found');
             return true;
         }
 
         return false;
     } catch (error) {
-        console.error('✗ Failed to check for Service Worker updates:', error);
+        logError('✗ Failed to check for Service Worker updates:', error);
         return false;
     }
 };
@@ -117,9 +119,9 @@ export const skipWaiting = async (): Promise<void> => {
             type: 'SKIP_WAITING',
         });
 
-        console.log('✓ Skip waiting message sent to Service Worker');
+        log('✓ Skip waiting message sent to Service Worker');
     } catch (error) {
-        console.error('✗ Failed to skip waiting:', error);
+        logError('✗ Failed to skip waiting:', error);
     }
 };
 
@@ -137,9 +139,9 @@ export const cleanupCaches = async (): Promise<void> => {
             type: 'CLEANUP_CACHE',
         });
 
-        console.log('✓ Cache cleanup message sent to Service Worker');
+        log('✓ Cache cleanup message sent to Service Worker');
     } catch (error) {
-        console.error('✗ Failed to cleanup caches:', error);
+        logError('✗ Failed to cleanup caches:', error);
     }
 };
 
@@ -159,20 +161,20 @@ const setupOfflineDetection = (): void => {
     // Listen for online/offline events
     window.addEventListener('online', () => {
         isOffline = false;
-        console.log('✓ Back online');
+        log('✓ Back online');
         notifyOfflineState(false);
     });
 
     window.addEventListener('offline', () => {
         isOffline = true;
-        console.log('✗ Went offline');
+        log('✗ Went offline');
         notifyOfflineState(true);
     });
 
     // Initial check
     isOffline = !navigator.onLine;
     if (isOffline) {
-        console.log('✗ Currently offline');
+        log('✗ Currently offline');
     }
 };
 
@@ -185,7 +187,7 @@ const notifyOfflineState = (offline: boolean): void => {
         try {
             listener(offline);
         } catch (error) {
-            console.error('Error in offline listener:', error);
+            logError('Error in offline listener:', error);
         }
     });
 };
@@ -230,9 +232,9 @@ export const initOfflineSupport = async (): Promise<void> => {
         // Register service worker
         await registerServiceWorker();
         
-        console.log('✓ Offline support initialized');
+        log('✓ Offline support initialized');
     } catch (error) {
-        console.error('✗ Failed to initialize offline support:', error);
+        logError('✗ Failed to initialize offline support:', error);
     }
 };
 

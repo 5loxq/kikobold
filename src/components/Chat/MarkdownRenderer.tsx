@@ -17,6 +17,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Prism } from 'prism-react-renderer';
+import { error as logError } from '../../services/logging';
 
 // KaTeX (~300 KB plus fonts) is loaded lazily on the first math block: it is
 // not part of the main bundle and only downloads when a message actually
@@ -416,7 +417,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language, value, isDarkMode, maxH
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }).catch((err) => {
-      console.error('Failed to copy code:', err);
+      logError('Failed to copy code:', err);
     });
   }, [value]);
 

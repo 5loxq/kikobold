@@ -6,6 +6,20 @@
   Header always set Cross-Origin-Embedder-Policy "require-corp"
   Header always set X-Content-Type-Options "nosniff"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "DENY"
+
+  # Camera is not used; the microphone is (voice input in the chat field).
+  Header always set Permissions-Policy "camera=(), microphone=(self), geolocation=()"
+
+  # Content-Security-Policy: everything the app needs, nothing more.
+  # - script-src: own scripts + WASM ('wasm-unsafe-eval'; 'unsafe-eval' only
+  #   for older Safari, which needs it to instantiate WebAssembly)
+  # - style-src 'unsafe-inline': React inline styles and KaTeX output
+  # - img-src blob:/data:: preview images of attachments
+  # - connect-src: HuggingFace CDN + GitHub (model_lib WASM) for the model
+  #   fallback download when the self-hosted copy is unavailable
+  # - worker-src blob:: wllama/WebLLM create workers from blob URLs
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://raw.githubusercontent.com blob: data:; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
 
   # The service worker must always be revalidated so new deployments are
   # picked up immediately instead of being served from the HTTP cache.

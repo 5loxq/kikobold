@@ -1,4 +1,4 @@
-import { warn } from '../logging';
+import { error as logError, warn } from '../logging';
 import { sanitizeInputLight } from '../security';
 import { ALLOWED_EXTENSIONS, MAX_FILE_SIZE } from '../attachments';
 
@@ -58,7 +58,7 @@ const openLibraryDB = (): Promise<void> => {
       const request = indexedDB.open(DB_NAME, 1);
 
       request.onerror = (): void => {
-        console.error('IndexedDB error:', request.error);
+        logError('IndexedDB error:', request.error);
         reject(request.error ?? new Error('Failed to open library database'));
       };
 
@@ -74,12 +74,12 @@ const openLibraryDB = (): Promise<void> => {
             database.createObjectStore(STORE_NAME, { keyPath: 'id' });
           }
         } catch (error) {
-          console.error('Library database upgrade error:', error);
+          logError('Library database upgrade error:', error);
           reject(error);
         }
       };
     } catch (error) {
-      console.error('Library database initialization error:', error);
+      logError('Library database initialization error:', error);
       reject(error);
     }
   });
@@ -96,7 +96,7 @@ export const getAllLibraryFiles = async (): Promise<LibraryFile[]> => {
       const request = transaction.objectStore(STORE_NAME).getAll();
 
       request.onerror = (): void => {
-        console.error('Failed to load library files:', request.error);
+        logError('Failed to load library files:', request.error);
         reject(request.error ?? new Error('Failed to load library files'));
       };
 
@@ -109,7 +109,7 @@ export const getAllLibraryFiles = async (): Promise<LibraryFile[]> => {
         resolve(valid);
       };
     } catch (error) {
-      console.error('Error loading library files:', error);
+      logError('Error loading library files:', error);
       reject(error);
     }
   });
@@ -138,12 +138,12 @@ export const saveLibraryFile = async (entry: LibraryFile): Promise<void> => {
       const request = transaction.objectStore(STORE_NAME).put(sanitized);
 
       request.onerror = (): void => {
-        console.error('Failed to save library file:', request.error);
+        logError('Failed to save library file:', request.error);
         reject(request.error ?? new Error('Failed to save library file'));
       };
       request.onsuccess = (): void => resolve();
     } catch (error) {
-      console.error('Error saving library file:', error);
+      logError('Error saving library file:', error);
       reject(error);
     }
   });
@@ -164,12 +164,12 @@ export const deleteLibraryFile = async (id: string): Promise<void> => {
       const request = transaction.objectStore(STORE_NAME).delete(id);
 
       request.onerror = (): void => {
-        console.error('Failed to delete library file:', request.error);
+        logError('Failed to delete library file:', request.error);
         reject(request.error ?? new Error('Failed to delete library file'));
       };
       request.onsuccess = (): void => resolve();
     } catch (error) {
-      console.error('Error deleting library file:', error);
+      logError('Error deleting library file:', error);
       reject(error);
     }
   });
@@ -187,12 +187,12 @@ export const clearAllLibraryFiles = async (): Promise<void> => {
       const request = transaction.objectStore(STORE_NAME).clear();
 
       request.onerror = (): void => {
-        console.error('Failed to clear library:', request.error);
+        logError('Failed to clear library:', request.error);
         reject(request.error ?? new Error('Failed to clear library'));
       };
       request.onsuccess = (): void => resolve();
     } catch (error) {
-      console.error('Error clearing library:', error);
+      logError('Error clearing library:', error);
       reject(error);
     }
   });

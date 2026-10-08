@@ -5,7 +5,7 @@ import './index.css'
 import { initOfflineSupport } from './services/offline';
 import { initThemeService } from './services/theme';
 import { getSystemInfo } from './services/system-info';
-import { info, log } from './services/logging';
+import { info, log, error as logError } from './services/logging';
 import { ErrorBoundary } from './components/Layout/ErrorBoundary';
 
 // Initialize services before rendering the app
@@ -28,7 +28,7 @@ const initializeServices = async (): Promise<void> => {
 
         log('✓ All services initialized successfully');
     } catch (error) {
-        console.error('✗ Failed to initialize services:', error);
+        logError('✗ Failed to initialize services:', error);
     }
 };
 

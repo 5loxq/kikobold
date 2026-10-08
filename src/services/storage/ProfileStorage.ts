@@ -1,5 +1,5 @@
 import { Profile } from '../../types';
-import { warn } from '../logging';
+import { error as logError, warn } from '../logging';
 import { sanitizeInput, secureLocalStorage } from '../security';
 
 const PROFILE_STORAGE_KEY = 'llm_profiles_v2';
@@ -46,7 +46,7 @@ export const getProfiles = (): Profile[] => {
     
     return validProfiles;
   } catch (error) {
-    console.error('Failed to load profiles:', error);
+    logError('Failed to load profiles:', error);
     return getDefaultProfiles();
   }
 };
@@ -76,7 +76,7 @@ export const saveProfile = (profile: Profile): void => {
 
     secureLocalStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profiles));
   } catch (error) {
-    console.error('Failed to save profile:', error);
+    logError('Failed to save profile:', error);
     throw error;
   }
 };
@@ -90,7 +90,7 @@ export const deleteProfile = (id: string): void => {
     const profiles = getProfiles().filter(p => p.id !== id);
     secureLocalStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profiles));
   } catch (error) {
-    console.error('Failed to delete profile:', error);
+    logError('Failed to delete profile:', error);
     throw error;
   }
 };
@@ -104,7 +104,7 @@ export const getProfile = (id: string): Profile | undefined => {
     const profile = getProfiles().find(p => p.id === id);
     return profile && validateProfile(profile) ? profile : undefined;
   } catch (error) {
-    console.error('Failed to get profile:', error);
+    logError('Failed to get profile:', error);
     return undefined;
   }
 };

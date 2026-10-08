@@ -1,5 +1,5 @@
 import { MemoryEntry } from '../../types';
-import { warn } from '../logging';
+import { error as logError, warn } from '../logging';
 import { sanitizeInputLight } from '../security';
 
 // Separate database (not the chat DB) so no version migration of the
@@ -54,7 +54,7 @@ const openMemoryDB = (): Promise<void> => {
       const request = indexedDB.open(DB_NAME, 1);
 
       request.onerror = (): void => {
-        console.error('IndexedDB error:', request.error);
+        logError('IndexedDB error:', request.error);
         reject(request.error ?? new Error('Failed to open memory database'));
       };
 
@@ -70,12 +70,12 @@ const openMemoryDB = (): Promise<void> => {
             database.createObjectStore(STORE_NAME, { keyPath: 'id' });
           }
         } catch (error) {
-          console.error('Memory database upgrade error:', error);
+          logError('Memory database upgrade error:', error);
           reject(error);
         }
       };
     } catch (error) {
-      console.error('Memory database initialization error:', error);
+      logError('Memory database initialization error:', error);
       reject(error);
     }
   });
@@ -92,7 +92,7 @@ export const getAllMemories = async (): Promise<MemoryEntry[]> => {
       const request = transaction.objectStore(STORE_NAME).getAll();
 
       request.onerror = (): void => {
-        console.error('Failed to load memories:', request.error);
+        logError('Failed to load memories:', request.error);
         reject(request.error ?? new Error('Failed to load memories'));
       };
 
@@ -106,7 +106,7 @@ export const getAllMemories = async (): Promise<MemoryEntry[]> => {
         resolve(valid);
       };
     } catch (error) {
-      console.error('Error loading memories:', error);
+      logError('Error loading memories:', error);
       reject(error);
     }
   });
@@ -139,12 +139,12 @@ export const saveMemory = async (entry: MemoryEntry): Promise<void> => {
       const request = transaction.objectStore(STORE_NAME).put(sanitized);
 
       request.onerror = (): void => {
-        console.error('Failed to save memory:', request.error);
+        logError('Failed to save memory:', request.error);
         reject(request.error ?? new Error('Failed to save memory'));
       };
       request.onsuccess = (): void => resolve();
     } catch (error) {
-      console.error('Error saving memory:', error);
+      logError('Error saving memory:', error);
       reject(error);
     }
   });
@@ -165,12 +165,12 @@ export const deleteMemory = async (id: string): Promise<void> => {
       const request = transaction.objectStore(STORE_NAME).delete(id);
 
       request.onerror = (): void => {
-        console.error('Failed to delete memory:', request.error);
+        logError('Failed to delete memory:', request.error);
         reject(request.error ?? new Error('Failed to delete memory'));
       };
       request.onsuccess = (): void => resolve();
     } catch (error) {
-      console.error('Error deleting memory:', error);
+      logError('Error deleting memory:', error);
       reject(error);
     }
   });
@@ -188,12 +188,12 @@ export const clearAllMemories = async (): Promise<void> => {
       const request = transaction.objectStore(STORE_NAME).clear();
 
       request.onerror = (): void => {
-        console.error('Failed to clear memories:', request.error);
+        logError('Failed to clear memories:', request.error);
         reject(request.error ?? new Error('Failed to clear memories'));
       };
       request.onsuccess = (): void => resolve();
     } catch (error) {
-      console.error('Error clearing memories:', error);
+      logError('Error clearing memories:', error);
       reject(error);
     }
   });

@@ -11,7 +11,8 @@
     "type-check": "tsc --noEmit",
     "check:i18n": "node scripts/check-i18n.mjs",
     "audit": "npm audit",
-    "outdated": "npm outdated"
+    "outdated": "npm outdated",
+    "deploy": "scripts/deploy.sh"
   },
   "dependencies": {
     "@mlc-ai/web-llm": "^0.2.84",

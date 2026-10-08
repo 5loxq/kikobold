@@ -11,8 +11,10 @@ export enum LogLevel {
   NONE = 'none'
 }
 
-// Current log level - can be changed at runtime
-let currentLogLevel: LogLevel = LogLevel.INFO;
+// Current log level - can be changed at runtime. In production builds only
+// warnings and errors are printed; in development info messages as well.
+// Debug messages are always suppressed unless explicitly enabled.
+let currentLogLevel: LogLevel = import.meta.env.PROD ? LogLevel.WARN : LogLevel.INFO;
 
 // Set the log level
 export const setLogLevel = (level: LogLevel): void => {

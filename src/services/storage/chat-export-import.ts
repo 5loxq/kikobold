@@ -1,5 +1,5 @@
 import { Chat, MemoryEntry, Message } from '../../types';
-import { info, warn } from '../logging';
+import { info, error as logError, warn } from '../logging';
 import { validateFileUpload } from '../security';
 import type { LibraryFile } from './LibraryStorage';
 
@@ -108,7 +108,7 @@ export const exportChats = (chats: Chat[], memories: MemoryEntry[] = [], library
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   } catch (error) {
-    console.error('Failed to export chats:', error);
+    logError('Failed to export chats:', error);
     throw new Error(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
@@ -205,20 +205,20 @@ export const importChats = (file: File): Promise<ChatImportResult> => {
         info(`Successfully imported ${validChats.length} chats`);
         resolve({ chats: validChats, memories: validMemories, library: validLibrary });
       } catch (error) {
-        console.error('Import error:', error);
+        logError('Import error:', error);
         reject(new Error(`Failed to parse import file: ${error instanceof Error ? error.message : 'Unknown error'}`));
       }
     };
 
     reader.onerror = (): void => {
-      console.error('File reader error:', reader.error);
+      logError('File reader error:', reader.error);
       reject(new Error('Failed to read file'));
     };
 
     try {
       reader.readAsText(file);
     } catch (error) {
-      console.error('Failed to start file reading:', error);
+      logError('Failed to start file reading:', error);
       reject(new Error('Failed to read file'));
     }
   });
