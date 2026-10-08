@@ -20,7 +20,11 @@ echo "==> Lese SFTP-Passwort aus dem macOS-Keychain..."
 PASS=$(security find-generic-password -s webgui-deploy -a rrbitr_1 -w)
 
 echo "==> Upload nach www613.your-server.de (Modelle ausgenommen)..."
+# --ignore-time compares file sizes only (saves re-uploading unchanged
+# assets). index.html and sw.js are re-uploaded explicitly afterwards:
+# their content changes with every build while their size often stays
+# identical - size comparison alone would skip them.
 lftp -u "rrbitr_1","$PASS" sftp://www613.your-server.de \
-  -e 'mirror -R --delete --ignore-time --exclude .DS_Store --exclude models ./dist .; bye'
+  -e 'mirror -R --delete --ignore-time --exclude .DS_Store --exclude models ./dist .; put -O . ./dist/index.html; put -O . ./dist/sw.js; bye'
 
 echo "==> Fertig. Hinweis: kurz im Browser testen (Modell laden, Nachricht senden)."
