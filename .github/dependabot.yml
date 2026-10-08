@@ -1,0 +1,25 @@
+# Dependabot keeps npm packages and GitHub Actions current with weekly
+# update PRs, so web-llm & Co. do not rot without manual `npm outdated`.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # Runtime dependencies move fast and can break inference - review them
+    # consciously. Dev tooling is lower risk.
+    allow:
+      - dependency-type: "direct"
+    grouping:
+      dev-dependencies:
+        group-name: "dev dependencies"
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "chore(deps)"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(ci)"

@@ -64,7 +64,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors"
-          aria-label="Toggle sidebar"
+          aria-label={t("sidebar.toggle")}
         >
           {isCollapsed ? '→' : '←'}
         </button>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { localStorageGet, localStorageSet } from '../../services/storage/local-storage';
 
 const WARNING_SEEN_KEY = 'webgui_firefox_warning_done_v1';
 
@@ -16,7 +17,7 @@ const isFirefox = (): boolean => {
 
 const hasSeenWarning = (): boolean => {
   try {
-    return localStorage.getItem(WARNING_SEEN_KEY) === '1';
+    return localStorageGet(WARNING_SEEN_KEY) === '1';
   } catch {
     return false;
   }
@@ -24,7 +25,7 @@ const hasSeenWarning = (): boolean => {
 
 const markWarningSeen = (): void => {
   try {
-    localStorage.setItem(WARNING_SEEN_KEY, '1');
+    localStorageSet(WARNING_SEEN_KEY, '1');
   } catch {
     // Ignore storage errors - the banner just shows again
   }

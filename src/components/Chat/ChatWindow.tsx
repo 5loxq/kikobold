@@ -35,6 +35,8 @@ interface ChatWindowProps {
   thinkingEnabled?: boolean;
   /** Toggle thinking mode on/off */
   onToggleThinking?: () => void;
+  /** Which engine runs the active model ('webllm' = WebGPU, 'wllama' = WASM) */
+  activeEngine?: 'webllm' | 'wllama' | null;
   onSendMessage: (message: string) => void;
   onSendMessageWithDocuments?: (message: string, attachments: import('../../services/attachments').DocumentAttachment[]) => void;
   supportsImageInput?: boolean;
@@ -66,6 +68,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   thinkingAvailable = false,
   thinkingEnabled = true,
   onToggleThinking,
+  activeEngine = null,
   onSendMessage,
   onSendMessageWithDocuments,
   supportsImageInput = false,
@@ -214,7 +217,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                     setIsEditingTitle(true);
                   }}
                   className="p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-sm"
-                  title="Rename chat"
+                  title={t("chat.renameChat")}
                 >
                   ✏️
                 </button>
@@ -286,6 +289,19 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 {thinkingEnabled ? t('chat.thinkingOn') : t('chat.thinkingOff')}
               </span>
             </button>
+          )}
+
+          {isModelLoaded && !isLoading && activeEngine && (
+            <span
+              className={`text-xs font-medium px-2.5 py-1 rounded-full border ${
+                activeEngine === 'webllm'
+                  ? 'border-green-200 dark:border-green-900/60 bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400'
+                  : 'border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400'
+              }`}
+              title={activeEngine === 'webllm' ? t('chat.engineWebgpuHint') : t('chat.engineWasmHint')}
+            >
+              ⚙️ {activeEngine === 'webllm' ? t('chat.engineWebgpu') : t('chat.engineWasm')}
+            </span>
           )}
 
           {selectedModelId && getModelConfig(selectedModelId)?.description && !isLoading && (

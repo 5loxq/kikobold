@@ -99,7 +99,7 @@ const SpeechRecognition = getSpeechRecognition();
  * and the caret and may contain spaces - file names can too. Scans backwards
  * from the caret so earlier "@" occurrences do not shadow the current token.
  */
-const detectMention = (value: string, caret: number): { query: string; startIndex: number } | null => {
+export const detectMention = (value: string, caret: number): { query: string; startIndex: number } | null => {
   const before = value.slice(0, caret);
   for (let i = before.length - 1; i >= 0; i--) {
     if (before[i] === '@') {

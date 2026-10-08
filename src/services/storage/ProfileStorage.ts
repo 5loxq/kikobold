@@ -1,6 +1,7 @@
 import { Profile } from '../../types';
 import { error as logError, warn } from '../logging';
-import { sanitizeInput, secureLocalStorage } from '../security';
+import { sanitizeInput } from '../security';
+import { localStorageGet, localStorageSetJson } from './local-storage';
 
 const PROFILE_STORAGE_KEY = 'llm_profiles_v2';
 
@@ -25,7 +26,7 @@ function validateProfile(profile: unknown): profile is Profile {
 
 export const getProfiles = (): Profile[] => {
   try {
-    const data = secureLocalStorage.getItem(PROFILE_STORAGE_KEY);
+    const data = localStorageGet(PROFILE_STORAGE_KEY);
     if (!data) {
       return getDefaultProfiles();
     }
@@ -74,7 +75,7 @@ export const saveProfile = (profile: Profile): void => {
       profiles.push(sanitizedProfile);
     }
 
-    secureLocalStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profiles));
+    localStorageSetJson(PROFILE_STORAGE_KEY, profiles);
   } catch (error) {
     logError('Failed to save profile:', error);
     throw error;
@@ -88,7 +89,7 @@ export const deleteProfile = (id: string): void => {
     }
 
     const profiles = getProfiles().filter(p => p.id !== id);
-    secureLocalStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profiles));
+    localStorageSetJson(PROFILE_STORAGE_KEY, profiles);
   } catch (error) {
     logError('Failed to delete profile:', error);
     throw error;

@@ -51,7 +51,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
           if (onImportProfiles(text)) {
             alert(t('profiles.importSuccess'));
           } else {
-            alert('Failed to import profiles - invalid JSON format');
+            alert(t('profiles.importError'));
           }
         } catch (error) {
           alert(`Error reading file: ${  error instanceof Error ? error.message : 'Unknown error'}`);
@@ -71,19 +71,19 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
               onClick={handleExport}
               className="px-4 py-2 text-sm bg-gray-600 text-white rounded-lg hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors"
             >
-              Export
+              {t('profiles.export')}
             </button>
             <button
               onClick={handleImport}
               className="px-4 py-2 text-sm bg-gray-600 text-white rounded-lg hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors"
             >
-              Import
+              {t('profiles.import')}
             </button>
             <button
               onClick={() => setIsCreating(!isCreating)}
               className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition-colors"
             >
-              {isCreating ? 'Cancel' : '+ New Profile'}
+              {isCreating ? t('profiles.cancel') : `+ ${t('profiles.new')}`}
             </button>
           </div>
         </div>
@@ -129,7 +129,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
                 <div className="flex-1">
                   <h3 className="font-bold text-zinc-800 dark:text-zinc-100">{profile.name}</h3>
                   {activeProfile?.id === profile.id && (
-                    <span className="text-xs text-green-600 dark:text-green-400 font-medium">Active</span>
+                    <span className="text-xs text-green-600 dark:text-green-400 font-medium">{t('profiles.active')}</span>
                   )}
                 </div>
                 <div className="flex gap-2">
@@ -140,18 +140,18 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
                     }}
                     className="px-2 py-1 text-xs bg-blue-100 text-indigo-700 dark:text-indigo-300 rounded hover:bg-blue-200 transition-colors"
                   >
-                    Edit
+                    {t('profiles.edit')}
                   </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (confirm('Delete this profile?')) {
+                      if (window.confirm(t('profiles.deleteConfirm'))) {
                         onDeleteProfile(profile.id);
                       }
                     }}
                     className="px-2 py-1 text-xs bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded hover:bg-red-100 dark:hover:bg-red-950/70 transition-colors"
                   >
-                    Delete
+                    {t('common.delete')}
                   </button>
                 </div>
               </div>

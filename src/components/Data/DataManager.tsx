@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Chat, LocalModel, MemoryEntry } from '../../types';
 import type { LibraryFile } from '../../services/storage/LibraryStorage';
 import { formatBytes } from '../../services/attachments';
+import { cleanupCaches } from '../../services/offline';
 import { error as logError } from '../../services/logging';
 
 interface DataManagerProps {
@@ -33,6 +34,7 @@ export const DataManager: React.FC<DataManagerProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const [storageEstimate, setStorageEstimate] = useState<StorageEstimate | null>(null);
+  const [cacheStatus, setCacheStatus] = useState<string | null>(null);
 
   useEffect(() => {
     // Best-effort storage usage display (not supported in all browsers)
@@ -159,6 +161,31 @@ export const DataManager: React.FC<DataManagerProps> = ({
                 : importStatus}
             </div>
           )}
+        </section>
+
+        {/* Browser cache cleanup */}
+        <section className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-800 mb-4">
+          <h3 className="font-bold text-lg mb-2 text-zinc-800 dark:text-zinc-100">
+            🧹 {t('data.clearCacheTitle')}
+          </h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
+            {t('data.clearCacheText')}
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => {
+                cleanupCaches();
+                setCacheStatus('done');
+                window.setTimeout(() => setCacheStatus(null), 3000);
+              }}
+              className="px-4 py-2 text-sm rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+            >
+              🧹 {t('data.clearCacheButton')}
+            </button>
+            {cacheStatus === 'done' && (
+              <span className="text-sm text-green-600 dark:text-green-400">{t('data.clearCacheDone')}</span>
+            )}
+          </div>
         </section>
 
         {/* Danger zone */}

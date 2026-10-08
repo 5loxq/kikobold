@@ -14,7 +14,9 @@
     "help": "Hilfe",
     "roadmap": "Roadmap",
     "wiki": "Lexikon",
-    "contact": "Kontakt"
+    "contact": "Kontakt",
+    "toggle": "Seitenleiste ein-/ausklappen",
+    "openMenu": "Menü öffnen"
   },
   "chat": {
     "welcome": "Willkommen bei KI Kobold",
@@ -94,7 +96,12 @@
     "thinkingOn": "An",
     "thinkingOff": "Aus",
     "thinkingToggleHint": "Schaltet das sichtbare Nachdenken des Modells an oder aus. Aus = schnellere, direkte Antworten bei einfache Fragen; An = Schritt-für-Schritt-Gedankengang bei schwierigen Aufgaben. Wirkt ab der nächsten Nachricht.",
-    "olderMessages": "{{count}} ältere Nachrichten laden"
+    "olderMessages": "{{count}} ältere Nachrichten laden",
+    "renameChat": "Chat umbenennen",
+    "engineWebgpu": "Engine: WebGPU",
+    "engineWasm": "Engine: WASM",
+    "engineWebgpuHint": "Das Modell läuft auf der Grafikkarte - schnellste Variante.",
+    "engineWasmHint": "Das Modell läuft ohne WebGPU im Prozessor - langsamer, funktioniert aber in fast jedem Browser."
   },
   "tab": {
     "generating": "KI denkt nach…",
@@ -160,7 +167,11 @@
     "dangerText": "Löscht alle Chats, Gedächtnis-Einträge und Bibliotheks-Dateien unwiderruflich aus dem Browser. Heruntergeladene Modelle bleiben erhalten (die kannst du in den Einstellungen löschen). Erstelle vorher ein Backup, wenn dir etwas daran liegt!",
     "deleteAll": "Alle Daten löschen",
     "deleteAllConfirm": "Wirklich ALLE Chats, Gedächtnis-Einträge und Bibliotheks-Dateien löschen? Das kann nicht rückgängig gemacht werden.",
-    "deleteAllConfirm2": "Bist du sicher? Falls du kein Backup hast, sind die Daten danach weg."
+    "deleteAllConfirm2": "Bist du sicher? Falls du kein Backup hast, sind die Daten danach weg.",
+    "clearCacheTitle": "App-Cache aufräumen",
+    "clearCacheText": "Der Browser-Cache der App speichert Dateien für den schnellen Start. Modelle und Chats bleiben vom Aufräumen unberührt - sie werden beim nächsten Bedarf neu geladen.",
+    "clearCacheButton": "Cache jetzt aufräumen",
+    "clearCacheDone": "Aufräumen gestartet - ältere Cache-Einträge werden gelöscht."
   },
   "library": {
     "title": "Bibliothek",
@@ -333,7 +344,14 @@
     "creative": "Kreativ",
     "precise": "Präzise",
     "importSuccess": "Profile erfolgreich importiert",
-    "importError": "Fehler beim Importieren der Profile"
+    "importError": "Fehler beim Importieren der Profile",
+    "deleteConfirm": "Dieses Profil wirklich löschen?",
+    "active": "Aktiv",
+    "editProfile": "Profil bearbeiten",
+    "update": "Aktualisieren",
+    "create": "Erstellen",
+    "namePlaceholder": "z.B. Kreativer Assistent",
+    "promptPlaceholder": "Definiere Persönlichkeit und Verhalten des Modells..."
   },
   "help": {
     "title": "Hilfe",
@@ -598,5 +616,8 @@
     "language": "Sprache",
     "de": "Deutsch",
     "en": "Englisch"
+  },
+  "offline": {
+    "banner": "Du bist offline - bereits heruntergeladene Modelle und Chats funktionieren weiter, Downloads brauchen eine Verbindung."
   }
 }

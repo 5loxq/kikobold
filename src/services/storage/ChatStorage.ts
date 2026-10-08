@@ -4,6 +4,13 @@ import { sanitizeInputLight } from '../security';
 
 const DB_NAME = 'LocalLLMDB';
 const STORE_NAME = 'chats';
+// Schema version. MUST be raised whenever the object stores or indexes
+// change. Migrations run in onupgradeneeded below, ordered by oldVersion:
+// existing data survives because IndexedDB keeps stores that the migration
+// does not touch. Pattern for future schema changes:
+//   if (event.oldVersion < 2) { /* v1 -> v2: e.g. new index */ }
+//   if (event.oldVersion < 3) { /* v2 -> v3: ... */ }
+const DB_VERSION = 1;
 
 let db: IDBDatabase | null = null;
 // Resolved once the database connection is established. All storage helpers
@@ -52,7 +59,7 @@ const openChatDB = (): Promise<void> => {
         throw new Error('IndexedDB is not supported in this browser');
       }
 
-      const request = indexedDB.open(DB_NAME, 1);
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
 
       request.onerror = (): void => {
         logError('IndexedDB error:', request.error);
@@ -67,11 +74,15 @@ const openChatDB = (): Promise<void> => {
       request.onupgradeneeded = (event): void => {
         try {
           const database = (event.target as IDBOpenDBRequest).result;
-          if (!database.objectStoreNames.contains(STORE_NAME)) {
+          const oldVersion = event.oldVersion;
+          // v0 -> v1: initial schema (fresh database)
+          if (oldVersion < 1 && !database.objectStoreNames.contains(STORE_NAME)) {
             const store = database.createObjectStore(STORE_NAME, { keyPath: 'id' });
             store.createIndex('createdAt', 'createdAt', { unique: false });
             store.createIndex('profileId', 'profileId', { unique: false });
           }
+          // Future migrations go here, guarded by `oldVersion < N` so
+          // existing users walk through every step exactly once.
         } catch (error) {
           logError('Database upgrade error:', error);
           reject(error);

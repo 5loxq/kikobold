@@ -1,12 +1,13 @@
 import { FC } from 'react';
 import { useTranslation } from 'react-i18next';
+import { localStorageGet, localStorageSet } from '../../services/storage/local-storage';
 
 // LocalStorage flag: once the user has seen the welcome guide, it stays closed
 const WELCOME_SEEN_KEY = 'webgui_welcome_seen_v1';
 
 export const hasSeenWelcome = (): boolean => {
   try {
-    return localStorage.getItem(WELCOME_SEEN_KEY) === '1';
+    return localStorageGet(WELCOME_SEEN_KEY) === '1';
   } catch {
     return false;
   }
@@ -14,7 +15,7 @@ export const hasSeenWelcome = (): boolean => {
 
 export const markWelcomeSeen = (): void => {
   try {
-    localStorage.setItem(WELCOME_SEEN_KEY, '1');
+    localStorageSet(WELCOME_SEEN_KEY, '1');
   } catch {
     // Ignore storage errors (e.g. private mode) - the screen just shows again
   }

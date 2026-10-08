@@ -40,7 +40,7 @@ export type ModelLoadStats = DownloadStats;
 // use "Fetching param cache[20/38]: 250MB fetched. 18% completed, 12.5 secs
 // elapsed." - the total size has to be derived from the percentage. Older
 // versions used "250MB/1.4GB".
-const parseWebLLMSizeText = (text: string): { loadedMB: number; totalMB: number } | null => {
+export const parseWebLLMSizeText = (text: string): { loadedMB: number; totalMB: number } | null => {
   const current = text.match(/(\d+(?:\.\d+)?)\s*MB\s+(?:fetched|loaded)\.\s*(\d+(?:\.\d+)?)%\s+completed/);
   if (current) {
     const loadedMB = parseFloat(current[1]);

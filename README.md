@@ -1,6 +1,6 @@
 # Local LLM Chat
 
-**Version:** 2.0.0 | **Lizenz:** MIT | **Status:** Produktionsreif
+**Version:** 3.4.0 | **Lizenz:** MIT | **Status:** Produktionsreif
 
 Ein datenschutzfreundlicher LLM-Chat, der komplett im Browser läuft. Die Modelle
 werden lokal heruntergeladen, im Browser gecacht und die Inferenz erfolgt
@@ -32,8 +32,9 @@ Live-Demo: **https://kikobold.net**
 | Modell | Wofür | Größe | Engine |
 |---|---|---|---|
 | **LFM 2.5 1.6B** (empfohlen) | Allzweckmodell für Alltag, Wissen und Texte — Fragen, Zusammenfassungen, Übersetzungen. Läuft in jedem Browser, auch ohne WebGPU | 664 MB | WASM (wllama) |
-| **Gemma 2 2B** | Anspruchsvollere Aufgaben: längere Texte, bessere Erklärungen, solidere Qualität beim Schreiben | 1,4 GB | WebGPU (WebLLM) |
-| **Qwen 2 0.5B** | Kurze Fragen und schnelle Antworten — ideal zum Ausprobieren und auf älteren Geräten | 400 MB | WebGPU (WebLLM) |
+| **Qwen 3.5 2B** (empfohlen) | Stärkstes Modell: längere Texte, beste Qualität, denkmodus | 1 GB | WebGPU (WebLLM) |
+| **Qwen 3 1.7B** | Mathe- und Logik-Spezialist mit sichtbarem Gedankengang | 939 MB | WebGPU (WebLLM) |
+| **Qwen 3 0.6B** | Kurze Fragen, schnelle Antworten — ideal zum Ausprobieren | 335 MB | WebGPU (WebLLM) |
 
 - Beim ersten Auswählen wird gefragt, ob der Download starten soll (mit Größenangabe).
 - Der Download läuft vom eigenen Webspace (siehe unten); ist dieser nicht erreichbar, wird automatisch der HuggingFace-CDN genutzt.
@@ -62,22 +63,47 @@ Die App ist ein statisches Frontend — der komplette Inhalt von `dist/` kommt
 ins Web-Root (HTTPS ist Pflicht: WebGPU, OPFS und Cache Storage brauchen einen
 Secure Context).
 
+### Ein Befehl: `npm run deploy`
+
+Baut die App und lädt `dist/` per SFTP auf den Webspace (Modelle ausgenommen,
+`--ignore-time` spart Upload-Zeit). Das SFTP-Passwort liegt im macOS-Keychain
+(Service `webgui-deploy`, Account `rrbitr_1`) — nie im Klartext im Projekt:
+
+```bash
+security add-generic-password -s webgui-deploy -a rrbitr_1 -w '<PASSWORT>'
+```
+
+### Sync-Workflow (Git + GitHub)
+
+- `git push` läuft über das Personal Access Token. **Achtung:** das Token hat
+  keinen `workflow`-Scope — Commits, die `.github/workflows/` ändern, werden
+  von GitHub abgelehnt.
+- Workflow-Dateien deshalb über die GitHub-App (Connector) pushen
+  (`push_files`), danach lokal `git pull`.
+- Nach jedem Push läuft die CI-Pipeline (type-check, lint, build,
+  i18n-Paritäts-Check). Dependabot öffnet wöchentliche Update-PRs
+  (`.github/dependabot.yml`).
+- Das Repository hat Git-LFS-Hooks, aber kein installiertes `git-lfs` —
+  `git push` braucht deshalb `--no-verify`, oder einmalig
+  `brew install git-lfs`.
+
 ### Struktur auf dem Server
 
 ```
 /                       # App (index.html, assets/, sw.js, wllama/, .htaccess)
 /models/                # Self-gehostete Modell-Dateien (optional)
 ├── LFM2.5-VL-1.6B-Q4_0.gguf
-├── Qwen2-0.5B-Instruct-q4f16_1-MLC/
-└── gemma-2-2b-it-q4f16_1-MLC/
+├── Qwen3.5-2B-q4f16_1-MLC/
+├── Qwen3-1.7B-q4f16_1-MLC/
+└── Qwen3-0.6B-q4f16_1-MLC/
 ```
 
 ### Modelle selbst hosten
 
 1. Dateien von HuggingFace laden:
    - `LiquidAI/LFM2.5-VL-1.6B-GGUF` → nur `LFM2.5-VL-1.6B-Q4_0.gguf`
-   - `mlc-ai/Qwen2-0.5B-Instruct-q4f16_1-MLC` → komplettes Repo
-   - `mlc-ai/gemma-2-2b-it-q4f16_1-MLC` → komplettes Repo
+   - `mlc-ai/Qwen3.5-2B-q4f16_1-MLC`, `mlc-ai/Qwen3-1.7B-q4f16_1-MLC`,
+     `mlc-ai/Qwen3-0.6B-q4f16_1-MLC` → komplette Repos
 2. Unter `/models/` ablegen (Struktur siehe oben).
 3. Die Pfade sind in `src/services/models/model-registry.ts` hinterlegt
    (`selfHostedPath`). Fehlt eine Datei, greift automatisch der HF-Fallback.

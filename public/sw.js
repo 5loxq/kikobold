@@ -7,7 +7,11 @@
  * - Provides fallback responses when offline
  */
 
-const CACHE_NAME = 'llm-webgui-v3';
+// The version placeholder is replaced by scripts/set-sw-version.mjs during
+// the build (dist/sw.js): every release gets its own cache name, so browser
+// updates apply reliably and stale caches are cleaned up by the activate
+// handler below.
+const CACHE_NAME = 'llm-webgui-v__APP_VERSION__';
 
 // Static assets to cache
 const STATIC_ASSETS = [

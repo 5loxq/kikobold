@@ -1,6 +1,8 @@
 // App settings persisted in localStorage. Managed by the settings page and
 // applied by the MainLayout (theme, default profile/model, behavior).
 
+import { localStorageGet, localStorageSetJson } from './storage/local-storage';
+
 export type AppThemeMode = 'system' | 'light' | 'dark';
 
 export interface AppSettings {
@@ -29,7 +31,7 @@ const DEFAULT_SETTINGS: AppSettings = {
 
 export const loadSettings = (): AppSettings => {
   try {
-    const raw = localStorage.getItem(SETTINGS_KEY);
+    const raw = localStorageGet(SETTINGS_KEY);
     if (!raw) {
       return { ...DEFAULT_SETTINGS };
     }
@@ -48,7 +50,7 @@ export const loadSettings = (): AppSettings => {
 
 export const saveSettings = (settings: AppSettings): void => {
   try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    localStorageSetJson(SETTINGS_KEY, settings);
   } catch {
     // Ignore storage errors - settings just don't persist
   }

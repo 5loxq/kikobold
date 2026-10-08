@@ -3,6 +3,7 @@ import { LocalModel, Model, UseModelsReturn } from '../types';
 import { MODELS } from '../services/models/model-registry';
 import { deleteModelCacheFiles, purgeRemovedModelCaches } from '../services/models/model-cache';
 import { error as logError } from '../services/logging';
+import { localStorageGet, localStorageRemove, localStorageSet, localStorageSetJson } from '../services/storage/local-storage';
 
 // LocalStorage keys for model persistence
 const STORAGE_KEYS = {
@@ -28,7 +29,7 @@ const getEstimatedSizeFromModelSize = (modelSize: string): number => {
 // Helper functions for LocalStorage
 const getDownloadedModelsFromStorage = (): LocalModel[] => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEYS.DOWNLOADED_MODELS);
+    const stored = localStorageGet(STORAGE_KEYS.DOWNLOADED_MODELS);
     if (!stored) {
       return [];
     }
@@ -47,7 +48,7 @@ const getDownloadedModelsFromStorage = (): LocalModel[] => {
 
 const saveDownloadedModelsToStorage = (models: LocalModel[]): void => {
   try {
-    localStorage.setItem(STORAGE_KEYS.DOWNLOADED_MODELS, JSON.stringify(models));
+    localStorageSetJson(STORAGE_KEYS.DOWNLOADED_MODELS, models);
   } catch {
     // Ignore errors (e.g., quota exceeded)
   }
@@ -55,7 +56,7 @@ const saveDownloadedModelsToStorage = (models: LocalModel[]): void => {
 
 const getActiveModelFromStorage = (): string | null => {
   try {
-    return localStorage.getItem(STORAGE_KEYS.ACTIVE_MODEL);
+    return localStorageGet(STORAGE_KEYS.ACTIVE_MODEL);
   } catch {
     return null;
   }
@@ -64,9 +65,9 @@ const getActiveModelFromStorage = (): string | null => {
 const setActiveModelToStorage = (modelId: string | null): void => {
   try {
     if (modelId) {
-      localStorage.setItem(STORAGE_KEYS.ACTIVE_MODEL, modelId);
+      localStorageSet(STORAGE_KEYS.ACTIVE_MODEL, modelId);
     } else {
-      localStorage.removeItem(STORAGE_KEYS.ACTIVE_MODEL);
+      localStorageRemove(STORAGE_KEYS.ACTIVE_MODEL);
     }
   } catch {
     // Ignore errors
@@ -100,7 +101,7 @@ export const useModels = (): UseModelsReturn => {
   // otherwise overwrite the stored list (and the removed IDs) first.
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.DOWNLOADED_MODELS);
+      const stored = localStorageGet(STORAGE_KEYS.DOWNLOADED_MODELS);
       if (!stored) {
         return;
       }

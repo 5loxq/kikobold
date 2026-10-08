@@ -29,6 +29,7 @@ import { useModels } from '../../hooks/useModels';
 import { useProfiles } from '../../hooks/useProfiles';
 import { useMemories } from '../../hooks/useMemories';
 import { useEnhancedInference } from '../../hooks/useEnhancedInference';
+import { useOfflineStatus } from '../../hooks/useOfflineStatus';
 import { getModelConfig } from '../../services/models/model-registry';
 import * as ChatStorage from '../../services/storage/ChatStorage';
 import { DEFAULT_CHAT_TITLE } from '../../services/storage/ChatStorage';
@@ -37,6 +38,7 @@ import { isDarkMode as checkDarkMode, getSystemPrefersDark, setThemeMode } from 
 import { error as logError } from '../../services/logging';
 import { buildPromptWithDocuments, type DocumentAttachment, type ImageAttachment } from '../../services/attachments';
 import { trimHistoryToCharBudget } from '../../services/llm/text-processing';
+import { localStorageGet, localStorageSet } from '../../services/storage/local-storage';
 
 
 type ActiveTab = 'chat' | 'profiles' | 'memory' | 'library' | 'models' | 'data' | 'settings' | 'help' | 'roadmap' | 'wiki' | 'contact';
@@ -63,6 +65,7 @@ export const MainLayout: FC = () => {
     const next = !darkMode;
     handleSettingsChange({ ...settings, theme: next ? 'dark' : 'light' });
   };
+  const isOffline = useOfflineStatus();
   const { chat, chats, loadChats, loadChat, createNewChat, deleteChat, addMessage, renameChat } = useChat();
   // deleteChat logs and re-throws DB errors; swallow them here so a failed
   // delete does not surface as an unhandled promise rejection in the onClick handler.
@@ -80,6 +83,7 @@ export const MainLayout: FC = () => {
     cancel: stopGeneration,
     isGenerating,
     isLoading,
+    activeEngine,
     webgpuAvailable,
     currentModelId,
     refreshStatus,
@@ -106,7 +110,7 @@ export const MainLayout: FC = () => {
   // prompt). Persisted so the choice survives a reload; default is on.
   const [thinkingEnabled, setThinkingEnabled] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('webgui_thinking_enabled_v1') !== '0';
+      return localStorageGet('webgui_thinking_enabled_v1') !== '0';
     } catch {
       return true;
     }
@@ -115,7 +119,7 @@ export const MainLayout: FC = () => {
     setThinkingEnabled((prev) => {
       const next = !prev;
       try {
-        localStorage.setItem('webgui_thinking_enabled_v1', next ? '1' : '0');
+        localStorageSet('webgui_thinking_enabled_v1', next ? '1' : '0');
       } catch {
         // Ignore storage errors - the toggle just resets on reload
       }
@@ -601,12 +605,22 @@ export const MainLayout: FC = () => {
             onClick={() => setShowMobileSidebar(true)}
             data-tour="mobile-menu"
             className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
-            aria-label="Menü öffnen"
+            aria-label={t("sidebar.openMenu")}
           >
             ☰
           </button>
           <h1 className="font-semibold flex-1">{t('sidebar.title')}</h1>
         </div>
+
+        {/* Offline banner: downloads need the internet, loaded models keep working */}
+        {isOffline && (
+          <div className="bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900 px-4 py-2">
+            <p className="text-amber-700 dark:text-amber-400 text-sm font-medium flex items-center gap-2">
+              <span className="text-base">📡</span>
+              {t('offline.banner')}
+            </p>
+          </div>
+        )}
 
         {/* Performance warning for Firefox users (dismissible) */}
         <BrowserWarning />
@@ -699,6 +713,7 @@ export const MainLayout: FC = () => {
             thinkingAvailable={thinkingAvailable}
             thinkingEnabled={thinkingEnabled}
             onToggleThinking={handleToggleThinking}
+            activeEngine={activeEngine}
             onSendMessage={handleSendMessage}
             onSendMessageWithDocuments={handleSendMessageWithDocuments}
             supportsImageInput={supportsImageInput}

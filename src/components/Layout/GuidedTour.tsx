@@ -1,11 +1,12 @@
 import { FC, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { localStorageGet, localStorageRemove, localStorageSet } from '../../services/storage/local-storage';
 
 const TOUR_SEEN_KEY = 'webgui_tour_done_v1';
 
 export const hasSeenTour = (): boolean => {
   try {
-    return localStorage.getItem(TOUR_SEEN_KEY) === '1';
+    return localStorageGet(TOUR_SEEN_KEY) === '1';
   } catch {
     return false;
   }
@@ -13,7 +14,7 @@ export const hasSeenTour = (): boolean => {
 
 export const markTourSeen = (): void => {
   try {
-    localStorage.setItem(TOUR_SEEN_KEY, '1');
+    localStorageSet(TOUR_SEEN_KEY, '1');
   } catch {
     // Ignore storage errors - the tour just shows again
   }
@@ -22,7 +23,7 @@ export const markTourSeen = (): void => {
 /** Forget that the tour was seen - the next render starts it again */
 export const resetTourSeen = (): void => {
   try {
-    localStorage.removeItem(TOUR_SEEN_KEY);
+    localStorageRemove(TOUR_SEEN_KEY);
   } catch {
     // Ignore storage errors
   }

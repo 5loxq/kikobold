@@ -10,6 +10,7 @@
 
 import { CustomizationSettings, ThemeMode, ThemeSettings } from '../types/kikobold-types';
 import { warn as logWarn } from './logging';
+import { localStorageGet, localStorageSetJson } from './storage/local-storage';
 
 // ============================================================================
 // Constants
@@ -96,7 +97,7 @@ const loadThemeSettings = (): CustomizationSettings | null => {
       return null;
     }
 
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = localStorageGet(STORAGE_KEY);
     if (!saved) {return null;}
 
     const parsed = JSON.parse(saved) as CustomizationSettings;
@@ -115,7 +116,7 @@ const saveThemeSettings = (settings: CustomizationSettings): void => {
       return;
     }
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    localStorageSetJson(STORAGE_KEY, settings);
   } catch {
     logWarn('Failed to save theme settings');
   }

@@ -22,7 +22,7 @@ interface MessageBubbleProps {
 }
 
 // Memoized message component to prevent re-renders
-const escapeRegExp = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+export const escapeRegExp = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const HighlightedText: React.FC<{ text: string; query: string; isUser: boolean }> = ({ text, query, isUser }) => {
   if (!query.trim()) {return <>{text}</>;}

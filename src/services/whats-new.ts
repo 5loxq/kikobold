@@ -3,6 +3,8 @@
 // their last visit; first-time visitors don't (they get the welcome page
 // and guided tour instead).
 
+import { localStorageGet, localStorageSet } from './storage/local-storage';
+
 const LAST_VERSION_KEY = 'webgui_last_seen_version';
 
 export interface WhatsNewEntry {
@@ -123,7 +125,7 @@ export const compareVersions = (a: string, b: string): number => {
 
 export const getLastSeenVersion = (): string | null => {
   try {
-    return localStorage.getItem(LAST_VERSION_KEY);
+    return localStorageGet(LAST_VERSION_KEY);
   } catch {
     return null;
   }
@@ -131,7 +133,7 @@ export const getLastSeenVersion = (): string | null => {
 
 export const setLastSeenVersion = (version: string): void => {
   try {
-    localStorage.setItem(LAST_VERSION_KEY, version);
+    localStorageSet(LAST_VERSION_KEY, version);
   } catch {
     // Ignore storage errors - the dialog may show again on the next visit
   }

@@ -14,7 +14,9 @@
     "help": "Help",
     "roadmap": "Roadmap",
     "wiki": "Lexicon",
-    "contact": "Contact"
+    "contact": "Contact",
+    "toggle": "Toggle sidebar",
+    "openMenu": "Open menu"
   },
   "chat": {
     "welcome": "Welcome to KI Kobold",
@@ -94,7 +96,12 @@
     "thinkingOn": "On",
     "thinkingOff": "Off",
     "thinkingToggleHint": "Turns the model's visible thinking on or off. Off = faster, direct answers for simple questions; On = step-by-step reasoning for difficult tasks. Takes effect from the next message.",
-    "olderMessages": "Load {{count}} older messages"
+    "olderMessages": "Load {{count}} older messages",
+    "renameChat": "Rename chat",
+    "engineWebgpu": "Engine: WebGPU",
+    "engineWasm": "Engine: WASM",
+    "engineWebgpuHint": "The model runs on the graphics card - fastest option.",
+    "engineWasmHint": "The model runs without WebGPU on the processor - slower, but works in almost any browser."
   },
   "tab": {
     "generating": "AI is thinking…",
@@ -160,7 +167,11 @@
     "dangerText": "Permanently deletes all chats, memory entries and library files from your browser. Downloaded models stay (you can delete those in the settings). Create a backup first if you care about the data!",
     "deleteAll": "Delete all data",
     "deleteAllConfirm": "Really delete ALL chats, memory entries and library files? This cannot be undone.",
-    "deleteAllConfirm2": "Are you sure? Without a backup the data is gone afterwards."
+    "deleteAllConfirm2": "Are you sure? Without a backup the data is gone afterwards.",
+    "clearCacheTitle": "Clean up app cache",
+    "clearCacheText": "The app's browser cache stores files for a fast start. Models and chats are untouched by the cleanup - cached files reload on next use.",
+    "clearCacheButton": "Clean up cache now",
+    "clearCacheDone": "Cleanup started - older cache entries are being deleted."
   },
   "library": {
     "title": "Library",
@@ -333,7 +344,14 @@
     "creative": "Creative",
     "precise": "Precise",
     "importSuccess": "Profiles imported successfully",
-    "importError": "Error importing profiles"
+    "importError": "Error importing profiles",
+    "deleteConfirm": "Delete this profile?",
+    "active": "Active",
+    "editProfile": "Edit Profile",
+    "update": "Update",
+    "create": "Create",
+    "namePlaceholder": "e.g., Creative Assistant",
+    "promptPlaceholder": "Define the personality and behavior of the model..."
   },
   "help": {
     "title": "Help",
@@ -598,5 +616,8 @@
     "language": "Language",
     "de": "German",
     "en": "English"
+  },
+  "offline": {
+    "banner": "You are offline - downloaded models and chats keep working, downloads need a connection."
   }
 }

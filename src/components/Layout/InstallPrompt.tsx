@@ -1,5 +1,6 @@
 import { FC, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { localStorageGet, localStorageSet } from '../../services/storage/local-storage';
 
 const DISMISSED_KEY = 'webgui_install_prompt_dismissed_v1';
 
@@ -19,7 +20,7 @@ export const InstallPrompt: FC = () => {
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [dismissed, setDismissed] = useState<boolean>(() => {
     try {
-      return localStorage.getItem(DISMISSED_KEY) === '1';
+      return localStorageGet(DISMISSED_KEY) === '1';
     } catch {
       return false;
     }
@@ -48,7 +49,7 @@ export const InstallPrompt: FC = () => {
 
   const handleLater = (): void => {
     try {
-      localStorage.setItem(DISMISSED_KEY, '1');
+      localStorageSet(DISMISSED_KEY, '1');
     } catch {
       // Ignore storage errors - the hint may show again then
     }

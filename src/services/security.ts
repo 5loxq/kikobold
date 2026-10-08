@@ -252,50 +252,6 @@ export const validateUserId = (id: string): boolean => {
 };
 
 /**
- * Secure localStorage operations
- * Adds validation and error handling
- */
-export const secureLocalStorage = {
-  getItem: (key: string): string | null => {
-    try {
-      if (typeof key !== 'string' || key.trim().length === 0) {
-        return null;
-      }
-      return localStorage.getItem(key);
-    } catch (error) {
-      return null;
-    }
-  },
-
-  setItem: (key: string, value: string): boolean => {
-    try {
-      if (typeof key !== 'string' || key.trim().length === 0) {
-        return false;
-      }
-      if (typeof value !== 'string') {
-        return false;
-      }
-      localStorage.setItem(key, value);
-      return true;
-    } catch (error) {
-      return false;
-    }
-  },
-
-  removeItem: (key: string): boolean => {
-    try {
-      if (typeof key !== 'string' || key.trim().length === 0) {
-        return false;
-      }
-      localStorage.removeItem(key);
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }
-};
-
-/**
  * Internal IP address patterns to block for SSRF prevention
  */
 const INTERNAL_IP_PATTERNS = [

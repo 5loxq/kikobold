@@ -52,7 +52,7 @@ const renderKatex = (katex: KatexModule, tex: string, displayMode: boolean): str
 // Everything else (javascript:, vbscript:, data:, ...) is dropped so
 // markdown in a message can never turn into a script URL.
 const SAFE_URL = /^(https?:\/\/|mailto:|\/|#)/i;
-const isSafeUrl = (url: string): boolean => SAFE_URL.test(url.trim());
+export const isSafeUrl = (url: string): boolean => SAFE_URL.test(url.trim());
 
 const MathBlock: React.FC<{ tex: string }> = ({ tex }) => {
   // undefined = still loading, null = rendering failed, string = HTML
@@ -515,7 +515,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
  * intact: their content may contain blank lines, which must not cut the
  * block in half (the code would otherwise render as broken paragraphs).
  */
-const splitBlocks = (content: string): string[] => {
+export const splitBlocks = (content: string): string[] => {
   const blocks: string[] = [];
   let current: string[] = [];
   let fence: string | null = null;

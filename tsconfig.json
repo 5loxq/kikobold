@@ -52,6 +52,6 @@
     }
   },
   "include": ["src"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts", "**/*-legacy*", "**/legacy/**"],
+  "exclude": ["node_modules", "dist", "**/*-legacy*", "**/legacy/**"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

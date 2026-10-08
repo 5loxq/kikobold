@@ -2,7 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import deTranslations from '../locales/de.json';
 import enTranslations from '../locales/en.json';
-import { secureLocalStorage } from '../services/security';
+import { localStorageGet } from '../services/storage/local-storage';
 
 const resources = {
   de: { translation: deTranslations },
@@ -10,7 +10,7 @@ const resources = {
 };
 
 // Get language preference from localStorage or default to 'de' (German)
-const savedLanguage = secureLocalStorage.getItem('language_preference') ?? 'de';
+const savedLanguage = localStorageGet('language_preference') ?? 'de';
 
 i18n
   .use(initReactI18next)
