@@ -4,9 +4,22 @@
 <IfModule mod_headers.c>
   Header always set Cross-Origin-Opener-Policy "same-origin"
   Header always set Cross-Origin-Embedder-Policy "require-corp"
+  # Our resources may only be embedded by our own origin (blocks other
+  # sites from hotlinking app files and limits Spectre-style leaks).
+  Header always set Cross-Origin-Resource-Policy "same-origin"
   Header always set X-Content-Type-Options "nosniff"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
   Header always set X-Frame-Options "DENY"
+  # Force HTTPS for a full year, including all subdomains. The domain has
+  # a wildcard certificate and redirects HTTP to HTTPS, so this is safe.
+  # (HSTS "preload" deliberately NOT set: it requires submission to
+  # hstspreload.org and is hard to undo - add it only if the domain stays
+  # dedicated to this site.)
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  # Legacy protection: do not allow Flash/PDF cross-domain policies
+  Header always set X-Permitted-Cross-Domain-Policies "none"
+  # Isolate the origin into its own agent cluster (process isolation)
+  Header always set Origin-Agent-Cluster "?1"
 
   # Camera is not used; the microphone is (voice input in the chat field).
   Header always set Permissions-Policy "camera=(), microphone=(self), geolocation=()"
@@ -19,7 +32,9 @@
   # - connect-src: HuggingFace CDN + GitHub (model_lib WASM) for the model
   #   fallback download when the self-hosted copy is unavailable
   # - worker-src blob:: wllama/WebLLM create workers from blob URLs
-  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://raw.githubusercontent.com blob: data:; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+  # - upgrade-insecure-requests: http:// links (e.g. in chat messages)
+  #   are automatically upgraded to https://
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://raw.githubusercontent.com blob: data:; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
 
   # The service worker must always be revalidated so new deployments are
   # picked up immediately instead of being served from the HTTP cache.
