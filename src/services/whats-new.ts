@@ -22,6 +22,7 @@ export const WHATS_NEW: WhatsNewEntry[] = [
       'whatsNew.v340.item4',
       'whatsNew.v340.item5',
       'whatsNew.v340.item6',
+      'whatsNew.v340.item7',
     ],
   },
   {
