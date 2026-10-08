@@ -20,6 +20,9 @@
   Header always set X-Permitted-Cross-Domain-Policies "none"
   # Isolate the origin into its own agent cluster (process isolation)
   Header always set Origin-Agent-Cluster "?1"
+  # Upgrade http:// navigations to this origin to https:// (session-scoped
+  # complement to HSTS; the CSP directive covers subresource requests)
+  Header always set Upgrade-Insecure-Requests "1"
 
   # Camera is not used; the microphone is (voice input in the chat field).
   Header always set Permissions-Policy "camera=(), microphone=(self), geolocation=()"
