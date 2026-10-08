@@ -7,7 +7,7 @@ werden lokal heruntergeladen, im Browser gecacht und die Inferenz erfolgt
 100 % auf dem eigenen Gerät — keine Nachricht verlässt den Browser, kein Server
 verarbeitet irgendetwas.
 
-Live-Demo: **https://www.posthiel.de**
+Live-Demo: **https://kikobold.net**
 
 ---
 

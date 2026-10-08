@@ -1,7 +1,7 @@
 # KI Kobold — Technische Dokumentation
 
 Zusammenfassung der Architektur-Entscheidungen und technischen Grundlagen von
-**KI Kobold** (https://www.posthiel.de). Diese Datei fasst die früheren
+**KI Kobold** (https://kikobold.net). Diese Datei fasst die früheren
 Arbeits- und Analyse-Dokumente inhaltlich zusammen; die Nutzer- und
 Feature-Sicht steht in `README.md`, die Versionshistorie in `CHANGELOG.md`.
 
