@@ -490,7 +490,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
   }, [isLoading, isModelLoaded]);
 
   return (
-    <div className="px-4 py-3 bg-transparent">
+    <div className="px-4 pt-3 safe-bottom bg-transparent">
       {!isModelLoaded && (
         <div className="mb-3 p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-2xl text-sm text-amber-800 dark:text-amber-400">
           <div className="flex items-center gap-2">
@@ -615,7 +615,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
               setMention(null);
               setPickerOpen(false);
             }}
-            className="w-full px-5 pt-4 pb-2 bg-transparent border-0 resize-none focus:outline-none focus:ring-0 disabled:cursor-not-allowed text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 text-sm leading-relaxed"
+            className="w-full px-5 pt-4 pb-2 bg-transparent border-0 resize-none focus:outline-none focus:ring-0 disabled:cursor-not-allowed text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 text-base sm:text-sm leading-relaxed"
             rows={1}
             style={{ minHeight: '28px', maxHeight: '150px' }}
           />

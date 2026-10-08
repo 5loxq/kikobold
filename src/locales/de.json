@@ -90,7 +90,11 @@
     "errorNotFound": "⚠️ Modell nicht auf dem HuggingFace-CDN gefunden. Bitte prüfe die Modell-ID in der Registry.",
     "errorWebgpu": "⚠️ WebGPU nicht verfügbar. Bitte verwende einen modernen Browser: Chrome, Firefox 113+, Edge oder Safari 16.4+.",
     "errorWasm": "⚠️ WebAssembly-Fehler. Bitte stelle sicher, dass dein Browser WASM unterstützt und die Seite über HTTPS geladen wird.",
-    "errorGeneric": "⚠️ Fehler beim Laden des Modells: {{message}}"
+    "errorGeneric": "⚠️ Fehler beim Laden des Modells: {{message}}",
+    "thinkingToggle": "Denkmodus",
+    "thinkingOn": "An",
+    "thinkingOff": "Aus",
+    "thinkingToggleHint": "Schaltet das sichtbare Nachdenken des Modells an oder aus. Aus = schnellere, direkte Antworten bei einfache Fragen; An = Schritt-für-Schritt-Gedankengang bei schwierigen Aufgaben. Wirkt ab der nächsten Nachricht."
   },
   "tab": {
     "generating": "KI denkt nach…",
@@ -201,7 +205,8 @@
       "item4": "Die Chat-Suche hebt Treffer jetzt auch in deinen eigenen Nachrichten hervor.",
       "item5": "Neuer dezenter Hinweis, die Seite als App zu installieren (wo der Browser es unterstützt).",
       "item6": "Fehlermeldungen beim Modell-Laden sind jetzt zweisprachig (Deutsch/Englisch).",
-      "item7": "Neues KI-Lexikon (Menü → Lexikon): einfach erklärt, was KI, Machine Learning und Sprachmodelle sind, was 'Thinking' bedeutet, welche Modelle es gibt - und was KI kann und nicht kann. Mit Glossar."
+      "item7": "Neues KI-Lexikon (Menü → Lexikon): einfach erklärt, was KI, Machine Learning und Sprachmodelle sind, was 'Thinking' bedeutet, welche Modelle es gibt - und was KI kann und nicht kann. Mit Glossar.",
+      "item8": "Denkmodus abschaltbar: Bei Denk-Modellen (Qwen) schaltet der 💭-Button das Nachdenken an und aus - aus bedeutet schnellere Antworten bei einfachen Fragen."
     },
     "v330": {
       "item1": "Neue Modelle: Qwen 3.5 2B, Qwen 3 1.7B und Qwen 3 0.6B ersetzen Gemma 2 und Qwen 2. Alle drei denken sichtbar nach - der Gedankengang erscheint aufklappbar in der Antwort.",
@@ -421,7 +426,7 @@
   },
   "wiki": {
     "title": "KI-Lexikon",
-    "subtitle": "Einfach erklärt: Was KI ist, wie sie funktioniert - und was sie kann und was nicht. Diese Seite braucht kein Modell: Alles hier ist fest geschrieben und funktioniert auch offline.",
+    "subtitle": "Einfach erklärt: Was KI ist, wie sie funktioniert - und was sie kann und was nicht. Diese Seite braucht kein Modell: Alles hier ist fest geschrieben.",
     "aiTitle": "Was ist künstliche Intelligenz?",
     "aiText": "KI ist ein Oberbegriff für Computer-Programme, die Aufgaben lösen, für die man sonst menschliches Denken braucht: Texte verstehen und schreiben, Bilder beschreiben, Sprachen übersetzen oder Fragen beantworten. Wichtig: Heutige KI hat kein Bewusstsein und keine Gefühle - sie ist eine sehr leistungsfähige Mustererkennung.",
     "aiPoint1": "Beispiele aus dem Alltag: Spamfilter, Sprachassistenten, Übersetzer, Gesichtserkennung im Handy.",

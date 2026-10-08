@@ -90,7 +90,11 @@
     "errorNotFound": "⚠️ Model not found on the HuggingFace CDN. Please check the model ID in the registry.",
     "errorWebgpu": "⚠️ WebGPU not available. Please use a modern browser: Chrome, Firefox 113+, Edge or Safari 16.4+.",
     "errorWasm": "⚠️ WebAssembly error. Please make sure your browser supports WASM and the site is served over HTTPS.",
-    "errorGeneric": "⚠️ Failed to load the model: {{message}}"
+    "errorGeneric": "⚠️ Failed to load the model: {{message}}",
+    "thinkingToggle": "Thinking",
+    "thinkingOn": "On",
+    "thinkingOff": "Off",
+    "thinkingToggleHint": "Turns the model's visible thinking on or off. Off = faster, direct answers for simple questions; On = step-by-step reasoning for difficult tasks. Takes effect from the next message."
   },
   "tab": {
     "generating": "AI is thinking…",
@@ -201,7 +205,8 @@
       "item4": "The chat search now highlights matches in your own messages too.",
       "item5": "New subtle hint to install the site as an app (where the browser supports it).",
       "item6": "Error messages while loading a model are now bilingual (German/English).",
-      "item7": "New AI lexicon (Menu → Lexicon): simply explains what AI, machine learning and language models are, what 'thinking' means, which models exist - and what AI can and cannot do. With glossary."
+      "item7": "New AI lexicon (Menu → Lexicon): simply explains what AI, machine learning and language models are, what 'thinking' means, which models exist - and what AI can and cannot do. With glossary.",
+      "item8": "Thinking mode can be turned off: on thinking models (Qwen) the 💭 button toggles reasoning on and off - off means faster answers for simple questions."
     },
     "v330": {
       "item1": "New models: Qwen 3.5 2B, Qwen 3 1.7B and Qwen 3 0.6B replace Gemma 2 and Qwen 2. All three think visibly - the reasoning appears collapsible in the answer.",
@@ -421,7 +426,7 @@
   },
   "wiki": {
     "title": "AI Lexicon",
-    "subtitle": "Explained simply: what AI is, how it works - and what it can and cannot do. This page needs no model: everything here is fixed text and works offline.",
+    "subtitle": "Explained simply: what AI is, how it works - and what it can and cannot do. This page needs no model: everything here is fixed text.",
     "aiTitle": "What is artificial intelligence?",
     "aiText": "AI is an umbrella term for computer programs that solve tasks which normally need human thinking: understanding and writing text, describing images, translating languages or answering questions. Important: today's AI has no consciousness and no feelings - it is a very powerful form of pattern recognition.",
     "aiPoint1": "Everyday examples: spam filters, voice assistants, translators, face recognition on your phone.",

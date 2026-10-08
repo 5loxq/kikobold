@@ -181,7 +181,7 @@ const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, isM
     const { t } = useTranslation();
 
     return (
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 max-h-[calc(100vh-320px)]">
+      <div className="messages-scroll flex-1 overflow-y-auto p-4 md:p-6">
         <div className="max-w-3xl mx-auto w-full">
         {messages.length === 0 ? (
           <div className="text-center text-zinc-400 dark:text-zinc-500 py-12">

@@ -29,6 +29,7 @@ import { useModels } from '../../hooks/useModels';
 import { useProfiles } from '../../hooks/useProfiles';
 import { useMemories } from '../../hooks/useMemories';
 import { useEnhancedInference } from '../../hooks/useEnhancedInference';
+import { getModelConfig } from '../../services/models/model-registry';
 import * as ChatStorage from '../../services/storage/ChatStorage';
 import { DEFAULT_CHAT_TITLE } from '../../services/storage/ChatStorage';
 import { buildMemoryPromptBlock } from '../../services/storage/MemoryStorage';
@@ -101,6 +102,28 @@ export const MainLayout: FC = () => {
   const [pendingModelId, setPendingModelId] = useState<string | null>(null);
   // "What's new" entries to show (auto on version change, or opened from help)
   const [whatsNewEntries, setWhatsNewEntries] = useState<WhatsNewEntry[]>([]);
+  // Thinking mode of the loaded model (Qwen 3: soft switch /no_think in the
+  // prompt). Persisted so the choice survives a reload; default is on.
+  const [thinkingEnabled, setThinkingEnabled] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('webgui_thinking_enabled_v1') !== '0';
+    } catch {
+      return true;
+    }
+  });
+  const handleToggleThinking = useCallback((): void => {
+    setThinkingEnabled((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('webgui_thinking_enabled_v1', next ? '1' : '0');
+      } catch {
+        // Ignore storage errors - the toggle just resets on reload
+      }
+      return next;
+    });
+  }, []);
+  // Only models with a thinking mode get the toggle
+  const thinkingAvailable = getModelConfig(activeModel?.id ?? '')?.thinking === true;
 
   // Returning users get a summary of changes since their last visit.
   // First-time visitors get nothing here - they see the welcome page and
@@ -348,6 +371,12 @@ export const MainLayout: FC = () => {
       const systemPrompt = [memoryBlock, activeProfile.systemPrompt]
         .filter(Boolean)
         .join('\n\n');
+      // Thinking models (Qwen 3) accept the soft switch "/no_think" in the
+      // system prompt - the model then answers directly without its
+      // visible reasoning, which is faster for simple questions.
+      const effectiveSystemPrompt = thinkingAvailable && !thinkingEnabled
+        ? [systemPrompt, '/no_think'].filter(Boolean).join('\n\n')
+        : systemPrompt;
       // The prompt must fit the model's context window together with the
       // generated answer - drop the oldest history messages if needed.
       const history = trimHistoryToCharBudget(
@@ -355,7 +384,7 @@ export const MainLayout: FC = () => {
           role: m.role === 'assistant' ? ('assistant' as const) : ('user' as const),
           content: m.content,
         })),
-        systemPrompt,
+        effectiveSystemPrompt,
         promptWithLibrary
       );
       setStreamingMessage('start');
@@ -363,7 +392,7 @@ export const MainLayout: FC = () => {
         temperature: activeProfile.temperature,
         top_p: activeProfile.topP,
         max_tokens: activeProfile.maxTokens,
-        systemPrompt,
+        systemPrompt: effectiveSystemPrompt,
         history,
         images,
       });
@@ -667,6 +696,9 @@ export const MainLayout: FC = () => {
             isGenerating={isGenerating}
             streamingMessage={streamingMessage ? streamText : null}
             onStopGeneration={stopGeneration}
+            thinkingAvailable={thinkingAvailable}
+            thinkingEnabled={thinkingEnabled}
+            onToggleThinking={handleToggleThinking}
             onSendMessage={handleSendMessage}
             onSendMessageWithDocuments={handleSendMessageWithDocuments}
             supportsImageInput={supportsImageInput}

@@ -29,6 +29,12 @@ interface ChatWindowProps {
   isGenerating?: boolean;
   streamingMessage?: string | null;
   onStopGeneration?: () => void;
+  /** True when the active model has a thinking mode (Qwen 3) */
+  thinkingAvailable?: boolean;
+  /** Whether thinking mode is currently enabled */
+  thinkingEnabled?: boolean;
+  /** Toggle thinking mode on/off */
+  onToggleThinking?: () => void;
   onSendMessage: (message: string) => void;
   onSendMessageWithDocuments?: (message: string, attachments: import('../../services/attachments').DocumentAttachment[]) => void;
   supportsImageInput?: boolean;
@@ -57,6 +63,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   isGenerating = false,
   streamingMessage = null,
   onStopGeneration,
+  thinkingAvailable = false,
+  thinkingEnabled = true,
+  onToggleThinking,
   onSendMessage,
   onSendMessageWithDocuments,
   supportsImageInput = false,
@@ -259,6 +268,26 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             })}
           </select>
 
+          {thinkingAvailable && onToggleThinking && (
+            <button
+              type="button"
+              onClick={onToggleThinking}
+              aria-pressed={thinkingEnabled}
+              title={t('chat.thinkingToggleHint')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${
+                thinkingEnabled
+                  ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300'
+                  : 'border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 text-zinc-500 dark:text-zinc-400'
+              }`}
+            >
+              <span className={thinkingEnabled ? '' : 'opacity-50'}>💭</span>
+              {t('chat.thinkingToggle')}
+              <span className="text-xs font-normal opacity-70">
+                {thinkingEnabled ? t('chat.thinkingOn') : t('chat.thinkingOff')}
+              </span>
+            </button>
+          )}
+
           {selectedModelId && getModelConfig(selectedModelId)?.description && !isLoading && (
             <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-md leading-relaxed">
               {getModelConfig(selectedModelId)?.description}
@@ -324,7 +353,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('chat.searchPlaceholder')}
               autoFocus
-              className="flex-1 max-w-sm px-4 py-2 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 shadow-sm"
+              className="flex-1 max-w-sm px-4 py-2 border border-zinc-200 dark:border-zinc-700 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 shadow-sm"
             />
             <span className="text-xs text-zinc-500 dark:text-zinc-500">
               {normalizedSearch ? `${visibleMessages.length}` : ''}

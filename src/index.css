@@ -152,3 +152,21 @@ html {
     animation: none;
 }
 }
+
+/* Mobile: message list height based on the DYNAMIC viewport height. On
+   phones the browser toolbar and keyboard change the visible height while
+   100vh stays fixed - the input would disappear behind the keyboard. */
+.messages-scroll {
+  max-height: calc(100vh - 320px);
+}
+@supports (height: 100dvh) {
+  .messages-scroll {
+    max-height: calc(100dvh - 320px);
+  }
+}
+
+/* Mobile: keep the input area above the iOS home indicator / Android
+   navigation bar (notch devices). Falls back to the normal padding. */
+.safe-bottom {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
