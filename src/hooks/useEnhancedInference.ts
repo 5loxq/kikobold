@@ -255,7 +255,7 @@ export const useEnhancedInference = (
       }
 
       // Use custom config or default
-      const effectiveAppConfig = customAppConfig ?? getCustomAppConfig();
+      const effectiveAppConfig = customAppConfig ?? await getCustomAppConfig();
 
       log(`Loading model: ${modelId} with WebLLM`);
       log(`Using WebGPU: ${hasWebGPU ? 'Yes' : 'No'}`);
@@ -301,7 +301,7 @@ export const useEnhancedInference = (
           setProgress(0);
           setProgressStats(null);
           engine = await CreateMLCEngine(modelId, {
-            appConfig: getCustomAppConfig(false),
+            appConfig: await getCustomAppConfig(false),
             initProgressCallback,
           });
         } else {

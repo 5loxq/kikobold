@@ -1,6 +1,9 @@
 // Global type declarations for external modules that are loaded dynamically
 // These modules are only available at runtime, not at compile time
 
+// CSS modules (static and dynamic imports, e.g. the lazily loaded KaTeX CSS)
+declare module '*.css';
+
 // Tauri API modules - loaded dynamically, types not needed for compilation
 declare module '@tauri-apps/api/core' {
     export function invoke(command: string, args?: Record<string, unknown>): Promise<unknown>;

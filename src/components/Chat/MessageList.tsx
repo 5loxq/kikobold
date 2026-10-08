@@ -177,11 +177,51 @@ const StreamingBubble: React.FC<{ content: string; isDarkMode?: boolean }> = ({ 
   );
 };
 
+// How many messages render initially; scrolling to the top loads more.
+// Keeps long chats (hundreds of messages) smooth without full windowing.
+const MESSAGE_PAGE_SIZE = 50;
+
 const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, isModelLoading, streamingMessage, messagesEndRef, isDarkMode, searchQuery }) => {
     const { t } = useTranslation();
+    const [visibleCount, setVisibleCount] = React.useState(MESSAGE_PAGE_SIZE);
+    const scrollRef = React.useRef<HTMLDivElement>(null);
+    // Scroll position bookkeeping so prepending older messages does not jump
+    const layoutRef = React.useRef({ hiddenCount: 0, scrollHeight: 0 });
+
+    const visibleMessages = React.useMemo(
+      () => messages.slice(Math.max(0, messages.length - visibleCount)),
+      [messages, visibleCount]
+    );
+    const hiddenCount = messages.length - visibleMessages.length;
+
+    const loadMore = React.useCallback((): void => {
+      setVisibleCount((count) => count + MESSAGE_PAGE_SIZE);
+    }, []);
+
+    const handleScroll = React.useCallback((): void => {
+      const el = scrollRef.current;
+      if (!el || hiddenCount <= 0 || el.scrollTop > 120) {
+        return;
+      }
+      loadMore();
+    }, [hiddenCount, loadMore]);
+
+    // When older messages get prepended, keep the current view anchored:
+    // shift the scroll position by the height the older messages added.
+    React.useLayoutEffect(() => {
+      const el = scrollRef.current;
+      if (!el) {
+        return;
+      }
+      const prev = layoutRef.current;
+      if (hiddenCount < prev.hiddenCount && prev.scrollHeight > 0) {
+        el.scrollTop += el.scrollHeight - prev.scrollHeight;
+      }
+      layoutRef.current = { hiddenCount, scrollHeight: el.scrollHeight };
+    }, [hiddenCount, visibleMessages]);
 
     return (
-      <div className="messages-scroll flex-1 overflow-y-auto p-4 md:p-6">
+      <div ref={scrollRef} onScroll={handleScroll} className="messages-scroll flex-1 overflow-y-auto p-4 md:p-6">
         <div className="max-w-3xl mx-auto w-full">
         {messages.length === 0 ? (
           <div className="text-center text-zinc-400 dark:text-zinc-500 py-12">
@@ -190,11 +230,22 @@ const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, isM
             <p className="text-sm mt-2 text-zinc-500 dark:text-zinc-500">{t('chat.startConversation')}</p>
           </div>
         ) : (
-          messages.map((message) => (
-            <div key={message.id} className="animate-fade-in">
-              <MessageBubble message={message} isDarkMode={isDarkMode} searchQuery={searchQuery} />
-            </div>
-          ))
+          <>
+            {hiddenCount > 0 && (
+              <button
+                type="button"
+                onClick={loadMore}
+                className="block mx-auto mb-3 px-4 py-1.5 rounded-xl text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+              >
+                ↑ {t('chat.olderMessages', { count: hiddenCount })}
+              </button>
+            )}
+            {visibleMessages.map((message) => (
+              <div key={message.id} className="animate-fade-in">
+                <MessageBubble message={message} isDarkMode={isDarkMode} searchQuery={searchQuery} />
+              </div>
+            ))}
+          </>
         )}
 
         {streamingMessage && (

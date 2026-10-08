@@ -7,7 +7,6 @@
     "profiles": "Profile",
     "memory": "Gedächtnis",
     "library": "Bibliothek",
-    "models": "Modelle",
     "data": "Daten",
     "settings": "Einstellungen",
     "history": "Verlauf",
@@ -94,7 +93,8 @@
     "thinkingToggle": "Denkmodus",
     "thinkingOn": "An",
     "thinkingOff": "Aus",
-    "thinkingToggleHint": "Schaltet das sichtbare Nachdenken des Modells an oder aus. Aus = schnellere, direkte Antworten bei einfache Fragen; An = Schritt-für-Schritt-Gedankengang bei schwierigen Aufgaben. Wirkt ab der nächsten Nachricht."
+    "thinkingToggleHint": "Schaltet das sichtbare Nachdenken des Modells an oder aus. Aus = schnellere, direkte Antworten bei einfache Fragen; An = Schritt-für-Schritt-Gedankengang bei schwierigen Aufgaben. Wirkt ab der nächsten Nachricht.",
+    "olderMessages": "{{count}} ältere Nachrichten laden"
   },
   "tab": {
     "generating": "KI denkt nach…",
@@ -206,7 +206,8 @@
       "item5": "Neuer dezenter Hinweis, die Seite als App zu installieren (wo der Browser es unterstützt).",
       "item6": "Fehlermeldungen beim Modell-Laden sind jetzt zweisprachig (Deutsch/Englisch).",
       "item7": "Neues KI-Lexikon (Menü → Lexikon): einfach erklärt, was KI, Machine Learning und Sprachmodelle sind, was 'Thinking' bedeutet, welche Modelle es gibt - und was KI kann und nicht kann. Mit Glossar.",
-      "item8": "Denkmodus abschaltbar: Bei Denk-Modellen (Qwen) schaltet der 💭-Button das Nachdenken an und aus - aus bedeutet schnellere Antworten bei einfachen Fragen."
+      "item8": "Denkmodus abschaltbar: Bei Denk-Modellen (Qwen) schaltet der 💭-Button das Nachdenken an und aus - aus bedeutet schnellere Antworten bei einfachen Fragen.",
+      "item9": "Schnellerer Start: Die KI-Engine (der größte Teil der App) lädt erst, wenn wirklich ein Modell gebraucht wird - Mathe-Formatierung ebenfalls nur bei Bedarf. Lange Chats bleiben flüssig: Ältere Nachrichten laden erst beim Hochscrollen."
     },
     "v330": {
       "item1": "Neue Modelle: Qwen 3.5 2B, Qwen 3 1.7B und Qwen 3 0.6B ersetzen Gemma 2 und Qwen 2. Alle drei denken sichtbar nach - der Gedankengang erscheint aufklappbar in der Antwort.",
@@ -404,23 +405,14 @@
     "title": "Roadmap",
     "intro": "Hier kannst du nachlesen, welche Verbesserungen und Features für KI Kobold geplant sind. Die Liste zeigt die Richtung, in die es gehen soll - zum Ausprobieren, Mitsprechen und Vorfreuen.",
     "noTimeline": "Wichtig: Diese Roadmap hat keine zeitliche Abfolge. Es gibt keine Termine, keine Reihenfolge und keine Zusagen - die Punkte sind Ideen, an denen gearbeitet werden soll. Manches kommt vielleicht bald, manches später, und die Liste kann sich jederzeit ändern.",
-    "speedTitle": "Geschwindigkeit & Ladezeit",
-    "speed1": "Die App soll generell schneller laden - unter anderem durch kleinere Datenpakete und effizienter geladene Schriftarten.",
-    "speed2": "Lange Chat-Verläufe sollen auch mit hunderten Nachrichten flüssig bleiben.",
     "stabilityTitle": "Stabilität",
-    "stability1": "Fehler-Schutz: Wenn etwas Unerwartetes passiert, soll die Oberfläche eine verständliche Fehlermeldung zeigen, statt einfach weiß zu bleiben.",
     "stability2": "Hängende Downloads sollen abbrechen und neu gestartet werden können, statt endlos zu warten.",
     "downloadsTitle": "Modell-Downloads",
-    "downloads1": "Ein Übersichts-Dashboard für Modell-Downloads mit Geschwindigkeit und geschätzter Restzeit.",
     "downloads2": "Unterbrochene Modell-Downloads sollen sich fortsetzen lassen, statt komplett neu zu starten.",
     "downloads3": "Anzeige, welche Engine (WebGPU oder der Fallback) gerade aktiv ist.",
-    "comfortTitle": "Bedienung & Komfort",
-    "comfort1": "Tastatur-Shortcuts, z.B. Suche mit Strg+K und Abbrechen der Antwort mit Esc.",
-    "comfort2": "Chat-Suche: Auch die eigenen Nachrichten sollen bei der Suche hervorgehoben werden.",
-    "comfort3": "Der Browser-Tab-Titel soll den aktuellen Zustand zeigen (z.B. laufende Antwort oder aktives Modell).",
+    "downloads4": "Ein Modell, das Bilder erzeugen kann, wird geprüft: Im Browser grundsätzlich möglich, aber die Downloads wären sehr groß und die Erzeugung langsam - steht unter Vorbehalt.",
     "storageTitle": "Speicher & Installation",
     "storage1": "Eine Speicher-Übersicht: was Modelle, Chats und Caches belegen - mit Aufräum-Buttons.",
-    "storage2": "Ein dezenter Hinweis \"Als App installieren\" für wiederkehrende Besucher.",
     "storage3": "Verbesserte Offline-Anzeige, damit der Status immer sichtbar ist.",
     "closeRoadmap": "Zurück zum Chat"
   },

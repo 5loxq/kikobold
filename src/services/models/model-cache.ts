@@ -41,7 +41,7 @@ export const deleteModelCacheFiles = async (model: Model): Promise<void> => {
       }
     } else {
       const { deleteModelAllInfoInCache } = await import('@mlc-ai/web-llm');
-      await deleteModelAllInfoInCache(model.id, getCustomAppConfig());
+      await deleteModelAllInfoInCache(model.id, await getCustomAppConfig());
     }
     log(`Model cache deleted: ${model.id}`);
   } catch (err) {
@@ -64,7 +64,7 @@ export const purgeRemovedModelCaches = async (removedIds: string[]): Promise<voi
     return;
   }
   const { prebuiltAppConfig, deleteModelAllInfoInCache } = await import('@mlc-ai/web-llm');
-  const baseConfig = getCustomAppConfig();
+  const baseConfig = await getCustomAppConfig();
 
   for (const id of removedIds) {
     const prebuilt = (prebuiltAppConfig.model_list ?? []).find(

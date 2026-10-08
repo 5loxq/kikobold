@@ -7,7 +7,6 @@
     "profiles": "Profiles",
     "memory": "Memory",
     "library": "Library",
-    "models": "Models",
     "data": "Data",
     "settings": "Settings",
     "history": "History",
@@ -94,7 +93,8 @@
     "thinkingToggle": "Thinking",
     "thinkingOn": "On",
     "thinkingOff": "Off",
-    "thinkingToggleHint": "Turns the model's visible thinking on or off. Off = faster, direct answers for simple questions; On = step-by-step reasoning for difficult tasks. Takes effect from the next message."
+    "thinkingToggleHint": "Turns the model's visible thinking on or off. Off = faster, direct answers for simple questions; On = step-by-step reasoning for difficult tasks. Takes effect from the next message.",
+    "olderMessages": "Load {{count}} older messages"
   },
   "tab": {
     "generating": "AI is thinking…",
@@ -206,7 +206,8 @@
       "item5": "New subtle hint to install the site as an app (where the browser supports it).",
       "item6": "Error messages while loading a model are now bilingual (German/English).",
       "item7": "New AI lexicon (Menu → Lexicon): simply explains what AI, machine learning and language models are, what 'thinking' means, which models exist - and what AI can and cannot do. With glossary.",
-      "item8": "Thinking mode can be turned off: on thinking models (Qwen) the 💭 button toggles reasoning on and off - off means faster answers for simple questions."
+      "item8": "Thinking mode can be turned off: on thinking models (Qwen) the 💭 button toggles reasoning on and off - off means faster answers for simple questions.",
+      "item9": "Faster start: the AI engine (the largest part of the app) only loads when a model is actually needed - math formatting likewise only on demand. Long chats stay smooth: older messages load when you scroll up."
     },
     "v330": {
       "item1": "New models: Qwen 3.5 2B, Qwen 3 1.7B and Qwen 3 0.6B replace Gemma 2 and Qwen 2. All three think visibly - the reasoning appears collapsible in the answer.",
@@ -404,23 +405,14 @@
     "title": "Roadmap",
     "intro": "Here you can see which improvements and features are planned for KI Kobold. The list shows the direction we want to take - for trying things out, having your say and looking forward.",
     "noTimeline": "Important: This roadmap has no chronological order. There are no dates, no sequence and no promises - these are ideas we want to work on. Some may arrive soon, some later, and the list can change at any time.",
-    "speedTitle": "Speed & Loading Time",
-    "speed1": "The app should load faster in general - including smaller bundles and more efficiently loaded fonts.",
-    "speed2": "Long chat histories should stay smooth even with hundreds of messages.",
     "stabilityTitle": "Stability",
-    "stability1": "Crash protection: when something unexpected happens, the UI should show a clear error message instead of going blank.",
     "stability2": "Stuck downloads should be able to abort and restart instead of waiting forever.",
     "downloadsTitle": "Model Downloads",
-    "downloads1": "A download dashboard showing speed and estimated time remaining.",
     "downloads2": "Interrupted model downloads should be resumable instead of starting over from scratch.",
     "downloads3": "Show which engine (WebGPU or the fallback) is currently active.",
-    "comfortTitle": "Handling & Comfort",
-    "comfort1": "Keyboard shortcuts, e.g. Ctrl+K for search and Esc to cancel a response.",
-    "comfort2": "Chat search: your own messages should also be highlighted when searching.",
-    "comfort3": "The browser tab title should reflect the current state (e.g. running response or active model).",
+    "downloads4": "A model that can generate images is being explored: possible in the browser in principle, but the downloads would be very large and generation slow - under reserve.",
     "storageTitle": "Storage & Installation",
     "storage1": "A storage overview: what models, chats and caches are using - with cleanup buttons.",
-    "storage2": "A subtle \"Install as app\" hint for returning visitors.",
     "storage3": "An improved offline indicator so the status is always visible.",
     "closeRoadmap": "Back to Chat"
   },

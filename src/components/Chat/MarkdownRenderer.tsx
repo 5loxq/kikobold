@@ -15,9 +15,82 @@
  * - Task lists
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
-import katex from 'katex';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Prism } from 'prism-react-renderer';
+
+// KaTeX (~300 KB plus fonts) is loaded lazily on the first math block: it is
+// not part of the main bundle and only downloads when a message actually
+// contains math. The CSS travels with it - the fonts inside are only
+// fetched by the browser when a formula really uses them.
+type KatexModule = typeof import('katex');
+let katexPromise: Promise<KatexModule> | null = null;
+const loadKatex = (): Promise<KatexModule> => {
+  if (!katexPromise) {
+    katexPromise = Promise.all([
+      import('katex'),
+      import('katex/dist/katex.min.css'),
+    ]).then(([katex]) => katex);
+  }
+  return katexPromise;
+};
+
+const renderKatex = (katex: KatexModule, tex: string, displayMode: boolean): string | null => {
+  try {
+    return katex.renderToString(tex, {
+      displayMode,
+      throwOnError: false,
+      strict: false,
+      output: 'html',
+    });
+  } catch {
+    return null;
+  }
+};
+
+// Only these URL schemes are rendered as clickable links / image sources.
+// Everything else (javascript:, vbscript:, data:, ...) is dropped so
+// markdown in a message can never turn into a script URL.
+const SAFE_URL = /^(https?:\/\/|mailto:|\/|#)/i;
+const isSafeUrl = (url: string): boolean => SAFE_URL.test(url.trim());
+
+const MathBlock: React.FC<{ tex: string }> = ({ tex }) => {
+  // undefined = still loading, null = rendering failed, string = HTML
+  const [html, setHtml] = useState<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    let cancelled = false;
+    void loadKatex().then((katex) => {
+      if (!cancelled) {
+        setHtml(renderKatex(katex, tex, true));
+      }
+    });
+    return (): void => { cancelled = true; };
+  }, [tex]);
+
+  if (html === undefined || html === null) {
+    return <Paragraph>{tex}</Paragraph>;
+  }
+  return <div className="math-block my-3 text-center overflow-x-auto" dangerouslySetInnerHTML={{ __html: html }} />;
+};
+
+const MathInline: React.FC<{ tex: string }> = ({ tex }) => {
+  const [html, setHtml] = useState<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    let cancelled = false;
+    void loadKatex().then((katex) => {
+      if (!cancelled) {
+        setHtml(renderKatex(katex, tex, false));
+      }
+    });
+    return (): void => { cancelled = true; };
+  }, [tex]);
+
+  if (html === undefined || html === null) {
+    return <>{tex}</>;
+  }
+  return <span className="math-inline" dangerouslySetInnerHTML={{ __html: html }} />;
+};
 
 // Type assertion for SyntaxHighlighter to work around type issues
 const SyntaxHighlighter = Prism as unknown as React.ComponentType<{
@@ -186,41 +259,6 @@ const LIGHT_THEME = {
       },
     },
   ],
-};
-
-const renderKatex = (tex: string, displayMode: boolean): string | null => {
-  try {
-    return katex.renderToString(tex, {
-      displayMode,
-      throwOnError: false,
-      strict: false,
-      output: 'html',
-    });
-  } catch {
-    return null;
-  }
-};
-
-// Only these URL schemes are rendered as clickable links / image sources.
-// Everything else (javascript:, vbscript:, data:, ...) is dropped so
-// markdown in a message can never turn into a script URL.
-const SAFE_URL = /^(https?:\/\/|mailto:|\/|#)/i;
-const isSafeUrl = (url: string): boolean => SAFE_URL.test(url.trim());
-
-const MathBlock: React.FC<{ tex: string }> = ({ tex }) => {
-  const html = renderKatex(tex, true);
-  if (html === null) {
-    return <Paragraph>{tex}</Paragraph>;
-  }
-  return <div className="math-block my-3 text-center overflow-x-auto" dangerouslySetInnerHTML={{ __html: html }} />;
-};
-
-const MathInline: React.FC<{ tex: string }> = ({ tex }) => {
-  const html = renderKatex(tex, false);
-  if (html === null) {
-    return <>{tex}</>;
-  }
-  return <span className="math-inline" dangerouslySetInnerHTML={{ __html: html }} />;
 };
 
 interface MarkdownRendererProps {

@@ -6,6 +6,9 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 
 ### Neu
 
+- **Deutlich schnellerer Start**: Die Web-LLM-Engine (~4,5 MB - der größte Teil der App) wird jetzt durchgehend dynamisch importiert und landet in einem eigenen Chunk, der erst lädt, wenn wirklich ein Modell geladen oder sein Cache angefasst wird. Der Start der Seite ist um diesen Anteil schlanker. KaTeX (~300 KB JS-Anteil plus Schriften) lädt ebenfalls erst, wenn eine Nachricht tatsächlich eine Formel enthält.
+- **Lange Chats bleiben flüssig**: Die Nachrichtenliste zeigt die letzten 50 Nachrichten und lädt ältere erst beim Hochscrollen nach (Button „↑ ältere Nachrichten laden" oder Scrollen an den oberen Rand) - mit stabiler Scroll-Position. Chats mit hunderten Nachrichten ruckeln nicht mehr.
+- **Roadmap aktualisiert**: Erledigte Punkte (Geschwindigkeit, Fehler-Schutz, Shortcuts, Such-Hervorhebung, Tab-Titel, Installations-Hinweis, Download-Dashboard) sind entfernt; neu aufgenommen: Prüfung eines Bild-Modells (im Browser möglich, aber große Downloads und langsam - unter Vorbehalt).
 - **Absturz-Schutz (ErrorBoundary)**: Ein unerwarteter Fehler in der Oberfläche zeigt jetzt eine verständliche Meldung mit „Seite neu laden"-Button statt einer weißen Seite. Chats und Daten liegen in IndexedDB/localStorage und bleiben erhalten.
 - **Tastatur-Shortcuts**: Strg+K bzw. Cmd+K öffnet und schließt die Chat-Suche; Esc bricht die laufende Generierung ab (offene Popups wie die @-Vorschläge werden dabei nicht gestört). Alle Shortcuts sind in der Hilfe dokumentiert.
 - **Dynamischer Tab-Titel**: Der Browser-Tab zeigt jetzt den aktuellen Zustand - „Modell wird geladen…", „KI denkt nach…" oder den Namen des aktiven Modells. Praktisch, wenn die Seite in mehreren Tabs offen ist.

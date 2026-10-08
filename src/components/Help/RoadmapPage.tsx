@@ -12,29 +12,19 @@ export const RoadmapPage: React.FC<RoadmapPageProps> = ({ onNavigateBack }) => {
 
   const categories: Array<{ icon: string; titleKey: string; itemKeys: string[] }> = [
     {
-      icon: '⚡',
-      titleKey: 'roadmap.speedTitle',
-      itemKeys: ['roadmap.speed1', 'roadmap.speed2'],
-    },
-    {
       icon: '🛡️',
       titleKey: 'roadmap.stabilityTitle',
-      itemKeys: ['roadmap.stability1', 'roadmap.stability2'],
+      itemKeys: ['roadmap.stability2'],
     },
     {
       icon: '📦',
       titleKey: 'roadmap.downloadsTitle',
-      itemKeys: ['roadmap.downloads1', 'roadmap.downloads2', 'roadmap.downloads3'],
-    },
-    {
-      icon: '⌨️',
-      titleKey: 'roadmap.comfortTitle',
-      itemKeys: ['roadmap.comfort1', 'roadmap.comfort2', 'roadmap.comfort3'],
+      itemKeys: ['roadmap.downloads2', 'roadmap.downloads3', 'roadmap.downloads4'],
     },
     {
       icon: '💾',
       titleKey: 'roadmap.storageTitle',
-      itemKeys: ['roadmap.storage1', 'roadmap.storage2', 'roadmap.storage3'],
+      itemKeys: ['roadmap.storage1', 'roadmap.storage3'],
     },
   ];
 
