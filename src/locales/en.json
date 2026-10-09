@@ -736,7 +736,7 @@
     "linksTitle": "Liability for links",
     "linksText": "This website contains links to external third-party websites (e.g. model providers such as HuggingFace). We have no influence on their content and therefore cannot guarantee it. No legal violations were apparent at the time of linking.",
     "copyrightTitle": "Copyright",
-    "copyrightText": "The app is published as open source under the MIT license. The integrated AI models are subject to the licenses of their respective providers (LiquidAI, Qwen/Alibaba) and are served unmodified from public sources.",
+    "copyrightText": "The app is currently not published publicly on Git - the source code is kept in a private repository. Publication under the MIT license is planned. The integrated AI models are subject to the licenses of their respective providers (LiquidAI, Qwen/Alibaba) and are served unmodified from public sources.",
     "backToChat": "Back to chat"
   }
 }
