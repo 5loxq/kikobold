@@ -16,7 +16,10 @@
     "wiki": "Lexikon",
     "contact": "Kontakt",
     "toggle": "Seitenleiste ein-/ausklappen",
-    "openMenu": "Menü öffnen"
+    "openMenu": "Menü öffnen",
+    "navigation": "Navigation",
+    "switchToLightMode": "Zum hellen Design wechseln",
+    "switchToDarkMode": "Zum dunklen Design wechseln"
   },
   "chat": {
     "welcome": "Willkommen bei KI Kobold",
@@ -101,7 +104,11 @@
     "engineWebgpu": "Engine: WebGPU",
     "engineWasm": "Engine: WASM",
     "engineWebgpuHint": "Das Modell läuft auf der Grafikkarte - schnellste Variante.",
-    "engineWasmHint": "Das Modell läuft ohne WebGPU im Prozessor - langsamer, funktioniert aber in fast jedem Browser."
+    "engineWasmHint": "Das Modell läuft ohne WebGPU im Prozessor - langsamer, funktioniert aber in fast jedem Browser.",
+    "messageInput": "Deine Nachricht",
+    "removeDocument": "Anhang entfernen",
+    "removeImage": "Bild entfernen",
+    "imagePreview": "Bildvorschau"
   },
   "tab": {
     "generating": "KI denkt nach…",
@@ -209,6 +216,16 @@
     "title": "Das ist neu",
     "subtitle": "Seit deinem letzten Besuch hat sich einiges getan:",
     "closeButton": "Alles klar!",
+    "v400": {
+      "item1": "Textgröße einstellbar: Klein bis sehr groß - skaliert die komplette Oberfläche (Einstellungen → Barrierefreiheit).",
+      "item2": "Lesbarkeit erhöhen: mehr Zeilenabstand und leichter Zeichenabstand in Nachrichten und Eingabefeld.",
+      "item3": "Animationen reduzieren: Bewegungen und Übergänge lassen sich abschalten - unabhängig von der Systemeinstellung.",
+      "item4": "Screenreader-Unterstützung: Sprunglink zum Chat, Ankündigungen wenn die KI zu antworten beginnt und fertig ist, klare \"Du\"/\"KI\"-Kennzeichnung der Nachrichten.",
+      "item5": "Tastatur: sichtbare Fokus-Ringe überall, Dialoge fangen den Tab-Fokus (Esc schließt), die Chat-Liste ist jetzt per Tastatur bedienbar.",
+      "item6": "Kontraste verbessert: Texte in hell und dunkel jetzt WCAG-konform - u.a. dunklere Nutzer-Blasen und besser lesbare Hinweis-Texte.",
+      "item7": "Mindest-Schriftgrößen: winzige 11-Pixel-Texte auf 12 Pixel angehoben, Touch-Buttons mindestens 24 Pixel groß.",
+      "item8": "Modell-Downloads werden für Screenreader angesagt - Start und Phase, ohne Prozent-Flut."
+    },
     "v340": {
       "item1": "Absturz-Schutz: Bei einem unerwarteten Fehler bleibt die Oberfläche jetzt sichtbar statt weiß - deine Daten sind sicher, ein Klick lädt neu.",
       "item2": "Tastatur-Shortcuts: Strg+K (bzw. Cmd+K) öffnet und schließt die Chat-Suche, Esc bricht die laufende Generierung ab.",
@@ -602,7 +619,19 @@
     "description": "Datenschutz an erster Stelle - 100% lokal, keine Server-Verarbeitung",
     "downloadedModels": "Heruntergeladene Modelle",
     "totalSize": "Gesamtgröße",
-    "language": "Sprache"
+    "language": "Sprache",
+    "a11y": "Barrierefreiheit",
+    "a11yText": "Textgröße, Lesbarkeit und Animationen an deine Bedürfnisse anpassen.",
+    "textSize": "Textgröße",
+    "textSizeHint": "Skaliert die gesamte Oberfläche - praktisch für kleinen oder großen Text.",
+    "textSmall": "Klein",
+    "textStandard": "Standard",
+    "textLarge": "Groß",
+    "textXLarge": "Sehr groß",
+    "readableText": "Lesbarkeit erhöhen",
+    "readableTextHint": "Mehr Zeilenabstand und leichter Zeichenabstand in Nachrichten und Eingabefeld.",
+    "reduceMotion": "Animationen reduzieren",
+    "reduceMotionHint": "Blendet Bewegungen und Übergänge aus - unabhängig von der Systemeinstellung."
   },
   "common": {
     "loading": "Wird geladen...",
@@ -615,9 +644,17 @@
     "close": "Schließen",
     "language": "Sprache",
     "de": "Deutsch",
-    "en": "Englisch"
+    "en": "Englisch",
+    "save": "Speichern"
   },
   "offline": {
     "banner": "Du bist offline - bereits heruntergeladene Modelle und Chats funktionieren weiter, Downloads brauchen eine Verbindung."
+  },
+  "a11y": {
+    "skipToContent": "Zum Chat springen",
+    "generatingStarted": "Die Antwort wird generiert.",
+    "responseReady": "Die Antwort ist fertig.",
+    "userMessage": "Du",
+    "assistantMessage": "KI"
   }
 }

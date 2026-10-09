@@ -1,6 +1,7 @@
 import { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { localStorageGet, localStorageSet } from '../../services/storage/local-storage';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 // LocalStorage flag: once the user has seen the welcome guide, it stays closed
 const WELCOME_SEEN_KEY = 'webgui_welcome_seen_v1';
@@ -33,6 +34,7 @@ interface WelcomeScreenProps {
  */
 export const WelcomeScreen: FC<WelcomeScreenProps> = ({ onDismiss }) => {
   const { t } = useTranslation();
+  const trapRef = useFocusTrap(true, onDismiss);
 
   const handleStart = (): void => {
     onDismiss();
@@ -57,7 +59,13 @@ export const WelcomeScreen: FC<WelcomeScreenProps> = ({ onDismiss }) => {
   ];
 
   return (
-    <div className="fixed inset-0 z-[60] bg-zinc-950/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div
+      ref={trapRef}
+      className="fixed inset-0 z-[60] bg-zinc-950/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('welcome.title')}
+    >
       <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl max-w-2xl w-full border border-zinc-200 dark:border-zinc-800 p-8 my-8">
         <div className="flex items-center gap-4 mb-6">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-2xl shadow-xl shadow-indigo-500/25 flex-shrink-0">

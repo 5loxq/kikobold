@@ -2,6 +2,19 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.0.0] - 2026-10-09
+
+### Neu: Barrierefreiheit (Ziel: WCAG 2.1 AA)
+
+- **Textgröße einstellbar** (Einstellungen → Barrierefreiheit): Klein / Standard / Groß / Sehr groß - das gesamte rem-basierte UI skaliert über die Schriftgröße des html-Elements, Auswahl wird wie das Theme persistiert.
+- **Lesbarkeit erhöhen**: Optionaler Schalter für mehr Zeilenabstand (1.8) und leichten Zeichenabstand in Nachrichten und Eingabefeld.
+- **Animationen reduzieren**: Schalter deaktiviert alle Bewegungen und Übergänge unabhängig von der OS-Einstellung (`prefers-reduced-motion` greift zusätzlich weiterhin automatisch, jetzt auch für Spin/Pulse-Animationen).
+- **Screenreader-Unterstützung**: Skip-Link „Zum Chat springen" als erster Tab-Stop, semantisches `<main>`, Live-Region kündigt Generierungs-Start und fertige Antwort an, Nachrichten tragen „Du"/„KI"-Kennzeichnung für Screenreader, Modell-Download wird angesagt (Start/Phase, ohne Prozent-Flut), Fehlermeldungen per `role="alert"`.
+- **Tastatur**: Global sichtbare Fokus-Ringe (`:focus-visible`, 2px Indigo), Fokus-Fallen in allen Dialogen (What's New, Willkommensseite, Tour, Bildvorschau) mit Esc und Fokus-Rückgabe, Chat-Verlauf ist jetzt per Tastatur bedienbar (vorher nur per Maus klickbar), Mindest-Zielgröße 24×24px für Buttons.
+- **Kontraste (WCAG AA)**: Nutzer-Nachrichtenblase dunkler (Indigo-600 statt 500 - weißer Text jetzt 6.3:1 statt 4.5:1), Hinweis-Texte zinc-400 → zinc-500 (hell) bzw. zinc-600 → zinc-400 (dunkel), Amber-Hinweise auf amber-700, Tour-Label auf Indigo-600.
+- **Mindest-Schriftgrößen**: Alle 11px-Texte auf 12px angehoben (Sidebar, Modelle-Seite, Tour, Datenschutzhinweis).
+- **Labels**: Alle Icon-Buttons haben jetzt sprechende ARIA-Labels (zweisprachig), Such-Toggle mit `aria-expanded`/`aria-controls`, Theme-Toggle-Label übersetzt (vorher hardcoded Englisch).
+
 ## [3.4.0] - 2026-10-08
 
 ### Neu

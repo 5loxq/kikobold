@@ -86,6 +86,29 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  // Screen reader announcements (generation start/end). The streaming text
+  // itself is NOT put in a live region - it changes on every token and would
+  // flood assistive technology. Only the state transitions are announced.
+  const [announcement, setAnnouncement] = useState('');
+
+  useEffect(() => {
+    if (isGenerating) {
+      setAnnouncement(t('a11y.generatingStarted'));
+    }
+  }, [isGenerating, t]);
+
+  useEffect(() => {
+    if (isGenerating || !chat) {
+      return;
+    }
+    const last = chat.messages[chat.messages.length - 1];
+    if (last?.role === 'assistant') {
+      setAnnouncement(t('a11y.responseReady'));
+    }
+    // Fires when a message is added or generation ends - exactly the
+    // transitions that should be announced.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chat?.messages.length, isGenerating]);
 
   const normalizedSearch = searchQuery.trim().toLowerCase();
   const visibleMessages = React.useMemo(
@@ -129,7 +152,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           {webgpuAvailable === false && (
             <div className="mb-8 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-2xl p-4">
               <p className="text-amber-700 dark:text-amber-400 font-semibold">⚠️ {t('chat.webgpuNotSupported')}</p>
-              <p className="text-amber-600 dark:text-amber-500 text-sm mt-2">
+              <p className="text-amber-700 dark:text-amber-500 text-sm mt-2">
                 {t('chat.webgpuRequiredBrowsers')}
               </p>
             </div>
@@ -156,6 +179,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
   return (
     <div className="flex-1 flex flex-col bg-zinc-50 dark:bg-zinc-900 min-h-0">
+      {/* Screen reader announcements for generation state changes */}
+      <div className="sr-only" role="status" aria-live="polite">{announcement}</div>
       {/* Drag & drop warning overlay (drop itself is not supported) */}
       <FileDropWarning />
       {/* WebGPU Warning */}
@@ -198,12 +223,14 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                     }
                   }}
                   className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/40 rounded-lg transition-colors"
+                  aria-label={t('common.save')}
                 >
                   ✓
                 </button>
                 <button
                   onClick={() => setIsEditingTitle(false)}
                   className="p-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                  aria-label={t('common.cancel')}
                 >
                   ✕
                 </button>
@@ -218,6 +245,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                   }}
                   className="p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-sm"
                   title={t("chat.renameChat")}
+                  aria-label={t("chat.renameChat")}
                 >
                   ✏️
                 </button>
@@ -242,7 +270,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             )}
           </div>
           {error && (
-            <div className="text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-950/40 px-4 py-2 rounded-xl border border-red-100 dark:border-red-900 max-w-sm">
+            <div role="alert" className="text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-950/40 px-4 py-2 rounded-xl border border-red-100 dark:border-red-900 max-w-sm">
               {error}
             </div>
           )}
@@ -258,6 +286,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             }}
             disabled={isLoading}
             data-tour="model-select"
+            aria-label={t('chat.selectModel')}
             className="w-full sm:w-auto px-4 py-2 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm disabled:bg-zinc-100 dark:disabled:bg-zinc-800 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 shadow-sm"
           >
             <option value="">{t('chat.selectModel')}...</option>
@@ -311,7 +340,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           )}
 
           {selectedModelId && getModelConfig(selectedModelId)?.engine === 'wllama' && !supportsWllamaJspi() && !isLoading && (
-            <p className="text-xs text-amber-600 dark:text-amber-400 max-w-md leading-relaxed">
+            <p className="text-xs text-amber-700 dark:text-amber-400 max-w-md leading-relaxed">
               ⚠️ {t('chat.jspiHint')}
             </p>
           )}
@@ -365,19 +394,22 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           <div className="flex items-center gap-2 mt-3">
             <input
               type="text"
+              id="chat-search-input"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('chat.searchPlaceholder')}
               autoFocus
+              aria-label={t('chat.searchInChat')}
               className="flex-1 max-w-sm px-4 py-2 border border-zinc-200 dark:border-zinc-700 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 shadow-sm"
             />
-            <span className="text-xs text-zinc-500 dark:text-zinc-500">
+            <span className="text-xs text-zinc-500 dark:text-zinc-500" aria-live="polite">
               {normalizedSearch ? `${visibleMessages.length}` : ''}
             </span>
             <button
               onClick={() => { setSearchQuery(''); setIsSearchOpen(false); }}
               className="p-2 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
               title={t('chat.searchClose')}
+              aria-label={t('chat.searchClose')}
             >
               ✕
             </button>
@@ -393,6 +425,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           <button
             onClick={() => setIsSearchOpen((v) => !v)}
             data-tour="search"
+            aria-expanded={isSearchOpen}
+            aria-controls="chat-search-input"
             className="p-2 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-sm flex items-center gap-1"
             title={t('chat.searchInChat')}
           >

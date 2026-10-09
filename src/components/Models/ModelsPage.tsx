@@ -63,7 +63,7 @@ const ModelCard: React.FC<{ info: ModelInfo }> = ({ info }) => {
       {/* Meta row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
         <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/60 p-3">
-          <p className="text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-semibold mb-0.5">
+          <p className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold mb-0.5">
             {t('modelsPage.released')}
           </p>
           <p className="text-sm text-zinc-700 dark:text-zinc-200 font-medium">
@@ -71,7 +71,7 @@ const ModelCard: React.FC<{ info: ModelInfo }> = ({ info }) => {
           </p>
         </div>
         <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/60 p-3">
-          <p className="text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-semibold mb-0.5">
+          <p className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold mb-0.5">
             {t('modelsPage.downloadSize')}
           </p>
           <p className="text-sm text-zinc-700 dark:text-zinc-200 font-medium">
@@ -79,7 +79,7 @@ const ModelCard: React.FC<{ info: ModelInfo }> = ({ info }) => {
           </p>
         </div>
         <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/60 p-3">
-          <p className="text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-semibold mb-0.5">
+          <p className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold mb-0.5">
             {t('modelsPage.engine')}
           </p>
           <p className="text-sm text-zinc-700 dark:text-zinc-200 font-medium">
@@ -87,7 +87,7 @@ const ModelCard: React.FC<{ info: ModelInfo }> = ({ info }) => {
           </p>
         </div>
         <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/60 p-3">
-          <p className="text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-semibold mb-0.5">
+          <p className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold mb-0.5">
             {t('modelsPage.context')}
           </p>
           <p className="text-sm text-zinc-700 dark:text-zinc-200 font-medium">

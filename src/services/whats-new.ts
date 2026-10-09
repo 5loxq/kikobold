@@ -16,6 +16,19 @@ export interface WhatsNewEntry {
 /** All notable changes, newest first. Keep in sync with CHANGELOG.md. */
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    version: '4.0.0',
+    itemKeys: [
+      'whatsNew.v400.item1',
+      'whatsNew.v400.item2',
+      'whatsNew.v400.item3',
+      'whatsNew.v400.item4',
+      'whatsNew.v400.item5',
+      'whatsNew.v400.item6',
+      'whatsNew.v400.item7',
+      'whatsNew.v400.item8',
+    ],
+  },
+  {
     version: '3.4.0',
     itemKeys: [
       'whatsNew.v340.item1',

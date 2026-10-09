@@ -19,6 +19,7 @@ const DataManager = lazy(() => import('../Data/DataManager').then(m => ({ defaul
 import { BrowserWarning } from './BrowserWarning';
 import { InstallPrompt } from './InstallPrompt';
 import { type AppSettings, loadSettings, saveSettings } from '../../services/settings';
+import { applyAccessibilityClasses } from '../../services/accessibility';
 import { useLibrary } from '../../hooks/useLibrary';
 import { type LibraryFile, resolveLibraryReferences } from '../../services/storage/LibraryStorage';
 import * as ChatExport from '../../services/storage/chat-export-import';
@@ -53,6 +54,7 @@ export const MainLayout: FC = () => {
   const handleSettingsChange = (next: AppSettings): void => {
     setSettings(next);
     saveSettings(next);
+    applyAccessibilityClasses(next);
     if (next.theme !== 'system') {
       setThemeMode(next.theme);
       setDarkMode(next.theme === 'dark');
@@ -210,7 +212,8 @@ export const MainLayout: FC = () => {
     } else {
       setDarkMode(getSystemPrefersDark());
     }
-    // Run once on mount - settings.theme is loaded synchronously above
+    applyAccessibilityClasses(settings);
+    // Run once on mount - settings are loaded synchronously above
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -532,6 +535,11 @@ export const MainLayout: FC = () => {
 
   return (
     <div className="relative flex h-screen overflow-hidden bg-gradient-to-b from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900">
+      {/* Skip link: first tab stop, jumps keyboard users to the chat */}
+      <a href="#main-content" className="skip-link">
+        {t('a11y.skipToContent')}
+      </a>
+
       {/* Subtle ambient glow */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
         <div className="absolute -top-32 -left-24 w-96 h-96 rounded-full bg-indigo-400/10 dark:bg-indigo-600/10 blur-3xl"></div>
@@ -568,6 +576,7 @@ export const MainLayout: FC = () => {
               <button
                 onClick={() => setShowMobileSidebar(false)}
                 className="text-zinc-400 p-2 hover:bg-zinc-800 hover:text-white rounded-lg transition-colors"
+                aria-label={t('common.close')}
               >
                 ✕
               </button>
@@ -598,7 +607,7 @@ export const MainLayout: FC = () => {
         </div>
       )}
 
-      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+      <main id="main-content" className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Mobile Header */}
         <div className="lg:hidden bg-zinc-950 text-white px-4 py-3 flex items-center gap-3 border-b border-zinc-800">
           <button
@@ -633,9 +642,13 @@ export const MainLayout: FC = () => {
           <div className="fixed inset-0 bg-zinc-950/20 dark:bg-black/40 flex items-center justify-center z-50 pointer-events-none backdrop-blur-[2px]">
             <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-2xl max-w-md w-full mx-4 border border-zinc-100 dark:border-zinc-800">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
+                <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin flex-shrink-0" aria-hidden="true"></div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-zinc-800 dark:text-zinc-100">
+                  {/* role=status announces the download start and phase
+                      change to screen readers; the percentage below stays
+                      outside so it does not fire on every progress tick */}
+                  <div role="status">
+                    <h3 className="font-semibold text-zinc-800 dark:text-zinc-100">
                     {modelLoadPhase === 'preparing'
                       ? t('chat.preparingModel')
                       : t('chat.downloadingModel')}
@@ -645,6 +658,7 @@ export const MainLayout: FC = () => {
                       ?? activeModel?.name
                       ?? t('chat.processingRequest')}
                   </p>
+                  </div>
                   {modelLoadPhase === 'preparing' ? (
                     <>
                       {/* Indeterminate bar: the files are complete, the model
@@ -822,7 +836,7 @@ export const MainLayout: FC = () => {
             <ContactPage onNavigateBack={() => setActiveTab('chat')} />
           </Suspense>
         )}
-      </div>
+      </main>
 
       {/* Welcome page with short guide - shown on the very first visit */}
       {!welcomeDone && (

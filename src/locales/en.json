@@ -16,7 +16,10 @@
     "wiki": "Lexicon",
     "contact": "Contact",
     "toggle": "Toggle sidebar",
-    "openMenu": "Open menu"
+    "openMenu": "Open menu",
+    "navigation": "Navigation",
+    "switchToLightMode": "Switch to light mode",
+    "switchToDarkMode": "Switch to dark mode"
   },
   "chat": {
     "welcome": "Welcome to KI Kobold",
@@ -101,7 +104,11 @@
     "engineWebgpu": "Engine: WebGPU",
     "engineWasm": "Engine: WASM",
     "engineWebgpuHint": "The model runs on the graphics card - fastest option.",
-    "engineWasmHint": "The model runs without WebGPU on the processor - slower, but works in almost any browser."
+    "engineWasmHint": "The model runs without WebGPU on the processor - slower, but works in almost any browser.",
+    "messageInput": "Your message",
+    "removeDocument": "Remove attachment",
+    "removeImage": "Remove image",
+    "imagePreview": "Image preview"
   },
   "tab": {
     "generating": "AI is thinking…",
@@ -209,6 +216,16 @@
     "title": "What's new",
     "subtitle": "A few things have changed since your last visit:",
     "closeButton": "Got it!",
+    "v400": {
+      "item1": "Adjustable text size: small to very large - scales the entire interface (Settings → Accessibility).",
+      "item2": "Increased readability: more line height and slight letter spacing in messages and the input field.",
+      "item3": "Reduce animations: movement and transitions can be disabled - independent of the system setting.",
+      "item4": "Screen reader support: skip link to the chat, announcements when the AI starts and finishes answering, clear \"You\"/\"AI\" labels on messages.",
+      "item5": "Keyboard: visible focus rings everywhere, dialogs trap the Tab focus (Esc closes), the chat list is now operable by keyboard.",
+      "item6": "Improved contrast: text in light and dark mode now meets WCAG - including darker user bubbles and more readable hint texts.",
+      "item7": "Minimum font sizes: tiny 11-pixel texts raised to 12 pixels, touch buttons at least 24 pixels.",
+      "item8": "Model downloads are announced to screen readers - start and phase, without flooding percentages."
+    },
     "v340": {
       "item1": "Crash protection: when an unexpected error occurs, the interface stays visible instead of turning white - your data is safe, one click reloads.",
       "item2": "Keyboard shortcuts: Ctrl+K (or Cmd+K) opens and closes the chat search, Esc cancels the running generation.",
@@ -602,7 +619,19 @@
     "description": "Privacy-first - 100% local, no server processing",
     "downloadedModels": "Downloaded Models",
     "totalSize": "Total Size",
-    "language": "Language"
+    "language": "Language",
+    "a11y": "Accessibility",
+    "a11yText": "Adjust text size, readability and animations to your needs.",
+    "textSize": "Text size",
+    "textSizeHint": "Scales the whole interface - useful for smaller or larger text.",
+    "textSmall": "Small",
+    "textStandard": "Standard",
+    "textLarge": "Large",
+    "textXLarge": "Very large",
+    "readableText": "Increase readability",
+    "readableTextHint": "More line height and slight letter spacing in messages and the input field.",
+    "reduceMotion": "Reduce animations",
+    "reduceMotionHint": "Hides movement and transitions - independent of the system setting."
   },
   "common": {
     "loading": "Loading...",
@@ -615,9 +644,17 @@
     "close": "Close",
     "language": "Language",
     "de": "German",
-    "en": "English"
+    "en": "English",
+    "save": "Save"
   },
   "offline": {
     "banner": "You are offline - downloaded models and chats keep working, downloads need a connection."
+  },
+  "a11y": {
+    "skipToContent": "Skip to chat",
+    "generatingStarted": "The response is being generated.",
+    "responseReady": "The response is ready.",
+    "userMessage": "You",
+    "assistantMessage": "AI"
   }
 }

@@ -5,6 +5,9 @@ import { localStorageGet, localStorageSetJson } from './storage/local-storage';
 
 export type AppThemeMode = 'system' | 'light' | 'dark';
 
+/** Base font size - scales the whole rem-based UI via the html element */
+export type TextScale = 'small' | 'standard' | 'large' | 'xlarge';
+
 export interface AppSettings {
   theme: AppThemeMode;
   /** Profile that is active on startup */
@@ -15,6 +18,12 @@ export interface AppSettings {
   autoSpeak: boolean;
   /** Include the memory entries in requests */
   memoryEnabled: boolean;
+  /** Base text size applied to the html element */
+  textScale: TextScale;
+  /** More line height on reading surfaces for easier reading */
+  readableText: boolean;
+  /** Disable animations regardless of the OS "reduce motion" setting */
+  reduceMotion: boolean;
 }
 
 const SETTINGS_KEY = 'webgui_settings_v1';
@@ -27,7 +36,13 @@ const DEFAULT_SETTINGS: AppSettings = {
   // helped - it can be enabled in the settings.
   autoSpeak: false,
   memoryEnabled: true,
+  textScale: 'standard',
+  readableText: false,
+  reduceMotion: false,
 };
+
+const isTextScale = (value: unknown): value is TextScale =>
+  value === 'small' || value === 'standard' || value === 'large' || value === 'xlarge';
 
 export const loadSettings = (): AppSettings => {
   try {
@@ -42,6 +57,7 @@ export const loadSettings = (): AppSettings => {
       theme: parsed.theme === 'light' || parsed.theme === 'dark' || parsed.theme === 'system'
         ? parsed.theme
         : DEFAULT_SETTINGS.theme,
+      textScale: isTextScale(parsed.textScale) ? parsed.textScale : DEFAULT_SETTINGS.textScale,
     };
   } catch {
     return { ...DEFAULT_SETTINGS };

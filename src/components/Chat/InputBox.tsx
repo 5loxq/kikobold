@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { error, log } from '../../services/logging';
 import { sanitizeInputLight } from '../../services/security';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { type LibraryFile } from '../../services/storage/LibraryStorage';
 import {
   ATTACHMENT_LIMITS,
@@ -135,6 +136,8 @@ export const InputBox: React.FC<InputBoxProps> = ({
   const [images, setImages] = useState<ImageAttachment[]>([]);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [previewImage, setPreviewImage] = useState<ImageAttachment | null>(null);
+  // Focus trap for the fullscreen image preview (Esc closes, Tab stays inside)
+  const previewTrapRef = useFocusTrap(previewImage !== null, () => setPreviewImage(null));
 
   // "@" mention autocomplete: active while the caret is right after an
   // @token (at the start of the text or after whitespace). `startIndex`
@@ -518,7 +521,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
               <button
                 onClick={() => removeDocument(doc.id)}
                 className="text-indigo-400 hover:text-red-500 transition-colors"
-                aria-label="Remove document"
+                aria-label={t('chat.removeDocument')}
               >
                 ✕
               </button>
@@ -541,8 +544,8 @@ export const InputBox: React.FC<InputBoxProps> = ({
               />
               <button
                 onClick={() => removeImage(img.id)}
-                className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-black/60 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                aria-label="Remove image"
+                className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-black/60 text-white text-xs opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity hover:bg-red-600"
+                aria-label={t('chat.removeImage')}
                 title={`${img.name} (${formatBytes(img.size)})`}
               >
                 ✕
@@ -610,6 +613,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
             onChange={handleInput}
             onKeyDown={handleKeyDown}
             placeholder={isModelLoaded ? t('chat.placeholder') : t('chat.selectModel')}
+            aria-label={t('chat.messageInput')}
             disabled={isLoading || !isModelLoaded}
             onBlur={() => {
               setMention(null);
@@ -722,7 +726,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
               className={`h-9 px-4 rounded-xl text-sm font-medium transition-all ${
                 isSendDisabled
                   ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:from-indigo-400 hover:to-violet-500 hover:shadow-lg hover:shadow-indigo-500/25 active:scale-95'
+                  : 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-400 hover:to-violet-500 hover:shadow-lg hover:shadow-indigo-500/25 active:scale-95'
               }`}
               aria-label={t('chat.send')}
             >
@@ -737,7 +741,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
             </button>
           </div>
         </div>
-        <p className="text-center text-[11px] text-zinc-400 dark:text-zinc-600 mt-2">
+        <p className="text-center text-xs text-zinc-500 dark:text-zinc-400 mt-2">
           {t('chat.privacyNote')}
         </p>
       </div>
@@ -745,7 +749,10 @@ export const InputBox: React.FC<InputBoxProps> = ({
       {/* Fullscreen Image Preview Modal */}
       {previewImage && (
         <div
+          ref={previewTrapRef}
           className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          role="dialog"
+          aria-label={t('chat.imagePreview')}
           onClick={() => setPreviewImage(null)}
         >
           <div
@@ -764,7 +771,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
             <button
               onClick={() => setPreviewImage(null)}
               className="absolute -top-3 -right-3 w-9 h-9 flex items-center justify-center rounded-full bg-white text-gray-800 shadow-lg hover:bg-red-500 hover:text-white transition-colors"
-              aria-label={t('chat.searchClose')}
+              aria-label={t('common.close')}
             >
               ✕
             </button>

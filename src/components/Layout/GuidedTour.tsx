@@ -1,6 +1,7 @@
 import { FC, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { localStorageGet, localStorageRemove, localStorageSet } from '../../services/storage/local-storage';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 const TOUR_SEEN_KEY = 'webgui_tour_done_v1';
 
@@ -96,6 +97,11 @@ export const GuidedTour: FC<GuidedTourProps> = ({ onComplete }) => {
   const [rect, setRect] = useState<HighlightRect | null>(null);
   const [tooltipHeight, setTooltipHeight] = useState(180);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  // Esc ends the tour; Tab stays inside the explanation card
+  const trapRef = useFocusTrap(rect !== null, () => {
+    markTourSeen();
+    onComplete();
+  });
 
   const findTarget = (step: TourStep): HTMLElement | null => {
     const selectors = [step.selector, step.mobileSelector].filter(Boolean) as string[];
@@ -199,7 +205,7 @@ export const GuidedTour: FC<GuidedTourProps> = ({ onComplete }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[70]" role="dialog" aria-label={t('tour.ariaLabel')}>
+    <div ref={trapRef} className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label={t('tour.ariaLabel')}>
       {/* Spotlight: the huge box-shadow dims everything except the target */}
       <div
         className="absolute rounded-2xl border-2 border-indigo-400 dark:border-indigo-500 transition-all duration-300"
@@ -218,7 +224,7 @@ export const GuidedTour: FC<GuidedTourProps> = ({ onComplete }) => {
         className="absolute w-[320px] max-w-[calc(100vw-24px)] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 p-4"
         style={{ top: tooltipTop, left: tooltipLeft }}
       >
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-1">
+        <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-1">
           {t('tour.progress', { current: stepIndex + 1, total: STEPS.length })}
         </p>
         <h3 className="font-bold text-zinc-800 dark:text-zinc-100 mb-1.5">
@@ -245,7 +251,7 @@ export const GuidedTour: FC<GuidedTourProps> = ({ onComplete }) => {
             )}
             <button
               onClick={next}
-              className="px-4 py-2 text-sm font-semibold rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:opacity-90 transition-opacity"
+              className="px-4 py-2 text-sm font-semibold rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:opacity-90 transition-opacity"
             >
               {isLast ? t('tour.finish') : t('tour.next')}
             </button>

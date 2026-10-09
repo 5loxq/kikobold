@@ -1,6 +1,7 @@
 import { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { WHATS_NEW, type WhatsNewEntry } from '../../services/whats-new';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 interface WhatsNewDialogProps {
   /** Entries to display (already filtered by the caller) */
@@ -16,6 +17,7 @@ interface WhatsNewDialogProps {
  */
 export const WhatsNewDialog: FC<WhatsNewDialogProps> = ({ entries, onClose }) => {
   const { t } = useTranslation();
+  const trapRef = useFocusTrap(entries.length > 0, onClose);
 
   if (entries.length === 0) {
     return null;
@@ -23,8 +25,10 @@ export const WhatsNewDialog: FC<WhatsNewDialogProps> = ({ entries, onClose }) =>
 
   return (
     <div
+      ref={trapRef}
       className="fixed inset-0 z-[60] bg-zinc-950/70 backdrop-blur-sm flex items-center justify-center p-4"
       role="dialog"
+      aria-modal="true"
       aria-label={t('whatsNew.title')}
     >
       <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl max-w-2xl w-full border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 max-h-[85vh] flex flex-col my-4">

@@ -19,6 +19,78 @@ body,
   height: 100%;
 }
 
+/* Accessibility: text scaling. The whole UI is rem-based, so the html
+   font size scales text, spacing and icon sizes together. */
+html {
+  font-size: 16px;
+}
+html.text-scale-small {
+  font-size: 15px;
+}
+html.text-scale-large {
+  font-size: 18px;
+}
+html.text-scale-xlarge {
+  font-size: 20px;
+}
+
+/* Accessibility: increased readability - more line height and a little
+   letter spacing on the main reading surfaces (chat messages, input). */
+html.readable-text .markdown-message,
+html.readable-text .whitespace-pre-wrap {
+  line-height: 1.8;
+  letter-spacing: 0.015em;
+}
+
+/* Accessibility: "reduce motion" setting - neutralizes animations and
+   transitions for users who cannot or do not want to set the OS option. */
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Accessibility: visible keyboard focus everywhere. :focus-visible only
+   reacts to keyboard navigation, mouse clicks stay unaffected. */
+:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+html.dark :focus-visible {
+  outline-color: #a5b4fc;
+}
+
+/* Accessibility: minimum touch target size for interactive elements
+   (WCAG 2.5.8 - at least 24x24 px). */
+button:not(:disabled),
+[role="option"] {
+  min-height: 24px;
+  min-width: 24px;
+}
+
+/* Accessibility: skip link - first tab stop, jumps to the main content.
+   Invisible until focused so it does not disturb the visual design. */
+.skip-link {
+  position: fixed;
+  top: -100px;
+  left: 8px;
+  z-index: 100;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: #4f46e5;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: top 150ms ease;
+}
+.skip-link:focus {
+  top: 8px;
+}
+
 /* Theme color scheme + smooth transitions between light and dark */
 html {
   color-scheme: light;
@@ -148,7 +220,10 @@ html {
   .animate-slide-in,
   .animate-typing-bounce,
   .animate-gentle-pulse,
-  .animate-progress-slide {
+  .animate-progress-slide,
+  .animate-spin,
+  .animate-pulse,
+  .animate-bounce {
     animation: none;
 }
 }

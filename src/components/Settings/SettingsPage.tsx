@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { LocalModel, Profile } from '../../types';
 import { MODELS } from '../../services/models/model-registry';
-import type { AppSettings, AppThemeMode } from '../../services/settings';
+import type { AppSettings, AppThemeMode, TextScale } from '../../services/settings';
 import { version as appVersion } from '../../../package.json';
 
 interface SettingsPageProps {
@@ -26,6 +26,13 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     { value: 'system', label: t('settings.themeSystem'), icon: '💻' },
     { value: 'light', label: t('settings.themeLight'), icon: '☀️' },
     { value: 'dark', label: t('settings.themeDark'), icon: '🌙' },
+  ];
+
+  const textScaleOptions: Array<{ value: TextScale; label: string; icon: string }> = [
+    { value: 'small', label: t('settings.textSmall'), icon: 'A⁻' },
+    { value: 'standard', label: t('settings.textStandard'), icon: 'A' },
+    { value: 'large', label: t('settings.textLarge'), icon: 'A⁺' },
+    { value: 'xlarge', label: t('settings.textXLarge'), icon: 'A⁺⁺' },
   ];
 
   return (
@@ -102,6 +109,74 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5">
               {t('settings.defaultModelHint')}
             </p>
+          </section>
+
+          {/* Accessibility */}
+          <section className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-800">
+            <h3 className="font-bold text-lg mb-2 text-zinc-800 dark:text-zinc-100">
+              {t('settings.a11y')}
+            </h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+              {t('settings.a11yText')}
+            </p>
+
+            <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-200 mb-1.5" htmlFor="settings-text-scale">
+              {t('settings.textSize')}
+            </label>
+            <div id="settings-text-scale" className="grid grid-cols-4 gap-2 mb-1.5" role="group" aria-label={t('settings.textSize')}>
+              {textScaleOptions.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => onChange({ ...settings, textScale: option.value })}
+                  aria-pressed={settings.textScale === option.value}
+                  className={`px-3 py-3 rounded-xl border text-sm font-medium transition-colors ${
+                    settings.textScale === option.value
+                      ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300'
+                      : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                  }`}
+                >
+                  <span className="block text-lg mb-1" aria-hidden="true">{option.icon}</span>
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
+              {t('settings.textSizeHint')}
+            </p>
+
+            <label className="flex items-start justify-between gap-3 cursor-pointer mb-4">
+              <span>
+                <span className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
+                  {t('settings.readableText')}
+                </span>
+                <span className="block text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  {t('settings.readableTextHint')}
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                checked={settings.readableText}
+                onChange={(e) => onChange({ ...settings, readableText: e.target.checked })}
+                className="mt-1 w-5 h-5 rounded accent-indigo-600 flex-shrink-0"
+              />
+            </label>
+
+            <label className="flex items-start justify-between gap-3 cursor-pointer">
+              <span>
+                <span className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
+                  {t('settings.reduceMotion')}
+                </span>
+                <span className="block text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  {t('settings.reduceMotionHint')}
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                checked={settings.reduceMotion}
+                onChange={(e) => onChange({ ...settings, reduceMotion: e.target.checked })}
+                className="mt-1 w-5 h-5 rounded accent-indigo-600 flex-shrink-0"
+              />
+            </label>
           </section>
 
           {/* Behavior */}

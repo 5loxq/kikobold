@@ -69,11 +69,14 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, isDarkMode,
       <div
         className={`max-w-xs lg:max-w-2xl px-5 py-3.5 shadow-sm ${
           isUser
-            ? 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white rounded-3xl rounded-br-lg'
+            ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white rounded-3xl rounded-br-lg'
             : 'bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 rounded-3xl rounded-bl-lg border border-zinc-100 dark:border-zinc-700'
         }`}
       >
         <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+          {/* Speaker label for screen readers - visual users have the bubble
+              alignment, assistive technology gets an explicit "who said it" */}
+          <span className="sr-only">{isUser ? `${t('a11y.userMessage')}: ` : `${t('a11y.assistantMessage')}: `}</span>
           {!isUser && thinking !== null && <ThinkingBlock thinking={thinking} />}
           {/* While searching, matches are highlighted in user AND assistant
               messages; markdown formatting is skipped then so the hits stay
@@ -89,20 +92,21 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, isDarkMode,
           )}
         </div>
         <div className="flex items-center justify-between mt-2">
-          <p className={`text-xs opacity-60 ${
-            isUser ? 'text-indigo-100' : 'text-zinc-400 dark:text-zinc-500'
+          <p className={`text-xs ${
+            isUser ? 'text-white' : 'text-zinc-500 dark:text-zinc-400'
           }`}>
             {timeStr}
           </p>
           <button
             type="button"
             onClick={handleCopy}
-            className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
+            className={`text-xs px-2 py-1 rounded transition-colors ${
               isUser
-                ? 'text-indigo-100 hover:bg-white/20'
-                : 'text-zinc-400 hover:bg-zinc-100 dark:text-zinc-500 dark:hover:bg-zinc-700 dark:hover:text-zinc-300'
+                ? 'text-white hover:bg-white/20'
+                : 'text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-300'
             }`}
             title={copied ? t('chat.copied') : t('chat.copyMessage')}
+            aria-label={copied ? t('chat.copied') : t('chat.copyMessage')}
           >
             {copied ? '✓' : '⧉'}
           </button>
