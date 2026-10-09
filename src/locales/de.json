@@ -20,7 +20,8 @@
     "navigation": "Navigation",
     "switchToLightMode": "Zum hellen Design wechseln",
     "switchToDarkMode": "Zum dunklen Design wechseln",
-    "privacy": "Datenschutz"
+    "privacy": "Datenschutz",
+    "imprint": "Impressum"
   },
   "chat": {
     "welcome": "Willkommen bei KI Kobold",
@@ -702,6 +703,21 @@
     "rightsText2": "Außerdem hast du das Recht, dich bei einer Datenschutz-Aufsichtsbehörde zu beschweren (Art. 77 DSGVO). Anfragen zu Datenschutz richtest du bitte an die E-Mail-Adresse unten.",
     "addressTitle": "Anschrift",
     "contactEmailLabel": "E-Mail für Datenschutz-Anfragen",
+    "backToChat": "Zurück zum Chat"
+  },
+  "imprint": {
+    "title": "Impressum",
+    "subtitle": "Angaben gemäß § 5 DDG (Digitale-Dienste-Gesetz)",
+    "providerTitle": "Anbieter",
+    "contactLabel": "E-Mail",
+    "vatTitle": "Umsatzsteuer-ID",
+    "vatText": "Keine Umsatzsteuer-Identifikationsnummer - kikobold.net ist ein privates, nicht kommerzielles Projekt.",
+    "contentTitle": "Haftung für Inhalte und KI-Antworten",
+    "contentText": "Die Inhalte dieser Website werden mit größter Sorgfalt erstellt. Die Antworten der KI-Modelle werden jedoch lokal auf deinem Gerät erzeugt und können fehlerhaft oder unvollständig sein (sogenannte Halluzinationen). Für Richtigkeit, Vollständigkeit und Aktualität der KI-Antworten wird keine Haftung übernommen - prüfe wichtige Informationen bitte immer an unabhängigen Quellen.",
+    "linksTitle": "Haftung für Links",
+    "linksText": "Diese Website enthält Links zu externen Websites Dritter (etwa zu Modell-Anbietern wie HuggingFace). Auf deren Inhalte haben wir keinen Einfluss und können daher keine Gewähr für sie übernehmen. Zum Zeitpunkt der Verlinkung waren keine Rechtsverstöße erkennbar.",
+    "copyrightTitle": "Urheberrecht",
+    "copyrightText": "Die App ist als Open Source unter der MIT-Lizenz veröffentlicht. Die eingebundenen KI-Modelle stehen unter den Lizenzen ihrer jeweiligen Anbieter (LiquidAI, Qwen/Alibaba) und werden unverändert aus öffentlichen Quellen ausgeliefert.",
     "backToChat": "Zurück zum Chat"
   }
 }

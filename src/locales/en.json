@@ -20,7 +20,8 @@
     "navigation": "Navigation",
     "switchToLightMode": "Switch to light mode",
     "switchToDarkMode": "Switch to dark mode",
-    "privacy": "Privacy"
+    "privacy": "Privacy",
+    "imprint": "Imprint"
   },
   "chat": {
     "welcome": "Welcome to KI Kobold",
@@ -702,6 +703,21 @@
     "rightsText2": "You also have the right to lodge a complaint with a data protection supervisory authority (Art. 77 GDPR). Please direct privacy requests to the email address below.",
     "addressTitle": "Address",
     "contactEmailLabel": "Email for privacy requests",
+    "backToChat": "Back to chat"
+  },
+  "imprint": {
+    "title": "Imprint",
+    "subtitle": "Information pursuant to § 5 DDG (German Digital Services Act)",
+    "providerTitle": "Provider",
+    "contactLabel": "Email",
+    "vatTitle": "VAT ID",
+    "vatText": "No VAT identification number - kikobold.net is a private, non-commercial project.",
+    "contentTitle": "Liability for content and AI answers",
+    "contentText": "The content of this website is created with the greatest care. However, the AI models' answers are generated locally on your device and may be incorrect or incomplete (so-called hallucinations). No liability is assumed for the accuracy, completeness or timeliness of AI answers - please always verify important information against independent sources.",
+    "linksTitle": "Liability for links",
+    "linksText": "This website contains links to external third-party websites (e.g. model providers such as HuggingFace). We have no influence on their content and therefore cannot guarantee it. No legal violations were apparent at the time of linking.",
+    "copyrightTitle": "Copyright",
+    "copyrightText": "The app is published as open source under the MIT license. The integrated AI models are subject to the licenses of their respective providers (LiquidAI, Qwen/Alibaba) and are served unmodified from public sources.",
     "backToChat": "Back to chat"
   }
 }
