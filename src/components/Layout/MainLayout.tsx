@@ -672,7 +672,7 @@ export const MainLayout: FC = () => {
                       <div className="mt-3 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
                         <div className="h-2 w-1/3 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full animate-progress-slide"></div>
                       </div>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1.5">
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5">
                         {t('chat.preparingNote')}
                       </p>
                     </>
@@ -684,7 +684,7 @@ export const MainLayout: FC = () => {
                           style={{ width: `${Math.max(2, Math.round(modelLoadProgress))}%` }}
                         ></div>
                       </div>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1.5 tabular-nums">
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5 tabular-nums">
                         {Math.round(modelLoadProgress)}%
                         {modelLoadStats
                           ? ` · ${t('chat.downloadStats', {
@@ -697,12 +697,12 @@ export const MainLayout: FC = () => {
                       {((): JSX.Element | null => {
                         const eta = downloadEta(modelLoadStats);
                         return eta ? (
-                          <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-0.5">
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                             {t('chat.downloadEta', { time: eta })}
                           </p>
                         ) : null;
                       })()}
-                      <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-2 leading-relaxed">
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2 leading-relaxed">
                         {t('chat.downloadLocalNote')}
                       </p>
                     </>

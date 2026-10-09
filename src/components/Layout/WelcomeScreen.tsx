@@ -102,7 +102,7 @@ export const WelcomeScreen: FC<WelcomeScreenProps> = ({ onDismiss }) => {
           ))}
         </div>
 
-        <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-5 leading-relaxed">
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-5 leading-relaxed">
           {t('welcome.downloadHint')}
         </p>
 

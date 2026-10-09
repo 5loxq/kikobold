@@ -225,10 +225,10 @@ const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, isM
       <div ref={scrollRef} onScroll={handleScroll} className="messages-scroll flex-1 overflow-y-auto p-4 md:p-6">
         <div className="max-w-3xl mx-auto w-full">
         {messages.length === 0 ? (
-          <div className="text-center text-zinc-400 dark:text-zinc-500 py-12">
+          <div className="text-center text-zinc-500 dark:text-zinc-400 py-12">
             <div className="text-4xl mb-4">💬</div>
             <p className="text-lg font-medium">{t('chat.noMessagesYet')}</p>
-            <p className="text-sm mt-2 text-zinc-500 dark:text-zinc-500">{t('chat.startConversation')}</p>
+            <p className="text-sm mt-2 text-zinc-500 dark:text-zinc-400">{t('chat.startConversation')}</p>
           </div>
         ) : (
           <>
@@ -284,7 +284,7 @@ const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, isM
                   <div className="w-2 h-2 bg-indigo-500 rounded-full animate-typing-bounce" style={{ animationDelay: '0.15s' }}></div>
                   <div className="w-2 h-2 bg-indigo-500 rounded-full animate-typing-bounce" style={{ animationDelay: '0.3s' }}></div>
                 </div>
-                <span className="ml-2 text-zinc-400 dark:text-zinc-500 text-sm">{t('chat.thinking')}</span>
+                <span className="ml-2 text-zinc-500 dark:text-zinc-400 text-sm">{t('chat.thinking')}</span>
               </div>
             </div>
           </div>

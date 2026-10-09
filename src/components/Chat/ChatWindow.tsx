@@ -371,7 +371,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                     setEditedTitle(chat.title);
                     setIsEditingTitle(true);
                   }}
-                  className="p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-sm"
+                  className="p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-sm"
                   title={t("chat.renameChat")}
                   aria-label={t("chat.renameChat")}
                 >
@@ -386,6 +386,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                   value={activeProfile.id}
                   onChange={(e) => onSelectProfile && onSelectProfile(e.target.value)}
                   data-tour="profile-select"
+                  aria-label={t('profiles.activeProfile')}
                   className="max-w-full px-3 py-1.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   {profiles.map((profile) => (
@@ -530,7 +531,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               aria-label={t('chat.searchInChat')}
               className="flex-1 max-w-sm px-4 py-2 border border-zinc-200 dark:border-zinc-700 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 shadow-sm"
             />
-            <span className="text-xs text-zinc-500 dark:text-zinc-500" aria-live="polite">
+            <span className="text-xs text-zinc-500 dark:text-zinc-400" aria-live="polite">
               {normalizedSearch ? `${visibleMessages.length}` : ''}
             </span>
             <button

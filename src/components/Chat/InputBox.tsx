@@ -601,7 +601,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
                     >
                       <span>📄</span>
                       <span className="flex-1 truncate font-medium">{file.name}</span>
-                      <span className="text-xs text-zinc-400">{formatBytes(file.size)}</span>
+                      <span className="text-xs text-zinc-500">{formatBytes(file.size)}</span>
                     </button>
                   </li>
                 ))}

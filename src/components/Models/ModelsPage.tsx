@@ -148,7 +148,7 @@ export const ModelsPage: React.FC<ModelsPageProps> = ({ onNavigateBack }) => {
           <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
             {t('modelsPage.intro')}
           </p>
-          <p className="text-sm text-zinc-500 dark:text-zinc-500 leading-relaxed border-l-4 border-indigo-300 dark:border-indigo-800 pl-3 mt-3">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed border-l-4 border-indigo-300 dark:border-indigo-800 pl-3 mt-3">
             💡 {t('modelsPage.thinkingHint')}
           </p>
         </section>

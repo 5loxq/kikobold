@@ -117,7 +117,7 @@ export const WikiPage: React.FC<WikiPageProps> = ({ onNavigateBack }) => {
               </ul>
             </div>
           </div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-500 leading-relaxed border-l-4 border-indigo-300 dark:border-indigo-800 pl-3">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed border-l-4 border-indigo-300 dark:border-indigo-800 pl-3">
             💡 {t('wiki.thinkingHint')}
           </p>
         </section>
@@ -149,7 +149,7 @@ export const WikiPage: React.FC<WikiPageProps> = ({ onNavigateBack }) => {
               </div>
             ))}
           </div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-500 leading-relaxed border-l-4 border-indigo-300 dark:border-indigo-800 pl-3">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed border-l-4 border-indigo-300 dark:border-indigo-800 pl-3">
             🔒 {t('wiki.modelsLocalNote')}
           </p>
         </section>
@@ -211,7 +211,7 @@ export const WikiPage: React.FC<WikiPageProps> = ({ onNavigateBack }) => {
               >
                 <summary className="px-4 py-2.5 text-sm font-semibold text-zinc-700 dark:text-zinc-200 cursor-pointer list-none flex items-center justify-between gap-2">
                   <span>{t(entry.termKey)}</span>
-                  <span className="text-zinc-400 transition-transform group-open:rotate-90">›</span>
+                  <span className="text-zinc-500 transition-transform group-open:rotate-90">›</span>
                 </summary>
                 <p className="px-4 pb-3 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
                   {t(entry.defKey)}
