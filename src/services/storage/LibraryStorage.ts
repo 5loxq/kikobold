@@ -42,9 +42,7 @@ export const isAllowedLibraryFile = (file: File): boolean => {
 };
 
 export const initLibraryDB = (): Promise<void> => {
-  if (!dbReadyPromise) {
-    dbReadyPromise = openLibraryDB();
-  }
+  dbReadyPromise ??= openLibraryDB();
   return dbReadyPromise;
 };
 

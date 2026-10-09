@@ -28,7 +28,6 @@ interface ChatWindowProps {
   loadStats?: { loadedMB: number; totalMB: number; speedMBps: number } | null;
   /** 'downloading' = fetching files, 'preparing' = initializing in memory */
   loadingPhase?: 'downloading' | 'preparing';
-  darkMode?: boolean;
   isModelDownloaded?: (modelId: string) => boolean;
   isGenerating?: boolean;
   streamingMessage?: string | null;
@@ -67,7 +66,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   error,
   webgpuAvailable,
   loadingProgress = 0,
-  darkMode = false,
   loadStats = null,
   loadingPhase = 'downloading',
   isModelDownloaded,
@@ -384,7 +382,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 <label className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{t('profiles.activeProfile')}:</label>
                 <select
                   value={activeProfile.id}
-                  onChange={(e) => onSelectProfile && onSelectProfile(e.target.value)}
+                  onChange={(e) => onSelectProfile?.(e.target.value)}
                   data-tour="profile-select"
                   aria-label={t('profiles.activeProfile')}
                   className="max-w-full px-3 py-1.5 border border-zinc-500 rounded-lg text-sm text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -623,7 +621,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         isModelLoading={isLoading}
         streamingMessage={streamingMessage}
         messagesEndRef={messagesEndRef}
-        isDarkMode={darkMode}
         searchQuery={searchQuery}
         focusedMessageId={focusedMessageIndex !== null ? visibleMessages[focusedMessageIndex]?.id ?? null : null}
         speakingMessageId={speakingMessageId}

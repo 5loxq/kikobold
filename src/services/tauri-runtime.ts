@@ -94,11 +94,11 @@ export const isBrowserExtension = (): boolean => {
         if (typeof window !== 'undefined') {
             // Check for extension-specific contexts
             const w = window as unknown as { chrome?: { extension?: unknown }; browser?: { extension?: unknown } };
-            if (w.chrome !== undefined && w.chrome.extension !== undefined) {
+            if (w.chrome?.extension !== undefined) {
                 return true;
             }
-            
-            if (w.browser !== undefined && w.browser.extension !== undefined) {
+
+            if (w.browser?.extension !== undefined) {
                 return true;
             }
         }

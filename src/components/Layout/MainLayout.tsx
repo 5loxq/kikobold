@@ -44,7 +44,7 @@ import {
   renameFolder as renameChatFolder,
 } from '../../services/storage/FolderStorage';
 import { buildMemoryPromptBlock } from '../../services/storage/MemoryStorage';
-import { isDarkMode as checkDarkMode, getSystemPrefersDark, setThemeMode } from '../../services/theme';
+import { isDarkMode as checkDarkMode, setThemeMode } from '../../services/theme';
 import { error as logError } from '../../services/logging';
 import { buildPromptWithDocuments, type DocumentAttachment, type ImageAttachment } from '../../services/attachments';
 import { trimHistoryToCharBudget } from '../../services/llm/text-processing';
@@ -59,22 +59,15 @@ export const MainLayout: FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('chat');
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
-  const [darkMode, setDarkMode] = useState<boolean>(checkDarkMode());
   // Apply settings changes: persist them and update the theme
   const handleSettingsChange = (next: AppSettings): void => {
     setSettings(next);
     saveSettings(next);
     applyAccessibilityClasses(next);
-    if (next.theme !== 'system') {
-      setThemeMode(next.theme);
-      setDarkMode(next.theme === 'dark');
-    } else {
-      setThemeMode('system');
-      setDarkMode(getSystemPrefersDark());
-    }
+    setThemeMode(next.theme);
   };
   const handleToggleTheme = (): void => {
-    const next = !darkMode;
+    const next = !checkDarkMode();
     handleSettingsChange({ ...settings, theme: next ? 'dark' : 'light' });
   };
   const isOffline = useOfflineStatus();
@@ -196,7 +189,7 @@ export const MainLayout: FC = () => {
       }
     }
     setLastSeenVersion(appVersion);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const isModelLoaded = currentModelId === activeModel?.id;
@@ -266,32 +259,11 @@ export const MainLayout: FC = () => {
 
   // Apply the persisted theme from the app settings on startup
   useEffect(() => {
-    if (settings.theme !== 'system') {
-      setThemeMode(settings.theme);
-      setDarkMode(settings.theme === 'dark');
-    } else {
-      setDarkMode(getSystemPrefersDark());
-    }
+    setThemeMode(settings.theme);
     applyAccessibilityClasses(settings);
     // Run once on mount - settings are loaded synchronously above
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Keep the toggle icon in sync when the OS switches between light and
-  // dark while the app is running with theme "system"
-  useEffect(() => {
-    if (!('matchMedia' in window)) {
-      return;
-    }
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-    const listener = (e: MediaQueryListEvent): void => {
-      if (settings.theme === 'system') {
-        setDarkMode(e.matches);
-      }
-    };
-    media.addEventListener('change', listener);
-    return (): void => media.removeEventListener('change', listener);
-  }, [settings.theme]);
 
   // Apply the default profile from settings once profiles are loaded
   const defaultProfileAppliedRef = useRef(false);
@@ -616,7 +588,6 @@ export const MainLayout: FC = () => {
           onDeleteChat={handleDeleteChat}
           activeTab={activeTab}
           onTabChange={setActiveTab}
-          darkMode={darkMode}
           onToggleTheme={handleToggleTheme}
           folders={folders}
           onCreateFolder={handleCreateFolder}
@@ -664,7 +635,6 @@ export const MainLayout: FC = () => {
                   setActiveTab(tab);
                   setShowMobileSidebar(false);
                 }}
-                darkMode={darkMode}
                 onToggleTheme={handleToggleTheme}
                 folders={folders}
                 onCreateFolder={handleCreateFolder}
@@ -794,7 +764,6 @@ export const MainLayout: FC = () => {
             loadingProgress={modelLoadProgress}
             loadStats={modelLoadStats}
             loadingPhase={modelLoadPhase}
-            darkMode={darkMode}
             isModelDownloaded={isModelDownloaded}
             isGenerating={isGenerating}
             streamingMessage={streamingMessage ? streamText : null}

@@ -46,9 +46,7 @@ function validateMessage(message: unknown): message is Message {
 }
 
 export const initChatDB = (): Promise<void> => {
-  if (!dbReadyPromise) {
-    dbReadyPromise = openChatDB();
-  }
+  dbReadyPromise ??= openChatDB();
   return dbReadyPromise;
 };
 

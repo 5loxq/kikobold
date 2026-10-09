@@ -38,9 +38,7 @@ function validateEntry(entry: unknown): entry is MemoryEntry {
 }
 
 export const initMemoryDB = (): Promise<void> => {
-  if (!dbReadyPromise) {
-    dbReadyPromise = openMemoryDB();
-  }
+  dbReadyPromise ??= openMemoryDB();
   return dbReadyPromise;
 };
 

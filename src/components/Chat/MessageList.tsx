@@ -11,7 +11,6 @@ interface MessageListProps {
   isModelLoading?: boolean;
   streamingMessage?: string | null;
   messagesEndRef?: React.RefObject<HTMLDivElement>;
-  isDarkMode?: boolean;
   searchQuery?: string;
   /** Message focused via keyboard navigation (J/K) - gets a visible ring */
   focusedMessageId?: string | null;
@@ -23,7 +22,6 @@ interface MessageListProps {
 
 interface MessageBubbleProps {
   message: Message;
-  isDarkMode?: boolean;
   searchQuery?: string;
   focusedMessageId?: string | null;
   speakingMessageId?: string | null;
@@ -53,7 +51,7 @@ const HighlightedText: React.FC<{ text: string; query: string; isUser: boolean }
   );
 };
 
-const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, isDarkMode, searchQuery, focusedMessageId, speakingMessageId, onToggleSpeak }) => {
+const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, searchQuery, focusedMessageId, speakingMessageId, onToggleSpeak }) => {
   const { t } = useTranslation();
   const isUser = message.role === 'user';
   const isFocused = focusedMessageId === message.id;
@@ -100,7 +98,6 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, isDarkMode,
           ) : (
             <MarkdownRenderer
               content={answer}
-              isDarkMode={isDarkMode}
               className="markdown-message"
             />
           )}
@@ -153,7 +150,6 @@ const MessageBubble = React.memo(MessageBubbleInner, (prevProps, nextProps) => {
     prevProps.message.content === nextProps.message.content &&
     prevProps.message.timestamp === nextProps.message.timestamp &&
     prevProps.message.role === nextProps.message.role &&
-    prevProps.isDarkMode === nextProps.isDarkMode &&
     prevProps.searchQuery === nextProps.searchQuery &&
     prevProps.focusedMessageId === nextProps.focusedMessageId &&
     prevProps.speakingMessageId === nextProps.speakingMessageId &&
@@ -161,13 +157,11 @@ const MessageBubble = React.memo(MessageBubbleInner, (prevProps, nextProps) => {
   );
 });
 
-const StreamingBubble: React.FC<{ content: string; isDarkMode?: boolean }> = ({ content, isDarkMode }) => {
+const StreamingBubble: React.FC<{ content: string }> = ({ content }) => {
   const { thinking, answer, isThinkingActive } = splitThinking(content);
   return (
     <div className="flex justify-start">
-      <div className={`px-5 py-3.5 rounded-3xl rounded-bl-lg border shadow-sm ${
-        isDarkMode ? 'bg-zinc-800 text-zinc-100 border-zinc-700' : 'bg-white text-zinc-800 border-zinc-100'
-      }`}>
+      <div className="px-5 py-3.5 rounded-3xl rounded-bl-lg border shadow-sm bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 border-zinc-100 dark:border-zinc-700">
         <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
           {thinking !== null && <ThinkingBlock thinking={thinking} isActive={isThinkingActive} />}
           {answer}
@@ -182,7 +176,7 @@ const StreamingBubble: React.FC<{ content: string; isDarkMode?: boolean }> = ({ 
 // Keeps long chats (hundreds of messages) smooth without full windowing.
 const MESSAGE_PAGE_SIZE = 50;
 
-const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, isModelLoading, streamingMessage, messagesEndRef, isDarkMode, searchQuery, focusedMessageId, speakingMessageId, onToggleSpeak }) => {
+const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, isModelLoading, streamingMessage, messagesEndRef, searchQuery, focusedMessageId, speakingMessageId, onToggleSpeak }) => {
     const { t } = useTranslation();
     const [visibleCount, setVisibleCount] = React.useState(MESSAGE_PAGE_SIZE);
     const scrollRef = React.useRef<HTMLDivElement>(null);
@@ -245,7 +239,6 @@ const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, isM
               <div key={message.id} className="animate-fade-in">
                 <MessageBubble
                   message={message}
-                  isDarkMode={isDarkMode}
                   searchQuery={searchQuery}
                   focusedMessageId={focusedMessageId}
                   speakingMessageId={speakingMessageId}
@@ -257,14 +250,12 @@ const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, isM
         )}
 
         {streamingMessage && (
-          <StreamingBubble content={streamingMessage} isDarkMode={isDarkMode} />
+          <StreamingBubble content={streamingMessage} />
         )}
 
         {isModelLoading && (
           <div className="flex justify-start">
-            <div className={`px-5 py-3.5 rounded-3xl rounded-bl-lg border shadow-sm ${
-              isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-100'
-            }`}>
+            <div className="px-5 py-3.5 rounded-3xl rounded-bl-lg border shadow-sm bg-white dark:bg-zinc-800 border-zinc-100 dark:border-zinc-700">
               <div className="flex gap-2.5 items-center">
                 <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
                 <span className="text-zinc-600 dark:text-zinc-400 text-sm">{t('chat.modelLoading')}</span>
@@ -275,9 +266,7 @@ const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, isM
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className={`px-5 py-3.5 rounded-3xl rounded-bl-lg border shadow-sm ${
-              isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-100'
-            }`}>
+            <div className="px-5 py-3.5 rounded-3xl rounded-bl-lg border shadow-sm bg-white dark:bg-zinc-800 border-zinc-100 dark:border-zinc-700">
               <div className="flex gap-1.5 items-center">
                 <div className="flex gap-1.5">
                   <div className="w-2 h-2 bg-indigo-500 rounded-full animate-typing-bounce" style={{ animationDelay: '0s' }}></div>

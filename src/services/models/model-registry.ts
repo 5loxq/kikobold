@@ -120,7 +120,7 @@ export const isMultimodalModel = (modelId: string): boolean => {
 // to it (LFM 2.5, the recommended model).
 export const getWasmFallbackModelId = (webllmModelId: string): string | undefined => {
   const source = MODEL_CONFIGS[webllmModelId];
-  if (!source || source.engine !== 'webllm') {
+  if (source?.engine !== 'webllm') {
     return undefined;
   }
   const ggufModels = Object.values(MODEL_CONFIGS).filter(

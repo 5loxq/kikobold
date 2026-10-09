@@ -18,6 +18,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Prism } from 'prism-react-renderer';
 import { error as logError } from '../../services/logging';
+import { useDarkMode } from '../../hooks/useDarkMode';
 
 // KaTeX (~300 KB plus fonts) is loaded lazily on the first math block: it is
 // not part of the main bundle and only downloads when a message actually
@@ -26,12 +27,10 @@ import { error as logError } from '../../services/logging';
 type KatexModule = typeof import('katex');
 let katexPromise: Promise<KatexModule> | null = null;
 const loadKatex = (): Promise<KatexModule> => {
-  if (!katexPromise) {
-    katexPromise = Promise.all([
-      import('katex'),
-      import('katex/dist/katex.min.css'),
-    ]).then(([katex]) => katex);
-  }
+  katexPromise ??= Promise.all([
+    import('katex'),
+    import('katex/dist/katex.min.css'),
+  ]).then(([katex]) => katex);
   return katexPromise;
 };
 
@@ -265,7 +264,6 @@ const LIGHT_THEME = {
 interface MarkdownRendererProps {
   content: string;
   className?: string;
-  isDarkMode?: boolean;
   onLinkClick?: (url: string) => void;
   onImageClick?: (src: string) => void;
   maxCodeBlockHeight?: string | number;
@@ -411,12 +409,14 @@ const ListItem: React.FC<{ children: React.ReactNode; checked?: boolean }> = ({ 
 interface CodeBlockProps {
   language?: string;
   value: string;
-  isDarkMode?: boolean;
   maxHeight?: string | number;
 }
 
-const CodeBlock: React.FC<CodeBlockProps> = ({ language, value, isDarkMode, maxHeight }) => {
+const CodeBlock: React.FC<CodeBlockProps> = ({ language, value, maxHeight }) => {
   const [copied, setCopied] = useState(false);
+  // Syntax highlighting needs a JS theme object, so the dark mode state
+  // comes from the hook instead of a CSS class
+  const isDark = useDarkMode();
 
   const handleCopy = useCallback(() => {
     if (typeof navigator === 'undefined') {return;}
@@ -445,7 +445,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language, value, isDarkMode, maxH
     return 'text';
   }, [language]);
 
-  const theme = isDarkMode ? DARK_THEME : LIGHT_THEME;
+  const theme = isDark ? DARK_THEME : LIGHT_THEME;
 
   return (
     <div className="my-4 relative">
@@ -495,7 +495,6 @@ const InlineCode: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   content,
   className = '',
-  isDarkMode = false,
   onLinkClick,
   onImageClick,
   maxCodeBlockHeight,
@@ -509,7 +508,6 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       {/* We'll use a simple approach: parse markdown manually for basic formatting */}
       <MarkdownContent
         content={content}
-        isDarkMode={isDarkMode}
         onLinkClick={onLinkClick}
         onImageClick={onImageClick}
         maxCodeBlockHeight={maxCodeBlockHeight}
@@ -559,7 +557,6 @@ export const splitBlocks = (content: string): string[] => {
 // Internal component to render markdown content
 interface MarkdownContentProps {
   content: string;
-  isDarkMode: boolean;
   onLinkClick?: (url: string) => void;
   onImageClick?: (src: string) => void;
   maxCodeBlockHeight?: string | number;
@@ -567,7 +564,6 @@ interface MarkdownContentProps {
 
 const MarkdownContent: React.FC<MarkdownContentProps> = ({
   content,
-  isDarkMode,
   onLinkClick,
   onImageClick,
   maxCodeBlockHeight,
@@ -619,7 +615,6 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
             <Blockquote key={index}>
               <MarkdownContent
                 content={block.substring(2)}
-                isDarkMode={isDarkMode}
                 onLinkClick={onLinkClick}
                 onImageClick={onImageClick}
                 maxCodeBlockHeight={maxCodeBlockHeight}
@@ -637,7 +632,6 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
               key={index}
               language={language || 'text'}
               value={code}
-              isDarkMode={isDarkMode}
               maxHeight={maxCodeBlockHeight}
             />
           );
@@ -650,7 +644,6 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
               <ListItem>
                 <MarkdownContent
                   content={block.substring(2)}
-                  isDarkMode={isDarkMode}
                   onLinkClick={onLinkClick}
                   onImageClick={onImageClick}
                   maxCodeBlockHeight={maxCodeBlockHeight}
@@ -668,7 +661,6 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
               <ListItem>
                 <MarkdownContent
                   content={orderedListMatch[2]}
-                  isDarkMode={isDarkMode}
                   onLinkClick={onLinkClick}
                   onImageClick={onImageClick}
                   maxCodeBlockHeight={maxCodeBlockHeight}
@@ -689,7 +681,6 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
               <ListItem checked={notChecked ? false : checked}>
                 <MarkdownContent
                   content={text}
-                  isDarkMode={isDarkMode}
                   onLinkClick={onLinkClick}
                   onImageClick={onImageClick}
                   maxCodeBlockHeight={maxCodeBlockHeight}

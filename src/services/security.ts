@@ -317,7 +317,7 @@ export const validateUrl = (url: string, allowLocalhost: boolean = false): boole
     }
 
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 };
@@ -350,7 +350,7 @@ export const isTrustedUrl = (url: string): boolean => {
       hostname === domain || 
       hostname.endsWith(`.${domain}`)
     );
-  } catch (error) {
+  } catch {
     return false;
   }
 };
@@ -751,7 +751,7 @@ export const getSystemMemoryInfo = (): MemoryInfo => {
         return {
             totalMB: mem.jsHeapSizeLimit ? Math.round(mem.jsHeapSizeLimit / (1024 * 1024)) : 4096,
             availableMB: mem.jsHeapSizeLimit ? Math.round((mem.jsHeapSizeLimit - (mem.usedJSHeapSize ?? 0)) / (1024 * 1024)) : 2048,
-            usedMB: mem.usedJSHeapSize ? Math.round(mem.usedJSHeapSize / (1024 * 1024)) : 512, // eslint-disable-line @typescript-eslint/no-unnecessary-condition
+            usedMB: mem.usedJSHeapSize ? Math.round(mem.usedJSHeapSize / (1024 * 1024)) : 512,  
         };
     }
     

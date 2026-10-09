@@ -2,6 +2,13 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.2.1] - 2026-10-09
+
+### Intern (keine sichtbaren Änderungen)
+
+- **Dark-Mode ohne Prop-Drilling**: `isDarkMode`/`darkMode` wird nicht mehr als Prop durch ChatWindow → MessageList → MarkdownRenderer gereicht. Sichtbare Unterschiede laufen jetzt durchgängig über Tailwind-`dark:`-Varianten, der neue `useDarkMode()`-Hook beobachtet die `dark`-Klasse auf `<html>` (per MutationObserver — deckt jetzt auch den Systemwechsel im „system"-Modus korrekt ab, was der alte React-State nicht tat). Memo-Vergleiche der Nachrichten sind dadurch schlanker.
+- **ESLint v9 + Flat-Config**: Von ESLint 8.57 auf 9.39 migriert (`.eslintrc.json` → `eslint.config.js`), inklusive typescript-eslint v8, react-hooks v5 und typabhängigen Regeln (`projectService`). Die strengere Version fand 10 Stellen, die jetzt mit `??=`/Optional Chaining bzw. `catch {}` sauberer gelöst sind.
+
 ## [4.2.0] - 2026-10-09
 
 ### Neu

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Chat, ChatFolder } from '../../types';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { useDarkMode } from '../../hooks/useDarkMode';
 
 type TabId = 'chat' | 'profiles' | 'memory' | 'library' | 'models' | 'data' | 'settings' | 'help' | 'roadmap' | 'wiki' | 'contact' | 'privacy' | 'imprint';
 
@@ -13,7 +14,6 @@ interface SidebarProps {
   onDeleteChat: (chatId: string) => void;
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
-  darkMode: boolean;
   onToggleTheme: () => void;
   folders: ChatFolder[];
   onCreateFolder: (name: string) => ChatFolder;
@@ -30,7 +30,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onDeleteChat,
   activeTab,
   onTabChange,
-  darkMode,
   onToggleTheme,
   folders,
   onCreateFolder,
@@ -39,6 +38,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onMoveChat,
 }) => {
   const { t } = useTranslation();
+  const darkMode = useDarkMode();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const // Collapsed folder sections in the chat history
     [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
