@@ -684,7 +684,7 @@
     "title": "Datenschutzerklärung",
     "subtitle": "Stand: Oktober 2026",
     "controllerTitle": "Verantwortlicher",
-    "controllerText": "Verantwortlicher für die Datenverarbeitung auf dieser Website ist der Betreiber von kikobold.net (Adresse siehe unten).",
+    "controllerText": "Verantwortlicher für die Datenverarbeitung auf dieser Website ist Roman Thiel, Betreiber von kikobold.net (Anschrift siehe unten).",
     "localTitle": "Wie KI Kobold arbeitet - alles bleibt auf deinem Gerät",
     "localText1": "KI Kobold verarbeitet deine Chat-Nachrichten ausschließlich lokal in deinem Browser. Die KI-Modelle werden auf dein Gerät heruntergeladen und die Antworten werden dort berechnet - keine deiner Nachrichten wird an einen Server gesendet oder dort verarbeitet.",
     "localText2": "Deine Chats werden in der IndexedDB deines Browsers gespeichert, Einstellungen und Profile im localStorage. Diese Daten verlassen dein Gerät nicht. Du kannst sie jederzeit über die Export-/Import-Funktion sichern oder über die Daten-Seite löschen.",

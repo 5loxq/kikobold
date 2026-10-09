@@ -76,6 +76,8 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ onNavigateBack }) => {
             {t('privacy.addressTitle')}
           </h2>
           <address className="not-italic text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            Roman Thiel
+            <br />
             kikobold.net
             <br />
             c/o COCENTER

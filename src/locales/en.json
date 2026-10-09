@@ -684,7 +684,7 @@
     "title": "Privacy Policy",
     "subtitle": "Last updated: October 2026",
     "controllerTitle": "Controller",
-    "controllerText": "The controller for data processing on this website is the operator of kikobold.net (see address below).",
+    "controllerText": "The controller for data processing on this website is Roman Thiel, operator of kikobold.net (see address below).",
     "localTitle": "How KI Kobold works - everything stays on your device",
     "localText1": "KI Kobold processes your chat messages exclusively locally in your browser. The AI models are downloaded to your device and the answers are computed there - none of your messages are sent to or processed on a server.",
     "localText2": "Your chats are stored in your browser's IndexedDB, settings and profiles in localStorage. This data never leaves your device. You can back it up at any time via the export/import function or delete it on the data page.",
