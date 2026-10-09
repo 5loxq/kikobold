@@ -564,7 +564,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
         </div>
       )}
       {isAttaching && (
-        <div className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">📎 {t('chat.attaching')}</div>
+        <div className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">📎 {t('chat.attaching')}</div>
       )}
 
       {/* Unified composer: textarea + actions inside one capsule */}
@@ -577,7 +577,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
             aria-label={t('chat.mentionAriaLabel')}
           >
             {mentionableFiles.length === 0 ? (
-              <p className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
                 📚 {t('chat.mentionNoFiles')}
               </p>
             ) : (
@@ -750,7 +750,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
             </button>
           </div>
         </div>
-        <p className="text-center text-xs text-zinc-500 dark:text-zinc-400 mt-2">
+        <p className="text-center text-xs text-zinc-600 dark:text-zinc-400 mt-2">
           {t('chat.privacyNote')}
         </p>
       </div>

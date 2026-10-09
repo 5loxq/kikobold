@@ -39,7 +39,7 @@ export const ShortcutsDialog: FC<ShortcutsDialogProps> = ({ onClose }) => {
         <h2 className="text-xl font-bold text-zinc-800 dark:text-zinc-100 mb-2">
           ⌨️ {t('help.shortcutsTitle')}
         </h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+        <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
           {t('help.shortcutsIntro')}
         </p>
         <ul className="space-y-2 mb-5">

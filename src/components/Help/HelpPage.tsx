@@ -97,7 +97,7 @@ export const HelpPage: React.FC<HelpPageProps> = ({ onNavigateBack, onRestartTou
               </ul>
             </div>
           </div>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-4 leading-relaxed">
+          <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-4 leading-relaxed">
             💡 {t('help.modelsHint')}
           </p>
         </section>
@@ -130,7 +130,7 @@ export const HelpPage: React.FC<HelpPageProps> = ({ onNavigateBack, onRestartTou
           <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
             {t('help.memoryText')}
           </p>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed border-l-4 border-indigo-300 dark:border-indigo-800 pl-3">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed border-l-4 border-indigo-300 dark:border-indigo-800 pl-3">
             💡 {t('help.memoryHowTo')}
           </p>
         </section>
@@ -151,7 +151,7 @@ export const HelpPage: React.FC<HelpPageProps> = ({ onNavigateBack, onRestartTou
               </li>
             ))}
           </ul>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed border-l-4 border-indigo-300 dark:border-indigo-800 pl-3">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed border-l-4 border-indigo-300 dark:border-indigo-800 pl-3">
             {t('help.importExportHint')}
           </p>
         </section>
@@ -217,7 +217,7 @@ export const HelpPage: React.FC<HelpPageProps> = ({ onNavigateBack, onRestartTou
               </ul>
             </div>
           </div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed border-l-4 border-amber-300 dark:border-amber-800 pl-3 mb-4">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed border-l-4 border-amber-300 dark:border-amber-800 pl-3 mb-4">
             ⚠️ {t('help.attachDropHint')}
           </p>
           <h3 className="font-semibold text-zinc-700 dark:text-zinc-200 mb-2">
@@ -226,7 +226,7 @@ export const HelpPage: React.FC<HelpPageProps> = ({ onNavigateBack, onRestartTou
           <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-2">
             {t('help.libraryText')}
           </p>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed border-l-4 border-indigo-300 dark:border-indigo-800 pl-3">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed border-l-4 border-indigo-300 dark:border-indigo-800 pl-3">
             💡 {t('help.libraryHint')}
           </p>
         </section>
@@ -266,7 +266,7 @@ export const HelpPage: React.FC<HelpPageProps> = ({ onNavigateBack, onRestartTou
             {onRestartTour && (
               <button
                 onClick={onRestartTour}
-                className="px-4 py-2 text-sm font-semibold rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:opacity-90 transition-opacity"
+                className="px-4 py-2 text-sm font-semibold rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:opacity-90 transition-opacity"
               >
                 {t('help.replayTourButton')}
               </button>
@@ -287,7 +287,7 @@ export const HelpPage: React.FC<HelpPageProps> = ({ onNavigateBack, onRestartTou
           <h3 className="font-semibold text-zinc-700 dark:text-zinc-200 mb-1">
             {t('help.needMoreHelp')}
           </h3>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">
             {t('help.contactSupport')}
           </p>
           <button

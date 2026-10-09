@@ -289,7 +289,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             💬
           </div>
           <h2 className="text-3xl font-bold mb-3 text-zinc-800 dark:text-zinc-100">{t('chat.welcome')}</h2>
-          <p className="text-zinc-500 dark:text-zinc-400 mb-8">
+          <p className="text-zinc-600 dark:text-zinc-400 mb-8">
             {t('chat.step3')}
           </p>
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 text-left shadow-sm">
@@ -381,7 +381,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             )}
             {activeProfile && (
               <div className="flex items-center gap-2 mt-2">
-                <label className="text-sm font-medium text-zinc-500 dark:text-zinc-400">{t('profiles.activeProfile')}:</label>
+                <label className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{t('profiles.activeProfile')}:</label>
                 <select
                   value={activeProfile.id}
                   onChange={(e) => onSelectProfile && onSelectProfile(e.target.value)}
@@ -438,7 +438,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${
                 thinkingEnabled
                   ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300'
-                  : 'border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 text-zinc-500 dark:text-zinc-400'
+                  : 'border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-400'
               }`}
             >
               <span className={thinkingEnabled ? '' : 'opacity-50'}>💭</span>
@@ -463,7 +463,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           )}
 
           {selectedModelId && getModelConfig(selectedModelId)?.description && !isLoading && (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-md leading-relaxed">
+            <p className="text-xs text-zinc-600 dark:text-zinc-400 max-w-md leading-relaxed">
               {getModelConfig(selectedModelId)?.description}
             </p>
           )}
@@ -531,12 +531,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               aria-label={t('chat.searchInChat')}
               className="flex-1 max-w-sm px-4 py-2 border border-zinc-500 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 shadow-sm"
             />
-            <span className="text-xs text-zinc-500 dark:text-zinc-400" aria-live="polite">
+            <span className="text-xs text-zinc-600 dark:text-zinc-400" aria-live="polite">
               {normalizedSearch ? `${visibleMessages.length}` : ''}
             </span>
             <button
               onClick={() => { setSearchQuery(''); setIsSearchOpen(false); }}
-              className="p-2 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              className="p-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
               title={t('chat.searchClose')}
               aria-label={t('chat.searchClose')}
             >
@@ -559,7 +559,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                   onClick={() => setIsTextSizeOpen((v) => !v)}
                   aria-expanded={isTextSizeOpen}
                   aria-haspopup="true"
-                  className="p-2 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-sm font-semibold"
+                  className="p-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-sm font-semibold"
                   title={t('settings.textSize')}
                   aria-label={t('settings.textSize')}
                 >
@@ -596,7 +596,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             )}
             <button
               onClick={() => setShowShortcuts(true)}
-              className="p-2 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-sm hidden sm:flex items-center gap-1"
+              className="p-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-sm hidden sm:flex items-center gap-1"
               title={t('help.shortcutsTitle')}
               aria-label={t('help.shortcutsTitle')}
             >
@@ -607,7 +607,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               data-tour="search"
               aria-expanded={isSearchOpen}
               aria-controls="chat-search-input"
-              className="p-2 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-sm flex items-center gap-1"
+              className="p-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-sm flex items-center gap-1"
               title={t('chat.searchInChat')}
             >
               🔍 <span className="hidden sm:inline">{t('chat.searchInChat')}</span>

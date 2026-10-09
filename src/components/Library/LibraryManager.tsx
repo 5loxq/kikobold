@@ -58,12 +58,12 @@ export const LibraryManager: React.FC<LibraryManagerProps> = ({ files, onAddFile
           <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-200 mb-2">
             {t('library.addTitle')}
           </p>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">
+          <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-3">
             {t('library.addHint')}
           </p>
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="px-4 py-2 text-sm font-semibold rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:opacity-90 transition-opacity"
+            className="px-4 py-2 text-sm font-semibold rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:opacity-90 transition-opacity"
           >
             + {t('library.addFile')}
           </button>
@@ -90,7 +90,7 @@ export const LibraryManager: React.FC<LibraryManagerProps> = ({ files, onAddFile
         {/* File list */}
         {files.length === 0 ? (
           <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-800 text-center">
-            <p className="text-zinc-500 dark:text-zinc-400 text-sm">{t('library.empty')}</p>
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm">{t('library.empty')}</p>
           </div>
         ) : (
           <ul className="space-y-3">
@@ -104,21 +104,21 @@ export const LibraryManager: React.FC<LibraryManagerProps> = ({ files, onAddFile
                     <p className="text-sm font-medium text-zinc-700 dark:text-zinc-200 truncate">
                       {file.name}
                     </p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400">
                       {formatBytes(file.size)} · <code className="text-indigo-600 dark:text-indigo-400">@{file.name.replace(/\.[^.]+$/, '')}</code>
                     </p>
                   </div>
                   <div className="flex gap-1 flex-shrink-0">
                     <button
                       onClick={() => setPreviewId(previewId === file.id ? null : file.id)}
-                      className="p-2 text-sm rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                      className="p-2 text-sm rounded-lg text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                       aria-label={t('library.preview')}
                     >
                       👁️
                     </button>
                     <button
                       onClick={() => void onDeleteFile(file.id)}
-                      className="p-2 text-sm rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                      className="p-2 text-sm rounded-lg text-zinc-600 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                       aria-label={t('common.delete')}
                     >
                       🗑️

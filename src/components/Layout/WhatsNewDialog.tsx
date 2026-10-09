@@ -40,7 +40,7 @@ export const WhatsNewDialog: FC<WhatsNewDialogProps> = ({ entries, onClose }) =>
             <h2 className="text-xl sm:text-2xl font-bold text-zinc-800 dark:text-zinc-100">
               {t('whatsNew.title')}
             </h2>
-            <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-0.5">
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm mt-0.5">
               {t('whatsNew.subtitle')}
             </p>
           </div>
@@ -73,7 +73,7 @@ export const WhatsNewDialog: FC<WhatsNewDialogProps> = ({ entries, onClose }) =>
 
         <button
           onClick={onClose}
-          className="mt-5 w-full px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-semibold shadow-lg shadow-indigo-500/25 hover:opacity-90 transition-opacity flex-shrink-0"
+          className="mt-5 w-full px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold shadow-lg shadow-indigo-500/25 hover:opacity-90 transition-opacity flex-shrink-0"
         >
           {t('whatsNew.closeButton')}
         </button>

@@ -236,7 +236,7 @@ export const GuidedTour: FC<GuidedTourProps> = ({ onComplete }) => {
         <div className="flex items-center justify-between gap-2">
           <button
             onClick={finish}
-            className="text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 px-2 py-2 transition-colors"
+            className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 px-2 py-2 transition-colors"
           >
             {t('tour.skip')}
           </button>

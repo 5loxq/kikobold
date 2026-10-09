@@ -117,7 +117,7 @@ export const WikiPage: React.FC<WikiPageProps> = ({ onNavigateBack }) => {
               </ul>
             </div>
           </div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed border-l-4 border-indigo-300 dark:border-indigo-800 pl-3">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed border-l-4 border-indigo-300 dark:border-indigo-800 pl-3">
             💡 {t('wiki.thinkingHint')}
           </p>
         </section>
@@ -149,7 +149,7 @@ export const WikiPage: React.FC<WikiPageProps> = ({ onNavigateBack }) => {
               </div>
             ))}
           </div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed border-l-4 border-indigo-300 dark:border-indigo-800 pl-3">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed border-l-4 border-indigo-300 dark:border-indigo-800 pl-3">
             🔒 {t('wiki.modelsLocalNote')}
           </p>
         </section>
@@ -200,7 +200,7 @@ export const WikiPage: React.FC<WikiPageProps> = ({ onNavigateBack }) => {
           <h2 className="text-xl font-semibold mb-2 text-zinc-700 dark:text-zinc-200">
             📗 {t('wiki.glossaryTitle')}
           </h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
             {t('wiki.glossaryIntro')}
           </p>
           <div className="space-y-2">

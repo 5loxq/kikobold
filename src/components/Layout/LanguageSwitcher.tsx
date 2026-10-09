@@ -12,12 +12,13 @@ export const LanguageSwitcher: React.FC<{ isCollapsed?: boolean }> = ({ isCollap
 
   return (
     <div className="flex gap-1">
-      {!isCollapsed && <span className="text-xs text-zinc-500 mr-auto mt-1">{t('common.language')}</span>}
+      {!isCollapsed && <span className="text-xs text-zinc-400 mr-auto mt-1">{t('common.language')}</span>}
       <button
         onClick={() => handleLanguageChange('de')}
+        aria-pressed={i18n.language === 'de'}
         className={`px-2 py-1 rounded text-sm transition-colors ${
           i18n.language === 'de'
-            ? 'bg-blue-600 text-white'
+            ? 'bg-blue-800 text-white'
             : 'hover:bg-gray-800 text-gray-300'
         }`}
         title={t("common.de")}
@@ -26,9 +27,10 @@ export const LanguageSwitcher: React.FC<{ isCollapsed?: boolean }> = ({ isCollap
       </button>
       <button
         onClick={() => handleLanguageChange('en')}
+        aria-pressed={i18n.language === 'en'}
         className={`px-2 py-1 rounded text-sm transition-colors ${
           i18n.language === 'en'
-            ? 'bg-blue-600 text-white'
+            ? 'bg-blue-800 text-white'
             : 'hover:bg-gray-800 text-gray-300'
         }`}
         title={t("common.en")}

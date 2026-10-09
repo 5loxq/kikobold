@@ -66,7 +66,7 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({ thinking, isActive
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+        className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
         aria-expanded={expanded}
       >
         <span className={isActive ? 'animate-pulse' : ''}>💭</span>
@@ -76,7 +76,7 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({ thinking, isActive
         <span className={`transition-transform ${expanded ? 'rotate-90' : ''}`}>›</span>
       </button>
       {expanded && (
-        <div className="mt-1.5 pl-3 pr-2 py-2 text-xs text-zinc-500 dark:text-zinc-400 whitespace-pre-wrap break-words border-l-2 border-zinc-200 dark:border-zinc-600 max-h-64 overflow-y-auto">
+        <div className="mt-1.5 pl-3 pr-2 py-2 text-xs text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap break-words border-l-2 border-zinc-200 dark:border-zinc-600 max-h-64 overflow-y-auto">
           {thinking}
         </div>
       )}

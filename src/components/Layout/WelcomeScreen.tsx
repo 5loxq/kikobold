@@ -75,7 +75,7 @@ export const WelcomeScreen: FC<WelcomeScreenProps> = ({ onDismiss }) => {
             <h2 className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">
               {t('welcome.title')}
             </h2>
-            <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-0.5">
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm mt-0.5">
               {t('welcome.subtitle')}
             </p>
           </div>
@@ -102,13 +102,13 @@ export const WelcomeScreen: FC<WelcomeScreenProps> = ({ onDismiss }) => {
           ))}
         </div>
 
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-5 leading-relaxed">
+        <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-5 leading-relaxed">
           {t('welcome.downloadHint')}
         </p>
 
         <button
           onClick={handleStart}
-          className="mt-6 w-full px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-semibold shadow-lg shadow-indigo-500/25 hover:opacity-90 transition-opacity"
+          className="mt-6 w-full px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold shadow-lg shadow-indigo-500/25 hover:opacity-90 transition-opacity"
         >
           {t('welcome.startButton')}
         </button>

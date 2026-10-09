@@ -89,7 +89,7 @@ export const MemoryManager: React.FC<MemoryManagerProps> = ({
               <div key={field.key}>
                 <label
                   htmlFor={`memory-field-${field.key}`}
-                  className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1"
+                  className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400 mb-1"
                 >
                   {t(field.labelKey)}
                 </label>
@@ -114,7 +114,7 @@ export const MemoryManager: React.FC<MemoryManagerProps> = ({
               </div>
             ))}
           </div>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-3">
+          <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-3">
             {t('memory.fieldsHint')}
           </p>
         </div>
@@ -133,14 +133,14 @@ export const MemoryManager: React.FC<MemoryManagerProps> = ({
             className="w-full px-3 py-2 rounded-xl border border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
           />
           <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
-            <span className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
+            <span className="text-xs text-zinc-600 dark:text-zinc-400 tabular-nums">
               {newContent.length}/{MEMORY_ENTRY_MAX_CHARS}
               {totalLimitReached && ` · ${t('memory.totalLimitReached')}`}
             </span>
             <button
               onClick={() => void handleAdd()}
               disabled={!newContent.trim() || totalLimitReached}
-              className="px-4 py-2 text-sm font-semibold rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 text-sm font-semibold rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
               + {t('memory.add')}
             </button>
@@ -156,7 +156,7 @@ export const MemoryManager: React.FC<MemoryManagerProps> = ({
         {/* Custom entry list */}
         {customEntries.length === 0 ? (
           <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-800 text-center">
-            <p className="text-zinc-500 dark:text-zinc-400 text-sm">{t('memory.empty')}</p>
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm">{t('memory.empty')}</p>
           </div>
         ) : (
           <ul className="space-y-3">
@@ -174,7 +174,7 @@ export const MemoryManager: React.FC<MemoryManagerProps> = ({
                       className="w-full px-3 py-2 rounded-xl border border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
                     />
                     <div className="flex items-center justify-between gap-2 mt-2">
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
+                      <span className="text-xs text-zinc-600 dark:text-zinc-400 tabular-nums">
                         {editContent.length}/{MEMORY_ENTRY_MAX_CHARS}
                       </span>
                       <div className="flex gap-2">
@@ -208,14 +208,14 @@ export const MemoryManager: React.FC<MemoryManagerProps> = ({
                           setEditingId(entry.id);
                           setEditContent(entry.content);
                         }}
-                        className="p-2 text-sm rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors"
+                        className="p-2 text-sm rounded-lg text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors"
                         aria-label={t('common.edit')}
                       >
                         ✏️
                       </button>
                       <button
                         onClick={() => void onDeleteMemory(entry.id)}
-                        className="p-2 text-sm rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                        className="p-2 text-sm rounded-lg text-zinc-600 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                         aria-label={t('common.delete')}
                       >
                         🗑️
@@ -229,7 +229,7 @@ export const MemoryManager: React.FC<MemoryManagerProps> = ({
         )}
 
         {/* Usage indicator */}
-        <p className="mt-4 text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="mt-4 text-xs text-zinc-600 dark:text-zinc-400">
           {t('memory.usage', { current: totalChars, max: MEMORY_TOTAL_MAX_CHARS })}
         </p>
       </div>

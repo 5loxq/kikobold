@@ -73,7 +73,7 @@ export const InstallPrompt: FC = () => {
           <button
             type="button"
             onClick={handleInstall}
-            className="px-4 py-1.5 text-sm font-semibold rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:opacity-90 transition-opacity"
+            className="px-4 py-1.5 text-sm font-semibold rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:opacity-90 transition-opacity"
           >
             {t('install.installButton')}
           </button>

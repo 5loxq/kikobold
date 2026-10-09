@@ -63,7 +63,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             <h3 className="font-bold text-lg mb-2 text-zinc-800 dark:text-zinc-100">
               {t('settings.defaultsTitle')}
             </h3>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
               {t('settings.defaultsText')}
             </p>
 
@@ -100,7 +100,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 </option>
               ))}
             </select>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5">
+            <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1.5">
               {t('settings.defaultModelHint')}
             </p>
           </section>
@@ -110,7 +110,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             <h3 className="font-bold text-lg mb-2 text-zinc-800 dark:text-zinc-100">
               {t('settings.a11y')}
             </h3>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
               {t('settings.a11yText')}
             </p>
 
@@ -134,7 +134,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 </button>
               ))}
             </div>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
+            <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-4">
               {t('settings.textSizeHint')}
             </p>
 
@@ -143,7 +143,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 <span className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
                   {t('settings.readableText')}
                 </span>
-                <span className="block text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                <span className="block text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
                   {t('settings.readableTextHint')}
                 </span>
               </span>
@@ -160,7 +160,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 <span className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
                   {t('settings.readableFont')}
                 </span>
-                <span className="block text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                <span className="block text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
                   {t('settings.readableFontHint')}
                 </span>
               </span>
@@ -177,7 +177,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 <span className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
                   {t('settings.highContrast')}
                 </span>
-                <span className="block text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                <span className="block text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
                   {t('settings.highContrastHint')}
                 </span>
               </span>
@@ -194,7 +194,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 <span className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
                   {t('settings.reduceMotion')}
                 </span>
-                <span className="block text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                <span className="block text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
                   {t('settings.reduceMotionHint')}
                 </span>
               </span>
@@ -218,7 +218,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 <span className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
                   {t('settings.autoSpeak')}
                 </span>
-                <span className="block text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                <span className="block text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
                   {t('settings.autoSpeakHint')}
                 </span>
               </span>
@@ -243,7 +243,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               onChange={(e) => onChange({ ...settings, speechRate: Number(e.target.value) })}
               className="w-full accent-indigo-600 mb-1"
             />
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
+            <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-4">
               {t('settings.speechRateHint')}
             </p>
 
@@ -252,7 +252,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 <span className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
                   {t('settings.memoryEnabled')}
                 </span>
-                <span className="block text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                <span className="block text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
                   {t('settings.memoryEnabledHint')}
                 </span>
               </span>

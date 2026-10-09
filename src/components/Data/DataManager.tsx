@@ -99,7 +99,7 @@ export const DataManager: React.FC<DataManagerProps> = ({
               key={item.label}
               className="bg-white dark:bg-zinc-900 rounded-2xl p-4 shadow-sm border border-zinc-200 dark:border-zinc-800"
             >
-              <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1">
+              <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 mb-1">
                 {item.icon} {item.label}
               </p>
               <p className="text-sm text-zinc-700 dark:text-zinc-200">{item.value}</p>
@@ -107,7 +107,7 @@ export const DataManager: React.FC<DataManagerProps> = ({
           ))}
         </div>
         {storageEstimate && storageEstimate.quota > 0 && (
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 -mt-3 mb-6">
+          <p className="text-xs text-zinc-600 dark:text-zinc-400 -mt-3 mb-6">
             {t('data.storageUsage', {
               used: formatBytes(storageEstimate.usage),
               total: formatBytes(storageEstimate.quota),
@@ -126,7 +126,7 @@ export const DataManager: React.FC<DataManagerProps> = ({
           <div className="flex flex-wrap gap-2">
             <button
               onClick={onExportAll}
-              className="px-4 py-2 text-sm font-semibold rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:opacity-90 transition-opacity"
+              className="px-4 py-2 text-sm font-semibold rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:opacity-90 transition-opacity"
             >
               ⬇️ {t('data.exportAll')}
             </button>

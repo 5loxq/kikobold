@@ -169,7 +169,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
                 {profile.systemPrompt}
               </p>
 
-              <div className="space-y-1 text-xs text-zinc-500 dark:text-zinc-400">
+              <div className="space-y-1 text-xs text-zinc-600 dark:text-zinc-400">
                 <p>Temperature: {profile.temperature.toFixed(1)}</p>
                 <p>Top-P: {profile.topP.toFixed(2)}</p>
                 <p>Max Tokens: {profile.maxTokens}</p>
