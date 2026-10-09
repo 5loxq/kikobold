@@ -21,7 +21,19 @@
     "switchToLightMode": "Zum hellen Design wechseln",
     "switchToDarkMode": "Zum dunklen Design wechseln",
     "privacy": "Datenschutz",
-    "imprint": "Impressum"
+    "imprint": "Impressum",
+    "groupManage": "Verwaltung",
+    "groupHelp": "Hilfe & Rechtliches",
+    "newFolder": "Neuer Ordner",
+    "folderNamePrompt": "Name des neuen Ordners:",
+    "renameFolder": "Ordner umbenennen",
+    "renameFolderPrompt": "Neuer Name für den Ordner:",
+    "deleteFolder": "Ordner löschen",
+    "deleteFolderConfirm": "Ordner „{{name}}\" löschen? Die Chats bleiben erhalten - sie werden nur wieder ohne Ordner angezeigt.",
+    "moveChat": "In Ordner verschieben",
+    "removeFromFolder": "Aus Ordner entfernen",
+    "emptyFolder": "Keine Chats in diesem Ordner",
+    "withoutFolder": "Ohne Ordner"
   },
   "chat": {
     "welcome": "Willkommen bei KI Kobold",
@@ -220,6 +232,12 @@
     "title": "Das ist neu",
     "subtitle": "Seit deinem letzten Besuch hat sich einiges getan:",
     "closeButton": "Alles klar!",
+    "v420": {
+      "item1": "Menü aufgeräumt: Verwaltung (Profile, Gedächtnis, Bibliothek, Modelle, Daten) und „Hilfe & Rechtliches\" sind jetzt einklappbare Gruppen - die Seitenleiste zeigt das Wesentliche.",
+      "item2": "Chat-Verlauf rückt in den Fokus: Er ist jetzt immer sichtbar (nicht mehr nur im Chat-Tab) und bekommt den ganzen Platz unter dem Menü.",
+      "item3": "Ordner für Chats: Verlauf um Ordner erweitert - anlegen, umbenennen, Chats per 📁 hineinverschieben, Ordner einklappen. Beim Löschen eines Ordners bleiben die Chats erhalten.",
+      "item4": "Backup-Format v1.3: Ordner werden beim Export/Import mitgesichert."
+    },
     "v410": {
       "item1": "Textgröße jetzt direkt im Chat einstellbar: der Aa-Knopf neben der Suche bietet alle vier Stufen - ohne Umweg über die Einstellungen.",
       "item2": "Hoher Kontrast: neuer Schalter (Einstellungen → Barrierefreiheit) verstärkt Text- und Rahmenkontraste; die System-Einstellung „Mehr Kontrast\" wird automatisch respektiert.",

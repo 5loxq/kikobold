@@ -161,6 +161,27 @@ export const useChat = (): UseChatReturn => {
     }
   }, [loadChats]);
 
+  const moveChatToFolder = useCallback(async (id: string, folderId: string | null) => {
+    try {
+      if (typeof id !== 'string' || id.trim().length === 0) {
+        throw new Error('Invalid chat ID');
+      }
+
+      const chatToUpdate = await ChatStorage.getChat(id);
+      if (chatToUpdate) {
+        chatToUpdate.folderId = folderId;
+        await ChatStorage.saveChat(chatToUpdate);
+        if (chat?.id === id) {
+          setChat(chatToUpdate);
+        }
+        await loadChats();
+      }
+    } catch (error) {
+      logError('Failed to move chat to folder:', error instanceof Error ? error : new Error(String(error)));
+      throw error;
+    }
+  }, [chat, loadChats]);
+
   return {
     chat,
     chats,
@@ -171,5 +192,6 @@ export const useChat = (): UseChatReturn => {
     deleteChat,
     renameChat,
     createNewChat,
+    moveChatToFolder,
   };
 };

@@ -25,7 +25,7 @@ import { applyAccessibilityClasses } from '../../services/accessibility';
 import { useLibrary } from '../../hooks/useLibrary';
 import { type LibraryFile, resolveLibraryReferences } from '../../services/storage/LibraryStorage';
 import * as ChatExport from '../../services/storage/chat-export-import';
-import { Chat, MemoryEntry } from '../../types';
+import { Chat, ChatFolder, MemoryEntry } from '../../types';
 import { version as appVersion } from '../../../package.json';
 import { useChat } from '../../hooks/useChat';
 import { useModels } from '../../hooks/useModels';
@@ -36,6 +36,13 @@ import { useOfflineStatus } from '../../hooks/useOfflineStatus';
 import { getModelConfig } from '../../services/models/model-registry';
 import * as ChatStorage from '../../services/storage/ChatStorage';
 import { DEFAULT_CHAT_TITLE } from '../../services/storage/ChatStorage';
+import {
+  createFolder as createChatFolder,
+  deleteFolder as deleteChatFolder,
+  getFolders,
+  importFolders as importChatFolders,
+  renameFolder as renameChatFolder,
+} from '../../services/storage/FolderStorage';
 import { buildMemoryPromptBlock } from '../../services/storage/MemoryStorage';
 import { isDarkMode as checkDarkMode, getSystemPrefersDark, setThemeMode } from '../../services/theme';
 import { error as logError } from '../../services/logging';
@@ -71,7 +78,26 @@ export const MainLayout: FC = () => {
     handleSettingsChange({ ...settings, theme: next ? 'dark' : 'light' });
   };
   const isOffline = useOfflineStatus();
-  const { chat, chats, loadChats, loadChat, createNewChat, deleteChat, addMessage, renameChat } = useChat();
+  const { chat, chats, loadChats, loadChat, createNewChat, deleteChat, addMessage, renameChat, moveChatToFolder } = useChat();
+  // Chat folders (localStorage) - chats reference them via folderId
+  const [folders, setFolders] = useState<ChatFolder[]>(() => getFolders());
+  const handleCreateFolder = useCallback((name: string): void => {
+    const folder = createChatFolder(name);
+    setFolders((prev) => [...prev, folder]);
+  }, []);
+  const handleRenameFolder = useCallback((id: string, name: string): void => {
+    renameChatFolder(id, name);
+    setFolders(getFolders());
+  }, []);
+  const handleDeleteFolder = useCallback((id: string): void => {
+    // Chats in the folder become ungrouped (their folderId simply no
+    // longer matches a known folder)
+    deleteChatFolder(id);
+    setFolders(getFolders());
+  }, []);
+  const handleMoveChat = useCallback((chatId: string, folderId: string | null): void => {
+    void moveChatToFolder(chatId, folderId).catch(() => undefined);
+  }, [moveChatToFolder]);
   // deleteChat logs and re-throws DB errors; swallow them here so a failed
   // delete does not surface as an unhandled promise rejection in the onClick handler.
   const handleDeleteChat = useCallback((chatId: string): void => {
@@ -491,7 +517,7 @@ export const MainLayout: FC = () => {
     }
   };
 
-  const handleImportChats = async (importedChats: Chat[], importedMemories: MemoryEntry[], importedLibrary: LibraryFile[]): Promise<void> => {
+  const handleImportChats = async (importedChats: Chat[], importedMemories: MemoryEntry[], importedLibrary: LibraryFile[], importedFolders?: ChatFolder[]): Promise<void> => {
     // Import each chat into the database
     for (const importedChat of importedChats) {
       await ChatStorage.saveChat(importedChat);
@@ -503,6 +529,11 @@ export const MainLayout: FC = () => {
     // Restore library files contained in the export file (if any)
     if (importedLibrary.length > 0) {
       await importLibraryFiles(importedLibrary);
+    }
+    // Restore chat folders contained in the export file (if any)
+    if (importedFolders && importedFolders.length > 0) {
+      importChatFolders(importedFolders);
+      setFolders(getFolders());
     }
     // Reload chats to reflect the imported ones
     await loadChats();
@@ -534,14 +565,14 @@ export const MainLayout: FC = () => {
 
   // Data page: full backup of chats + memories + library files
   const handleExportAllData = (): void => {
-    ChatExport.exportChats(chats, memories, libraryFiles);
+    ChatExport.exportChats(chats, memories, libraryFiles, folders);
   };
 
   // Data page: restore a backup file (chats + memories + library). Stay on
   // the data page so the success message stays visible.
   const handleImportBackup = async (file: File): Promise<void> => {
     const result = await ChatExport.importChats(file);
-    await handleImportChats(result.chats, result.memories, result.library);
+    await handleImportChats(result.chats, result.memories, result.library, result.folders);
   };
 
   // Data page: delete all chats, memories and library files. A fresh chat
@@ -586,6 +617,11 @@ export const MainLayout: FC = () => {
           onTabChange={setActiveTab}
           darkMode={darkMode}
           onToggleTheme={handleToggleTheme}
+          folders={folders}
+          onCreateFolder={handleCreateFolder}
+          onRenameFolder={handleRenameFolder}
+          onDeleteFolder={handleDeleteFolder}
+          onMoveChat={handleMoveChat}
         />
       </div>
 
@@ -629,6 +665,11 @@ export const MainLayout: FC = () => {
                 }}
                 darkMode={darkMode}
                 onToggleTheme={handleToggleTheme}
+                folders={folders}
+                onCreateFolder={handleCreateFolder}
+                onRenameFolder={handleRenameFolder}
+                onDeleteFolder={handleDeleteFolder}
+                onMoveChat={handleMoveChat}
               />
             </div>
           </div>

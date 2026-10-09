@@ -50,6 +50,8 @@ export interface UseChatReturn {
   deleteChat: (id: string) => Promise<void>;
   renameChat: (id: string, newTitle: string) => Promise<void>;
   createNewChat: (profileId: string, title?: string) => Promise<Chat>;
+  /** Move a chat into a folder (null = ungrouped) */
+  moveChatToFolder: (id: string, folderId: string | null) => Promise<void>;
 }
 
 // useProfiles hook return type

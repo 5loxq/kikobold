@@ -21,7 +21,19 @@
     "switchToLightMode": "Switch to light mode",
     "switchToDarkMode": "Switch to dark mode",
     "privacy": "Privacy",
-    "imprint": "Imprint"
+    "imprint": "Imprint",
+    "groupManage": "Management",
+    "groupHelp": "Help & Legal",
+    "newFolder": "New folder",
+    "folderNamePrompt": "Name of the new folder:",
+    "renameFolder": "Rename folder",
+    "renameFolderPrompt": "New name for the folder:",
+    "deleteFolder": "Delete folder",
+    "deleteFolderConfirm": "Delete folder \"{{name}}\"? The chats are kept - they will just show up without a folder again.",
+    "moveChat": "Move to folder",
+    "removeFromFolder": "Remove from folder",
+    "emptyFolder": "No chats in this folder",
+    "withoutFolder": "Without folder"
   },
   "chat": {
     "welcome": "Welcome to KI Kobold",
@@ -220,6 +232,12 @@
     "title": "What's new",
     "subtitle": "A few things have changed since your last visit:",
     "closeButton": "Got it!",
+    "v420": {
+      "item1": "Menu cleaned up: Management (profiles, memory, library, models, data) and \"Help & Legal\" are now collapsible groups - the sidebar shows the essentials.",
+      "item2": "Chat history takes the spotlight: it is now always visible (no longer only on the chat tab) and gets all the space below the menu.",
+      "item3": "Folders for chats: the history supports folders - create, rename, move chats via 📁, collapse folders. Deleting a folder keeps the chats.",
+      "item4": "Backup format v1.3: folders are included in export/import."
+    },
     "v410": {
       "item1": "Text size is now adjustable directly in the chat: the Aa button next to the search offers all four levels - no detour to the settings.",
       "item2": "High contrast: new toggle (Settings → Accessibility) boosts text and border contrast; the system \"more contrast\" preference is respected automatically.",

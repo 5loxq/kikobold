@@ -1,4 +1,4 @@
-import { Chat, MemoryEntry, Message } from '../../types';
+import { Chat, ChatFolder, MemoryEntry, Message } from '../../types';
 import { info, error as logError, warn } from '../logging';
 import { validateFileUpload } from '../security';
 import type { LibraryFile } from './LibraryStorage';
@@ -11,6 +11,8 @@ export interface ExportedChat {
   memories?: MemoryEntry[];
   /** Optional library files (added in v1.2 of the export format) */
   library?: LibraryFile[];
+  /** Optional chat folders (added in v1.3 of the export format) */
+  folders?: ChatFolder[];
 }
 
 // Validate a memory entry for export/import
@@ -22,6 +24,17 @@ function validateMemoryEntry(entry: unknown): entry is MemoryEntry {
     typeof (entry as MemoryEntry).content === 'string' &&
     typeof (entry as MemoryEntry).createdAt === 'number' &&
     typeof (entry as MemoryEntry).updatedAt === 'number'
+  );
+}
+
+// Validate a chat folder for export/import
+function validateChatFolder(entry: unknown): entry is ChatFolder {
+  return (
+    typeof entry === 'object' &&
+    entry !== null &&
+    typeof (entry as ChatFolder).id === 'string' &&
+    typeof (entry as ChatFolder).name === 'string' &&
+    typeof (entry as ChatFolder).createdAt === 'number'
   );
 }
 
@@ -68,7 +81,7 @@ function validateMessage(message: unknown): boolean {
 /**
  * Export chats (and optionally memory entries / library files) as JSON file
  */
-export const exportChats = (chats: Chat[], memories: MemoryEntry[] = [], library: LibraryFile[] = []): void => {
+export const exportChats = (chats: Chat[], memories: MemoryEntry[] = [], library: LibraryFile[] = [], folders: ChatFolder[] = []): void => {
   try {
     if (!Array.isArray(chats)) {
       throw new Error('Invalid chats array');
@@ -89,12 +102,17 @@ export const exportChats = (chats: Chat[], memories: MemoryEntry[] = [], library
       ? library.filter((entry) => validateLibraryFile(entry))
       : [];
 
+    const validFolders = Array.isArray(folders)
+      ? folders.filter((entry) => validateChatFolder(entry))
+      : [];
+
     const exportData: ExportedChat = {
-      version: '1.2',
+      version: '1.3',
       timestamp: Date.now(),
       chats: validChats,
       ...(validMemories.length > 0 ? { memories: validMemories } : {}),
       ...(validLibrary.length > 0 ? { library: validLibrary } : {}),
+      ...(validFolders.length > 0 ? { folders: validFolders } : {}),
     };
 
     const dataStr = JSON.stringify(exportData, null, 2);
@@ -117,6 +135,7 @@ export interface ChatImportResult {
   chats: Chat[];
   memories: MemoryEntry[];
   library: LibraryFile[];
+  folders: ChatFolder[];
 }
 
 /**
@@ -160,7 +179,7 @@ export const importChats = (file: File): Promise<ChatImportResult> => {
         }
 
         // Validate version
-        if (data.version !== '1.0' && data.version !== '1.1' && data.version !== '1.2') {
+        if (data.version !== '1.0' && data.version !== '1.1' && data.version !== '1.2' && data.version !== '1.3') {
           warn(`Import file version ${data.version} may not be fully compatible`);
         }
 
@@ -202,8 +221,19 @@ export const importChats = (file: File): Promise<ChatImportResult> => {
             })
           : [];
 
+        // Chat folders are optional (export formats < 1.3 have none)
+        const validFolders = Array.isArray(data.folders)
+          ? data.folders.filter((entry: unknown) => {
+              if (!validateChatFolder(entry)) {
+                warn('Invalid chat folder skipped during import');
+                return false;
+              }
+              return true;
+            })
+          : [];
+
         info(`Successfully imported ${validChats.length} chats`);
-        resolve({ chats: validChats, memories: validMemories, library: validLibrary });
+        resolve({ chats: validChats, memories: validMemories, library: validLibrary, folders: validFolders });
       } catch (error) {
         logError('Import error:', error);
         reject(new Error(`Failed to parse import file: ${error instanceof Error ? error.message : 'Unknown error'}`));

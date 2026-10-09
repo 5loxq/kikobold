@@ -1,6 +1,6 @@
 # Local LLM Chat
 
-**Version:** 4.1.0 | **Lizenz:** MIT | **Status:** Produktionsreif
+**Version:** 4.2.0 | **Lizenz:** MIT | **Status:** Produktionsreif
 
 Ein datenschutzfreundlicher LLM-Chat, der komplett im Browser läuft. Die Modelle
 werden lokal heruntergeladen, im Browser gecacht und die Inferenz erfolgt
@@ -23,7 +23,7 @@ Live-Demo: **https://kikobold.net**
 | **Barrierefreiheit** | Textgröße skalierbar (Klein bis Sehr groß, direkt im Chat per Aa-Knopf), hoher Kontrast, lesbare Schrift (Atkinson Hyperlegible), Lesbarkeits-Modus, Animationen abschaltbar, Nachrichten-Navigation per Tastatur (J/K/C), Vorlesen pro Nachricht, Screenreader-Ankündigungen, sichtbare Fokus-Ringe, Fokus-Fallen in Dialogen, WCAG-AA-Kontraste (Ziel: WCAG 2.1 AA) |
 | **Streaming** | Antworten erscheinen Token für Token, abbrechbar |
 | **Profile** | Standard / Kreativ / Präzise (deutsch) — der System-Prompt wird tatsächlich an das Modell übergeben |
-| **Chats** | Verlauf in IndexedDB, Suche im Chat, Export/Import als JSON |
+| **Chats** | Verlauf in IndexedDB mit Ordnern, Suche im Chat, Export/Import als JSON |
 | **Sprache** | Deutsch und Englisch, umschaltbar |
 | **Offline** | Service Worker; nach dem Modell-Download funktioniert der Chat offline |
 | **Anhänge** | Dokumente als Kontext; Spracheingabe per Mikrofon |

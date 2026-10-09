@@ -2,6 +2,15 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.2.0] - 2026-10-09
+
+### Neu
+
+- **Sidebar entrümpelt**: Aus 13 Menüpunkten werden 4 primäre (Chat, Einstellungen) plus zwei einklappbare Gruppen — „Verwaltung" (Profile, Gedächtnis, Bibliothek, Modelle, Daten) und „Hilfe & Rechtliches" (Hilfe, Roadmap, Lexikon, Kontakt, Datenschutz, Impressum). Verwaltung ist standardmäßig aufgeklappt, Hilfe & Rechtliches zu.
+- **Chat-Verlauf immer sichtbar**: Der Verlauf ist nicht mehr an den Chat-Tab gebunden, sondern permanent in der Sidebar und bekommt den gesamten Platz unter dem Menü (flexibel, scrollbar).
+- **Ordner für Chats**: Neue Ordner-Struktur im Verlauf — Ordner anlegen (📁+), umbenennen, löschen (Chats bleiben erhalten und werden „ohne Ordner" angezeigt), einklappen, Chats per 📁-Button verschieben. Ordner liegen in localStorage, die Zuordnung am Chat in IndexedDB.
+- **Backup-Format v1.3**: Ordner werden beim Komplett-Export mitgesichert und beim Import wiederhergestellt (abwärtskompatibel mit v1.0–v1.2).
+
 ## [4.1.0] - 2026-10-09
 
 ### Neu

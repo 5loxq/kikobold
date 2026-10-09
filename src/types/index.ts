@@ -13,6 +13,15 @@ export interface Chat {
   profileId: string;
   createdAt: number;
   updatedAt: number;
+  /** Optional folder the chat is sorted into (see ChatFolder) */
+  folderId?: string | null;
+}
+
+// Chat folder types
+export interface ChatFolder {
+  id: string;
+  name: string;
+  createdAt: number;
 }
 
 // Memory types
