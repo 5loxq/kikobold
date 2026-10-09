@@ -85,7 +85,7 @@ export const WelcomeScreen: FC<WelcomeScreenProps> = ({ onDismiss }) => {
           {steps.map((step) => (
             <div
               key={step.title}
-              className="flex gap-4 bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-2xl p-4"
+              className="flex gap-4 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl p-4"
             >
               <div className="text-2xl flex-shrink-0" aria-hidden="true">
                 {step.icon}
@@ -108,7 +108,7 @@ export const WelcomeScreen: FC<WelcomeScreenProps> = ({ onDismiss }) => {
 
         <button
           onClick={handleStart}
-          className="mt-6 w-full px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold shadow-lg shadow-indigo-500/25 hover:opacity-90 transition-opacity"
+          className="mt-6 w-full px-6 py-3 rounded-xl bg-indigo-700 text-white font-semibold shadow-lg shadow-indigo-500/25 hover:opacity-90 transition-opacity"
         >
           {t('welcome.startButton')}
         </button>

@@ -109,14 +109,19 @@ export const MainLayout: FC = () => {
   const [pendingModelId, setPendingModelId] = useState<string | null>(null);
   // "What's new" entries to show (auto on version change, or opened from help)
   const [whatsNewEntries, setWhatsNewEntries] = useState<WhatsNewEntry[]>([]);
-  // While a modal dialog is open (welcome, tour, what's new) the app shell
-  // behind it becomes inert: focus, screen readers and clicks cannot reach
-  // the covered elements anymore (WCAG 2.4.11 - focus not obscured).
-  const appShellRef = useRef<HTMLDivElement>(null);
+  // While a modal dialog is open (welcome, tour, what's new) the app content
+  // becomes inert: focus, screen readers and clicks cannot reach the covered
+  // elements anymore (WCAG 2.4.11 - focus not obscured). The <main> element
+  // itself stays focusable - it is the skip link target and must remain so.
+  const sidebarShellRef = useRef<HTMLDivElement>(null);
+  const mainShellRef = useRef<HTMLDivElement>(null);
   const modalOpen = !welcomeDone || whatsNewEntries.length > 0 || (welcomeDone && !tourDone && chat !== null);
   useEffect(() => {
-    if (appShellRef.current) {
-      appShellRef.current.inert = modalOpen;
+    if (sidebarShellRef.current) {
+      sidebarShellRef.current.inert = modalOpen;
+    }
+    if (mainShellRef.current) {
+      mainShellRef.current.inert = modalOpen;
     }
   }, [modalOpen]);
   // Thinking mode of the loaded model (Qwen 3: soft switch /no_think in the
@@ -550,22 +555,23 @@ export const MainLayout: FC = () => {
   };
 
   return (
-    <div className="relative flex h-screen overflow-hidden bg-gradient-to-b from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900">
+    <div className="relative isolate flex h-screen overflow-hidden bg-gradient-to-b from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900">
       {/* Skip link: first tab stop, jumps keyboard users to the chat */}
       <a href="#main-content" className="skip-link">
         {t('a11y.skipToContent')}
       </a>
 
-      {/* Subtle ambient glow */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+      {/* Subtle ambient glow - negative z-index keeps it clearly BELOW all
+          content (accessibility tools evaluate stacking order; without this
+          the blurred circles read as "overlapping" the text) */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden -z-10" aria-hidden="true">
         <div className="absolute -top-32 -left-24 w-96 h-96 rounded-full bg-indigo-400/10 dark:bg-indigo-600/10 blur-3xl"></div>
         <div className="absolute -bottom-40 -right-24 w-[28rem] h-[28rem] rounded-full bg-violet-400/10 dark:bg-violet-600/10 blur-3xl"></div>
       </div>
 
-      {/* App shell: sidebar + content. display:contents keeps the flex
-          layout intact; the ref makes the shell inert while a modal is
-          open (see appShellRef). */}
-      <div className="contents" ref={appShellRef}>
+      {/* Sidebar shell: display:contents keeps the flex layout intact; the
+          ref makes the sidebar inert while a modal is open. */}
+      <div className="contents" ref={sidebarShellRef}>
       {/* Desktop Sidebar */}
       <div className="hidden lg:flex lg:flex-shrink-0 relative z-10">
         <Sidebar
@@ -627,7 +633,12 @@ export const MainLayout: FC = () => {
         </div>
       )}
 
-      <main id="main-content" className="flex-1 flex flex-col overflow-hidden min-w-0">
+      </div>
+
+      <main id="main-content" tabIndex={-1} className="flex-1 flex flex-col overflow-hidden min-w-0 focus:outline-none">
+      {/* Main content shell: inert while a modal is open - main itself
+          stays focusable as the skip link target */}
+      <div className="contents" ref={mainShellRef}>
         {/* Mobile Header */}
         <div className="lg:hidden bg-zinc-950 text-white px-4 py-3 flex items-center gap-3 border-b border-zinc-800">
           <button
@@ -684,7 +695,7 @@ export const MainLayout: FC = () => {
                       {/* Indeterminate bar: the files are complete, the model
                           is being initialized in memory without progress events */}
                       <div className="mt-3 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
-                        <div className="h-2 w-1/3 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full animate-progress-slide"></div>
+                        <div className="h-2 w-1/3 bg-indigo-700 rounded-full animate-progress-slide"></div>
                       </div>
                       <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1.5">
                         {t('chat.preparingNote')}
@@ -694,7 +705,7 @@ export const MainLayout: FC = () => {
                     <>
                       <div className="mt-3 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
                         <div
-                          className="bg-gradient-to-r from-indigo-500 to-violet-500 h-2 rounded-full transition-all duration-300"
+                          className="bg-indigo-700 h-2 rounded-full transition-all duration-300"
                           style={{ width: `${Math.max(2, Math.round(modelLoadProgress))}%` }}
                         ></div>
                       </div>
@@ -859,8 +870,8 @@ export const MainLayout: FC = () => {
             <ContactPage onNavigateBack={() => setActiveTab('chat')} />
           </Suspense>
         )}
-      </main>
       </div>
+      </main>
 
       {/* Welcome page with short guide - shown on the very first visit */}
       {!welcomeDone && (

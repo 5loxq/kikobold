@@ -735,7 +735,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
               className={`h-9 px-4 rounded-xl text-sm font-medium transition-all ${
                 isSendDisabled
                   ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-400 hover:to-violet-500 hover:shadow-lg hover:shadow-indigo-500/25 active:scale-95'
+                  : 'bg-indigo-700 text-white hover:bg-indigo-600 hover:shadow-lg hover:shadow-indigo-500/25 active:scale-95'
               }`}
               aria-label={t('chat.send')}
             >

@@ -487,7 +487,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                     <>
                       <div className="w-32 h-2 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-300"
+                          className="h-full bg-indigo-700 transition-all duration-300"
                           style={{ width: `${Math.max(2, loadingProgress)}%` }}
                         ></div>
                       </div>

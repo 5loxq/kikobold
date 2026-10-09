@@ -83,7 +83,7 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, isDarkMode,
           isFocused ? 'ring-2 ring-indigo-500 dark:ring-indigo-400' : ''
         } ${
           isUser
-            ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white rounded-3xl rounded-br-lg'
+            ? 'bg-indigo-700 text-white rounded-3xl rounded-br-lg'
             : 'bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 rounded-3xl rounded-bl-lg border border-zinc-100 dark:border-zinc-700'
         }`}
       >

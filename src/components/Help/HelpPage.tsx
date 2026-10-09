@@ -266,7 +266,7 @@ export const HelpPage: React.FC<HelpPageProps> = ({ onNavigateBack, onRestartTou
             {onRestartTour && (
               <button
                 onClick={onRestartTour}
-                className="px-4 py-2 text-sm font-semibold rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:opacity-90 transition-opacity"
+                className="px-4 py-2 text-sm font-semibold rounded-xl bg-indigo-700 text-white hover:opacity-90 transition-opacity"
               >
                 {t('help.replayTourButton')}
               </button>

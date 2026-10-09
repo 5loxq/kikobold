@@ -126,7 +126,7 @@ export const DataManager: React.FC<DataManagerProps> = ({
           <div className="flex flex-wrap gap-2">
             <button
               onClick={onExportAll}
-              className="px-4 py-2 text-sm font-semibold rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:opacity-90 transition-opacity"
+              className="px-4 py-2 text-sm font-semibold rounded-xl bg-indigo-700 text-white hover:opacity-90 transition-opacity"
             >
               ⬇️ {t('data.exportAll')}
             </button>

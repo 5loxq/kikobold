@@ -51,7 +51,7 @@ export const WhatsNewDialog: FC<WhatsNewDialogProps> = ({ entries, onClose }) =>
           {entries.map((entry) => (
             <div
               key={entry.version}
-              className="bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-2xl p-4"
+              className="bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl p-4"
             >
               <h3 className="font-semibold text-zinc-800 dark:text-zinc-100 mb-2">
                 v{entry.version}
@@ -73,7 +73,7 @@ export const WhatsNewDialog: FC<WhatsNewDialogProps> = ({ entries, onClose }) =>
 
         <button
           onClick={onClose}
-          className="mt-5 w-full px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold shadow-lg shadow-indigo-500/25 hover:opacity-90 transition-opacity flex-shrink-0"
+          className="mt-5 w-full px-6 py-3 rounded-xl bg-indigo-700 text-white font-semibold shadow-lg shadow-indigo-500/25 hover:opacity-90 transition-opacity flex-shrink-0"
         >
           {t('whatsNew.closeButton')}
         </button>

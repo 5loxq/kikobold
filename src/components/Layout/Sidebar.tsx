@@ -55,7 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex-shrink-0 px-4 py-4 flex items-center justify-between">
         {!isCollapsed && (
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-sm font-bold shadow-lg shadow-indigo-500/20">
+            <div className="w-8 h-8 rounded-xl bg-indigo-700 flex items-center justify-center text-sm font-bold shadow-lg shadow-indigo-500/20">
               AI
             </div>
             <h1 className="text-base font-semibold tracking-tight">{t('sidebar.title')}</h1>
@@ -74,7 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex-shrink-0 px-3 pt-1 pb-3">
         <button
           onClick={onNewChat}
-          className={`w-full py-2.5 rounded-xl font-medium text-sm text-center truncate transition-all duration-200 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-400 hover:to-violet-500 shadow-lg shadow-indigo-500/25 ${
+          className={`w-full py-2.5 rounded-xl font-medium text-sm text-center truncate transition-all duration-200 bg-indigo-700 hover:bg-indigo-600 shadow-lg shadow-indigo-500/25 ${
             isCollapsed ? 'px-0' : 'px-4'
           }`}
           title={t('sidebar.newChat')}

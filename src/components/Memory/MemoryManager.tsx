@@ -140,7 +140,7 @@ export const MemoryManager: React.FC<MemoryManagerProps> = ({
             <button
               onClick={() => void handleAdd()}
               disabled={!newContent.trim() || totalLimitReached}
-              className="px-4 py-2 text-sm font-semibold rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 text-sm font-semibold rounded-xl bg-indigo-700 text-white hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
               + {t('memory.add')}
             </button>
