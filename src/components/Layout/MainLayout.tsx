@@ -13,6 +13,7 @@ const WikiPage = lazy(() => import('../Help/WikiPage').then(m => ({ default: m.W
 const ModelsPage = lazy(() => import('../Models/ModelsPage').then(m => ({ default: m.ModelsPage })));
 const MemoryManager = lazy(() => import('../Memory/MemoryManager').then(m => ({ default: m.MemoryManager })));
 const ContactPage = lazy(() => import('../Contact/ContactPage').then(m => ({ default: m.ContactPage })));
+const PrivacyPage = lazy(() => import('../Privacy/PrivacyPage').then(m => ({ default: m.PrivacyPage })));
 const SettingsPage = lazy(() => import('../Settings/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const LibraryManager = lazy(() => import('../Library/LibraryManager').then(m => ({ default: m.LibraryManager })));
 const DataManager = lazy(() => import('../Data/DataManager').then(m => ({ default: m.DataManager })));
@@ -43,7 +44,7 @@ import { localStorageGet, localStorageSet } from '../../services/storage/local-s
 import { ttsSpeak } from '../../services/tts';
 
 
-type ActiveTab = 'chat' | 'profiles' | 'memory' | 'library' | 'models' | 'data' | 'settings' | 'help' | 'roadmap' | 'wiki' | 'contact';
+type ActiveTab = 'chat' | 'profiles' | 'memory' | 'library' | 'models' | 'data' | 'settings' | 'help' | 'roadmap' | 'wiki' | 'contact' | 'privacy';
 
 export const MainLayout: FC = () => {
   const { t, i18n } = useTranslation();
@@ -868,6 +869,12 @@ export const MainLayout: FC = () => {
         {activeTab === 'contact' && (
           <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
             <ContactPage onNavigateBack={() => setActiveTab('chat')} />
+          </Suspense>
+        )}
+
+        {activeTab === 'privacy' && (
+          <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
+            <PrivacyPage onNavigateBack={() => setActiveTab('chat')} />
           </Suspense>
         )}
       </div>

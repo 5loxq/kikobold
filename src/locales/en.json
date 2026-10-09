@@ -19,7 +19,8 @@
     "openMenu": "Open menu",
     "navigation": "Navigation",
     "switchToLightMode": "Switch to light mode",
-    "switchToDarkMode": "Switch to dark mode"
+    "switchToDarkMode": "Switch to dark mode",
+    "privacy": "Privacy"
   },
   "chat": {
     "welcome": "Welcome to KI Kobold",
@@ -678,5 +679,29 @@
     "shortcutCopy": "C: copy the focused message",
     "shortcutDialog": "?: open this overview",
     "shortcutClearFocus": "Esc: clear the message focus"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "subtitle": "Last updated: October 2026",
+    "controllerTitle": "Controller",
+    "controllerText": "The controller for data processing on this website is the operator of kikobold.net (see address below).",
+    "localTitle": "How KI Kobold works - everything stays on your device",
+    "localText1": "KI Kobold processes your chat messages exclusively locally in your browser. The AI models are downloaded to your device and the answers are computed there - none of your messages are sent to or processed on a server.",
+    "localText2": "Your chats are stored in your browser's IndexedDB, settings and profiles in localStorage. This data never leaves your device. You can back it up at any time via the export/import function or delete it on the data page.",
+    "logsTitle": "Server logs",
+    "logsText1": "When you visit the website, the hosting provider (Hetzner Online GmbH, Germany) records technically necessary server log data: your IP address, the time of access, the requested file, the amount of data transferred and the browser identifier. This data is technically required to serve the website and ensure its security.",
+    "logsText2": "The legal basis is Art. 6 (1) (f) GDPR (legitimate interest in a secure and stable operation). The log data is routinely deleted after a short period; it is not merged with other data sources.",
+    "modelsTitle": "Model downloads",
+    "modelsText1": "The AI models are primarily downloaded from this website's own webspace (Germany). Only if it is unreachable, a fallback to the public HuggingFace CDN (Hugging Face Inc., USA) kicks in automatically. The provider then sees your IP address and the requested file.",
+    "modelsText2": "The legal basis is likewise Art. 6 (1) (f) GDPR. For the fallback, the EU Commission's standard contractual clauses apply as safeguards for the data transfer to the USA. The download only starts after your confirmation.",
+    "trackingTitle": "No tracking, no cookies",
+    "trackingText1": "This website does not set cookies, uses no analytics, no advertising and no social media plugins. There is no telemetry and no user accounts.",
+    "trackingText2": "The local storage (IndexedDB, localStorage) serves exclusively to operate the app (chats, settings, downloaded models) and is technically necessary - it lives in your browser and is not visible to us.",
+    "rightsTitle": "Your rights",
+    "rightsText1": "You have the right of access (Art. 15 GDPR), rectification (Art. 16), erasure (Art. 17), restriction of processing (Art. 18), data portability (Art. 20) and the right to object to processing (Art. 21). Since almost all data is stored locally on your device, you can delete it yourself via the app's data page.",
+    "rightsText2": "You also have the right to lodge a complaint with a data protection supervisory authority (Art. 77 GDPR). Please direct privacy requests to the email address below.",
+    "addressTitle": "Address",
+    "contactEmailLabel": "Email for privacy requests",
+    "backToChat": "Back to chat"
   }
 }

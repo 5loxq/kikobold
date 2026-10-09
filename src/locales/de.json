@@ -19,7 +19,8 @@
     "openMenu": "Menü öffnen",
     "navigation": "Navigation",
     "switchToLightMode": "Zum hellen Design wechseln",
-    "switchToDarkMode": "Zum dunklen Design wechseln"
+    "switchToDarkMode": "Zum dunklen Design wechseln",
+    "privacy": "Datenschutz"
   },
   "chat": {
     "welcome": "Willkommen bei KI Kobold",
@@ -678,5 +679,29 @@
     "shortcutCopy": "C: fokussierte Nachricht kopieren",
     "shortcutDialog": "?: diese Übersicht öffnen",
     "shortcutClearFocus": "Esc: Nachrichten-Fokus aufheben"
+  },
+  "privacy": {
+    "title": "Datenschutzerklärung",
+    "subtitle": "Stand: Oktober 2026",
+    "controllerTitle": "Verantwortlicher",
+    "controllerText": "Verantwortlicher für die Datenverarbeitung auf dieser Website ist der Betreiber von kikobold.net (Adresse siehe unten).",
+    "localTitle": "Wie KI Kobold arbeitet - alles bleibt auf deinem Gerät",
+    "localText1": "KI Kobold verarbeitet deine Chat-Nachrichten ausschließlich lokal in deinem Browser. Die KI-Modelle werden auf dein Gerät heruntergeladen und die Antworten werden dort berechnet - keine deiner Nachrichten wird an einen Server gesendet oder dort verarbeitet.",
+    "localText2": "Deine Chats werden in der IndexedDB deines Browsers gespeichert, Einstellungen und Profile im localStorage. Diese Daten verlassen dein Gerät nicht. Du kannst sie jederzeit über die Export-/Import-Funktion sichern oder über die Daten-Seite löschen.",
+    "logsTitle": "Server-Logdaten",
+    "logsText1": "Beim Aufruf der Website erfasst der Hosting-Anbieter (Hetzner Online GmbH, Deutschland) technisch notwendige Server-Logdaten: deine IP-Adresse, den Zeitpunkt des Zugriffs, die abgerufene Datei, übertragene Datenmenge und Browser-Kennung. Diese Daten sind technisch erforderlich, um die Website auszuliefern und ihre Sicherheit zu gewährleisten.",
+    "logsText2": "Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einem sicheren und stabilen Betrieb). Die Logdaten werden nach kurzer Zeit routinemäßig gelöscht; eine Zusammenführung mit anderen Datenquellen findet nicht statt.",
+    "modelsTitle": "Modell-Downloads",
+    "modelsText1": "Die KI-Modelle werden vorrangig vom Webspace dieser Website (Deutschland) heruntergeladen. Nur wenn dieser nicht erreichbar ist, greift automatisch ein Fallback auf den öffentlichen CDN von HuggingFace (Hugging Face Inc., USA) zu. Dabei sieht der Anbieter deine IP-Adresse und die angeforderte Datei.",
+    "modelsText2": "Rechtsgrundlage ist ebenfalls Art. 6 Abs. 1 lit. f DSGVO. Für den Fallback greifen die Standardvertragsklauseln der EU-Kommission als Garantien für den Datentransfer in die USA. Der Download startet erst nach deiner Bestätigung.",
+    "trackingTitle": "Kein Tracking, keine Cookies",
+    "trackingText1": "Diese Website setzt keine Cookies, verwendet kein Analytics, keine Werbung und keine Social-Media-Plugins. Es gibt keine Telemetrie und keine Nutzerkonten.",
+    "trackingText2": "Die lokale Speicherung (IndexedDB, localStorage) dient ausschließlich dem Betrieb der App (Chats, Einstellungen, heruntergeladene Modelle) und ist technisch notwendig - sie ist in deinem Browser verankert und für uns nicht einsehbar.",
+    "rightsTitle": "Deine Rechte",
+    "rightsText1": "Du hast das Recht auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) sowie Widerspruch gegen die Verarbeitung (Art. 21). Da nahezu alle Daten lokal bei dir liegen, kannst du sie selbst über die Daten-Seite der App löschen.",
+    "rightsText2": "Außerdem hast du das Recht, dich bei einer Datenschutz-Aufsichtsbehörde zu beschweren (Art. 77 DSGVO). Anfragen zu Datenschutz richtest du bitte an die E-Mail-Adresse unten.",
+    "addressTitle": "Anschrift",
+    "contactEmailLabel": "E-Mail für Datenschutz-Anfragen",
+    "backToChat": "Zurück zum Chat"
   }
 }
