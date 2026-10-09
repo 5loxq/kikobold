@@ -5,9 +5,13 @@ import { MessageList } from './MessageList';
 import { InputBox } from './InputBox';
 import { ChatExportImport } from './chat-export-import';
 import { FileDropWarning } from './FileDropWarning';
+import { ShortcutsDialog } from './ShortcutsDialog';
 import type { LibraryFile } from '../../services/storage/LibraryStorage';
 import { getModelConfig, MODELS } from '../../services/models/model-registry';
 import { supportsWllamaJspi } from '../../services/inference/wllama-engine';
+import { TEXT_SCALES } from '../../services/accessibility';
+import type { TextScale } from '../../services/settings';
+import { ttsSpeak, ttsStop } from '../../services/tts';
 
 
 interface ChatWindowProps {
@@ -46,6 +50,11 @@ interface ChatWindowProps {
   onRenameChat?: (chatId: string, newTitle: string) => void;
   memories?: MemoryEntry[];
   library?: LibraryFile[];
+  /** Current text size level - controlled by the quick control in the header */
+  textScale?: TextScale;
+  onTextScaleChange?: (scale: TextScale) => void;
+  /** Speech rate for the per-message read-aloud button (0.5 - 1.5) */
+  speechRate?: number;
 }
 
 export const ChatWindow: React.FC<ChatWindowProps> = ({
@@ -78,14 +87,24 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   onRenameChat,
   memories = [],
   library = [],
+  textScale = 'standard',
+  onTextScaleChange,
+  speechRate = 1,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [selectedModelId, setSelectedModelId] = useState<string>(_activeModel?.id ?? '');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  // Quick text size control (popover in the header)
+  const [isTextSizeOpen, setIsTextSizeOpen] = useState(false);
+  // Keyboard message navigation (J/K focus, C copy, ? shortcuts, Esc clears)
+  const [focusedMessageIndex, setFocusedMessageIndex] = useState<number | null>(null);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  // Per-message read-aloud: id of the message currently being spoken
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   // Screen reader announcements (generation start/end). The streaming text
   // itself is NOT put in a live region - it changes on every token and would
   // flood assistive technology. Only the state transitions are announced.
@@ -120,7 +139,15 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   );
 
   const scrollToBottom = (): void => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Programmatic smooth scrolling ignores the CSS scroll-behavior
+    // property - check the reduce-motion setting and OS preference here.
+    const reduceMotion =
+      document.documentElement.classList.contains('reduce-motion') ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    messagesEndRef.current?.scrollIntoView({
+      behavior: reduceMotion ? 'auto' : 'smooth',
+      block: 'end',
+    });
   };
 
   useEffect(() => {
@@ -144,6 +171,107 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     window.addEventListener('keydown', onKeyDown);
     return (): void => window.removeEventListener('keydown', onKeyDown);
   }, []);
+
+  // Keyboard message navigation: J/K move the focus between messages, C
+  // copies the focused one, ? opens the shortcut overview, Esc clears the
+  // focus (and closes the text size popover). Ignored while typing.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent): void => {
+      if (showShortcuts) {
+        return;
+      }
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      if (e.ctrlKey || e.metaKey || e.altKey) {
+        return;
+      }
+      if (e.key === '?') {
+        e.preventDefault();
+        setShowShortcuts(true);
+        return;
+      }
+      if (e.key === 'Escape') {
+        setFocusedMessageIndex(null);
+        setIsTextSizeOpen(false);
+        return;
+      }
+      const count = visibleMessages.length;
+      if (count === 0) {
+        return;
+      }
+      if (e.key === 'j' || e.key === 'J') {
+        e.preventDefault();
+        setFocusedMessageIndex((i) => Math.min(count - 1, (i ?? -1) + 1));
+        return;
+      }
+      if (e.key === 'k' || e.key === 'K') {
+        e.preventDefault();
+        setFocusedMessageIndex((i) => Math.max(0, (i ?? count) - 1));
+        return;
+      }
+      if (e.key === 'c' || e.key === 'C') {
+        const message = focusedMessageIndex !== null ? visibleMessages[focusedMessageIndex] : undefined;
+        if (message) {
+          e.preventDefault();
+          void navigator.clipboard.writeText(message.content);
+          setAnnouncement(t('chat.copied'));
+        }
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return (): void => window.removeEventListener('keydown', onKeyDown);
+  }, [showShortcuts, focusedMessageIndex, visibleMessages, t]);
+
+  // Keep the keyboard-focused message in view
+  useEffect(() => {
+    if (focusedMessageIndex === null) {
+      return;
+    }
+    const message = visibleMessages[focusedMessageIndex];
+    if (!message) {
+      return;
+    }
+    const el = document.querySelector(`[data-message-id="${message.id}"]`);
+    const reduceMotion =
+      document.documentElement.classList.contains('reduce-motion') ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    el?.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+  }, [focusedMessageIndex, visibleMessages]);
+
+  // Reset the keyboard focus when switching chats
+  useEffect(() => {
+    setFocusedMessageIndex(null);
+  }, [chat?.id]);
+
+  // Stop the speech when leaving the chat
+  useEffect(() => {
+    return (): void => ttsStop();
+  }, []);
+
+  // Per-message read-aloud: clicking the speaker button reads the message,
+  // clicking again (or another message) switches/stops the speech.
+  const handleToggleSpeak = (messageId: string, content: string): void => {
+    if (speakingMessageId === messageId) {
+      ttsStop();
+      setSpeakingMessageId(null);
+      return;
+    }
+    setSpeakingMessageId(messageId);
+    ttsSpeak(
+      content,
+      i18n.language === 'de' ? 'de-DE' : 'en-US',
+      speechRate,
+      () => setSpeakingMessageId(null)
+    );
+  };
 
   if (!chat) {
     return (
@@ -422,16 +550,68 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             memories={memories}
             library={library}
           />
-          <button
-            onClick={() => setIsSearchOpen((v) => !v)}
-            data-tour="search"
-            aria-expanded={isSearchOpen}
-            aria-controls="chat-search-input"
-            className="p-2 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-sm flex items-center gap-1"
-            title={t('chat.searchInChat')}
-          >
-            🔍 <span className="hidden sm:inline">{t('chat.searchInChat')}</span>
-          </button>
+          <div className="flex items-center gap-1">
+            {/* Quick text size control - same four levels as the settings */}
+            {onTextScaleChange && (
+              <div className="relative">
+                <button
+                  onClick={() => setIsTextSizeOpen((v) => !v)}
+                  aria-expanded={isTextSizeOpen}
+                  aria-haspopup="true"
+                  className="p-2 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-sm font-semibold"
+                  title={t('settings.textSize')}
+                  aria-label={t('settings.textSize')}
+                >
+                  Aa
+                </button>
+                {isTextSizeOpen && (
+                  <div
+                    role="group"
+                    aria-label={t('settings.textSize')}
+                    className="absolute bottom-full right-0 mb-2 z-30 flex gap-1 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl"
+                  >
+                    {TEXT_SCALES.map((scale) => (
+                      <button
+                        key={scale.value}
+                        onClick={() => {
+                          onTextScaleChange(scale.value);
+                          setIsTextSizeOpen(false);
+                        }}
+                        aria-pressed={textScale === scale.value}
+                        title={t(scale.labelKey)}
+                        aria-label={t(scale.labelKey)}
+                        className={`w-9 h-9 rounded-xl text-sm font-semibold transition-colors ${
+                          textScale === scale.value
+                            ? 'bg-indigo-600 text-white'
+                            : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                        }`}
+                      >
+                        <span aria-hidden="true">{scale.icon}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            <button
+              onClick={() => setShowShortcuts(true)}
+              className="p-2 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-sm hidden sm:flex items-center gap-1"
+              title={t('help.shortcutsTitle')}
+              aria-label={t('help.shortcutsTitle')}
+            >
+              ⌨️
+            </button>
+            <button
+              onClick={() => setIsSearchOpen((v) => !v)}
+              data-tour="search"
+              aria-expanded={isSearchOpen}
+              aria-controls="chat-search-input"
+              className="p-2 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-sm flex items-center gap-1"
+              title={t('chat.searchInChat')}
+            >
+              🔍 <span className="hidden sm:inline">{t('chat.searchInChat')}</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -444,6 +624,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         messagesEndRef={messagesEndRef}
         isDarkMode={darkMode}
         searchQuery={searchQuery}
+        focusedMessageId={focusedMessageIndex !== null ? visibleMessages[focusedMessageIndex]?.id ?? null : null}
+        speakingMessageId={speakingMessageId}
+        onToggleSpeak={handleToggleSpeak}
       />
 
       {/* Input Area */}
@@ -459,6 +642,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         isGenerating={isGenerating}
         onStopGeneration={onStopGeneration}
       />
+
+      {/* Keyboard shortcut overview - opened with ? or the header button */}
+      {showShortcuts && (
+        <ShortcutsDialog onClose={() => setShowShortcuts(false)} />
+      )}
     </div>
   );
 };

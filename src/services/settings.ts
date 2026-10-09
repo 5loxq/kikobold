@@ -24,6 +24,12 @@ export interface AppSettings {
   readableText: boolean;
   /** Disable animations regardless of the OS "reduce motion" setting */
   reduceMotion: boolean;
+  /** Stronger contrasts for visually impaired users */
+  highContrast: boolean;
+  /** Atkinson Hyperlegible instead of Inter (designed for low vision) */
+  readableFont: boolean;
+  /** Speech rate for text-to-speech (0.5 - 1.5) */
+  speechRate: number;
 }
 
 const SETTINGS_KEY = 'webgui_settings_v1';
@@ -39,6 +45,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   textScale: 'standard',
   readableText: false,
   reduceMotion: false,
+  highContrast: false,
+  readableFont: false,
+  speechRate: 1,
 };
 
 const isTextScale = (value: unknown): value is TextScale =>
@@ -58,6 +67,9 @@ export const loadSettings = (): AppSettings => {
         ? parsed.theme
         : DEFAULT_SETTINGS.theme,
       textScale: isTextScale(parsed.textScale) ? parsed.textScale : DEFAULT_SETTINGS.textScale,
+      speechRate: typeof parsed.speechRate === 'number' && parsed.speechRate >= 0.5 && parsed.speechRate <= 1.5
+        ? parsed.speechRate
+        : DEFAULT_SETTINGS.speechRate,
     };
   } catch {
     return { ...DEFAULT_SETTINGS };

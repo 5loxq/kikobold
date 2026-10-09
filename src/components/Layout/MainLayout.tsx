@@ -40,6 +40,7 @@ import { error as logError } from '../../services/logging';
 import { buildPromptWithDocuments, type DocumentAttachment, type ImageAttachment } from '../../services/attachments';
 import { trimHistoryToCharBudget } from '../../services/llm/text-processing';
 import { localStorageGet, localStorageSet } from '../../services/storage/local-storage';
+import { ttsSpeak } from '../../services/tts';
 
 
 type ActiveTab = 'chat' | 'profiles' | 'memory' | 'library' | 'models' | 'data' | 'settings' | 'help' | 'roadmap' | 'wiki' | 'contact';
@@ -203,6 +204,21 @@ export const MainLayout: FC = () => {
     window.addEventListener('keydown', onKeyDown);
     return (): void => window.removeEventListener('keydown', onKeyDown);
   }, [isGenerating, stopGeneration]);
+
+  // Keyboard: Escape closes the mobile sidebar overlay (the ✕ button stays
+  // the visible path; this covers keyboard-only users).
+  useEffect(() => {
+    if (!showMobileSidebar) {
+      return;
+    }
+    const onKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape' && !e.defaultPrevented) {
+        setShowMobileSidebar(false);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return (): void => window.removeEventListener('keydown', onKeyDown);
+  }, [showMobileSidebar]);
 
   // Apply the persisted theme from the app settings on startup
   useEffect(() => {
@@ -421,17 +437,7 @@ export const MainLayout: FC = () => {
   };
 
   const speakResponse = (text: string): void => {
-    // Cancel any ongoing speech
-    window.speechSynthesis.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    // Use current i18n language instead of hardcoded de-DE
-    utterance.lang = i18n.language === 'de' ? 'de-DE' : 'en-US';
-    utterance.rate = 0.9;
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
-
-    window.speechSynthesis.speak(utterance);
+    ttsSpeak(text, i18n.language === 'de' ? 'de-DE' : 'en-US', settings.speechRate);
   };
 
   const handleModelSelect = async (modelId: string): Promise<void> => {
@@ -737,6 +743,9 @@ export const MainLayout: FC = () => {
             onRenameChat={renameChat}
             memories={memories}
             library={libraryFiles}
+            textScale={settings.textScale}
+            onTextScaleChange={(scale) => handleSettingsChange({ ...settings, textScale: scale })}
+            speechRate={settings.speechRate}
           />
         )}
 

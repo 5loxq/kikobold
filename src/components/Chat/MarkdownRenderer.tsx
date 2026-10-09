@@ -354,6 +354,14 @@ const Image: React.FC<{ src?: string; alt?: string; onClick?: (src: string) => v
         alt={alt ?? ''}
         onLoad={() => setLoaded(true)}
         onClick={handleClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleClick();
+          }
+        }}
+        role={onClick ? 'button' : undefined}
+        tabIndex={onClick ? 0 : undefined}
         className={`rounded-lg shadow-md cursor-pointer transition-all duration-300 ${
           loaded ? 'opacity-100' : 'opacity-50'
         }`}

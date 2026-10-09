@@ -13,12 +13,21 @@ interface MessageListProps {
   messagesEndRef?: React.RefObject<HTMLDivElement>;
   isDarkMode?: boolean;
   searchQuery?: string;
+  /** Message focused via keyboard navigation (J/K) - gets a visible ring */
+  focusedMessageId?: string | null;
+  /** Message currently being read aloud */
+  speakingMessageId?: string | null;
+  /** Read a message aloud / stop the speech (read-aloud button) */
+  onToggleSpeak?: (messageId: string, content: string) => void;
 }
 
 interface MessageBubbleProps {
   message: Message;
   isDarkMode?: boolean;
   searchQuery?: string;
+  focusedMessageId?: string | null;
+  speakingMessageId?: string | null;
+  onToggleSpeak?: (messageId: string, content: string) => void;
 }
 
 // Memoized message component to prevent re-renders
@@ -44,9 +53,11 @@ const HighlightedText: React.FC<{ text: string; query: string; isUser: boolean }
   );
 };
 
-const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, isDarkMode, searchQuery }) => {
+const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, isDarkMode, searchQuery, focusedMessageId, speakingMessageId, onToggleSpeak }) => {
   const { t } = useTranslation();
   const isUser = message.role === 'user';
+  const isFocused = focusedMessageId === message.id;
+  const isSpeaking = speakingMessageId === message.id;
   const timeStr = React.useMemo(
     () => new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     [message.timestamp]
@@ -67,7 +78,10 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, isDarkMode,
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
       <div
+        data-message-id={message.id}
         className={`max-w-xs lg:max-w-2xl px-5 py-3.5 shadow-sm ${
+          isFocused ? 'ring-2 ring-indigo-500 dark:ring-indigo-400' : ''
+        } ${
           isUser
             ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white rounded-3xl rounded-br-lg'
             : 'bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 rounded-3xl rounded-bl-lg border border-zinc-100 dark:border-zinc-700'
@@ -97,19 +111,35 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, isDarkMode,
           }`}>
             {timeStr}
           </p>
-          <button
-            type="button"
-            onClick={handleCopy}
-            className={`text-xs px-2 py-1 rounded transition-colors ${
-              isUser
-                ? 'text-white hover:bg-white/20'
-                : 'text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-300'
-            }`}
-            title={copied ? t('chat.copied') : t('chat.copyMessage')}
-            aria-label={copied ? t('chat.copied') : t('chat.copyMessage')}
-          >
-            {copied ? '✓' : '⧉'}
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => onToggleSpeak?.(message.id, message.content)}
+              className={`text-xs px-2 py-1 rounded transition-colors ${
+                isUser
+                  ? 'text-white hover:bg-white/20'
+                  : 'text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-300'
+              }`}
+              title={isSpeaking ? t('chat.stopSpeaking') : t('chat.readAloud')}
+              aria-label={isSpeaking ? t('chat.stopSpeaking') : t('chat.readAloud')}
+              aria-pressed={isSpeaking}
+            >
+              {isSpeaking ? '⏹' : '🔊'}
+            </button>
+            <button
+              type="button"
+              onClick={handleCopy}
+              className={`text-xs px-2 py-1 rounded transition-colors ${
+                isUser
+                  ? 'text-white hover:bg-white/20'
+                  : 'text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-300'
+              }`}
+              title={copied ? t('chat.copied') : t('chat.copyMessage')}
+              aria-label={copied ? t('chat.copied') : t('chat.copyMessage')}
+            >
+              {copied ? '✓' : '⧉'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -124,7 +154,10 @@ const MessageBubble = React.memo(MessageBubbleInner, (prevProps, nextProps) => {
     prevProps.message.timestamp === nextProps.message.timestamp &&
     prevProps.message.role === nextProps.message.role &&
     prevProps.isDarkMode === nextProps.isDarkMode &&
-    prevProps.searchQuery === nextProps.searchQuery
+    prevProps.searchQuery === nextProps.searchQuery &&
+    prevProps.focusedMessageId === nextProps.focusedMessageId &&
+    prevProps.speakingMessageId === nextProps.speakingMessageId &&
+    prevProps.onToggleSpeak === nextProps.onToggleSpeak
   );
 });
 
@@ -149,7 +182,7 @@ const StreamingBubble: React.FC<{ content: string; isDarkMode?: boolean }> = ({ 
 // Keeps long chats (hundreds of messages) smooth without full windowing.
 const MESSAGE_PAGE_SIZE = 50;
 
-const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, isModelLoading, streamingMessage, messagesEndRef, isDarkMode, searchQuery }) => {
+const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, isModelLoading, streamingMessage, messagesEndRef, isDarkMode, searchQuery, focusedMessageId, speakingMessageId, onToggleSpeak }) => {
     const { t } = useTranslation();
     const [visibleCount, setVisibleCount] = React.useState(MESSAGE_PAGE_SIZE);
     const scrollRef = React.useRef<HTMLDivElement>(null);
@@ -210,7 +243,14 @@ const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, isM
             )}
             {visibleMessages.map((message) => (
               <div key={message.id} className="animate-fade-in">
-                <MessageBubble message={message} isDarkMode={isDarkMode} searchQuery={searchQuery} />
+                <MessageBubble
+                  message={message}
+                  isDarkMode={isDarkMode}
+                  searchQuery={searchQuery}
+                  focusedMessageId={focusedMessageId}
+                  speakingMessageId={speakingMessageId}
+                  onToggleSpeak={onToggleSpeak}
+                />
               </div>
             ))}
           </>

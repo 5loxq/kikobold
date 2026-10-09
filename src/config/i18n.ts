@@ -23,4 +23,12 @@ i18n
     },
   });
 
+// Keep the html lang attribute in sync with the UI language (WCAG 3.1.1):
+// screen readers pick their pronunciation engine from it - without this,
+// the English UI would be read with German pronunciation rules.
+i18n.on('languageChanged', (lng) => {
+  document.documentElement.lang = lng;
+});
+document.documentElement.lang = savedLanguage;
+
 export default i18n;

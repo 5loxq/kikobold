@@ -2,7 +2,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { LocalModel, Profile } from '../../types';
 import { MODELS } from '../../services/models/model-registry';
-import type { AppSettings, AppThemeMode, TextScale } from '../../services/settings';
+import type { AppSettings, AppThemeMode } from '../../services/settings';
+import { TEXT_SCALES } from '../../services/accessibility';
 import { version as appVersion } from '../../../package.json';
 
 interface SettingsPageProps {
@@ -26,13 +27,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     { value: 'system', label: t('settings.themeSystem'), icon: '💻' },
     { value: 'light', label: t('settings.themeLight'), icon: '☀️' },
     { value: 'dark', label: t('settings.themeDark'), icon: '🌙' },
-  ];
-
-  const textScaleOptions: Array<{ value: TextScale; label: string; icon: string }> = [
-    { value: 'small', label: t('settings.textSmall'), icon: 'A⁻' },
-    { value: 'standard', label: t('settings.textStandard'), icon: 'A' },
-    { value: 'large', label: t('settings.textLarge'), icon: 'A⁺' },
-    { value: 'xlarge', label: t('settings.textXLarge'), icon: 'A⁺⁺' },
   ];
 
   return (
@@ -124,7 +118,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               {t('settings.textSize')}
             </label>
             <div id="settings-text-scale" className="grid grid-cols-4 gap-2 mb-1.5" role="group" aria-label={t('settings.textSize')}>
-              {textScaleOptions.map((option) => (
+              {TEXT_SCALES.map((option) => (
                 <button
                   key={option.value}
                   onClick={() => onChange({ ...settings, textScale: option.value })}
@@ -136,7 +130,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   }`}
                 >
                   <span className="block text-lg mb-1" aria-hidden="true">{option.icon}</span>
-                  {option.label}
+                  {t(option.labelKey)}
                 </button>
               ))}
             </div>
@@ -157,6 +151,40 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 type="checkbox"
                 checked={settings.readableText}
                 onChange={(e) => onChange({ ...settings, readableText: e.target.checked })}
+                className="mt-1 w-5 h-5 rounded accent-indigo-600 flex-shrink-0"
+              />
+            </label>
+
+            <label className="flex items-start justify-between gap-3 cursor-pointer mb-4">
+              <span>
+                <span className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
+                  {t('settings.readableFont')}
+                </span>
+                <span className="block text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  {t('settings.readableFontHint')}
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                checked={settings.readableFont}
+                onChange={(e) => onChange({ ...settings, readableFont: e.target.checked })}
+                className="mt-1 w-5 h-5 rounded accent-indigo-600 flex-shrink-0"
+              />
+            </label>
+
+            <label className="flex items-start justify-between gap-3 cursor-pointer mb-4">
+              <span>
+                <span className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
+                  {t('settings.highContrast')}
+                </span>
+                <span className="block text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  {t('settings.highContrastHint')}
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                checked={settings.highContrast}
+                onChange={(e) => onChange({ ...settings, highContrast: e.target.checked })}
                 className="mt-1 w-5 h-5 rounded accent-indigo-600 flex-shrink-0"
               />
             </label>
@@ -201,6 +229,23 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 className="mt-1 w-5 h-5 rounded accent-indigo-600 flex-shrink-0"
               />
             </label>
+
+            <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-200 mb-1.5" htmlFor="settings-speech-rate">
+              {t('settings.speechRate')} ({settings.speechRate.toFixed(1)}×)
+            </label>
+            <input
+              id="settings-speech-rate"
+              type="range"
+              min={0.5}
+              max={1.5}
+              step={0.1}
+              value={settings.speechRate}
+              onChange={(e) => onChange({ ...settings, speechRate: Number(e.target.value) })}
+              className="w-full accent-indigo-600 mb-1"
+            />
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
+              {t('settings.speechRateHint')}
+            </p>
 
             <label className="flex items-start justify-between gap-3 cursor-pointer">
               <span>

@@ -108,7 +108,9 @@
     "messageInput": "Your message",
     "removeDocument": "Remove attachment",
     "removeImage": "Remove image",
-    "imagePreview": "Image preview"
+    "imagePreview": "Image preview",
+    "readAloud": "Read message aloud",
+    "stopSpeaking": "Stop reading aloud"
   },
   "tab": {
     "generating": "AI is thinking…",
@@ -216,6 +218,15 @@
     "title": "What's new",
     "subtitle": "A few things have changed since your last visit:",
     "closeButton": "Got it!",
+    "v410": {
+      "item1": "Text size is now adjustable directly in the chat: the Aa button next to the search offers all four levels - no detour to the settings.",
+      "item2": "High contrast: new toggle (Settings → Accessibility) boosts text and border contrast; the system \"more contrast\" preference is respected automatically.",
+      "item3": "Readable font: Atkinson Hyperlegible - designed for low vision, self-hosted (no Google server involved).",
+      "item4": "Navigate messages by keyboard: J/K jumps between messages (with a visible focus), C copies the focused message, ? shows all shortcuts right in the chat.",
+      "item5": "Read-aloud button per message: every message can be read aloud and stopped individually - with an adjustable speech rate.",
+      "item6": "Touch optimization: small buttons get invisibly enlarged hit areas on touch devices (44px, without changing their look).",
+      "item7": "Under the hood: switching the language now sets the lang attribute (screen readers pronounce English correctly), profile cards and image previews are keyboard-operable, and an a11y linter guards against new issues in CI."
+    },
     "v400": {
       "item1": "Adjustable text size: small to very large - scales the entire interface (Settings → Accessibility).",
       "item2": "Increased readability: more line height and slight letter spacing in messages and the input field.",
@@ -631,7 +642,13 @@
     "readableText": "Increase readability",
     "readableTextHint": "More line height and slight letter spacing in messages and the input field.",
     "reduceMotion": "Reduce animations",
-    "reduceMotionHint": "Hides movement and transitions - independent of the system setting."
+    "reduceMotionHint": "Hides movement and transitions - independent of the system setting.",
+    "readableFont": "Readable font (Atkinson Hyperlegible)",
+    "readableFontHint": "A typeface specifically designed for low vision - letter shapes that are hard to confuse.",
+    "highContrast": "High contrast",
+    "highContrastHint": "Boosts text and border contrast in light and dark mode beyond WCAG AA.",
+    "speechRate": "Speech rate",
+    "speechRateHint": "Speed of the text-to-speech output - applies to auto-speak and the per-message read-aloud button."
   },
   "common": {
     "loading": "Loading...",
@@ -655,6 +672,11 @@
     "generatingStarted": "The response is being generated.",
     "responseReady": "The response is ready.",
     "userMessage": "You",
-    "assistantMessage": "AI"
+    "assistantMessage": "AI",
+    "shortcutOlderMessage": "K: jump to the previous message",
+    "shortcutNewerMessage": "J: jump to the next message",
+    "shortcutCopy": "C: copy the focused message",
+    "shortcutDialog": "?: open this overview",
+    "shortcutClearFocus": "Esc: clear the message focus"
   }
 }

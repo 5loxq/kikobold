@@ -2,6 +2,29 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.1.0] - 2026-10-09
+
+### Neu
+
+- **Textgröße direkt im Chat**: Neuer Aa-Knopf neben der Suche - Popover mit den vier Stufen (Klein/Standard/Groß/Sehr groß), wirkt sofort, gleicher Speicherstand wie die Einstellungen.
+- **Hoher Kontrast**: Schalter in Einstellungen → Barrierefreiheit; verstärkt Text- und Rahmenkontraste in hell und dunkel. `@media (prefers-contrast: more)` wendet dieselben Regeln automatisch an, `forced-colors` (Windows) bleibt funktionsfähig.
+- **Lesbare Schrift**: Atkinson Hyperlegible als Option (selbst gehostet, 34 KB, kein Google-Request) - Schriftart speziell für Sehbeeinträchtigte.
+- **Nachrichten-Tastaturnavigation**: J/K springt zwischen Nachrichten (mit sichtbarem Fokus-Ring und Scroll-Into-View), C kopiert die fokussierte Nachricht, `?` öffnet eine Shortcut-Übersicht direkt im Chat (auch per Button in der Kopfzeile erreichbar).
+- **Vorlesen pro Nachricht**: 🔊-Button an jeder Nachricht - vorlesen, erneut klicken stoppt; Sprechgeschwindigkeit (0.5×-1.5×) einstellbar, gilt auch für das automatische Vorlesen. Sprachausgabe läuft jetzt über einen zentralen TTS-Service.
+- **Touch-Trefferflächen 44px**: Auf Touch-Geräten (`pointer: coarse`) bekommen sichtbare Buttons eine unsichtbare 44×44px-Trefferfläche via Pseudo-Overlay - ohne optische Veränderung.
+
+### Behoben
+
+- **`lang`-Attribut bei Sprachwechsel** (WCAG 3.1.1, Level A): Beim Umschalten auf Englisch sprachen Screenreader die UI mit deutscher Aussprache-Engine - `document.documentElement.lang` wird jetzt synchronisiert.
+- **Smooth-Scroll vs. Reduce-Motion**: `scrollIntoView({behavior:'smooth'})` ignorierte die „Animationen reduzieren"-Einstellung - jetzt wird auch der programmatische Scroll bei reduzierter Bewegung sofort ausgeführt.
+- **Profil-Karten nicht tastaturbedienbar**: Die Karten waren nur per Maus klickbar - jetzt `role="button"`, Tab-fokussierbar, Enter/Leertaste wählt aus.
+- **Bild-Vorschauen nicht tastaturbedienbar**: Vorschaubilder in Anhängen und Markdown-Antworten sind jetzt fokussierbar und per Enter zu öffnen.
+- **Mobile Sidebar ohne Esc**: Das Overlay lässt sich jetzt auch per Escape schließen.
+
+### Werkzeuge
+
+- **eslint-plugin-jsx-a11y** in Lint und CI: statische A11y-Prüfung (alt-Texte, ARIA-Rollen, Tastatur-Handler) verhindert Regressionen.
+
 ## [4.0.0] - 2026-10-09
 
 ### Neu: Barrierefreiheit (Ziel: WCAG 2.1 AA)

@@ -118,12 +118,21 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
           {profiles.map((profile) => (
             <div
               key={profile.id}
+              role="button"
+              tabIndex={0}
+              aria-pressed={activeProfile?.id === profile.id}
               className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
                 activeProfile?.id === profile.id
                   ? 'border-blue-600 bg-indigo-50 dark:bg-indigo-950/40'
                   : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
               }`}
               onClick={() => onSelectProfile(profile)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelectProfile(profile);
+                }
+              }}
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">

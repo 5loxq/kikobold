@@ -108,7 +108,9 @@
     "messageInput": "Deine Nachricht",
     "removeDocument": "Anhang entfernen",
     "removeImage": "Bild entfernen",
-    "imagePreview": "Bildvorschau"
+    "imagePreview": "Bildvorschau",
+    "readAloud": "Nachricht vorlesen",
+    "stopSpeaking": "Vorlesen stoppen"
   },
   "tab": {
     "generating": "KI denkt nach…",
@@ -216,6 +218,15 @@
     "title": "Das ist neu",
     "subtitle": "Seit deinem letzten Besuch hat sich einiges getan:",
     "closeButton": "Alles klar!",
+    "v410": {
+      "item1": "Textgröße jetzt direkt im Chat einstellbar: der Aa-Knopf neben der Suche bietet alle vier Stufen - ohne Umweg über die Einstellungen.",
+      "item2": "Hoher Kontrast: neuer Schalter (Einstellungen → Barrierefreiheit) verstärkt Text- und Rahmenkontraste; die System-Einstellung „Mehr Kontrast\" wird automatisch respektiert.",
+      "item3": "Lesbare Schrift: Atkinson Hyperlegible - speziell für Sehbeeinträchtigte gestaltet, selbst gehostet (kein Google-Server).",
+      "item4": "Nachrichten per Tastatur navigieren: J/K springt zwischen Nachrichten (mit sichtbarem Fokus), C kopiert die fokussierte Nachricht, ? zeigt alle Shortcuts direkt im Chat.",
+      "item5": "Vorlesen-Button pro Nachricht: jede Nachricht lässt sich einzeln vorlesen und wieder stoppen - die Sprechgeschwindigkeit ist einstellbar.",
+      "item6": "Touch-Optimierung: kleine Buttons bekommen auf Touch-Geräten unsichtbar vergrößerte Trefferflächen (44px, ohne Optik zu ändern).",
+      "item7": "Unter der Haube: Sprachwechsel setzt jetzt das lang-Attribut (Screenreader sprechen Englisch richtig aus), Profil-Karten und Bild-Vorschauen sind tastaturbedienbar, und ein A11y-Linter wacht in der CI über neue Fehler."
+    },
     "v400": {
       "item1": "Textgröße einstellbar: Klein bis sehr groß - skaliert die komplette Oberfläche (Einstellungen → Barrierefreiheit).",
       "item2": "Lesbarkeit erhöhen: mehr Zeilenabstand und leichter Zeichenabstand in Nachrichten und Eingabefeld.",
@@ -631,7 +642,13 @@
     "readableText": "Lesbarkeit erhöhen",
     "readableTextHint": "Mehr Zeilenabstand und leichter Zeichenabstand in Nachrichten und Eingabefeld.",
     "reduceMotion": "Animationen reduzieren",
-    "reduceMotionHint": "Blendet Bewegungen und Übergänge aus - unabhängig von der Systemeinstellung."
+    "reduceMotionHint": "Blendet Bewegungen und Übergänge aus - unabhängig von der Systemeinstellung.",
+    "readableFont": "Lesbare Schrift (Atkinson Hyperlegible)",
+    "readableFontHint": "Schriftart, die speziell für Sehbeeinträchtigte gestaltet wurde - schwer verwechselbare Buchstabenformen.",
+    "highContrast": "Hoher Kontrast",
+    "highContrastHint": "Verstärkt Text- und Rahmenkontraste in hell und dunkel über das WCAG-AA-Maß hinaus.",
+    "speechRate": "Sprechgeschwindigkeit",
+    "speechRateHint": "Geschwindigkeit der Sprachausgabe - gilt für das automatische Vorlesen und den Vorlesen-Button pro Nachricht."
   },
   "common": {
     "loading": "Wird geladen...",
@@ -655,6 +672,11 @@
     "generatingStarted": "Die Antwort wird generiert.",
     "responseReady": "Die Antwort ist fertig.",
     "userMessage": "Du",
-    "assistantMessage": "KI"
+    "assistantMessage": "KI",
+    "shortcutOlderMessage": "K: zur vorherigen Nachricht springen",
+    "shortcutNewerMessage": "J: zur nächsten Nachricht springen",
+    "shortcutCopy": "C: fokussierte Nachricht kopieren",
+    "shortcutDialog": "?: diese Übersicht öffnen",
+    "shortcutClearFocus": "Esc: Nachrichten-Fokus aufheben"
   }
 }

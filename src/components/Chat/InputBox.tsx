@@ -540,6 +540,15 @@ export const InputBox: React.FC<InputBoxProps> = ({
                 src={img.previewUrl}
                 alt={img.name}
                 onClick={() => setPreviewImage(img)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setPreviewImage(img);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                aria-label={t('chat.imagePreview')}
                 className="w-full h-full object-cover cursor-zoom-in transition-transform duration-200 group-hover:scale-105"
               />
               <button
