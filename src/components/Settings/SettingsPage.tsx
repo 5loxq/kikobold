@@ -74,7 +74,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               id="settings-default-profile"
               value={settings.defaultProfileId ?? ''}
               onChange={(e) => onChange({ ...settings, defaultProfileId: e.target.value || null })}
-              className="w-full px-3 py-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4"
+              className="w-full px-3 py-2 rounded-xl border border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4"
             >
               <option value="">{t('settings.noDefault')}</option>
               {profiles.map((profile) => (
@@ -91,7 +91,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               id="settings-default-model"
               value={settings.defaultModelId ?? ''}
               onChange={(e) => onChange({ ...settings, defaultModelId: e.target.value || null })}
-              className="w-full px-3 py-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 rounded-xl border border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="">{t('settings.noDefault')}</option>
               {MODELS.map((model) => (
@@ -281,7 +281,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 {downloadedModels.map((m) => (
                   <li
                     key={m.id}
-                    className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700"
+                    className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-500"
                   >
                     <span className="text-sm text-zinc-700 dark:text-zinc-200 truncate">
                       {m.name} · {(m.size / (1024 * 1024 * 1024)).toFixed(2)} GB

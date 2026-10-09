@@ -613,7 +613,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
           className={`rounded-3xl border shadow-lg shadow-zinc-900/5 dark:shadow-black/20 bg-white dark:bg-zinc-900 transition-all duration-200 ${
             isLoading || !isModelLoaded
               ? 'border-zinc-200 dark:border-zinc-800 opacity-80'
-              : 'border-zinc-200 dark:border-zinc-700 focus-within:border-indigo-400 dark:focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10'
+              : 'border-zinc-500 focus-within:border-indigo-400 dark:focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10'
           }`}
         >
           <textarea

@@ -340,7 +340,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                       setIsEditingTitle(false);
                     }
                   }}
-                  className="flex-1 px-4 py-2 border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 rounded-xl text-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white shadow-sm"
+                  className="flex-1 px-4 py-2 border border-zinc-500 dark:bg-zinc-900 dark:text-zinc-100 rounded-xl text-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white shadow-sm"
                   autoFocus
                 />
                 <button
@@ -387,7 +387,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                   onChange={(e) => onSelectProfile && onSelectProfile(e.target.value)}
                   data-tour="profile-select"
                   aria-label={t('profiles.activeProfile')}
-                  className="max-w-full px-3 py-1.5 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="max-w-full px-3 py-1.5 border border-zinc-500 rounded-lg text-sm text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   {profiles.map((profile) => (
                     <option key={profile.id} value={profile.id}>
@@ -416,7 +416,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             disabled={isLoading}
             data-tour="model-select"
             aria-label={t('chat.selectModel')}
-            className="w-full sm:w-auto px-4 py-2 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm disabled:bg-zinc-100 dark:disabled:bg-zinc-800 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 shadow-sm"
+            className="w-full sm:w-auto px-4 py-2 border border-zinc-500 rounded-xl text-sm disabled:bg-zinc-100 dark:disabled:bg-zinc-800 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 shadow-sm"
           >
             <option value="">{t('chat.selectModel')}...</option>
             {MODELS.map((model) => {
@@ -529,7 +529,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               placeholder={t('chat.searchPlaceholder')}
               autoFocus
               aria-label={t('chat.searchInChat')}
-              className="flex-1 max-w-sm px-4 py-2 border border-zinc-200 dark:border-zinc-700 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 shadow-sm"
+              className="flex-1 max-w-sm px-4 py-2 border border-zinc-500 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 shadow-sm"
             />
             <span className="text-xs text-zinc-500 dark:text-zinc-400" aria-live="polite">
               {normalizedSearch ? `${visibleMessages.length}` : ''}

@@ -109,6 +109,16 @@ export const MainLayout: FC = () => {
   const [pendingModelId, setPendingModelId] = useState<string | null>(null);
   // "What's new" entries to show (auto on version change, or opened from help)
   const [whatsNewEntries, setWhatsNewEntries] = useState<WhatsNewEntry[]>([]);
+  // While a modal dialog is open (welcome, tour, what's new) the app shell
+  // behind it becomes inert: focus, screen readers and clicks cannot reach
+  // the covered elements anymore (WCAG 2.4.11 - focus not obscured).
+  const appShellRef = useRef<HTMLDivElement>(null);
+  const modalOpen = !welcomeDone || whatsNewEntries.length > 0 || (welcomeDone && !tourDone && chat !== null);
+  useEffect(() => {
+    if (appShellRef.current) {
+      appShellRef.current.inert = modalOpen;
+    }
+  }, [modalOpen]);
   // Thinking mode of the loaded model (Qwen 3: soft switch /no_think in the
   // prompt). Persisted so the choice survives a reload; default is on.
   const [thinkingEnabled, setThinkingEnabled] = useState<boolean>(() => {
@@ -552,6 +562,10 @@ export const MainLayout: FC = () => {
         <div className="absolute -bottom-40 -right-24 w-[28rem] h-[28rem] rounded-full bg-violet-400/10 dark:bg-violet-600/10 blur-3xl"></div>
       </div>
 
+      {/* App shell: sidebar + content. display:contents keeps the flex
+          layout intact; the ref makes the shell inert while a modal is
+          open (see appShellRef). */}
+      <div className="contents" ref={appShellRef}>
       {/* Desktop Sidebar */}
       <div className="hidden lg:flex lg:flex-shrink-0 relative z-10">
         <Sidebar
@@ -846,6 +860,7 @@ export const MainLayout: FC = () => {
           </Suspense>
         )}
       </main>
+      </div>
 
       {/* Welcome page with short guide - shown on the very first visit */}
       {!welcomeDone && (

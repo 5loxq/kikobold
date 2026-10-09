@@ -24,7 +24,7 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg p-6 mb-6">
+    <div className="bg-white dark:bg-zinc-900 border border-zinc-500 rounded-lg p-6 mb-6">
       <h3 className="text-lg font-bold mb-4 text-zinc-800 dark:text-zinc-100">
         {profile ? t('profiles.editProfile') : t('profiles.createNew')}
       </h3>
