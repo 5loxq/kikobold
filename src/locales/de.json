@@ -33,7 +33,8 @@
     "moveChat": "In Ordner verschieben",
     "removeFromFolder": "Aus Ordner entfernen",
     "emptyFolder": "Keine Chats in diesem Ordner",
-    "withoutFolder": "Ohne Ordner"
+    "withoutFolder": "Ohne Ordner",
+    "dropToRemove": "Hier ablegen, um aus dem Ordner zu entfernen"
   },
   "chat": {
     "welcome": "Willkommen bei KI Kobold",

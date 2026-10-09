@@ -33,7 +33,8 @@
     "moveChat": "Move to folder",
     "removeFromFolder": "Remove from folder",
     "emptyFolder": "No chats in this folder",
-    "withoutFolder": "Without folder"
+    "withoutFolder": "Without folder",
+    "dropToRemove": "Drop here to remove from the folder"
   },
   "chat": {
     "welcome": "Welcome to KI Kobold",

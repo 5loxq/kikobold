@@ -16,7 +16,7 @@ interface SidebarProps {
   darkMode: boolean;
   onToggleTheme: () => void;
   folders: ChatFolder[];
-  onCreateFolder: (name: string) => void;
+  onCreateFolder: (name: string) => ChatFolder;
   onRenameFolder: (id: string, name: string) => void;
   onDeleteFolder: (id: string) => void;
   onMoveChat: (chatId: string, folderId: string | null) => void;
@@ -46,6 +46,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [moveMenuChatId, setMoveMenuChatId] = useState<string | null>(null);
   // Collapsed menu groups
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set(['manage']));
+  // Drag & drop: id of the dragged chat and the current drop target
+  const [draggedChatId, setDraggedChatId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ type: 'folder' | 'ungrouped'; id?: string } | null>(null);
+  // Inline folder creation (optionally moving a chat into the new folder)
+  const [creatingFolder, setCreatingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [createForChatId, setCreateForChatId] = useState<string | null>(null);
+  // Inline folder rename
+  const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
 
   const toggleFolder = (folderId: string): void => {
     setCollapsedFolders((prev) => {
@@ -71,18 +81,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
     });
   };
 
-  const handleCreateFolder = (): void => {
-    const name = window.prompt(t('sidebar.folderNamePrompt'));
-    if (name?.trim()) {
-      onCreateFolder(name.trim());
-    }
+  const openCreateFolderForm = (chatId: string | null): void => {
+    setCreateForChatId(chatId);
+    setNewFolderName('');
+    setCreatingFolder(true);
+    setMoveMenuChatId(null);
   };
 
-  const handleRenameFolder = (folder: ChatFolder): void => {
-    const name = window.prompt(t('sidebar.renameFolderPrompt'), folder.name);
-    if (name?.trim() && name.trim() !== folder.name) {
-      onRenameFolder(folder.id, name.trim());
+  const submitCreateFolder = (): void => {
+    const name = newFolderName.trim();
+    if (!name) {
+      setCreatingFolder(false);
+      setCreateForChatId(null);
+      return;
     }
+    const folder = onCreateFolder(name);
+    // When the form was opened from a chat's move menu, move that chat
+    // straight into the freshly created folder
+    if (createForChatId) {
+      onMoveChat(createForChatId, folder.id);
+    }
+    setCreatingFolder(false);
+    setCreateForChatId(null);
+    setNewFolderName('');
+  };
+
+  const startRenameFolder = (folder: ChatFolder): void => {
+    setRenamingFolderId(folder.id);
+    setRenameValue(folder.name);
+  };
+
+  const submitRenameFolder = (): void => {
+    const name = renameValue.trim();
+    if (renamingFolderId && name) {
+      onRenameFolder(renamingFolderId, name);
+    }
+    setRenamingFolderId(null);
+    setRenameValue('');
   };
 
   const handleDeleteFolder = (folder: ChatFolder): void => {
@@ -90,6 +125,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (confirmed) {
       onDeleteFolder(folder.id);
     }
+  };
+
+  // ----- Drag & drop handlers (chats into folders / out via the
+  // ungrouped zone). Touch devices have no HTML5 drag - the move menu
+  // button stays as the fallback. -----
+  const handleChatDragStart = (e: React.DragEvent, chatId: string): void => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', chatId);
+    setDraggedChatId(chatId);
+  };
+
+  const handleChatDragEnd = (): void => {
+    setDraggedChatId(null);
+    setDropTarget(null);
+  };
+
+  const handleDropOnFolder = (e: React.DragEvent, folderId: string): void => {
+    e.preventDefault();
+    if (draggedChatId) {
+      onMoveChat(draggedChatId, folderId);
+    }
+    handleChatDragEnd();
+  };
+
+  const handleDropOnUngrouped = (e: React.DragEvent): void => {
+    e.preventDefault();
+    if (draggedChatId) {
+      onMoveChat(draggedChatId, null);
+    }
+    handleChatDragEnd();
   };
 
   // Primary tabs are always visible as single buttons
@@ -128,7 +193,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const renderChatRow = (chat: Chat): React.ReactNode => (
     <div
       key={chat.id}
-      className={`group relative flex items-center gap-1 rounded-xl mb-1 transition-colors ${
+      draggable
+      onDragStart={(e) => handleChatDragStart(e, chat.id)}
+      onDragEnd={handleChatDragEnd}
+      className={`group relative flex items-center gap-1 rounded-xl mb-1 transition-all ${
+        draggedChatId === chat.id ? 'opacity-40' : ''
+      } ${
         activeChat?.id === chat.id
           ? 'bg-zinc-800'
           : 'hover:bg-zinc-900'
@@ -185,10 +255,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="border-t border-zinc-800 my-1" />
           <button
             role="menuitem"
-            onClick={() => {
-              handleCreateFolder();
-              setMoveMenuChatId(null);
-            }}
+            onClick={() => openCreateFolderForm(chat.id)}
             className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-sm text-zinc-200 hover:bg-zinc-800 rounded-lg transition-colors"
           >
             ➕ <span>{t('sidebar.newFolder')}</span>
@@ -323,7 +390,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {t('sidebar.history')}
             </h3>
             <button
-              onClick={handleCreateFolder}
+              onClick={() => openCreateFolderForm(null)}
               className="text-xs text-zinc-400 hover:text-white transition-colors p-1 rounded"
               title={t('sidebar.newFolder')}
               aria-label={t('sidebar.newFolder')}
@@ -332,53 +399,156 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </button>
           </div>
 
-          {chats.length === 0 && (
+          {/* Inline form: create a new folder */}
+          {creatingFolder && (
+            <div className="flex items-center gap-1 px-2 mb-2">
+              <span aria-hidden="true">📁</span>
+              <input
+                autoFocus
+                type="text"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    submitCreateFolder();
+                  } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    setCreatingFolder(false);
+                    setCreateForChatId(null);
+                  }
+                }}
+                placeholder={t('sidebar.folderNamePrompt')}
+                aria-label={t('sidebar.newFolder')}
+                className="flex-1 min-w-0 px-2 py-1.5 rounded-lg border border-zinc-600 bg-zinc-900 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              <button
+                onClick={submitCreateFolder}
+                className="p-1.5 text-green-400 hover:bg-zinc-800 rounded-lg transition-colors"
+                aria-label={t('common.save')}
+                title={t('common.save')}
+              >
+                ✓
+              </button>
+              <button
+                onClick={() => {
+                  setCreatingFolder(false);
+                  setCreateForChatId(null);
+                }}
+                className="p-1.5 text-zinc-400 hover:bg-zinc-800 rounded-lg transition-colors"
+                aria-label={t('common.cancel')}
+                title={t('common.cancel')}
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {chats.length === 0 && folders.length === 0 && (
             <p className="text-sm text-zinc-400 px-2">{t('sidebar.noChatYet')}</p>
           )}
 
-          {/* Folders */}
+          {/* Folders - drop targets for chats */}
           {folders.map((folder) => {
             const folderChats = chatsInFolder(folder.id);
             const isCollapsedFolder = collapsedFolders.has(folder.id);
+            const isDropTarget = dropTarget?.type === 'folder' && dropTarget.id === folder.id;
+            const isRenaming = renamingFolderId === folder.id;
             return (
-              <div key={folder.id} className="mb-1">
+              <div
+                key={folder.id}
+                className="mb-1"
+                onDragOver={(e) => {
+                  if (draggedChatId) {
+                    e.preventDefault();
+                    setDropTarget({ type: 'folder', id: folder.id });
+                  }
+                }}
+                onDragLeave={() => {
+                  setDropTarget((prev) => (prev?.type === 'folder' && prev.id === folder.id ? null : prev));
+                }}
+                onDrop={(e) => handleDropOnFolder(e, folder.id)}
+              >
                 <div
-                  className={`group flex items-center gap-1 rounded-xl transition-colors ${
+                  className={`group flex items-center gap-1 rounded-xl transition-all ${
+                    isDropTarget ? 'ring-2 ring-indigo-500 bg-zinc-900' : ''
+                  } ${
                     folderChats.length > 0 && !isCollapsedFolder ? 'bg-zinc-900/60' : 'hover:bg-zinc-900'
                   }`}
                 >
-                  <button
-                    type="button"
-                    onClick={() => toggleFolder(folder.id)}
-                    aria-expanded={!isCollapsedFolder}
-                    className="flex-1 flex items-center gap-2 px-2.5 py-2 text-left text-sm text-zinc-300 rounded-xl"
-                  >
-                    <span
-                      className={`text-xs transition-transform ${isCollapsedFolder ? '' : 'rotate-90'}`}
-                      aria-hidden="true"
-                    >
-                      ▸
-                    </span>
-                    <span aria-hidden="true">📁</span>
-                    <span className="truncate">{folder.name}</span>
-                    <span className="text-xs text-zinc-500 ml-auto tabular-nums">{folderChats.length}</span>
-                  </button>
-                  <button
-                    onClick={() => handleRenameFolder(folder)}
-                    className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-xs text-zinc-500 hover:text-indigo-300 transition-all p-1"
-                    aria-label={t('sidebar.renameFolder')}
-                    title={t('sidebar.renameFolder')}
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    onClick={() => handleDeleteFolder(folder)}
-                    className="mr-1.5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-xs text-zinc-500 hover:text-red-400 transition-all p-1"
-                    aria-label={t('sidebar.deleteFolder')}
-                    title={t('sidebar.deleteFolder')}
-                  >
-                    ✕
-                  </button>
+                  {isRenaming ? (
+                    <div className="flex-1 flex items-center gap-1 px-2 py-1.5">
+                      <span aria-hidden="true">📁</span>
+                      <input
+                        autoFocus
+                        type="text"
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            submitRenameFolder();
+                          } else if (e.key === 'Escape') {
+                            e.preventDefault();
+                            setRenamingFolderId(null);
+                          }
+                        }}
+                        aria-label={t('sidebar.renameFolder')}
+                        className="flex-1 min-w-0 px-2 py-1 rounded-lg border border-zinc-600 bg-zinc-900 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                      <button
+                        onClick={submitRenameFolder}
+                        className="p-1 text-green-400 hover:bg-zinc-800 rounded-lg transition-colors"
+                        aria-label={t('common.save')}
+                        title={t('common.save')}
+                      >
+                        ✓
+                      </button>
+                      <button
+                        onClick={() => setRenamingFolderId(null)}
+                        className="p-1 text-zinc-400 hover:bg-zinc-800 rounded-lg transition-colors"
+                        aria-label={t('common.cancel')}
+                        title={t('common.cancel')}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => toggleFolder(folder.id)}
+                        aria-expanded={!isCollapsedFolder}
+                        className="flex-1 flex items-center gap-2 px-2.5 py-2 text-left text-sm text-zinc-300 rounded-xl"
+                      >
+                        <span
+                          className={`text-xs transition-transform ${isCollapsedFolder ? '' : 'rotate-90'}`}
+                          aria-hidden="true"
+                        >
+                          ▸
+                        </span>
+                        <span aria-hidden="true">📁</span>
+                        <span className="truncate">{folder.name}</span>
+                        <span className="text-xs text-zinc-500 ml-auto tabular-nums">{folderChats.length}</span>
+                      </button>
+                      <button
+                        onClick={() => startRenameFolder(folder)}
+                        className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-xs text-zinc-500 hover:text-indigo-300 transition-all p-1"
+                        aria-label={t('sidebar.renameFolder')}
+                        title={t('sidebar.renameFolder')}
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        onClick={() => handleDeleteFolder(folder)}
+                        className="mr-1.5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-xs text-zinc-500 hover:text-red-400 transition-all p-1"
+                        aria-label={t('sidebar.deleteFolder')}
+                        title={t('sidebar.deleteFolder')}
+                      >
+                        ✕
+                      </button>
+                    </>
+                  )}
                 </div>
                 {!isCollapsedFolder && (
                   <div className="pl-3 mt-0.5">
@@ -392,6 +562,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             );
           })}
+
+          {/* Drop zone: drag a chat here to remove it from its folder */}
+          {draggedChatId && chats.find((c) => c.id === draggedChatId)?.folderId && (
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDropTarget({ type: 'ungrouped' });
+              }}
+              onDragLeave={() => {
+                setDropTarget((prev) => (prev?.type === 'ungrouped' ? null : prev));
+              }}
+              onDrop={handleDropOnUngrouped}
+              className={`mb-1 px-3 py-2 rounded-xl text-xs text-center transition-all ${
+                dropTarget?.type === 'ungrouped'
+                  ? 'ring-2 ring-indigo-500 bg-zinc-900 text-zinc-200'
+                  : 'border-2 border-dashed border-zinc-700 text-zinc-500'
+              }`}
+            >
+              ↩ {t('sidebar.dropToRemove')}
+            </div>
+          )}
 
           {/* Ungrouped chats */}
           {ungroupedChats.length > 0 && (

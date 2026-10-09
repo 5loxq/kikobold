@@ -81,9 +81,10 @@ export const MainLayout: FC = () => {
   const { chat, chats, loadChats, loadChat, createNewChat, deleteChat, addMessage, renameChat, moveChatToFolder } = useChat();
   // Chat folders (localStorage) - chats reference them via folderId
   const [folders, setFolders] = useState<ChatFolder[]>(() => getFolders());
-  const handleCreateFolder = useCallback((name: string): void => {
+  const handleCreateFolder = useCallback((name: string): ChatFolder => {
     const folder = createChatFolder(name);
     setFolders((prev) => [...prev, folder]);
+    return folder;
   }, []);
   const handleRenameFolder = useCallback((id: string, name: string): void => {
     renameChatFolder(id, name);
