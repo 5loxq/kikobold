@@ -364,7 +364,8 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 - **Fehlermeldungen zweisprachig**: Die Meldungen beim Modell-Laden (CORS, 404, WebGPU, WASM) laufen jetzt über i18next statt hardcoded auf Deutsch.
 - **i18n-Paritäts-Check automatisiert**: Neues Skript `npm run check:i18n` prüft, dass de.json und en.json deckungsgleich sind und jeder im Code benutzte Key existiert; läuft zusätzlich in der CI-Pipeline.
 
-### Behoben (aus dem Code-Review vor dieser Vers
+### Behoben (aus dem Code-Review vor dieser Version)
+
 - **Code-Antworten wurden beim Speichern verstümmelt**: Die Voll-Sanitizing löschte Muster wie „data:", „on x =" oder „javascript:" aus normalem Text - Code-Antworten der Modelle kamen beschädigt aus der Datenbank zurück. Nachrichten werden jetzt wie Gedächtnis und Bibliothek nur von HTML-Tags befreit; Markdown-Links und -Bilder akzeptieren ausschließlich sichere Protokolle (http/https/mailto/relativ).
 - **Codeblöcke mit Leerzeilen wurden zerrissen**: Der Markdown-Renderer zerschnitt Codeblöcke am Absatz-Splitter - sie erschienen als kaputte Absätze mit Backtick-Resten. Der Splitter kennt jetzt Code-Fences.
 - **Fehlender Text im Lade-Hinweis**: „chat.modelLoadingBubble" existierte nicht in den Sprachdateien - im UI wäre der rote Key erschienen.
