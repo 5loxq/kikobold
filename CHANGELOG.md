@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.23] - 2026-10-11
+
+### Behoben
+
+- **Bild-Engine: „unreachable" beim Generieren behoben — Root Cause war die JSPI-Suspending-Übersetzung.** Der Fehler ließ sich mit einem neuen Headless-Chrome-Harness (`scripts/sd-repro/webgpu-repro.mjs`, echtes WebGPU/Metal, CDP-Exception-Debugger) exakt reproduzieren und bis auf die Ursache zurückverfolgen: Der Text-Encoder lief komplett auf der GPU durch, dann scheiterte der GPU-Readback mit „data does not exist", das Wasm fängt das, wirft fatal und trappt „unreachable". Ursache: Die finale `WebAssembly.Suspending()`-API übergibt der JS-Funktion das Promise (den führenden externref des Imports) als **zusätzliches erstes Argument** — die Draft-API, gegen die der Fork gebaut ist, tat das nicht. Dadurch verschoben sich alle Parameter um eins und `Number(undefined)` wurde als GPU-Data-ID `NaN` übergeben. Der Shim entfernt das erste Argument jetzt in der Suspending-Übersetzung. Im Harness bestätigt: Die angeforderte ID war `NaN` bei gültigen Cache-Schlüsseln.
+
 ## [4.3.22] - 2026-10-11
 
 ### Behoben

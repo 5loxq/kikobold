@@ -334,6 +334,13 @@ const ensureOrtMemoryGrowShim = (): void => {
  * .type()` (used to re-type an export) is faked - the translated constructor
  * ignores the type descriptor anyway.
  *
+ * Suspending translation detail (verified in a headless-Chrome repro with
+ * real WebGPU): the draft wrapper calls fn with only the import's
+ * parameters, while the final Suspending() wrapper passes the promise
+ * (the import's leading externref) as an EXTRA FIRST argument - the
+ * translation drops it, otherwise every parameter shifts by one and the
+ * fork's GPU readback computes with NaN.
+ *
  * Promising translation detail (verified against the fork's wasm binary):
  * the draft-built async exports carry a LEADING externref parameter - the
  * draft promise handle; OrtRun is (externref, i64 x 8) -> i32. The draft
@@ -379,7 +386,17 @@ const ensureOrtJspiShim = (): void => {
     if (options?.suspending === 'first') {
       const suspending = wa.Suspending;
       if (suspending) {
-        return new suspending(fn);
+        // The draft wrapper called fn with ONLY the import's parameters; the
+        // final Suspending() wrapper passes the promise (the import's
+        // leading externref) as an EXTRA FIRST argument. Verified in a
+        // headless-Chrome repro: without dropping it, the fork's
+        // __asyncjs__jsepDownload handler receives the promise in its first
+        // parameter slot, converts it with Number() to NaN and every GPU
+        // buffer readback fails with "data does not exist" (which aborts
+        // the wasm with an "unreachable" trap).
+        const dropPromise = (...args: unknown[]): unknown =>
+          (fn as (...a: unknown[]) => unknown)(...args.slice(1));
+        return new suspending(dropPromise);
       }
     }
     throw new Error('unsupported WebAssembly.Function options (JSPI shim)');
