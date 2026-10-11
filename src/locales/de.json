@@ -35,7 +35,8 @@
     "removeFromFolder": "Aus Ordner entfernen",
     "emptyFolder": "Keine Chats in diesem Ordner",
     "withoutFolder": "Ohne Ordner",
-    "dropToRemove": "Hier ablegen, um aus dem Ordner zu entfernen"
+    "dropToRemove": "Hier ablegen, um aus dem Ordner zu entfernen",
+    "images": "Bilder"
   },
   "chat": {
     "welcome": "Willkommen bei KI Kobold",
@@ -627,6 +628,24 @@
       "w3": "Vergleichsweise kurzer Kontext (8.192 Zeichen)",
       "w4": "Bei sehr anspruchsvollen Aufgaben schwächer",
       "summary": "Der Allrounder für alle Browser: Das einzige Modell, das auch ohne WebGPU läuft - und das einzige mit Bildverständnis."
+    },
+    "alphaBadge": "Alpha",
+    "gemma4": {
+      "name": "Gemma 4 E2B",
+      "released": "März 2026",
+      "s1": "Ensus Mobil-Modell - von Google für lokale Nutzung trainiert",
+      "s2": "Versteht Bilder (Vision) über die mitgelieferte mmproj-Datei",
+      "s3": "Sehr gute Qualität für seine Größe (2B effektive Parameter)",
+      "s4": "Offizielles Google-QAT-Modell (Apache-2.0-Lizenz)",
+      "w1": "Riesiger Download: 3,3 GB plus ~1 GB Vision-Datei",
+      "w2": "Läuft auf dem Prozessor (WASM) - deutlich langsamer als WebGPU-Modelle",
+      "w3": "Braucht viel RAM - auf Mobilgeräten und schwachen Rechnern nicht empfohlen",
+      "w4": "Kein automatischer Fallback für andere Modelle",
+      "summary": "Das größte Modell im Angebot: für Nutzer mit viel RAM und Geduld, die Ensus Mobil-Modell ausprobieren möchten. Wie bei Ensu gilt: auf dem Desktop nativ stark, im Browser grenzwertig."
+    },
+    "imageGen": {
+      "title": "Bildgenerierung (Alpha)",
+      "text": "Neben den Chat-Modellen gibt es ein Bildmodell: {{name}} erzeugt aus einer Textbeschreibung ein Bild - ebenfalls vollständig lokal im Browser (WebGPU, ca. {{size}} GB beim ersten Laden). Erreichbar im Menü unter \"Bilder\"."
     }
   },
   "settings": {
@@ -684,7 +703,8 @@
     "language": "Sprache",
     "de": "Deutsch",
     "en": "Englisch",
-    "save": "Speichern"
+    "save": "Speichern",
+    "optional": "optional"
   },
   "offline": {
     "banner": "Du bist offline - bereits heruntergeladene Modelle und Chats funktionieren weiter, Downloads brauchen eine Verbindung."
@@ -739,5 +759,32 @@
     "copyrightTitle": "Urheberrecht",
     "copyrightText": "Die App ist derzeit nicht öffentlich im Git veröffentlicht - der Quellcode liegt in einem privaten Repository. Eine Veröffentlichung unter der MIT-Lizenz ist in Planung. Die eingebundenen KI-Modelle stehen unter den Lizenzen ihrer jeweiligen Anbieter (LiquidAI, Qwen/Alibaba) und werden unverändert aus öffentlichen Quellen ausgeliefert.",
     "backToChat": "Zurück zum Chat"
+  },
+  "imagesPage": {
+    "title": "Bild-Studio",
+    "alphaBadge": "Alpha",
+    "intro": "Erzeuge Bilder aus Textbeschreibungen - direkt im Browser über WebGPU mit {{name}} (ca. {{size}} GB Download beim ersten Mal, danach gecacht). Experimentelle Funktion.",
+    "prompt": "Beschreibung",
+    "promptPlaceholder": "z. B. Ein gemütlicher Kobold, der in einer Bibliothek liest, warmes Licht, Aquarell-Stil",
+    "negativePrompt": "Was soll vermieden werden",
+    "negativePromptPlaceholder": "z. B. verschwommen, verzerrt, hässlich",
+    "steps": "Schritte",
+    "stepsHint": "Mehr Schritte = mehr Details, aber längere Wartezeit. 4 ist ein guter Startwert.",
+    "seed": "Seed",
+    "seedPlaceholder": "leer lassen = zufällig",
+    "seedHint": "Gleicher Seed + gleicher Prompt = gleiches Bild (reproduzierbar).",
+    "generate": "Bild erzeugen",
+    "generateFirst": "Modell laden & Bild erzeugen",
+    "generating": "Erzeugt ...",
+    "downloadingModel": "Modell wird geladen",
+    "encodingPrompt": "Beschreibung wird kodiert ...",
+    "diffusing": "Bild entsteht: Schritt {{current}} von {{total}}",
+    "decoding": "Bild wird dekodiert ...",
+    "result": "Ergebnis",
+    "download": "Herunterladen",
+    "localOnly": "Das Bild wurde vollständig lokal auf deinem Gerät erzeugt.",
+    "back": "Zurück zum Chat",
+    "errorWebgpu": "WebGPU wird von diesem Browser nicht unterstützt.",
+    "errorWebgpuHint": "Bildgenerierung braucht Chrome oder Edge mit WebGPU. Der Rest der App funktioniert weiterhin."
   }
 }

@@ -66,3 +66,7 @@ VERBESSERUNGS-IDEEN.md
 
 # Modelle (zu gross fuer Git, liegen lokal in public/models und auf dem Server)
 public/models/
+
+# onnxruntime-WASM-Dateien fuer Bildgenerierung (48 MB, werden beim Build aus
+# node_modules nach public/ort kopiert und mit dem dist-Mirror deployt)
+public/ort/

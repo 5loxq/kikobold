@@ -2,6 +2,21 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.0] - 2026-10-11
+
+### Neu
+
+- **Bild-Studio (Alpha)**: Bilder aus Textbeschreibungen - vollständig lokal im Browser über WebGPU. Neuer Menüpunkt "Bilder" mit Prompt-Eingabe, Negativ-Prompt, Schritte-Regler (2-12, Standard 4) und Seed für reproduzierbare Ergebnisse; Download als PNG. Engine: `@aislamov/diffusers.js` (MIT) mit onnxruntime-web, Modell: **LCM DreamShaper v7** (~2,2 GB beim ersten Laden, danach im Browser gecacht). Die onnxruntime-WASM-Dateien (48 MB) werden beim Build aus node_modules nach `public/ort/` kopiert und selbst gehostet - kein CDN nötig. Das Modell wird beim Verlassen des Studios wieder freigegeben (GPU-Speicher). Überall als "Alpha" markiert (Tab, Studio, Modellseite).
+- **Gemma 4 E2B** als Chat-Modell: Ensus Mobil-Modell von Google (offizielles QAT-Q4_0-GGUF, Apache-2.0), multimodal - versteht über die mitgelieferte mmproj-Datei auch Bilder. 3,3 GB Download plus ~1 GB Vision-Datei, läuft wie LFM über die WASM-Engine; bewusst nicht als automatischer Fallback für WebGPU-Modelle (zu groß für schwache Geräte).
+
+### Modellseite
+
+- Gemma-4-E2B-Karte mit Stärken/Schwächen (u. a. der Hinweis, dass Ensu selbst das Modell nativ nur auf High-End-Mobilgeräten nutzt - im Browser ist es grenzwertig) und eine Alpha-Sektion zur Bildgenerierung inkl. Lizenzangabe.
+
+### Werkzeuge
+
+- `scripts/copy-ort-wasm.mjs`: kopiert die onnxruntime-WASM-Varianten (SIMD, jsep/nicht-jsep, threaded/nicht-threaded) reproduzierbar aus node_modules - `public/ort/` ist wie `public/models/` ausgeblendet und wird über den dist-Mirror deployt.
+
 ## [4.2.3] - 2026-10-11
 
 ### Intern (keine sichtbaren Änderungen)

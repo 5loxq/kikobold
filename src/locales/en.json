@@ -35,7 +35,8 @@
     "removeFromFolder": "Remove from folder",
     "emptyFolder": "No chats in this folder",
     "withoutFolder": "Without folder",
-    "dropToRemove": "Drop here to remove from the folder"
+    "dropToRemove": "Drop here to remove from the folder",
+    "images": "Images"
   },
   "chat": {
     "welcome": "Welcome to KI Kobold",
@@ -627,6 +628,24 @@
       "w3": "Comparatively short context (8,192 characters)",
       "w4": "Weaker on very demanding tasks",
       "summary": "The all-rounder for every browser: the only model that runs without WebGPU - and the only one with image understanding."
+    },
+    "alphaBadge": "Alpha",
+    "gemma4": {
+      "name": "Gemma 4 E2B",
+      "released": "March 2026",
+      "s1": "Ensu's mobile model - trained by Google for local use",
+      "s2": "Understands images (vision) via the bundled mmproj file",
+      "s3": "Very good quality for its size (2B effective parameters)",
+      "s4": "Official Google QAT model (Apache-2.0 license)",
+      "w1": "Huge download: 3.3 GB plus ~1 GB vision file",
+      "w2": "Runs on the processor (WASM) - noticeably slower than WebGPU models",
+      "w3": "Needs a lot of RAM - not recommended on mobile or weak machines",
+      "w4": "Not used as an automatic fallback for other models",
+      "summary": "The largest model on offer: for users with plenty of RAM and patience who want to try Ensu's mobile model. As with Ensu: strong natively on desktop, borderline in the browser."
+    },
+    "imageGen": {
+      "title": "Image generation (Alpha)",
+      "text": "Besides the chat models there is one image model: {{name}} turns a text prompt into an image - also fully locally in the browser (WebGPU, about {{size}} GB on first load). Find it in the menu under \"Images\"."
     }
   },
   "settings": {
@@ -684,7 +703,8 @@
     "language": "Language",
     "de": "German",
     "en": "English",
-    "save": "Save"
+    "save": "Save",
+    "optional": "optional"
   },
   "offline": {
     "banner": "You are offline - downloaded models and chats keep working, downloads need a connection."
@@ -739,5 +759,32 @@
     "copyrightTitle": "Copyright",
     "copyrightText": "The app is currently not published publicly on Git - the source code is kept in a private repository. Publication under the MIT license is planned. The integrated AI models are subject to the licenses of their respective providers (LiquidAI, Qwen/Alibaba) and are served unmodified from public sources.",
     "backToChat": "Back to chat"
+  },
+  "imagesPage": {
+    "title": "Image Studio",
+    "alphaBadge": "Alpha",
+    "intro": "Generate images from text prompts - right in your browser via WebGPU with {{name}} (about a {{size}} GB download the first time, cached afterwards). Experimental feature.",
+    "prompt": "Prompt",
+    "promptPlaceholder": "e.g. a cozy goblin reading in a library, warm light, watercolor style",
+    "negativePrompt": "What to avoid",
+    "negativePromptPlaceholder": "e.g. blurry, distorted, ugly",
+    "steps": "Steps",
+    "stepsHint": "More steps = more detail, but longer wait. 4 is a good starting point.",
+    "seed": "Seed",
+    "seedPlaceholder": "leave empty = random",
+    "seedHint": "Same seed + same prompt = same image (reproducible).",
+    "generate": "Generate image",
+    "generateFirst": "Load model & generate",
+    "generating": "Generating ...",
+    "downloadingModel": "Loading model",
+    "encodingPrompt": "Encoding prompt ...",
+    "diffusing": "Diffusing: step {{current}} of {{total}}",
+    "decoding": "Decoding image ...",
+    "result": "Result",
+    "download": "Download",
+    "localOnly": "This image was generated entirely locally on your device.",
+    "back": "Back to chat",
+    "errorWebgpu": "WebGPU is not supported in this browser.",
+    "errorWebgpuHint": "Image generation requires Chrome or Edge with WebGPU. The rest of the app keeps working."
   }
 }

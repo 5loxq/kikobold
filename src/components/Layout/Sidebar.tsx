@@ -4,7 +4,7 @@ import { Chat, ChatFolder } from '../../types';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { useDarkMode } from '../../hooks/useDarkMode';
 
-type TabId = 'chat' | 'profiles' | 'memory' | 'library' | 'models' | 'data' | 'settings' | 'help' | 'roadmap' | 'wiki' | 'contact' | 'privacy' | 'imprint';
+type TabId = 'chat' | 'profiles' | 'memory' | 'library' | 'models' | 'images' | 'data' | 'settings' | 'help' | 'roadmap' | 'wiki' | 'contact' | 'privacy' | 'imprint';
 
 interface SidebarProps {
   chats: Chat[];
@@ -169,6 +169,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'memory', icon: '🧠', label: t('sidebar.memory') },
     { id: 'library', icon: '📚', label: t('sidebar.library') },
     { id: 'models', icon: '🤖', label: t('sidebar.models') },
+    { id: 'images', icon: '🎨', label: t('sidebar.images') },
     { id: 'data', icon: '💾', label: t('sidebar.data') },
   ];
 

@@ -1,11 +1,11 @@
 {
   "name": "webgpu-local-llm",
   "private": true,
-  "version": "4.2.3",
+  "version": "4.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && node scripts/set-sw-version.mjs",
+    "build": "tsc && node scripts/copy-ort-wasm.mjs && vite build && node scripts/set-sw-version.mjs",
     "preview": "vite preview",
     "lint": "eslint src",
     "test": "vitest run",
@@ -17,6 +17,7 @@
     "deploy": "scripts/deploy.sh"
   },
   "dependencies": {
+    "@aislamov/diffusers.js": "^0.9.3",
     "@mlc-ai/web-llm": "^0.2.84",
     "@types/katex": "^0.16.8",
     "@wllama/wllama": "^3.8.1",

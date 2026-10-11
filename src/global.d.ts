@@ -128,3 +128,11 @@ declare module '@xenova-transformers-stub' {
     export const AutoTokenizer: Record<string, unknown>;
     export type TextGenerationPipeline = (text: string, options?: Record<string, unknown>) => Promise<Record<string, unknown>>;
 }
+
+// The image generation engine packages ship types, but their package.json
+// "exports" fields do not include a "types" entry, so TypeScript cannot
+// resolve them. We import both lazily and work with our own structural
+// types (see services/inference/sd-engine.ts), so an ambient declaration
+// with `any` is sufficient here.
+declare module '@aislamov/diffusers.js';
+declare module '@aislamov/onnxruntime-web64';

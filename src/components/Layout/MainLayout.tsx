@@ -18,6 +18,7 @@ const ImprintPage = lazy(() => import('../Imprint/ImprintPage').then(m => ({ def
 const SettingsPage = lazy(() => import('../Settings/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const LibraryManager = lazy(() => import('../Library/LibraryManager').then(m => ({ default: m.LibraryManager })));
 const DataManager = lazy(() => import('../Data/DataManager').then(m => ({ default: m.DataManager })));
+const ImageStudio = lazy(() => import('../Images/ImageStudio').then(m => ({ default: m.ImageStudio })));
 import { BrowserWarning } from './BrowserWarning';
 import { InstallPrompt } from './InstallPrompt';
 import { type AppSettings, loadSettings, saveSettings } from '../../services/settings';
@@ -52,7 +53,7 @@ import { localStorageGet, localStorageSet } from '../../services/storage/local-s
 import { ttsSpeak } from '../../services/tts';
 
 
-type ActiveTab = 'chat' | 'profiles' | 'memory' | 'library' | 'models' | 'data' | 'settings' | 'help' | 'roadmap' | 'wiki' | 'contact' | 'privacy' | 'imprint';
+type ActiveTab = 'chat' | 'profiles' | 'memory' | 'library' | 'models' | 'images' | 'data' | 'settings' | 'help' | 'roadmap' | 'wiki' | 'contact' | 'privacy' | 'imprint';
 
 // Remaining time for the current download, derived from size/speed stats
 const downloadEta = (stats: { loadedMB: number; totalMB: number; speedMBps: number } | null): string | null => {
@@ -872,6 +873,12 @@ export const MainLayout: FC = () => {
         {activeTab === 'models' && (
           <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
             <ModelsPage onNavigateBack={() => setActiveTab('chat')} />
+          </Suspense>
+        )}
+
+        {activeTab === 'images' && (
+          <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
+            <ImageStudio onNavigateBack={() => setActiveTab('chat')} />
           </Suspense>
         )}
 
