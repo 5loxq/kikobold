@@ -2,6 +2,14 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.39] - 2026-10-11
+
+### Behoben (Root Cause gefunden: iOS-Deadlock in der Modell-Vorbereitung)
+- **Ursache:** kikobold.net ist cross-origin isoliert (COOP/COEP, nötig für die Bild-Engine) — damit aktiviert wllama auf dem iPhone den pthread-Multi-Thread-Modus. Safari hat kein JSPI und läuft im Asyncify-Modus, und **Asyncify + pthreads deadlockt die Modell-Initialisierung auf iOS**: Der Download läuft durch (JS), die Vorbereitung hängt für immer. ensu (ente) geht das Problem komplett anders an — ensu.ente.com sendet gar keine COOP/COEP-Header, läuft also auf iOS immer im Single-Thread-Modus.
+- **Fix 1 — Single-Thread erzwingen ohne JSPI:** `n_threads: 1` in Browsern ohne JSPI (Safari, Firefox); Chrome/Edge behalten Multi-Threading. Die Isolation bleibt für die Bild-Engine bestehen.
+- **Fix 2 — Compat-Build selbst hosten:** Ohne JSPI lädt wllama 3.x standardmäßig sein Asyncify-WASM vom jsdelivr-CDN — den die CSP nicht erlaubt und der offline nicht funktioniert. Der Compat-Build (@wllama/wllama-compat 3.8.1) liegt jetzt unter `/wllama/compat/` auf dem eigenen Webspace und wird per `setCompat()` angebunden.
+- **Verifiziert:** iPhone-Simulation (isoliert + kein JSPI) lädt das 350M-Modell in ~4 s — Single-Thread, lokales Compat-WASM, null Fehler; Chrome (JSPI) läuft unverändert mit Multi-Threading (4 s).
+
 ## [4.3.38] - 2026-10-11
 
 ### Neu (Fortsetzbarer Modell-Download, übernommen von ente/ensu)

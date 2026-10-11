@@ -280,6 +280,14 @@ export const loadWllamaModel = async (
 
       const { Wllama: WllamaClass } = await import('@wllama/wllama');
       wllama = new WllamaClass(WASM_PATHS, { allowOffline: true });
+      // Browsers without JSPI (Safari, older Firefox) need wllama's asyncify
+      // "compat" build. Its default comes from the jsdelivr CDN - which the
+      // CSP does not allow and which breaks offline use. Serve the compat
+      // build (from @wllama/wllama-compat) from our own webspace instead.
+      wllama.setCompat({
+        worker: new URL('/wllama/compat/wllama.js', window.location.origin).href,
+        wasm: new URL('/wllama/compat/wllama.wasm', window.location.origin).href,
+      });
 
     const downloadStartedAt = Date.now();
     const reportDownloadProgress = (loaded: number, total: number): void => {
@@ -306,7 +314,14 @@ export const loadWllamaModel = async (
       progressCallback: ({ loaded, total }: { loaded: number; total: number }): void => {
         reportDownloadProgress(loaded, total);
       },
-      n_threads: Math.min(navigator.hardwareConcurrency || 2, 4),
+      // Threading: pthread + SharedArrayBuffer only works reliably together
+      // with JSPI (Chrome/Edge). Safari/Firefox run wllama in asyncify mode,
+      // and asyncify + pthreads deadlocks the model initialization on iOS -
+      // the "preparing" phase then never ends. ensu sidesteps this by serving
+      // without COOP/COEP (never cross-origin isolated, always single-thread);
+      // this app needs the isolation headers for the image engine, so the
+      // single-thread path is forced explicitly in browsers without JSPI.
+      n_threads: supportsWllamaJspi() ? Math.min(navigator.hardwareConcurrency || 2, 4) : 1,
       // wllama defaults to a tiny 1024-token context, which regular prompts
       // (system prompt + memory + history + attachments) quickly exceed.
       n_ctx: isMobileLike() ? 2048 : 4096,

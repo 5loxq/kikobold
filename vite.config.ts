@@ -32,6 +32,15 @@ export default defineConfig({
       overlay: true,
     },
   },
+  // Preview must send the same isolation headers as production (.htaccess):
+  // only a cross-origin isolated page enables the multi-thread (pthread)
+  // WASM path, which behaves differently from the single-thread fallback.
+  preview: {
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+    },
+  },
   worker: {
     // Configure Vite to build workers with proper format
     format: 'es',
