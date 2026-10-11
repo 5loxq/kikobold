@@ -58,6 +58,9 @@ export const ImageStudio: React.FC<ImageStudioProps> = ({ onNavigateBack }) => {
   // download progress, the UI shows the total like for the chat models.
   const dlBytesByFile = useRef<Map<string, number>>(new Map());
   const dlStartTs = useRef<number | null>(null);
+  // Progress throttle bookkeeping (see onProgress below)
+  const lastProgressTs = useRef(0);
+  const lastProgressPhase = useRef<ImageGenProgress['phase'] | null>(null);
 
   const hasWebGPU = typeof navigator !== 'undefined' && !!(navigator as Navigator & { gpu?: unknown }).gpu;
   const runtimeIssue = getImageGenRuntimeIssue();
@@ -89,6 +92,8 @@ export const ImageStudio: React.FC<ImageStudioProps> = ({ onNavigateBack }) => {
     setDlStats(null);
     dlBytesByFile.current.clear();
     dlStartTs.current = null;
+    lastProgressTs.current = 0;
+    lastProgressPhase.current = null;
     const parsedSeed = seed.trim().length > 0 ? Number(seed) : undefined;
 
     generateImage(prompt, {
@@ -96,6 +101,17 @@ export const ImageStudio: React.FC<ImageStudioProps> = ({ onNavigateBack }) => {
       steps,
       seed: Number.isFinite(parsedSeed) ? parsedSeed : undefined,
       onProgress: (p) => {
+        // Throttle React updates: at ~27 MB/s the engine fires well over a
+        // thousand progress events per second - rendering each one
+        // saturates the main thread. Update the UI at most every 100 ms
+        // (phase changes always go through).
+        const now = Date.now();
+        const isPhaseChange = p.phase !== lastProgressPhase.current;
+        if (!isPhaseChange && now - lastProgressTs.current < 100) {
+          return;
+        }
+        lastProgressTs.current = now;
+        lastProgressPhase.current = p.phase;
         setProgress(p);
         if (p.phase === 'downloading' && p.totalBytes && p.totalBytes > 0) {
           dlBytesByFile.current.set(p.label ?? '_current', p.downloadedBytes ?? 0);

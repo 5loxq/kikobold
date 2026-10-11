@@ -447,7 +447,13 @@ export const loadImageGenModel = async (
         : input instanceof URL
           ? input.href
           : input?.url;
-      const tracked = originalFetch(input, init).then(
+      // Single fetch per call: bypass the browser HTTP cache for the model
+      // files (stale gzip-era responses break the engine's buffer
+      // allocation; the engine keeps its own IndexedDB cache anyway).
+      const effectiveInit = url.includes('/models/sd/') && init?.cache === undefined
+        ? { ...init, cache: 'no-store' as RequestCache }
+        : init;
+      return originalFetch(input, effectiveInit).then(
         (response) => {
           record(`${url} -> ${response.status} ${response.headers.get('content-type') ?? '?'}`);
           return response;
@@ -457,19 +463,6 @@ export const loadImageGenModel = async (
           throw err;
         }
       );
-      if (url.includes('/models/sd/') && init?.cache === undefined) {
-        return originalFetch(input, { ...init, cache: 'no-store' }).then(
-          (response) => {
-            record(`${url} -> ${response.status} ${response.headers.get('content-type') ?? '?'}`);
-            return response;
-          },
-          (err: unknown) => {
-            record(`${url} -> FAILED ${err instanceof Error ? err.message : String(err)}`);
-            throw err;
-          }
-        );
-      }
-      return tracked;
     }) as typeof window.fetch;
 
     try {

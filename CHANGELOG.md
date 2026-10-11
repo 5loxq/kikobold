@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.16] - 2026-10-11
+
+### Behoben
+
+- **Modell-Download der Bild-Engine blieb bei ~100 MB stehen**: Das Request-Recording aus 4.3.11 hatte einen Doppel-Fetch-Bug - für `/models/sd/`-Dateien wurde versehentlich ein zweiter, verworfener Fetch parallel zum eigentlichen (no-store-)Download gestartet; der Verwaiste lud dieselbe 1,6-GB-Datei als Parallel-Stream mit und störte den aktiven Download. Jetzt gibt es genau einen Fetch pro Anfrage. Zusätzlich drosselt das Bild-Studio die Progress-Updates auf höchstens 10 pro Sekunde - bei ~27 MB/s feuert die Engine über tausend Events pro Sekunde, deren individuelle React-Renders den Main-Thread sättigen.
+
 ## [4.3.15] - 2026-10-11
 
 ### Geändert
