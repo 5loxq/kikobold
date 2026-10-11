@@ -2,6 +2,13 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.38] - 2026-10-11
+
+### Neu (Fortsetzbarer Modell-Download, übernommen von ente/ensu)
+- **Downloads überleben Abbrüche:** wllamas eigener Downloader truncatet die Cache-Datei bei jedem Versuch und startet immer bei Byte 0 — auf dem Handy (Bildschirmsperre, Tab-Wechsel, Netzwechsel mitten im Download) bedeutet das: Endlos-Neustarts und eine halbe Datei ohne Metadaten, an der die Initialisierung hängt. Neu: `ensureModelCachedResumable()` lädt per HTTP-Range-Requests direkt in die OPFS-Cache-Datei und setzt einen unterbrochenen Download beim nächsten Versuch beim letzten Byte fort (Ansatz aus ente/ensu, `web/apps/ensu/src/services/llm/inference.ts`). Metadaten werden im wllama-eigenen Format geschrieben, `loadModelFromUrl` findet danach einen gültigen Cache und lädt ohne erneuten Download.
+- **Edge-Cases:** 416 (Offset am Dateiende) wird als „Datei bereits vollständig, Metadaten fehlen" erkannt und über einen 1-Byte-Probe vervollständigt; eine Datei, die LÄNGER als das Original ist, wird gelöscht und neu geladen; ohne OPFS/Writable-File-Handles greift wllamas eigener Downloader.
+- **Verifiziert:** Frischer Download, Resume nach künstlichem Abbruch bei 40 % (Fortschritt startet beim Offset, Range-Request wird vom Server mit 206 bedient), Laden aus vollständigem Cache — jeweils mit Modell-Load danach, ohne Fehler.
+
 ## [4.3.37] - 2026-10-11
 
 ### Verbessert (Cache-Validierung nach dem Vorbild von ente/ensu)
