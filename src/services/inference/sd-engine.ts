@@ -113,7 +113,7 @@ export const loadImageGenModel = async (
         throw new Error('WebGPU is not supported in this browser');
       }
 
-      const [{ DiffusionPipeline }, ortModule] = await Promise.all([
+      const [{ DiffusionPipeline, setModelCacheDir }, ortModule] = await Promise.all([
         import('@aislamov/diffusers.js'),
         import('@aislamov/onnxruntime-web64'),
       ]);
@@ -124,6 +124,9 @@ export const loadImageGenModel = async (
       if (env?.wasm) {
         env.wasm.wasmPaths = '/ort/';
       }
+      // Prefer the copy on our own webspace (same origin, no CDN dependency).
+      // The engine falls back to HuggingFace when a file is missing there.
+      setModelCacheDir('/models/sd');
 
       log(`sd-engine: loading ${IMAGE_GEN_MODEL.repo}`);
       const loaded = (await DiffusionPipeline.fromPretrained(IMAGE_GEN_MODEL.repo, {

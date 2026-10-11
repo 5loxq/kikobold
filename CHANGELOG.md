@@ -2,6 +2,20 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.1] - 2026-10-11
+
+### Behoben
+
+- **Markdown wird jetzt auch während des Streamings gerendert**: Die Antwort erschien bisher während der Generierung als Rohtext (literale `**fett**`-Marker, Listenpunkte als Striche) und wurde erst nach Abschluss der Antwort als Markdown aufbereitet - das las sich wie ein Bug. Der Streaming-Bubble rendert jetzt denselben Markdown-Renderer wie die fertige Nachricht; der blinkende Cursor bleibt erhalten.
+
+### Neu
+
+- **Bildmodell selbst gehostet**: LCM DreamShaper v7 (~2,1 GB, 14 Dateien) liegt jetzt auf dem eigenen Webspace unter `/models/sd/` - der erste Bildgenerierungs-Download kommt nicht mehr von HuggingFace, sondern von der eigenen Domain (Fallback auf HF bleibt als Reserve erhalten). Neues Skript `scripts/download-sd-model.sh` hält die lokale Kopie in `public/models/sd/` reproduzierbar.
+
+### Tests
+
+- Neuer Render-Smoke-Test (`markdown-render.test.tsx`): rendert den MarkdownRenderer ins DOM und prüft konkret das gemeldete Szenario (Bold in nummerierten Listen + Sub-Bullets), Inline-Code mit Unterstrichen und mehrzeilige Listen - jetzt 47 Tests gesamt.
+
 ## [4.3.0] - 2026-10-11
 
 ### Neu

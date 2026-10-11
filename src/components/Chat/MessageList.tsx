@@ -179,9 +179,11 @@ const StreamingBubble: React.FC<{ content: string }> = ({ content }) => {
   return (
     <div className="flex justify-start">
       <div className="px-5 py-3.5 rounded-3xl rounded-bl-lg border shadow-sm bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 border-zinc-100 dark:border-zinc-700">
-        <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
-          {thinking !== null && <ThinkingBlock thinking={thinking} isActive={isThinkingActive} />}
-          {answer}
+        {/* Render the streaming text as markdown right away - showing raw
+            **markers** while the model types reads like a bug to users. */}
+        {thinking !== null && <ThinkingBlock thinking={thinking} isActive={isThinkingActive} />}
+        <div className="text-sm leading-relaxed">
+          <MarkdownRenderer content={answer} className="markdown-message" />
           <span className="animate-pulse">▍</span>
         </div>
       </div>
