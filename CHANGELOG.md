@@ -2,6 +2,11 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.32] - 2026-10-11
+
+### Geändert
+- **Roadmap gestrafft:** Von 10 Kategorien mit 45 Punkten auf 5 Kategorien mit 16 kurzen Einzeilern reduziert (Bild-Studio, Chat & Assistent, Dokumente & Wissen, Privatsphäre, Erweiterbarkeit). Die ausführlichen Ausarbeitungen aller 45 Ideen bleiben in der lokalen `VERBESSERUNGS-IDEEN.md` erhalten. Die zwei bereits existierenden Punkte (Sprachausgabe, Textskalierung) sind entfallen.
+
 ## [4.3.31] - 2026-10-11
 
 ### Neu
