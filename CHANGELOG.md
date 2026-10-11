@@ -2,6 +2,11 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.30] - 2026-10-11
+
+### Neu
+- **Betreiber-Hinweis im Bild-Studio:** Ergänzender Absatz in der Nutzungsregeln-Box: Die Bildgenerierung läuft vollständig lokal im Browser; der Betreiber hat keinen Zugriff auf erzeugte Bilder (kein Einsehen, Speichern, Löschen) und keine Kontrolle über die Generierung. Die Verantwortung liegt ausschließlich beim Nutzer; für rechtswidrige Inhalte trotz der Schutzfilter haftet der Verursacher, nicht der Betreiber (de/en).
+
 ## [4.3.29] - 2026-10-11
 
 ### Neu (Sicherheitsfilter für die Bildgenerierung)

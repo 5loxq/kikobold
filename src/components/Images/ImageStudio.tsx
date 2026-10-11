@@ -192,6 +192,9 @@ export const ImageStudio: React.FC<ImageStudioProps> = ({ onNavigateBack }) => {
           <p className="text-zinc-600 dark:text-zinc-400 text-sm mt-1 leading-relaxed">
             {t('imagesPage.safetyNoticeText')}
           </p>
+          <p className="text-zinc-500 dark:text-zinc-500 text-xs mt-2 leading-relaxed border-t border-zinc-200 dark:border-zinc-700 pt-2">
+            {t('imagesPage.safetyDisclaimer')}
+          </p>
         </div>
 
         {!hasWebGPU && (

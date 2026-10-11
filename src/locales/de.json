@@ -838,6 +838,7 @@
         "sexual": "Dieser Prompt wurde gesperrt: Pornografische oder sexuell explizite Inhalte werden nicht generiert. Bitte passe deinen Prompt an."
       },
       "output": "Das generierte Bild wurde vom Sicherheitsfilter blockiert (automatische Bildanalyse). Bitte passe deinen Prompt an - etwa durch Kleidung, anderen Bildausschnitt oder anderen Bildstil."
-    }
+    },
+    "safetyDisclaimer": "Hinweis zur Verantwortung: Die Bildgenerierung läuft vollständig lokal in deinem Browser. Wir als Betreiber haben keinen Zugriff auf die erzeugten Bilder - wir können sie weder einsehen noch speichern noch nachträglich löschen und haben keine Kontrolle darüber, was dein Gerät generiert. Die Verantwortung für die erzeugten Bilder und deren Nutzung liegt ausschließlich bei dir. Für rechtswidrige Inhalte, die trotz der eingebauten Schutzfilter entstehen, haftet der Verursacher - nicht der Betreiber dieser Website."
   }
 }

@@ -838,6 +838,7 @@
         "sexual": "This prompt was blocked: pornographic or sexually explicit content is not generated. Please adjust your prompt."
       },
       "output": "The generated image was blocked by the safety filter (automatic image analysis). Please adjust your prompt - e.g. clothing, a different framing or a different style."
-    }
+    },
+    "safetyDisclaimer": "Responsibility notice: Image generation runs entirely locally in your browser. As operators we have no access to the generated images - we cannot view, store or delete them, and we have no control over what your device generates. Responsibility for the generated images and their use lies solely with you. For illegal content created despite the built-in safety filters, the creator is liable - not the operator of this website."
   }
 }
