@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.18] - 2026-10-11
+
+### Behoben
+
+- **Memory-Diagnose wurde von sich selbst geflutet**: Die Browser-Probe (`getImageGenRuntimeIssue`) lief bei *jedem* React-Render des Bild-Studios - und das Studio rendert bei jedem Progress-Event. Beim Laden des gecachten Modells feuert die Engine tausende Progress-Events, also tausende Proben à drei Memory-Anlagen - darunter je eine Shared-Memory mit 16-GiB-Reservierung. Die 20er-Log-Grenze wurde von Proben überschwemmt und die eigentlich interessanten Einträge (Memory-Erzeugung der Glue, grow-Operationen) herausgedrängt - deshalb zeigte der 4.3.17-Bericht nur Proben. Die Probe ist jetzt gecacht (einmal pro Seitenladung); das behebt nebenbei auch die hundertfache Memory-Allokation pro Render.
+
 ## [4.3.17] - 2026-10-11
 
 ### Geändert

@@ -304,17 +304,25 @@ const canCreateMemory = (descriptor: MemoryDescriptorLike): boolean => {
   }
 };
 
+// Cached: the browser's capabilities do not change during a session, and the
+// probe allocates real memories (including a shared 16 GiB reservation) -
+// calling it on every component render would flood the memory diagnostics
+// log and allocate hundreds of memories.
+let cachedRuntimeIssue: ImageGenRuntimeIssue | null | undefined;
+
 export const getImageGenRuntimeIssue = (): ImageGenRuntimeIssue | null => {
-  if (!canCreateMemory({ initial: 1n, maximum: 2n, address: 'i64' })) {
-    return 'memory64';
+  if (cachedRuntimeIssue === undefined) {
+    if (!canCreateMemory({ initial: 1n, maximum: 2n, address: 'i64' })) {
+      cachedRuntimeIssue = 'memory64';
+    } else if (!canCreateMemory({ initial: 1n, maximum: 262144n, address: 'i64' })) {
+      cachedRuntimeIssue = 'memory-limit';
+    } else if (!canCreateMemory({ initial: 1n, maximum: 262144n, shared: true, address: 'i64' })) {
+      cachedRuntimeIssue = 'isolation';
+    } else {
+      cachedRuntimeIssue = null;
+    }
   }
-  if (!canCreateMemory({ initial: 1n, maximum: 262144n, address: 'i64' })) {
-    return 'memory-limit';
-  }
-  if (!canCreateMemory({ initial: 1n, maximum: 262144n, shared: true, address: 'i64' })) {
-    return 'isolation';
-  }
-  return null;
+  return cachedRuntimeIssue;
 };
 
 /**
