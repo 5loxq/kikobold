@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.20] - 2026-10-11
+
+### Geändert
+
+- **Accessor-Diagnose für `WebAssembly.Memory`**: Der 4.3.19-Bericht bestätigte, dass der gepatchte Konstruktor während des gesamten Ladens *nie aufgerufen* wird - obwohl die Glue läuft. Der Shim ersetzt die Property jetzt durch einen Accessor (`Object.defineProperty` mit get/set), der jedes Lesen und jede Neu-Zuweisung protokolliert, und unmittelbar vor dem Modell-Laden wird verifiziert, dass die Property noch unseren Patch enthält. Damit klärt der nächste Bericht endgültig: liest die Glue die Property überhaupt (und bekommt dabei was), oder läuft sie in einem anderen Binding/Realm.
+
 ## [4.3.19] - 2026-10-11
 
 ### Geändert

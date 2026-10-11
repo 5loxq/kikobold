@@ -173,6 +173,9 @@ interface MemoryDescriptorLike {
  * whether the wasm heap actually grew.
  */
 const memoryLog: string[] = [];
+// The patched WebAssembly.Memory constructor (set by the shim below); used
+// for the "still patched?" check right before the model load.
+let patchedMemoryCtor: unknown = null;
 const recordMemory = (entry: string): void => {
   memoryLog.push(entry);
   if (memoryLog.length > 20) {
@@ -250,8 +253,25 @@ const ensureOrtMemory64Shim = (): void => {
   Object.setPrototypeOf(patched, nativeMemory);
   patched.prototype = nativeMemory.prototype;
   (patched as unknown as Record<string, unknown>)['__webguiMemory64Shim'] = true;
-  WebAssembly.Memory = patched;
-  recordMemory('memory64 translation shim installed');
+  patchedMemoryCtor = patched;
+  // Accessor instead of a plain assignment: records every read of the
+  // property (so we see whether the glue even looks at the global) and
+  // every attempt to overwrite it. The getter returns our patched
+  // constructor, so behavior is unchanged - only observable.
+  let slot: unknown = patched;
+  Object.defineProperty(WebAssembly, 'Memory', {
+    get(): unknown {
+      recordMemory('WebAssembly.Memory read');
+      return slot;
+    },
+    set(value: unknown): void {
+      recordMemory(`WebAssembly.Memory REASSIGNED (type ${typeof value})`);
+      slot = value;
+    },
+    configurable: true,
+    enumerable: false,
+  });
+  recordMemory('memory64 translation shim installed (accessor)');
   log('sd-engine: installed WebAssembly.Memory memory64 translation shim');
 };
 
@@ -528,6 +548,9 @@ export const loadImageGenModel = async (
       setModelCacheDir('/models/sd');
 
       log(`sd-engine: loading ${IMAGE_GEN_MODEL.repo}`);
+      recordMemory(
+        `before fromPretrained: Memory still patched=${String(WebAssembly.Memory === patchedMemoryCtor)}`
+      );
       const loaded = (await DiffusionPipeline.fromPretrained(IMAGE_GEN_MODEL.repo, {
         progressCallback: async (cb: ProgressPayload) => {
           mapProgress(cb, onProgress);
