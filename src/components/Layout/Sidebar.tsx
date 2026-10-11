@@ -164,6 +164,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Primary tabs are always visible as single buttons
   const primaryTabs: Array<{ id: TabId; icon: string; label: string }> = [
     { id: 'chat', icon: '💬', label: t('sidebar.chat') },
+    { id: 'images', icon: '🎨', label: t('sidebar.images') },
     { id: 'settings', icon: '⚙️', label: t('sidebar.settings') },
   ];
 
@@ -173,7 +174,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'memory', icon: '🧠', label: t('sidebar.memory') },
     { id: 'library', icon: '📚', label: t('sidebar.library') },
     { id: 'models', icon: '🤖', label: t('sidebar.models') },
-    { id: 'images', icon: '🎨', label: t('sidebar.images') },
     { id: 'data', icon: '💾', label: t('sidebar.data') },
   ];
 

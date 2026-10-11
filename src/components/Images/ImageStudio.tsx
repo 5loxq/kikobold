@@ -68,13 +68,14 @@ export const ImageStudio: React.FC<ImageStudioProps> = ({ onNavigateBack }) => {
         setModelLoaded(true);
       })
       .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : String(err));
+        const detail = err instanceof Error ? err.message : String(err);
+        setError(`${t('imagesPage.errorLoadModel')}: ${detail}`);
       })
       .finally(() => {
         setIsWorking(false);
         setProgress(null);
       });
-  }, [isWorking, prompt, negativePrompt, steps, seed]);
+  }, [isWorking, prompt, negativePrompt, steps, seed, t]);
 
   const handleDownload = useCallback((): void => {
     if (!result) {

@@ -2,6 +2,16 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.3] - 2026-10-11
+
+### Behoben
+
+- **"Bildmodell konnte nicht geladen werden" jetzt mit Ursache**: Die Meldung versteckte bisher den echten Fehlergrund. Die Engine liefert jetzt die tatsächliche Ursache (fehlende ORT-Dateien, WebGPU-Limit, abgebrochener Download, ...) mit aus - im Studio angezeigt als "Das Bildmodell konnte nicht geladen werden: <Detail>". Zusätzlich prüft ein Preflight vor dem großen Download WebGPU-Verfügbarkeit und die Erreichbarkeit der ORT-Runtime auf dem Server und scheitert früh mit klarer Meldung.
+
+### Geändert
+
+- **"Bilder (Alpha)" direkt unter "Chat"**: Der Tab ist aus der einklappbaren Verwaltungs-Gruppe in die primäre Navigation gewandert (Chat → Bilder (Alpha) → Einstellungen), das Alpha-Marker steht jetzt auch im Tab-Label.
+
 ## [4.3.2] - 2026-10-11
 
 ### Behoben

@@ -57,7 +57,7 @@ export interface ImageGenOptions {
 }
 
 let pipeline: DiffusionPipelineLike | null = null;
-let loadPromise: Promise<boolean> | null = null;
+let loadPromise: Promise<void> | null = null;
 
 export const isImageGenModelLoaded = (): boolean => pipeline !== null;
 
@@ -94,27 +94,56 @@ const mapProgress = (payload: ProgressPayload, onProgress?: (p: ImageGenProgress
 };
 
 /**
+ * Fail with a descriptive error: the studio shows `err.message` to the
+ * user, so a bare "could not be loaded" hides the actual cause (missing
+ * engine files, WebGPU limits, interrupted download, ...).
+ */
+const engineError = (context: string, err: unknown): Error => {
+  const detail = err instanceof Error ? err.message : String(err);
+  const wrapped = new Error(`${context}: ${detail}`);
+  warn(`sd-engine: ${wrapped.message}`);
+  return wrapped;
+};
+
+/**
+ * Quick checks before the big download, so the most common setup problems
+ * fail fast with a clear message instead of deep inside the engine.
+ */
+const preflight = async (): Promise<void> => {
+  if (!(navigator as Navigator & { gpu?: unknown }).gpu) {
+    throw new Error('WebGPU is not available (Chrome or Edge required)');
+  }
+  // The ORT WASM runtime must be served by our own origin; if the files
+  // are missing, every session creation would fail with a fetch error.
+  const probe = await fetch('/ort/ort-wasm-simd.jsep.wasm', { method: 'HEAD' });
+  if (!probe.ok) {
+    throw new Error(`ORT runtime not found on the server (HTTP ${probe.status})`);
+  }
+};
+
+/**
  * Load the image generation model (downloads on first use, ~2.2 GB).
- * Safe to call repeatedly; parallel calls share one load.
+ * Safe to call repeatedly; parallel calls share one load. Throws with a
+ * descriptive message on failure.
  */
 export const loadImageGenModel = async (
   onProgress?: (progress: ImageGenProgress) => void
-): Promise<boolean> => {
+): Promise<void> => {
   if (pipeline) {
-    return true;
+    return;
   }
   if (loadPromise) {
-    return loadPromise;
+    await loadPromise;
+    return;
   }
-  loadPromise = (async (): Promise<boolean> => {
+  loadPromise = (async (): Promise<void> => {
     try {
-      // WebGPU is required: the WASM CPU fallback would take minutes per image.
-      if (!(navigator as Navigator & { gpu?: unknown }).gpu) {
-        throw new Error('WebGPU is not supported in this browser');
-      }
+      await preflight();
 
       const [{ DiffusionPipeline, setModelCacheDir }, ortModule] = await Promise.all([
-        import('@aislamov/diffusers.js'),
+        import('@aislamov/diffusers.js').catch((err: unknown) => {
+          throw engineError('Engine code could not be loaded', err);
+        }),
         import('@aislamov/onnxruntime-web64'),
       ]);
       // Serve the ORT WASM runtime from our own origin (see public/ort).
@@ -133,20 +162,20 @@ export const loadImageGenModel = async (
         progressCallback: async (cb: ProgressPayload) => {
           mapProgress(cb, onProgress);
         },
+      }).catch((err: unknown) => {
+        throw engineError('Model could not be loaded', err);
       })) as DiffusionPipelineLike;
 
       pipeline = loaded;
       log('sd-engine: model loaded');
-      return true;
     } catch (err) {
-      warn(`sd-engine: failed to load image model: ${err}`);
       pipeline = null;
-      return false;
+      throw err;
     } finally {
       loadPromise = null;
     }
   })();
-  return loadPromise;
+  await loadPromise;
 };
 
 /** Convert the VAE decoder output tensor (float 0..1) to a PNG data URL. */
@@ -191,8 +220,8 @@ export const generateImage = async (prompt: string, options: ImageGenOptions = {
   if (typeof prompt !== 'string' || prompt.trim().length === 0) {
     throw new Error('Prompt must be a non-empty string');
   }
-  const ready = await loadImageGenModel(options.onProgress);
-  if (!ready || !pipeline) {
+  await loadImageGenModel(options.onProgress);
+  if (!pipeline) {
     throw new Error('The image model could not be loaded');
   }
 

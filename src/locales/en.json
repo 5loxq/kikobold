@@ -36,7 +36,7 @@
     "emptyFolder": "No chats in this folder",
     "withoutFolder": "Without folder",
     "dropToRemove": "Drop here to remove from the folder",
-    "images": "Images",
+    "images": "Images (Alpha)",
     "whatsNewHint": "What's new - open the changelog"
   },
   "chat": {
@@ -787,6 +787,7 @@
     "localOnly": "This image was generated entirely locally on your device.",
     "back": "Back to chat",
     "errorWebgpu": "WebGPU is not supported in this browser.",
-    "errorWebgpuHint": "Image generation requires Chrome or Edge with WebGPU. The rest of the app keeps working."
+    "errorWebgpuHint": "Image generation requires Chrome or Edge with WebGPU. The rest of the app keeps working.",
+    "errorLoadModel": "The image model could not be loaded"
   }
 }
