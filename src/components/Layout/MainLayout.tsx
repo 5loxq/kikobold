@@ -666,13 +666,15 @@ export const MainLayout: FC = () => {
             aria-label={t('common.close')}
             className="absolute inset-0 w-full h-full bg-black/60 backdrop-blur-sm cursor-default"
           />
-          {/* h-dvh instead of h-screen: on iOS Safari, 100vh includes the
-              area behind the browser chrome, so a fixed h-screen drawer is
-              partially hidden behind the URL/toolbar. The drawer is a flex
-              column: fixed header + sidebar filling (and scrolling in) the
-              remaining space - h-screen on the sidebar would overflow the
-              drawer and clip its bottom without any way to scroll there. */}
-          <div className="fixed top-0 left-0 h-dvh w-72 bg-zinc-950 shadow-2xl z-50 animate-slide-in flex flex-col">
+          {/* h-screen with a dvh upgrade where supported: on iOS Safari,
+              100vh includes the area behind the browser chrome, so a fixed
+              h-screen drawer is partially hidden behind the URL/toolbar.
+              100dvh fixes that, but older iOS versions do not know dvh -
+              without the supports-query they would end up with NO height at
+              all (drawer grows with content, bottom clipped, nothing
+              scrolls). The drawer is a flex column: fixed header + sidebar
+              filling (and scrolling in) the remaining space. */}
+          <div className="fixed top-0 left-0 h-screen supports-[height:100dvh]:h-dvh w-72 bg-zinc-950 shadow-2xl z-50 animate-slide-in flex flex-col">
             <div className="flex-shrink-0 flex items-center justify-between px-4 py-4 border-b border-zinc-800">
               <h1 className="text-lg font-semibold text-white">KI Kobold</h1>
               <button
@@ -683,7 +685,11 @@ export const MainLayout: FC = () => {
                 ✕
               </button>
             </div>
-            <div className="text-white flex-1 min-h-0 flex flex-col">
+            {/* overflow-y-auto as a safety net: the sidebar scrolls its chat
+                list internally, but when the fixed parts (expanded nav
+                groups) exceed the drawer height, the wrapper takes over
+                instead of clipping the bottom. */}
+            <div className="text-white flex-1 min-h-0 flex flex-col overflow-y-auto overscroll-contain">
               <Sidebar
                 fillHeight
                 chats={chats}

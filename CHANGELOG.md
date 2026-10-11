@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.36] - 2026-10-11
+
+### Behoben (Mobile-Drawer, zweite Runde)
+- **Höhen-Fallback:** Der Drawer nutzte `h-dvh` allein — iOS-Versionen ohne dvh-Unterstützung bekommen damit GAR keine Höhe (Drawer wächst mit dem Inhalt, unten abgeschnitten, nichts scrollbar). Jetzt `h-screen` als Basis und `dvh` nur per `supports-[height:100dvh]`-Query, wo der Browser es kann.
+- **Scroll-Safety-Net:** Der Inhalts-Wrapper des Drawers scrollt jetzt selbst (`overflow-y-auto`), wenn die fixen Teile der Sidebar (z. B. aufgeklappte Navigationsgruppen) die Drawer-Höhe sprengen — vorher wurde der untere Teil einfach abgeschnitten. Die Chat-Liste scrollt weiterhin intern.
+
 ## [4.3.35] - 2026-10-11
 
 ### Neu (Mobile-Modell)
