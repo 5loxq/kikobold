@@ -2,6 +2,16 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.33] - 2026-10-11
+
+### Behoben (Mobile: LLM-Download bleibt bei „Modell wird geladen" hängen)
+- **Ursache:** Mobile Browser (v. a. iOS Safari) pausieren die Seite komplett, wenn der Bildschirm sperrt oder der Tab in den Hintergrund geht — Download und Speicher-Vorbereitung frieren mitten ein und der Spinner dreht ewig.
+- **Screen Wake Lock:** Neuer Service `src/services/wake-lock.ts` hält den Bildschirm während Modell-Download, Speicher-Vorbereitung und Textgenerierung wach (Wake-Lock-API, Safari 16.4+; referenzgezählt, damit die rekursiven Fallback-Ladungen den Lock halten, bis die letzte fertig ist; bei Tab-Rückkehr wird der Lock automatisch neu angefordert). Nicht unterstützte Browser laufen einfach ohne Lock weiter.
+- **Weniger RAM auf Handys:** wllama lädt auf Mobilgeräten mit 2048 statt 4096 Token Kontext — der KV-Cache ist ein großer Teil des WASM-Heaps obendrauf, und iOS Safari killt Tabs um ~1–1,5 GB.
+- **Kein Endlos-Spinner mehr:** Die Vorbereitungsphase zeigt jetzt einen mitlaufenden Timer („Vorbereitung läuft seit 2:05 min"), nach 60 Sekunden einen Hinweis, dass das auf Mobilgeräten mehrere Minuten dauern kann, und ein Watchdog (5 Minuten ohne Fortschritt) zeigt eine klare Fehlermeldung mit Empfehlung (Seite neu laden, kleineres Modell) statt ewig zu warten.
+- **Mobile-Hinweise:** Overlay zeigt auf Handys „Bildschirm anlassen und Tab offen halten" (Download und Vorbereitung); die Modelle-Seite erklärt auf Handys, dass WebGPU-Modelle (Qwen) am Desktop laufen und auf dem iPhone automatisch das kleinere LFM-Modell geladen wird (de/en).
+- **Android: WebGPU-Falle geschlossen:** Chrome auf Android hat WebGPU — dort versuchte die App bisher die großen Qwen-MLC-Modelle auf dem Handy, was nach ~1 GB Download am RAM-Limit scheitert (auf dem iPhone trat das nie auf, weil Safari kein WebGPU hat). Jetzt: Warndialog beim Auswählen eines WebGPU-Modells auf dem Handy (de/en), automatischer Rückfall auf das LFM-WASM-Modell, wenn Chrome auf Android ≤ 2 GB RAM meldet (`navigator.deviceMemory`, meldet nur Chrome — Safari/Firefox geben nichts an), und die Mobil-Erkennung ist als gemeinsamer Helper `src/utils/device.ts` gebündelt (`isMobileLike()`, `getDeviceMemoryGB()`), statt vierfach dupliziertem Regex.
+
 ## [4.3.32] - 2026-10-11
 
 ### Geändert

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { type EngineModelConfig, getModelConfig, IMAGE_GEN_MODEL } from '../../services/models/model-registry';
+import { isMobileLike } from '../../utils/device';
 
 interface ModelsPageProps {
   /** Return to the previous view (e.g. the chat) */
@@ -141,6 +142,9 @@ const ModelCard: React.FC<{ info: ModelInfo }> = ({ info }) => {
 
 export const ModelsPage: React.FC<ModelsPageProps> = ({ onNavigateBack }) => {
   const { t } = useTranslation();
+  // Phones/tablets: WASM inference is slow and the per-tab memory limit is
+  // small, so the model choice matters more there than on desktops.
+  const isMobile = isMobileLike();
 
   return (
     <div className="flex-1 overflow-auto">
@@ -158,6 +162,15 @@ export const ModelsPage: React.FC<ModelsPageProps> = ({ onNavigateBack }) => {
             💡 {t('modelsPage.thinkingHint')}
           </p>
         </section>
+
+        {/* Mobile hint: which model to pick on a phone and how to download */}
+        {isMobile && (
+          <section className="bg-amber-50 dark:bg-amber-950/30 rounded-2xl p-6 shadow-sm border border-amber-200 dark:border-amber-900 mb-4">
+            <p className="text-sm text-amber-700 dark:text-amber-400 leading-relaxed">
+              📱 {t('modelsPage.mobileNote')}
+            </p>
+          </section>
+        )}
 
         {/* Model cards */}
         {MODELS_INFO.map((info) => (

@@ -4,6 +4,7 @@ import type {
   Wllama,
 } from '@wllama/wllama';
 import { log, warn } from '../logging';
+import { isMobileLike } from '../../utils/device';
 
 export interface WllamaLoadCallbacks {
   /** fraction: 0..1; stats: download size/speed while available */
@@ -160,6 +161,10 @@ export const loadWllamaModel = async (
     }
 
     const downloadStartedAt = Date.now();
+    // Mobile devices have a hard per-tab memory limit (iOS Safari kills the
+    // tab around 1-1.5 GB). The KV cache for the context is a big chunk of
+    // the WASM heap on top of the model weights, so phones get a smaller
+    // context than desktops.
     const loadParams = {
       progressCallback: ({ loaded, total }: { loaded: number; total: number }): void => {
         const fraction = total > 0 ? loaded / total : 0;
@@ -180,7 +185,7 @@ export const loadWllamaModel = async (
       n_threads: Math.min(navigator.hardwareConcurrency || 2, 4),
       // wllama defaults to a tiny 1024-token context, which regular prompts
       // (system prompt + memory + history + attachments) quickly exceed.
-      n_ctx: 4096,
+      n_ctx: isMobileLike() ? 2048 : 4096,
     };
 
     // Prefer the copy on our own webspace (same origin, no CDN dependency).

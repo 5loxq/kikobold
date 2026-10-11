@@ -101,6 +101,10 @@
     "downloadingModel": "Modell wird heruntergeladen",
     "preparingModel": "Modell wird geladen",
     "preparingNote": "Die Dateien sind vollständig - das Modell wird jetzt im Speicher vorbereitet. Das dauert je nach Gerät ein paar Sekunden.",
+    "preparingElapsed": "Vorbereitung läuft seit {{time}}",
+    "preparingSlowHint": "Das dauert länger als üblich - auf Mobilgeräten kann das Vorbereiten im Speicher einige Minuten dauern. Bildschirm anlassen und diesen Tab geöffnet halten.",
+    "keepScreenOnHint": "Auf dem Handy: Bildschirm eingeschaltet lassen und diesen Tab geöffnet halten, sonst pausiert der Ladevorgang.",
+    "errorPreparingTimeout": "Das Modell konnte nicht im Speicher vorbereitet werden - vermutlich reicht der Arbeitsspeicher deines Geräts nicht aus. Lade die Seite neu und wähle ein kleineres Modell.",
     "downloadStats": "{{loaded}} MB von {{total}} MB · {{speed}} MB/s",
     "privacyNote": "Alle Antworten werden lokal in deinem Browser erzeugt - deine Nachrichten verlassen dein Gerät nicht.",
     "downloadConfirm": "Das Modell \"{{name}}\" muss zuerst heruntergeladen werden (ca. {{size}} MB). Es wird im Browser gecacht und beim nächsten Mal sofort geladen. Jetzt herunterladen?",
@@ -129,7 +133,8 @@
     "imagePreview": "Bildvorschau",
     "readAloud": "Nachricht vorlesen",
     "stopSpeaking": "Vorlesen stoppen",
-    "downloadConfirmMobileBigModel": "Achtung: \"{{name}}\" ist mit ca. {{size}} MB ein sehr großes Modell und wurde für leistungsstarke Rechner (Desktop mit viel RAM) gebaut. Auf einem Handy verbraucht der Download viel mobiles Datenverkehr, und das Modell läuft dort sehr langsam oder gar nicht (Arbeitsspeicher). Wirklich fortfahren?"
+    "downloadConfirmMobileBigModel": "Achtung: \"{{name}}\" ist mit ca. {{size}} MB ein sehr großes Modell und wurde für leistungsstarke Rechner (Desktop mit viel RAM) gebaut. Auf einem Handy verbraucht der Download viel mobiles Datenverkehr, und das Modell läuft dort sehr langsam oder gar nicht (Arbeitsspeicher). Wirklich fortfahren?",
+    "downloadConfirmMobileWebgpu": "Achtung: \"{{name}}\" (ca. {{size}} MB) ist ein WebGPU-Modell und wurde für Desktop-Grafikkarten gebaut. Auf dem Handy läuft es oft gar nicht (Arbeitsspeicher) oder nur sehr langsam. Für das Handy ist das kleinere LFM-Modell die bessere Wahl. Wirklich fortfahren?"
   },
   "tab": {
     "generating": "KI denkt nach…",
@@ -618,6 +623,7 @@
   "modelsPage": {
     "title": "Modelle",
     "intro": "Hier findest du alle Modelle, die in KI Kobold verfügbar sind. Jedes Modell läuft komplett lokal in deinem Browser - es wird einmal heruntergeladen und danach auch ohne Internetverbindung ausgeführt. Die Modelle unterscheiden sich in Größe, Tempo und Können.",
+    "mobileNote": "Auf dem Handy: Die WebGPU-Modelle (Qwen) sind für Desktops gebaut - auf dem iPhone lädt die App automatisch das kleinere LFM-Modell, auf Android wirst du vor dem Download gewarnt (und bei wenig RAM ebenfalls automatisch auf LFM ausgewichen). Behalte beim Download Bildschirm und Tab offen, sonst pausiert der Ladevorgang. Die Vorbereitung im Speicher kann auf dem Handy einige Minuten dauern - das ist normal.",
     "thinkingHint": "Modelle mit dem 💭-Zeichen denken sichtbar nach: Der Gedankengang erscheint in der Antwort als aufklappbarer Bereich - standardmäßig zugeklappt.",
     "released": "Erschienen",
     "downloadSize": "Download",

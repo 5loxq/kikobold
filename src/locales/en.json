@@ -101,6 +101,10 @@
     "downloadingModel": "Downloading model",
     "preparingModel": "Loading model",
     "preparingNote": "The files are complete - the model is now being prepared in memory. Depending on your device, this takes a few seconds.",
+    "preparingElapsed": "Preparation has been running for {{time}}",
+    "preparingSlowHint": "This takes longer than usual - on mobile devices, preparing the model in memory can take several minutes. Keep the screen on and this tab open.",
+    "keepScreenOnHint": "On your phone: keep the screen on and this tab open, otherwise the load pauses.",
+    "errorPreparingTimeout": "The model could not be prepared in memory - your device probably does not have enough RAM. Reload the page and choose a smaller model.",
     "downloadStats": "{{loaded}} MB of {{total}} MB · {{speed}} MB/s",
     "privacyNote": "All responses are generated locally in your browser - your messages never leave your device.",
     "downloadConfirm": "The model \"{{name}}\" must be downloaded first (approx. {{size}} MB). It will be cached in your browser and load instantly next time. Download now?",
@@ -129,7 +133,8 @@
     "imagePreview": "Image preview",
     "readAloud": "Read message aloud",
     "stopSpeaking": "Stop reading aloud",
-    "downloadConfirmMobileBigModel": "Warning: \"{{name}}\" is a very large model (about {{size}} MB) built for powerful machines (desktop with plenty of RAM). On a phone the download eats mobile data, and the model will run very slowly or not at all (memory). Really continue?"
+    "downloadConfirmMobileBigModel": "Warning: \"{{name}}\" is a very large model (about {{size}} MB) built for powerful machines (desktop with plenty of RAM). On a phone the download eats mobile data, and the model will run very slowly or not at all (memory). Really continue?",
+    "downloadConfirmMobileWebgpu": "Warning: \"{{name}}\" (about {{size}} MB) is a WebGPU model built for desktop graphics cards. On a phone it often does not run at all (memory) or only very slowly. The smaller LFM model is the better choice for a phone. Really continue?"
   },
   "tab": {
     "generating": "AI is thinking…",
@@ -618,6 +623,7 @@
   "modelsPage": {
     "title": "Models",
     "intro": "Here you find all models available in KI Kobold. Every model runs entirely locally in your browser - it is downloaded once and then works even without an internet connection. The models differ in size, speed and capability.",
+    "mobileNote": "On your phone: The WebGPU models (Qwen) are built for desktops - on the iPhone the app automatically loads the smaller LFM model, on Android you get a warning before the download (and with little RAM it also falls back to LFM automatically). Keep the screen on and the tab open during the download, otherwise the load pauses. Preparing the model in memory can take a few minutes on a phone - that is normal.",
     "thinkingHint": "Models marked with 💭 think visibly: their reasoning appears in the answer as a collapsible section - collapsed by default.",
     "released": "Released",
     "downloadSize": "Download",

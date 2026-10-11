@@ -15,8 +15,10 @@ import i18n from '../config/i18n';
 import { handleErrorSilent } from '../utils/errors';
 import { log, warn } from '../services/logging';
 import { stripHiddenPartsText } from '../services/llm/text-processing';
+import { getDeviceMemoryGB, isMobileLike } from '../utils/device';
 import { getEngineType, getModelConfig, getWasmFallbackModelId } from '../services/models/model-registry';
 import { getCustomAppConfig } from '../services/models/webllm-config';
+import { releaseWakeLock, requestWakeLock } from '../services/wake-lock';
 import {
   cancelWllamaGeneration,
   type DownloadStats,
@@ -35,6 +37,12 @@ import {
 
 /** Download size/speed info shown while a model is being fetched */
 export type ModelLoadStats = DownloadStats;
+
+// The "preparing" phase (model initialization in memory) has no progress
+// events. On slow devices it can legitimately take minutes, but a phase
+// that never ends usually means the browser killed the WASM worker (mobile
+// memory limit) - surface an error instead of spinning forever.
+const PREPARING_TIMEOUT_MS = 5 * 60 * 1000;
 
 // WebLLM reports download progress only as text. Current versions (0.2.79+)
 // use "Fetching param cache[20/38]: 250MB fetched. 18% completed, 12.5 secs
@@ -102,6 +110,8 @@ export interface InferenceState {
   progressStats: ModelLoadStats | null;
   /** 'downloading' = fetching model files, 'preparing' = initializing in memory */
   modelLoadPhase: 'downloading' | 'preparing';
+  /** Seconds since the current model load started (download + preparation) */
+  loadElapsedSec: number;
   tokensGenerated: number;
   tokensPerSecond: number;
   
@@ -155,6 +165,7 @@ export const useEnhancedInference = (
   const [progress, setProgress] = useState(0);
   const [progressStats, setProgressStats] = useState<ModelLoadStats | null>(null);
   const [modelLoadPhase, setModelLoadPhase] = useState<'downloading' | 'preparing'>('downloading');
+  const [loadElapsedSec, setLoadElapsedSec] = useState(0);
   const [tokensGenerated, setTokensGenerated] = useState(0);
   const [tokensPerSecond, setTokensPerSecond] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -166,6 +177,54 @@ export const useEnhancedInference = (
     activeEngineRef.current = engine;
     setActiveEngine(engine);
   }, []);
+  // When the current load entered the "preparing" phase (null = downloading)
+  const preparingSinceRef = useRef<number | null>(null);
+  const watchdogFiredRef = useRef(false);
+
+  // Phase transitions of the current model load. The "preparing" phase has
+  // no progress events, so its start time is tracked for the elapsed timer
+  // and the watchdog below. Repeated progress events while already in the
+  // phase must not restart the timer.
+  const markLoadPhase = useCallback((phase: 'downloading' | 'preparing'): void => {
+    setModelLoadPhase(phase);
+    if (phase === 'preparing') {
+      if (preparingSinceRef.current === null) {
+        preparingSinceRef.current = Date.now();
+        // The elapsed timer measures the preparation, not the download
+        // that finished right before it.
+        setLoadElapsedSec(0);
+      }
+    } else {
+      preparingSinceRef.current = null;
+    }
+  }, []);
+
+  // Elapsed-time ticker for the load overlay + watchdog for a "preparing"
+  // phase that never finishes. The interval freezes while the page is
+  // suspended (screen lock / background tab); the watchdog therefore works
+  // with Date.now() so the time the page was suspended still counts.
+  useEffect((): (() => void) => {
+    if (!isLoading) {
+      return () => undefined;
+    }
+    const interval = window.setInterval(() => {
+      setLoadElapsedSec((sec) => sec + 1);
+      const since = preparingSinceRef.current;
+      if (
+        since !== null &&
+        !watchdogFiredRef.current &&
+        Date.now() - since > PREPARING_TIMEOUT_MS
+      ) {
+        watchdogFiredRef.current = true;
+        warn('Model preparation watchdog triggered - stop waiting for the load');
+        setError(i18n.t('chat.errorPreparingTimeout'));
+        setIsLoading(false);
+        setProgress(0);
+        setProgressStats(null);
+      }
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [isLoading]);
   const [webgpuAvailable, setWebgpuAvailable] = useState<boolean | null>(null);
   const [supportsImageInput, setSupportsImageInput] = useState(false);
 
@@ -177,6 +236,11 @@ export const useEnhancedInference = (
 
   // Load model using WebLLM
   const loadModel = useCallback(async (modelId: string): Promise<boolean> => {
+    // Keep the screen awake for the whole load: mobile browsers suspend the
+    // page on screen lock / tab switch, which freezes the download and the
+    // in-memory preparation mid-way (ref-counted, so the recursive fallback
+    // loads keep the lock until the last one finishes).
+    void requestWakeLock();
     try {
       if (!modelId) {
         throw new Error('No model ID provided');
@@ -186,7 +250,9 @@ export const useEnhancedInference = (
       setError(null);
       setProgress(0);
       setProgressStats(null);
-      setModelLoadPhase('downloading');
+      setLoadElapsedSec(0);
+      watchdogFiredRef.current = false;
+      markLoadPhase('downloading');
       const engineType = getEngineType(modelId);
       if (engineType === 'wllama') {
         const config = getModelConfig(modelId);
@@ -203,7 +269,7 @@ export const useEnhancedInference = (
             // Once the file is fully fetched, wllama initializes the model in
             // memory (allocate context, load tensors) - that phase has no
             // progress events, so switch the label to "preparing".
-            setModelLoadPhase(fraction >= 0.999 ? 'preparing' : 'downloading');
+            markLoadPhase(fraction >= 0.999 ? 'preparing' : 'downloading');
             log(`Loading: ${label ?? ''}`);
           },
         });
@@ -235,6 +301,21 @@ export const useEnhancedInference = (
           return loadModel(fallbackModelId);
         }
         throw new Error('WebGPU is not supported in your browser. Please use Chrome, Firefox 113+, Edge, or Safari 16.4+.');
+      }
+
+      // Chrome on Android exposes WebGPU AND reports the device RAM
+      // (Safari/iOS has neither, so this only ever triggers on Android).
+      // Phones with little RAM cannot hold an MLC model in the per-tab
+      // memory budget - fall back to the WASM model instead of failing
+      // after the big download.
+      const deviceMemoryGB = getDeviceMemoryGB();
+      if (hasWebGPU && isMobileLike() && deviceMemoryGB !== undefined && deviceMemoryGB <= 2) {
+        const fallbackModelId = getWasmFallbackModelId(modelId);
+        if (fallbackModelId) {
+          log(`WebGPU available but device memory too low (${deviceMemoryGB} GB) - falling back to WASM model ${fallbackModelId}`);
+          setIsLoading(false);
+          return loadModel(fallbackModelId);
+        }
       }
 
       // Proactive check: WebLLM requires maxStorageBuffersPerShaderStage >= 10.
@@ -273,7 +354,7 @@ export const useEnhancedInference = (
         // the weights into graphics memory - no download progress anymore.
         const isPreparing =
           report.progress >= 0.999 || /shader|Loading GPU/i.test(report.text ?? '');
-        setModelLoadPhase(isPreparing ? 'preparing' : 'downloading');
+        markLoadPhase(isPreparing ? 'preparing' : 'downloading');
         const size = report.text ? parseWebLLMSizeText(report.text) : null;
         const elapsed = report.timeElapsed ?? 0;
         if (size && elapsed > 0 && !isPreparing) {
@@ -355,8 +436,10 @@ export const useEnhancedInference = (
       }
       
       return false;
+    } finally {
+      void releaseWakeLock();
     }
-  }, [customAppConfig, setEngine]);
+  }, [customAppConfig, setEngine, markLoadPhase]);
 
 
   // Generate text (non-streaming)
@@ -364,6 +447,8 @@ export const useEnhancedInference = (
     prompt: string,
     options: WebLLMGenerateOptions = {}
   ): Promise<WebLLMGenerateResult | null> => {
+    // Keep the screen awake: a suspended tab freezes the generation
+    void requestWakeLock();
     try {
       setIsGenerating(true);
       setError(null);
@@ -456,6 +541,8 @@ export const useEnhancedInference = (
       setError(appError.userMessage);
       setIsGenerating(false);
       throw err;
+    } finally {
+      void releaseWakeLock();
     }
   }, [defaultOptions, currentModelId]);
 
@@ -467,6 +554,8 @@ export const useEnhancedInference = (
   ): Promise<string> => {
     // Declared outside the try so the finally block can compare against it
     let newAbortController: AbortController | null = null;
+    // Keep the screen awake: a suspended tab freezes the generation
+    void requestWakeLock();
     try {
       // Cancel any existing generation
       if (abortControllerRef.current) {
@@ -603,6 +692,7 @@ export const useEnhancedInference = (
       if (newAbortController !== null && abortControllerRef.current === newAbortController) {
         abortControllerRef.current = null;
       }
+      void releaseWakeLock();
     }
   }, [defaultOptions, currentModelId]);
 
@@ -649,6 +739,7 @@ export const useEnhancedInference = (
       if (wllamaIsActive()) {
         void unloadWllamaModel();
       }
+      void releaseWakeLock();
     };
   }, []);
 
@@ -666,6 +757,7 @@ export const useEnhancedInference = (
     progress,
     progressStats,
     modelLoadPhase,
+    loadElapsedSec,
     tokensGenerated,
     tokensPerSecond,
     

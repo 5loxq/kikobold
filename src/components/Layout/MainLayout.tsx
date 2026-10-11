@@ -1,4 +1,4 @@
-import { FC, lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { FC, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sidebar } from './Sidebar';
 import { ChatWindow } from '../Chat/ChatWindow';
@@ -51,6 +51,7 @@ import { error as logError } from '../../services/logging';
 import { buildPromptWithDocuments, type DocumentAttachment, type ImageAttachment } from '../../services/attachments';
 import { stripHiddenPartsText, trimHistoryToCharBudget } from '../../services/llm/text-processing';
 import { downloadEta } from '../../utils/format';
+import { isMobileLike } from '../../utils/device';
 import { localStorageGet, localStorageSet } from '../../services/storage/local-storage';
 import { ttsSpeak } from '../../services/tts';
 
@@ -120,7 +121,11 @@ export const MainLayout: FC = () => {
     progress: modelLoadProgress,
     progressStats: modelLoadStats,
     modelLoadPhase,
+    loadElapsedSec,
   } = useEnhancedInference();
+  // Phones/tablets: the load overlay shows an extra hint because mobile
+  // browsers suspend the page when the screen locks or the tab is hidden.
+  const isMobileView = useMemo(() => isMobileLike(), []);
   const [localError, setLocalError] = useState<string | null>(null);
   const [streamingMessage, setStreamingMessage] = useState<string | null>(null);
   // Welcome page (first visit) and guided tour (shown right after it)
@@ -478,14 +483,25 @@ export const MainLayout: FC = () => {
         const info = getModelInfo(modelId);
         const sizeMB = info?.fileSizeMB ? Math.round(info.fileSizeMB) : 0;
 
+        // WebGPU (MLC) models are built for desktop GPUs. Chrome on Android
+        // does expose WebGPU, so the automatic WASM fallback never kicks in
+        // there - warn explicitly instead of letting the load die on the
+        // phone's per-tab memory limit after a ~1 GB download.
+        if (isMobileLike() && getModelConfig(modelId)?.engine === 'webllm') {
+          const webgpuConfirmed = window.confirm(
+            t('chat.downloadConfirmMobileWebgpu', { name: info?.name ?? modelId, size: sizeMB })
+          );
+          if (!webgpuConfirmed) {
+            return;
+          }
+        }
+
         // Very large models are a poor fit for phones: the download eats
         // mobile data and WASM inference on a phone is painfully slow or
         // fails outright on the memory limit. Warn explicitly before the
         // regular download confirmation.
-        const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-          || (typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches);
         const isLargeModel = (getModelConfig(modelId)?.fileSizeMB ?? 0) >= 2000;
-        if (isMobileDevice && isLargeModel) {
+        if (isMobileLike() && isLargeModel) {
           const mobileConfirmed = window.confirm(
             t('chat.downloadConfirmMobileBigModel', { name: info?.name ?? modelId, size: sizeMB })
           );
@@ -756,9 +772,21 @@ export const MainLayout: FC = () => {
                       <div className="mt-3 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
                         <div className="h-2 w-1/3 bg-indigo-700 rounded-full animate-progress-slide"></div>
                       </div>
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1.5 tabular-nums">
+                        {t('chat.preparingElapsed', {
+                          time: `${Math.floor(loadElapsedSec / 60)}:${String(loadElapsedSec % 60).padStart(2, '0')} min`,
+                        })}
+                      </p>
                       <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1.5">
                         {t('chat.preparingNote')}
                       </p>
+                      {/* On phones the WASM initialization takes much longer
+                          than the "few seconds" above - say so after a minute */}
+                      {loadElapsedSec >= 60 && (
+                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-1.5 leading-relaxed">
+                          {t('chat.preparingSlowHint')}
+                        </p>
+                      )}
                     </>
                   ) : (
                     <>
@@ -790,6 +818,13 @@ export const MainLayout: FC = () => {
                         {t('chat.downloadLocalNote')}
                       </p>
                     </>
+                  )}
+                  {/* Mobile browsers suspend the page when the screen locks
+                      or the tab is hidden - the load then freezes mid-way */}
+                  {isMobileView && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 leading-relaxed">
+                      {t('chat.keepScreenOnHint')}
+                    </p>
                   )}
                 </div>
               </div>
