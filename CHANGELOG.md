@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.8] - 2026-10-11
+
+### Geändert
+
+- **Präzisere Browser-Diagnose im Bild-Studio**: Der memory64-Check unterscheidet jetzt zwei Ursachen: (1) Der Browser unterstützt WebAssembly memory64 nicht (Chrome/Edge ab Version 133 nötig) - in der Warnung wird zusätzlich die erkannte Browser-Version angezeigt („Erkannter Browser: Chrome/Edge 129"), damit sofort sichtbar ist, wie alt der Browser ist; (2) die Seite ist nicht cross-origin isoliert (COOP/COEP fehlen) - nötig für den geteilten WebAssembly-Speicher der Engine. Beide Prüfungen probieren exakt dieselbe Memory-Anlage, die die Engine später durchführt.
+
 ## [4.3.7] - 2026-10-11
 
 ### Behoben

@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { IMAGE_GEN_MODEL } from '../../services/models/model-registry';
 import {
   generateImage,
+  getImageGenRuntimeIssue,
   type ImageGenProgress,
   isImageGenModelLoaded,
-  supportsImageGenMemory64,
   unloadImageGenModel,
 } from '../../services/inference/sd-engine';
 
@@ -60,7 +60,13 @@ export const ImageStudio: React.FC<ImageStudioProps> = ({ onNavigateBack }) => {
   const dlStartTs = useRef<number | null>(null);
 
   const hasWebGPU = typeof navigator !== 'undefined' && !!(navigator as Navigator & { gpu?: unknown }).gpu;
-  const hasMemory64 = supportsImageGenMemory64();
+  const runtimeIssue = getImageGenRuntimeIssue();
+  // Chromium major version from the UA (Chrome and Edge both report it) -
+  // shown in the memory64 warning so users can see how old their browser is.
+  const chromiumMajor = ((): number | null => {
+    const match = /Chrom(?:e|ium)\/(\d+)/.exec(navigator.userAgent);
+    return match ? Number(match[1]) : null;
+  })();
 
   // Release the model (and its GPU memory) when leaving the studio: image
   // generation and the chat models compete for the same resources.
@@ -168,13 +174,29 @@ export const ImageStudio: React.FC<ImageStudioProps> = ({ onNavigateBack }) => {
           </div>
         )}
 
-        {hasWebGPU && !hasMemory64 && (
+        {hasWebGPU && runtimeIssue === 'memory64' && (
           <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-2xl">
             <p className="text-amber-700 dark:text-amber-400 font-semibold">
               {t('imagesPage.errorMemory64')}
             </p>
             <p className="text-amber-700/80 dark:text-amber-500 text-sm mt-1">
               {t('imagesPage.errorMemory64Hint')}
+            </p>
+            {chromiumMajor !== null && (
+              <p className="text-amber-700/80 dark:text-amber-500 text-sm mt-1 font-medium">
+                {t('imagesPage.detectedBrowser', { version: `Chrome/Edge ${chromiumMajor}` })}
+              </p>
+            )}
+          </div>
+        )}
+
+        {hasWebGPU && runtimeIssue === 'isolation' && (
+          <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-2xl">
+            <p className="text-amber-700 dark:text-amber-400 font-semibold">
+              {t('imagesPage.errorIsolation')}
+            </p>
+            <p className="text-amber-700/80 dark:text-amber-500 text-sm mt-1">
+              {t('imagesPage.errorIsolationHint')}
             </p>
           </div>
         )}
@@ -190,7 +212,7 @@ export const ImageStudio: React.FC<ImageStudioProps> = ({ onNavigateBack }) => {
             onChange={(e) => setPrompt(e.target.value)}
             placeholder={t('imagesPage.promptPlaceholder')}
             rows={3}
-            disabled={isWorking || !hasWebGPU || !hasMemory64}
+            disabled={isWorking || !hasWebGPU || runtimeIssue !== null}
             className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
           />
 
@@ -203,7 +225,7 @@ export const ImageStudio: React.FC<ImageStudioProps> = ({ onNavigateBack }) => {
             value={negativePrompt}
             onChange={(e) => setNegativePrompt(e.target.value)}
             placeholder={t('imagesPage.negativePromptPlaceholder')}
-            disabled={isWorking || !hasWebGPU || !hasMemory64}
+            disabled={isWorking || !hasWebGPU || runtimeIssue !== null}
             className="w-full px-4 py-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
 
@@ -250,7 +272,7 @@ export const ImageStudio: React.FC<ImageStudioProps> = ({ onNavigateBack }) => {
           <button
             type="button"
             onClick={handleGenerate}
-            disabled={isWorking || !hasWebGPU || !hasMemory64 || !prompt.trim()}
+            disabled={isWorking || !hasWebGPU || runtimeIssue !== null || !prompt.trim()}
             className="mt-6 w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
           >
             {isWorking

@@ -801,6 +801,9 @@
     "errorWebgpuHint": "Image generation requires Chrome or Edge with WebGPU. The rest of the app keeps working.",
     "errorMemory64": "This browser does not support WebAssembly memory64.",
     "errorMemory64Hint": "The image engine needs memory larger than 4 GB (memory64) - available in Chrome and Edge 133 or newer. Without it the 2 GB download would start in vain. The rest of the app keeps working.",
+    "errorIsolation": "This page is not cross-origin isolated.",
+    "errorIsolationHint": "The image engine needs shared WebAssembly memory, which requires COOP/COEP headers. The rest of the app keeps working.",
+    "detectedBrowser": "Detected browser: {{version}}",
     "errorLoadModel": "The image model could not be loaded"
   }
 }

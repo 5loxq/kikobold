@@ -801,6 +801,9 @@
     "errorWebgpuHint": "Bildgenerierung braucht Chrome oder Edge mit WebGPU. Der Rest der App funktioniert weiterhin.",
     "errorMemory64": "Dieser Browser unterstützt kein WebAssembly memory64.",
     "errorMemory64Hint": "Die Bild-Engine braucht Arbeitsspeicher über 4 GB (memory64) - verfügbar in Chrome und Edge ab Version 133. Ohne das würde der 2-GB-Download vergeblich starten. Der Rest der App funktioniert weiterhin.",
+    "errorIsolation": "Diese Seite ist nicht cross-origin isoliert.",
+    "errorIsolationHint": "Die Bild-Engine braucht geteilten WebAssembly-Speicher, der nur mit COOP/COEP-Headern verfügbar ist. Der Rest der App funktioniert weiterhin.",
+    "detectedBrowser": "Erkannter Browser: {{version}}",
     "errorLoadModel": "Das Bildmodell konnte nicht geladen werden"
   }
 }

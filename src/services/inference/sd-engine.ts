@@ -144,9 +144,21 @@ const ensureOrtAssertShim = (): void => {
  * (`index: "i64"`, maximum 262144 pages). Browsers without memory64 reject
  * that with "value 262144 is above the upper bound 65536" - after the whole
  * model download. Probe with the exact same allocation so it fails fast.
- * memory64 is available since Chrome/Edge 133 and Firefox 134.
+ * memory64 is available since Chrome/Edge 133 and Firefox 134; the shared
+ * variant additionally requires cross-origin isolation (COOP/COEP).
  */
-export const supportsImageGenMemory64 = (): boolean => {
+export type ImageGenRuntimeIssue = 'memory64' | 'isolation';
+
+export const getImageGenRuntimeIssue = (): ImageGenRuntimeIssue | null => {
+  try {
+    new WebAssembly.Memory({
+      initial: 1,
+      maximum: 262144,
+      index: 'i64',
+    } as WebAssembly.MemoryDescriptor & { index: 'i64' });
+  } catch {
+    return 'memory64';
+  }
   try {
     new WebAssembly.Memory({
       initial: 1,
@@ -154,10 +166,10 @@ export const supportsImageGenMemory64 = (): boolean => {
       shared: true,
       index: 'i64',
     } as WebAssembly.MemoryDescriptor & { index: 'i64' });
-    return true;
   } catch {
-    return false;
+    return 'isolation';
   }
+  return null;
 };
 
 /**
@@ -165,10 +177,17 @@ export const supportsImageGenMemory64 = (): boolean => {
  * fail fast with a clear message instead of deep inside the engine.
  */
 const preflight = async (): Promise<void> => {
-  if (!supportsImageGenMemory64()) {
+  const runtimeIssue = getImageGenRuntimeIssue();
+  if (runtimeIssue === 'memory64') {
     throw new Error(
       'This browser does not support WebAssembly memory64 (required for the image engine). '
       + 'Please use Chrome or Edge 133 or newer.'
+    );
+  }
+  if (runtimeIssue === 'isolation') {
+    throw new Error(
+      'This page is not cross-origin isolated, but the image engine requires shared '
+      + 'WebAssembly memory (COOP/COEP headers missing).'
     );
   }
   if (!(navigator as Navigator & { gpu?: unknown }).gpu) {
