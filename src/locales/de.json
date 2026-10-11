@@ -101,6 +101,7 @@
     "downloadingModel": "Modell wird heruntergeladen",
     "preparingModel": "Modell wird geladen",
     "preparingNote": "Die Dateien sind vollständig - das Modell wird jetzt im Speicher vorbereitet. Das dauert je nach Gerät ein paar Sekunden.",
+    "preparingNoteMobile": "Die Dateien sind vollständig - das Modell wird jetzt im Speicher vorbereitet. Auf dem Handy kann das einige Minuten dauern, das ist normal. Bildschirm anlassen und diesen Tab offen halten, dann geht es schneller vonstatt.",
     "preparingElapsed": "Vorbereitung läuft seit {{time}}",
     "preparingSlowHint": "Das dauert länger als üblich - auf Mobilgeräten kann das Vorbereiten im Speicher einige Minuten dauern. Bildschirm anlassen und diesen Tab geöffnet halten.",
     "keepScreenOnHint": "Auf dem Handy: Bildschirm eingeschaltet lassen und diesen Tab geöffnet halten, sonst pausiert der Ladevorgang.",

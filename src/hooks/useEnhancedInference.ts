@@ -41,8 +41,11 @@ export type ModelLoadStats = DownloadStats;
 // The "preparing" phase (model initialization in memory) has no progress
 // events. On slow devices it can legitimately take minutes, but a phase
 // that never ends usually means the browser killed the WASM worker (mobile
-// memory limit) - surface an error instead of spinning forever.
+// memory limit) - surface an error instead of spinning forever. Mobile gets
+// a longer budget: iOS Safari has no JSPI, so the WASM initialization runs
+// in the slow asyncify mode and can take many minutes on a phone.
 const PREPARING_TIMEOUT_MS = 5 * 60 * 1000;
+const PREPARING_TIMEOUT_MS_MOBILE = 10 * 60 * 1000;
 
 // WebLLM reports download progress only as text. Current versions (0.2.79+)
 // use "Fetching param cache[20/38]: 250MB fetched. 18% completed, 12.5 secs
@@ -210,10 +213,13 @@ export const useEnhancedInference = (
     const interval = window.setInterval(() => {
       setLoadElapsedSec((sec) => sec + 1);
       const since = preparingSinceRef.current;
+      const timeoutMs = isMobileLike()
+        ? PREPARING_TIMEOUT_MS_MOBILE
+        : PREPARING_TIMEOUT_MS;
       if (
         since !== null &&
         !watchdogFiredRef.current &&
-        Date.now() - since > PREPARING_TIMEOUT_MS
+        Date.now() - since > timeoutMs
       ) {
         watchdogFiredRef.current = true;
         warn('Model preparation watchdog triggered - stop waiting for the load');

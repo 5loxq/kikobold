@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.34] - 2026-10-11
+
+### Behoben (Mobile-Test auf dem iPhone)
+- **Seitenmenü scrollbar:** Der Mobile-Drawer (Hamburger-Menü) war `h-screen` hoch, enthielt aber zusätzlich einen eigenen ~57px-Kopf — die eingebettete Sidebar (ebenfalls `h-screen`) lief damit über den Drawer hinaus: Der untere Teil (Navigation, Verlauf, Fußzeile) war abgeschnitten und es gab keine Möglichkeit, dorthin zu scrollen. Der Drawer ist jetzt eine Flex-Spalte mit fixem Kopf; die Sidebar füllt den verbleibenden Platz (`fillHeight`-Prop) und scrollt intern. Zusätzlich `h-dvh` statt `h-screen`: Auf iOS Safari umfasst 100vh auch den Bereich hinter der Browser-Leiste, der Drawer-Unterrand wäre dort teilweise verdeckt gewesen.
+- **Vorbereitungs-Phase auf dem Handy:** Erwartung jetzt sofort korrekt („auf dem Handy kann das einige Minuten dauern, das ist normal") statt „paar Sekunden" mit Korrektur erst nach 60 s; Watchdog auf Mobilgeräten 10 statt 5 Minuten — iOS Safari hat kein JSPI, das Modell wird im WASM-Langsam-Modus initialisiert, das darf länger dauern.
+
 ## [4.3.33] - 2026-10-11
 
 ### Behoben (Mobile: LLM-Download bleibt bei „Modell wird geladen" hängen)

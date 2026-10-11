@@ -101,6 +101,7 @@
     "downloadingModel": "Downloading model",
     "preparingModel": "Loading model",
     "preparingNote": "The files are complete - the model is now being prepared in memory. Depending on your device, this takes a few seconds.",
+    "preparingNoteMobile": "The files are complete - the model is now being prepared in memory. On a phone this can take several minutes, which is normal. Keep the screen on and this tab open.",
     "preparingElapsed": "Preparation has been running for {{time}}",
     "preparingSlowHint": "This takes longer than usual - on mobile devices, preparing the model in memory can take several minutes. Keep the screen on and this tab open.",
     "keepScreenOnHint": "On your phone: keep the screen on and this tab open, otherwise the load pauses.",

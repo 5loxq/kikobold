@@ -23,6 +23,11 @@ interface SidebarProps {
   onMoveChat: (chatId: string, folderId: string | null) => void;
   /** Opens the "What's new" dialog (version button in the footer) */
   onShowWhatsNew?: () => void;
+  /** Fill the parent container instead of the full viewport height. Used in
+   * the mobile drawer, where the sidebar sits below the drawer header:
+   * h-screen there would overflow the drawer by the header's height and
+   * clip the sidebar bottom (unreachable nav items, no scrolling). */
+  fillHeight?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -40,6 +45,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onDeleteFolder,
   onMoveChat,
   onShowWhatsNew,
+  fillHeight = false,
 }) => {
   const { t } = useTranslation();
   const darkMode = useDarkMode();
@@ -325,7 +331,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <div
       className={`${
         isCollapsed ? 'w-16' : 'w-64'
-      } bg-zinc-950 text-white h-screen flex flex-col transition-all duration-300 border-r border-zinc-800/60`}
+      } bg-zinc-950 text-white ${fillHeight ? 'h-full' : 'h-screen'} flex flex-col transition-all duration-300 border-r border-zinc-800/60`}
     >
       {/* Header */}
       <div className="flex-shrink-0 px-4 py-4 flex items-center justify-between">
