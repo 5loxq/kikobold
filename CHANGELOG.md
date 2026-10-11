@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.17] - 2026-10-11
+
+### Geändert
+
+- **Memory-Diagnose verschärft**: Der Fehlerbericht von v4.3.16 zeigte Downloads erfolgreich, aber einen *leeren* Memory-Abschnitt - obwohl die Glue ihre Memory zwingend anlegen muss, bevor das Wasm läuft. Die Diagnose protokolliert jetzt zusätzlich: die Shim-Installation selbst, Memory-Anlagen über *beide* Konstruktor-Zweige (auch ohne i64-Index, falls der Descriptor unerwartet anders aussieht) und den env-Zustand (numThreads, proxy, wasmPaths) zum Zeitpunkt des Ladens. Damit ist der nächste Bericht dreifach eindeutig: lief der Shim, welchen Descriptor sah er, und in welchem Modus lief ORT.
+
 ## [4.3.16] - 2026-10-11
 
 ### Behoben

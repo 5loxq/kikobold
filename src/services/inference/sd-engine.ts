@@ -175,7 +175,7 @@ interface MemoryDescriptorLike {
 const memoryLog: string[] = [];
 const recordMemory = (entry: string): void => {
   memoryLog.push(entry);
-  if (memoryLog.length > 12) {
+  if (memoryLog.length > 20) {
     memoryLog.shift();
   }
 };
@@ -193,6 +193,10 @@ const ensureOrtMemory64Shim = (): void => {
   const patched = function (descriptor?: MemoryDescriptorLike): WebAssembly.Memory {
     const desc = descriptor ?? {};
     if (desc.index !== 'i64') {
+      recordMemory(
+        `created memory WITHOUT i64 index: initial=${String(desc.initial)}, `
+        + `maximum=${String(desc.maximum)}, shared=${String(desc.shared)}`
+      );
       return Reflect.construct(nativeMemory as unknown as typeof WebAssembly.Memory, [desc]);
     }
     const translated: MemoryDescriptorLike = { address: 'i64' };
@@ -235,6 +239,7 @@ const ensureOrtMemory64Shim = (): void => {
   patched.prototype = nativeMemory.prototype;
   (patched as unknown as Record<string, unknown>)['__webguiMemory64Shim'] = true;
   WebAssembly.Memory = patched;
+  recordMemory('memory64 translation shim installed');
   log('sd-engine: installed WebAssembly.Memory memory64 translation shim');
 };
 
@@ -482,7 +487,7 @@ export const loadImageGenModel = async (
       const ort = (ortModule as unknown as { default?: Record<string, unknown> }).default
         ?? (ortModule as unknown as Record<string, unknown>);
       const env = (ort as {
-        env?: { wasm?: { wasmPaths?: string; numThreads?: number } };
+        env?: { wasm?: { wasmPaths?: string; numThreads?: number; proxy?: boolean } };
       }).env;
       if (env?.wasm) {
         env.wasm.wasmPaths = '/ort/';
@@ -493,6 +498,10 @@ export const loadImageGenModel = async (
         // main thread where the shims are installed; WebGPU does the heavy
         // math anyway, so the CPU parallelism loss is negligible.
         env.wasm.numThreads = 1;
+        recordMemory(
+          `env.wasm: numThreads=${String(env.wasm.numThreads)}, `
+          + `proxy=${String(env.wasm.proxy)}, wasmPaths=${String(env.wasm.wasmPaths)}`
+        );
       }
       // Prefer the copy on our own webspace (same origin, no CDN dependency).
       // The engine falls back to HuggingFace when a file is missing there.
