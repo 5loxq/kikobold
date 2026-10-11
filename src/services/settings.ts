@@ -88,6 +88,15 @@ export const loadSettings = (): AppSettings => {
   }
 };
 
+/** Whether settings have ever been saved (false = fresh install or pre-settings legacy user) */
+export const hasStoredSettings = (): boolean => {
+  try {
+    return localStorageGet(SETTINGS_KEY) !== null;
+  } catch {
+    return false;
+  }
+};
+
 export const saveSettings = (settings: AppSettings): void => {
   try {
     localStorageSetJson(SETTINGS_KEY, settings);

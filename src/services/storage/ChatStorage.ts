@@ -263,6 +263,10 @@ export const clearAllChats = async (): Promise<void> => {
 };
 
 export const updateChatMessages = async (chatId: string, messages: Message[]): Promise<void> => {
+  await initChatDB();
+  if (!db) {throw new Error('Database not initialized');}
+  const database = db;
+
   if (typeof chatId !== 'string' || chatId.trim().length === 0) {
     throw new Error('Invalid chat ID');
   }
@@ -271,7 +275,7 @@ export const updateChatMessages = async (chatId: string, messages: Message[]): P
     throw new Error('Invalid messages array');
   }
 
-  // Validate and sanitize messages (see saveChat for the sanitizer choice)
+  // Validate and sanitize messages once (see saveChat for the sanitizer choice)
   const sanitizedMessages = messages.map(message => {
     if (!validateMessage(message)) {
       throw new Error('Invalid message in array');
@@ -282,12 +286,42 @@ export const updateChatMessages = async (chatId: string, messages: Message[]): P
     };
   });
 
-  const chat = await getChat(chatId);
-  if (!chat) {throw new Error('Chat not found');}
+  // Read-modify-write inside ONE transaction: with separate get/put
+  // transactions, two concurrent writers (second browser tab, rapid
+  // follow-up call) could interleave and the last writer would silently
+  // drop the other one's messages.
+  return new Promise((resolve, reject) => {
+    try {
+      const transaction = database.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const getRequest = store.get(chatId);
 
-  chat.messages = sanitizedMessages;
-  chat.updatedAt = Date.now();
-  await saveChat(chat);
+      getRequest.onerror = (): void => {
+        logError('Failed to get chat for update:', getRequest.error);
+        reject(getRequest.error ?? new Error('Failed to update chat messages'));
+      };
+
+      getRequest.onsuccess = (): void => {
+        const chat = getRequest.result;
+        if (!chat || !validateChat(chat)) {
+          reject(new Error('Chat not found'));
+          return;
+        }
+        chat.messages = sanitizedMessages;
+        chat.updatedAt = Date.now();
+
+        const putRequest = store.put(chat);
+        putRequest.onerror = (): void => {
+          logError('Failed to update chat messages:', putRequest.error);
+          reject(putRequest.error ?? new Error('Failed to update chat messages'));
+        };
+        putRequest.onsuccess = (): void => resolve();
+      };
+    } catch (error) {
+      logError('Error updating chat messages:', error);
+      reject(error);
+    }
+  });
 };
 
 // Default title for new chats; also used to detect "not yet renamed" chats

@@ -2,6 +2,14 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.2.3] - 2026-10-11
+
+### Intern (keine sichtbaren Änderungen)
+
+- **Theme-Service konsolidiert** (457 → 141 Zeilen): `theme.ts` hatte eine eigene, konkurrierende Theme-Persistenz (`webgui.theme.settings`), die von der in den App-Settings (`webgui_settings_v1`) überdeckt werden konnte. Der Service ist jetzt reine Apply-Logik (dark-Klasse + meta theme-color + System-Listener), Persistenz läuft ausschließlich über die App-Settings. Die ungenutzte Custom-Color-/Animation-/Sound-/Sprach-Maschinerie (kein CSS nutzte die Variablen) ist entfernt; Nutzer mit nur altem Legacy-Key behalten ihre Theme-Wahl durch einen einmaligen Fallback beim Start.
+- **security.ts auf die tatsächlich genutzten Funktionen reduziert** (767 → 175 Zeilen): Der Voll-Sanitizer samt XSS-Pattern-Liste, URL-/Modellpfad-Validatoren, Session-Storage-Wrapper, doppeltes `formatBytes`, Speicher-Schätzung und weitere ~20 Exports hatten null Aufrufer. Übrig bleiben `sanitizeInputLight`, `validateFileUpload`, `checkWebGPUSupport` und `checkWASMSupport`. Nebeneffekt des Aufräumens: `checkWebGPUSupport` zerstört das Probe-GPU-Device jetzt wieder (`device.destroy()`) statt bei jedem App-Start Devices zu leaken.
+- **ChatStorage: `updateChatMessages` als atomare Transaktion**: Bisher drei separate Transaktionen (get → mutieren → put) mit doppelter Sanitizing - konkurrierende Schreiber (zweiter Tab, schnelle Folge-Calls) konnten sich gegenseitig Nachrichten still verlieren. Jetzt ein Read-Modify-Write in einer einzigen `readwrite`-Transaktion, Sanitizing nur einmal.
+
 ## [4.2.2] - 2026-10-11
 
 ### Behoben
