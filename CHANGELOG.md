@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.4] - 2026-10-11
+
+### Behoben
+
+- **"Invalid typed array length: 633" beim Laden des Bildmodells**: Der Webserver komprimierte die JSON-Dateien unter `/models/sd/` mit gzip - der Content-Length-Header nannte dann die komprimierte Größe (z. B. 269 statt 633 Bytes), während `fetch()` den Inhalt transparent dekomprimiert. Die diffusers.js-Engine allokiert ihren Download-Puffer aber nach dem rohen Header und der erste Schreibzugriff lief über das Pufferende hinaus. Eine `.htaccess` unter `/models/sd/` deaktiviert gzip für den Modellbaum (verifiziert: alle Dateien liefern jetzt die echte Größe); das Download-Skript legt die Datei für künftige Kopien automatisch mit an. HuggingFace als Fallback ist von Haus aus nicht betroffen.
+
 ## [4.3.3] - 2026-10-11
 
 ### Behoben

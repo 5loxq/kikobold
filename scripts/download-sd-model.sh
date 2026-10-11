@@ -28,6 +28,15 @@ vae_decoder/model.onnx_data
 vae_encoder/model.onnx
 "
 
+# The diffusers.js engine allocates download buffers from the raw
+# Content-Length header - gzip would break it (see .htaccess comment).
+cat > "$TARGET/../.htaccess" <<'HTACCESS'
+<IfModule mod_deflate.c>
+  SetEnv no-gzip 1
+</IfModule>
+RemoveOutputFilter .json .txt .onnx
+HTACCESS
+
 for file in $FILES; do
   mkdir -p "$TARGET/$(dirname "$file")"
   if [ -f "$TARGET/$file" ] && [ "$(wc -c < "$TARGET/$file")" -gt 0 ]; then
