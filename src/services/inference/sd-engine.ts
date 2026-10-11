@@ -165,6 +165,20 @@ interface MemoryDescriptorLike {
   index?: 'i64';
 }
 
+/**
+ * Diagnostics for the translated memories: records creations and grow
+ * operations (with the resulting buffer sizes). Appended to load errors so
+ * a failure like "offset is out of bounds" in createSessionAllocate shows
+ * whether the wasm heap actually grew.
+ */
+const memoryLog: string[] = [];
+const recordMemory = (entry: string): void => {
+  memoryLog.push(entry);
+  if (memoryLog.length > 12) {
+    memoryLog.shift();
+  }
+};
+
 const ensureOrtMemory64Shim = (): void => {
   const nativeMemory = WebAssembly.Memory as unknown as
     ((new (descriptor?: MemoryDescriptorLike) => WebAssembly.Memory
@@ -189,15 +203,30 @@ const ensureOrtMemory64Shim = (): void => {
       translated.shared = desc.shared;
     }
     const memory = Reflect.construct(nativeMemory as unknown as typeof WebAssembly.Memory, [translated]);
+    recordMemory(
+      `created memory64: initial ${translated.initial} pages `
+      + `(${memory.buffer.byteLength} bytes), max ${translated.maximum ?? 'unbounded'}, `
+      + `shared=${translated.shared === true}`
+    );
     try {
       const nativeGrow = memory.grow.bind(memory);
       memory.grow = (delta: number | bigint): number => {
         const pages = typeof delta === 'bigint' ? delta : BigInt(Math.trunc(delta));
-        return Number(nativeGrow(pages));
+        try {
+          const result = nativeGrow(pages);
+          recordMemory(`grow(${pages} pages) ok -> buffer ${memory.buffer.byteLength} bytes`);
+          return Number(result);
+        } catch (err) {
+          recordMemory(
+            `grow(${pages} pages) FAILED: ${err instanceof Error ? err.message : String(err)}`
+          );
+          throw err;
+        }
       };
     } catch {
       // Best effort: the glue only grows on the main thread; if assigning
       // the own property fails, growth with plain numbers may throw later.
+      recordMemory('could not patch grow() on the created memory');
     }
     return memory;
   } as unknown as typeof WebAssembly.Memory;
@@ -489,13 +518,21 @@ export const loadImageGenModel = async (
     } catch (err) {
       pipeline = null;
       const detail = err instanceof Error ? err.message : String(err);
-      // Include the recorded requests so the visible error names the
-      // failing URL instead of a downstream symptom.
-      const withRequests = requestLog.length > 0
-        ? new Error(`${detail} [requests: ${requestLog.join(' | ')}]`)
+      // Include the recorded requests and memory operations so the visible
+      // error names the failing URL and the heap state instead of a
+      // downstream symptom.
+      const parts: string[] = [];
+      if (requestLog.length > 0) {
+        parts.push(`requests: ${requestLog.join(' | ')}`);
+      }
+      if (memoryLog.length > 0) {
+        parts.push(`memory: ${memoryLog.join(' | ')}`);
+      }
+      const withDiagnostics = parts.length > 0
+        ? new Error(`${detail} [${parts.join('] [')}]`)
         : err;
       warn(`sd-engine: load failed: ${detail}`);
-      throw withRequests;
+      throw withDiagnostics;
     } finally {
       window.fetch = originalFetch;
       loadPromise = null;

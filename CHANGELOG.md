@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.14] - 2026-10-11
+
+### Geändert
+
+- **Memory-Diagnose in Fehlermeldungen der Bild-Engine**: Der Fehler „offset is out of bounds" in `createSessionAllocate` (Kopieren der Modell-Bytes in den Wasm-Heap) bedeutet, dass `malloc` einen Zeiger jenseits der JS-Heap-Views lieferte - entweder wuchs der Heap nicht richtig oder die Views sind veraltet. Der memory64-Shim protokolliert jetzt jede erzeugte Memory (Initial-/Maximum-Größe, shared) und jede grow-Operation mit der resultierenden Puffergröße; das Protokoll wird wie das Request-Log an Ladefehler angehängt. Damit zeigt der nächste Fehler die exakte Heap-Historie.
+
 ## [4.3.13] - 2026-10-11
 
 ### Geändert
