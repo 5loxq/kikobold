@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.7] - 2026-10-11
+
+### Behoben
+
+- **„Das Bildmodell konnte nicht geladen werden: ... RangeError: WebAssembly.Memory(): Property 'maximum': value 262144 is above the upper bound 65536"**: Kein Bug unsererseits - der Browser unterstützt das WebAssembly-memory64-Proposal nicht. Der ORT-Fork der Bild-Engine („web64") ist vollständig für memory64 kompiliert: Die Glue legt eine shared Memory mit 16 GiB Maximum an (`index: "i64"`, 262144 Pages). Browser ohne memory64 wenden noch das 32-Bit-Limit von 65536 Pages (4 GiB) an und werfen genau diesen RangeError - bislang leider erst nach dem kompletten 2-GB-Download. Jetzt prüft ein Preflight vor dem Download mit derselben Memory-Anlage, ob der Browser memory64 beherrscht, und scheitert früh mit klarer Meldung. Zusätzlich zeigt das Bild-Studio bei fehlendem memory64 direkt eine Warnung (wie bei fehlendem WebGPU) und sperrt die Eingaben - niemand lädt mehr vergeblich 2 GB herunter. memory64 ist verfügbar seit Chrome/Edge 133 und Firefox 134; die heruntergeladenen Modell-Daten in der IndexedDB bleiben beim Browser-Update erhalten.
+
 ## [4.3.6] - 2026-10-11
 
 ### Behoben

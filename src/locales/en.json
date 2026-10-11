@@ -237,9 +237,10 @@
     "title": "What's new",
     "subtitle": "A few things have changed since your last visit:",
     "closeButton": "Got it!",
-    "v436": {
+    "v437": {
       "item1": "Download display for the image model: the image studio now shows loaded MB, total size, speed and estimated remaining time just like the chat models - the bar tracks all model files, not just one file at a time.",
-      "item2": "Fixed loading the image model: a bug in the minified ONNX Runtime bundle (\"assert is not defined\") crashed the engine right after the 2 GB download. A fallback now fixes this before the engine starts."
+      "item2": "Image engine fixed: two bugs (\"assert is not defined\" in the minified ONNX Runtime bundle, missing memory64 check) crashed the image model after the 2 GB download.",
+      "item3": "Clear browser requirement: image generation needs WebAssembly memory64 (Chrome/Edge 133 or newer). The studio now checks this before the download and warns early instead of downloading 2 GB in vain."
     },
     "v430": {
       "item1": "Image studio (alpha): generate images from text descriptions right in the browser - locally via WebGPU. The 2 GB model is downloaded once and cached afterwards.",
@@ -798,6 +799,8 @@
     "back": "Back to chat",
     "errorWebgpu": "WebGPU is not supported in this browser.",
     "errorWebgpuHint": "Image generation requires Chrome or Edge with WebGPU. The rest of the app keeps working.",
+    "errorMemory64": "This browser does not support WebAssembly memory64.",
+    "errorMemory64Hint": "The image engine needs memory larger than 4 GB (memory64) - available in Chrome and Edge 133 or newer. Without it the 2 GB download would start in vain. The rest of the app keeps working.",
     "errorLoadModel": "The image model could not be loaded"
   }
 }

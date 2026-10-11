@@ -139,10 +139,38 @@ const ensureOrtAssertShim = (): void => {
 };
 
 /**
+ * The ORT fork the engine uses ("web64") is compiled entirely for the
+ * WebAssembly memory64 proposal: its glue allocates a shared 16 GiB memory
+ * (`index: "i64"`, maximum 262144 pages). Browsers without memory64 reject
+ * that with "value 262144 is above the upper bound 65536" - after the whole
+ * model download. Probe with the exact same allocation so it fails fast.
+ * memory64 is available since Chrome/Edge 133 and Firefox 134.
+ */
+export const supportsImageGenMemory64 = (): boolean => {
+  try {
+    new WebAssembly.Memory({
+      initial: 1,
+      maximum: 262144,
+      shared: true,
+      index: 'i64',
+    } as WebAssembly.MemoryDescriptor & { index: 'i64' });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Quick checks before the big download, so the most common setup problems
  * fail fast with a clear message instead of deep inside the engine.
  */
 const preflight = async (): Promise<void> => {
+  if (!supportsImageGenMemory64()) {
+    throw new Error(
+      'This browser does not support WebAssembly memory64 (required for the image engine). '
+      + 'Please use Chrome or Edge 133 or newer.'
+    );
+  }
   if (!(navigator as Navigator & { gpu?: unknown }).gpu) {
     throw new Error('WebGPU is not available (Chrome or Edge required)');
   }

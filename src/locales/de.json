@@ -237,9 +237,10 @@
     "title": "Das ist neu",
     "subtitle": "Seit deinem letzten Besuch hat sich einiges getan:",
     "closeButton": "Alles klar!",
-    "v436": {
+    "v437": {
       "item1": "Download-Anzeige für das Bildmodell: Das Bild-Studio zeigt jetzt wie die Chat-Modelle geladene MB, Gesamtgröße, Tempo und geschätzte Restzeit - der Balken läuft über alle Modell-Dateien, nicht nur pro Datei.",
-      "item2": "Laden des Bildmodells repariert: Ein Bug im minifizierten ONNX-Runtime-Bundle („assert is not defined\") ließ die Engine direkt nach dem 2-GB-Download abstürzen. Ein Fallback behebt das, bevor die Engine startet."
+      "item2": "Bild-Engine repariert: Zwei Bugs („assert is not defined“ im minifizierten ONNX-Runtime-Bundle, fehlender memory64-Check) ließen das Bildmodell nach dem 2-GB-Download abstürzen.",
+      "item3": "Klare Browser-Anforderung: Die Bildgenerierung braucht WebAssembly memory64 (Chrome/Edge ab Version 133). Das Studio prüft das jetzt vor dem Download und warnt früh, statt vergeblich 2 GB herunterzuladen."
     },
     "v430": {
       "item1": "Bild-Studio (Alpha): Bilder aus Textbeschreibungen direkt im Browser erzeugen - lokal über WebGPU. Das 2-GB-Modell wird beim ersten Mal geladen und danach gecacht.",
@@ -798,6 +799,8 @@
     "back": "Zurück zum Chat",
     "errorWebgpu": "WebGPU wird von diesem Browser nicht unterstützt.",
     "errorWebgpuHint": "Bildgenerierung braucht Chrome oder Edge mit WebGPU. Der Rest der App funktioniert weiterhin.",
+    "errorMemory64": "Dieser Browser unterstützt kein WebAssembly memory64.",
+    "errorMemory64Hint": "Die Bild-Engine braucht Arbeitsspeicher über 4 GB (memory64) - verfügbar in Chrome und Edge ab Version 133. Ohne das würde der 2-GB-Download vergeblich starten. Der Rest der App funktioniert weiterhin.",
     "errorLoadModel": "Das Bildmodell konnte nicht geladen werden"
   }
 }
