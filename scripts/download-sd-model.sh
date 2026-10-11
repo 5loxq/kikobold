@@ -35,6 +35,9 @@ cat > "$TARGET/../.htaccess" <<'HTACCESS'
   SetEnv no-gzip 1
 </IfModule>
 RemoveOutputFilter .json .txt .onnx
+<IfModule mod_headers.c>
+  Header set Cache-Control "no-store"
+</IfModule>
 HTACCESS
 
 for file in $FILES; do

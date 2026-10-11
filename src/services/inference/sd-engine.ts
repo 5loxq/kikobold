@@ -137,6 +137,24 @@ export const loadImageGenModel = async (
     return;
   }
   loadPromise = (async (): Promise<void> => {
+    // Bypass the browser HTTP cache for the model files: responses from
+    // before the no-gzip server fix may still be cached with a compressed
+    // Content-Length, which breaks the engine's buffer allocation (and the
+    // engine keeps its own IndexedDB cache anyway, so nothing is lost).
+    // Surgical: only /models/sd/ requests, restored right after the load.
+    const originalFetch = window.fetch;
+    window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.href
+          : input?.url;
+      if (url.includes('/models/sd/') && init?.cache === undefined) {
+        return originalFetch(input, { ...init, cache: 'no-store' });
+      }
+      return originalFetch(input, init);
+    }) as typeof window.fetch;
+
     try {
       await preflight();
 
@@ -172,6 +190,7 @@ export const loadImageGenModel = async (
       pipeline = null;
       throw err;
     } finally {
+      window.fetch = originalFetch;
       loadPromise = null;
     }
   })();

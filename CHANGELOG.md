@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.5] - 2026-10-11
+
+### Behoben
+
+- **Bildmodell-Laden steckte noch im Browser-HTTP-Cache fest**: Der gzip-Fix von 4.3.4 war korrekt auf dem Server aktiv, aber die alte gzip-komprimierte Antwort (mit der falschen Content-Length) war im Browser-HTTP-Cache ohne Cache-Control-Header gespeichert und wurde heuristisch noch als frisch wiederverwendet - der Fehler blieb dadurch identisch. Jetzt doppelt gefixt: (1) Die Engine umgeht den HTTP-Cache für `/models/sd/`-Anfragen während des Modellladens (`cache: no-store`, chirurgisch nur für diese URLs, danach wiederhergestellt) - die Engine hält ohnehin ihren eigenen IndexedDB-Cache; (2) der Server sendet für den Modellbaum `Cache-Control: no-store`, damit keine veralteten Antworten mehr gecacht werden und die 2 GB nicht doppelt (HTTP-Cache + IndexedDB) vorgehalten werden.
+
 ## [4.3.4] - 2026-10-11
 
 ### Behoben
