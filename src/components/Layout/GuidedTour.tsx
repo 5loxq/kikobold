@@ -128,6 +128,9 @@ export const GuidedTour: FC<GuidedTourProps> = ({ onComplete }) => {
       idx++;
     }
     if (idx >= STEPS.length || !target) {
+      // No target found at all: the tour cannot run - persist it as seen,
+      // otherwise it pops up again on every reload.
+      markTourSeen();
       onComplete();
       return;
     }

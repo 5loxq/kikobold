@@ -343,8 +343,7 @@ export const useEnhancedInference = (
         }
       }
 
-      const appError = handleErrorSilent(err);
-      setError(appError.userMessage);
+      handleErrorSilent(err);
       setIsLoading(false);
       setProgress(0);
       setProgressStats(null);
@@ -466,9 +465,15 @@ export const useEnhancedInference = (
       }
       const completion = reply;
       const responseText = completion.choices[0]?.message?.content ?? '';
-      
+      // The non-streaming path never goes through the onChunk counter -
+      // take the token count from the usage report (with a rough
+      // character-based estimate as the fallback).
+      const completionTokens = completion.usage?.completion_tokens
+        ?? Math.ceil(responseText.length / 4);
+      tokenCountRef.current = completionTokens;
+
       setResult(responseText);
-      setTokensGenerated(tokenCountRef.current);
+      setTokensGenerated(completionTokens);
       setDuration(Date.now() - startTimeRef.current);
       setIsGenerating(false);
 
@@ -498,6 +503,10 @@ export const useEnhancedInference = (
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
+      // The wllama engine does not react to the abort signal: without
+      // this, a superseded generation would keep streaming ITS text into
+      // the state while the new one runs.
+      cancelWllamaGeneration();
 
       newAbortController = new AbortController();
       abortControllerRef.current = newAbortController;

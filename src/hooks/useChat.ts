@@ -58,10 +58,15 @@ export const useChat = (): UseChatReturn => {
     }
   }, []);
 
-  const addMessage = useCallback(async (role: 'user' | 'assistant', content: string) => {
+  const addMessage = useCallback(async (role: 'user' | 'assistant', content: string, chatId?: string) => {
     try {
       const currentChat = chatRef.current;
-      if (!currentChat) {
+      // The message belongs to the chat the user was in when the send
+      // started. `chatId` pins it: if the user switches chats while a
+      // response is streaming, the answer must still land in the original
+      // chat, not in whatever chat is active when the stream finishes.
+      const targetId = chatId ?? currentChat?.id;
+      if (!targetId) {
         throw new Error('No active chat');
       }
 
@@ -80,19 +85,33 @@ export const useChat = (): UseChatReturn => {
         timestamp: Date.now(),
       };
 
-      const updatedMessages = [...currentChat.messages, newMessage];
+      // The in-memory chat is the source of truth only while it is the
+      // active one; for a background chat the stored copy is fresher.
+      let targetChat: Chat | null = null;
+      if (currentChat?.id === targetId) {
+        targetChat = currentChat;
+      } else {
+        targetChat = await ChatStorage.getChat(targetId);
+      }
+      if (!targetChat) {
+        throw new Error('Chat not found');
+      }
+
+      const updatedMessages = [...targetChat.messages, newMessage];
       // Persist outside of the state updater: React state updaters must be
       // pure (StrictMode invokes them twice), so no side effects inside.
-      await ChatStorage.updateChatMessages(currentChat.id, updatedMessages);
+      await ChatStorage.updateChatMessages(targetId, updatedMessages);
       const updatedChat: Chat = {
-        ...currentChat,
+        ...targetChat,
         messages: updatedMessages,
         updatedAt: Date.now(),
       };
       // Keep the ref in sync immediately so consecutive calls within one
       // async flow (user message + streamed response) both see all messages.
-      chatRef.current = updatedChat;
-      setChat(updatedChat);
+      if (currentChat?.id === targetId) {
+        chatRef.current = updatedChat;
+        setChat(updatedChat);
+      }
 
       // Patch the chat list locally instead of re-reading every chat with
       // all its messages from IndexedDB on every single message.
@@ -133,16 +152,16 @@ export const useChat = (): UseChatReturn => {
         throw new Error('Title must be a non-empty string');
       }
 
-      const chatToUpdate = await ChatStorage.getChat(id);
-      if (chatToUpdate) {
-        chatToUpdate.title = newTitle;
-        chatToUpdate.updatedAt = Date.now();
-        await ChatStorage.saveChat(chatToUpdate);
-        if (chat?.id === id) {
-          setChat(chatToUpdate);
+      // Single-transaction update (see updateChatMetadata): a get/put pair
+      // across two transactions could lose messages written in between.
+      await ChatStorage.updateChatMetadata(id, { title: newTitle });
+      if (chat?.id === id) {
+        const refreshed = await ChatStorage.getChat(id);
+        if (refreshed) {
+          setChat(refreshed);
         }
-        await loadChats();
       }
+      await loadChats();
     } catch (error) {
       logError('Failed to rename chat:', error instanceof Error ? error : new Error(String(error)));
       throw error;
@@ -172,15 +191,16 @@ export const useChat = (): UseChatReturn => {
         throw new Error('Invalid chat ID');
       }
 
-      const chatToUpdate = await ChatStorage.getChat(id);
-      if (chatToUpdate) {
-        chatToUpdate.folderId = folderId;
-        await ChatStorage.saveChat(chatToUpdate);
-        if (chat?.id === id) {
-          setChat(chatToUpdate);
+      // Single-transaction update (see updateChatMetadata): a get/put pair
+      // across two transactions could lose messages written in between.
+      await ChatStorage.updateChatMetadata(id, { folderId });
+      if (chat?.id === id) {
+        const refreshed = await ChatStorage.getChat(id);
+        if (refreshed) {
+          setChat(refreshed);
         }
-        await loadChats();
       }
+      await loadChats();
     } catch (error) {
       logError('Failed to move chat to folder:', error instanceof Error ? error : new Error(String(error)));
       throw error;

@@ -670,12 +670,18 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
           return <HorizontalRule key={index} />;
         }
 
-        // Check for blockquote
-        if (block.startsWith('> ')) {
+        // Check for blockquote - strip the "> " prefix from EVERY line:
+        // multi-line quotes keep the marker on each line, and removing it
+        // only from the first would render the rest as literal ">" text.
+        if (block.startsWith('> ') || block === '>') {
+          const quoteContent = block
+            .split('\n')
+            .map((line) => line.replace(/^>\s?/, ''))
+            .join('\n');
           return (
             <Blockquote key={index}>
               <MarkdownContent
-                content={block.substring(2)}
+                content={quoteContent}
                 onLinkClick={onLinkClick}
                 onImageClick={onImageClick}
                 maxCodeBlockHeight={maxCodeBlockHeight}
@@ -684,18 +690,24 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
           );
         }
 
-        // Check for code blocks (```language or ~~~language)
-        const codeBlockMatch = block.match(/^(`{3,4}|~{3,4})([^\n]*)\n?([\s\S]*?)\n?\1$/);
+        // Check for code blocks (```language or ~~~language). The closing
+        // fence may be LONGER than the opening one (CommonMark allows it,
+        // and splitBlocks above treats it as one block) - a backreference
+        // (\1) would require exact equality and drop such blocks into the
+        // paragraph path with visible backticks.
+        const codeBlockMatch = block.match(/^(`{3,}|~{3,})([^\n]*)\n?([\s\S]*?)\n?(`{3,}|~{3,})$/);
         if (codeBlockMatch) {
-          const [, , language, code] = codeBlockMatch;
-          return (
-            <CodeBlock
-              key={index}
-              language={language || 'text'}
-              value={code}
-              maxHeight={maxCodeBlockHeight}
-            />
-          );
+          const [, opening, language, code, closing] = codeBlockMatch;
+          if (closing.startsWith(opening)) {
+            return (
+              <CodeBlock
+                key={index}
+                language={language || 'text'}
+                value={code}
+                maxHeight={maxCodeBlockHeight}
+              />
+            );
+          }
         }
 
         // Check for lists (unordered, ordered, task). The block is parsed

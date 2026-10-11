@@ -135,6 +135,12 @@ export const InputBox: React.FC<InputBoxProps> = ({
   const [documents, setDocuments] = useState<DocumentAttachment[]>([]);
   const [isAttaching, setIsAttaching] = useState(false);
   const [images, setImages] = useState<ImageAttachment[]>([]);
+  // Mirrors `images` for the unmount cleanup: the effect below runs with an
+  // empty dependency array, so it must not close over a stale empty array.
+  const imagesRef = useRef<ImageAttachment[]>([]);
+  useEffect(() => {
+    imagesRef.current = images;
+  }, [images]);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [previewImage, setPreviewImage] = useState<ImageAttachment | null>(null);
   // Focus trap for the fullscreen image preview (Esc closes, Tab stays inside)
@@ -393,10 +399,13 @@ export const InputBox: React.FC<InputBoxProps> = ({
 
   // Stop the microphone when the component unmounts (tab switch): without
   // this the recognition keeps running and fires setState on a dead component.
+  // Attached images are released too - their object URLs would otherwise
+  // keep the blobs alive until the page is reloaded.
   useEffect((): (() => void) => {
     return () => {
       recognitionRef.current?.abort();
       recognitionRef.current = null;
+      imagesRef.current.forEach((img) => URL.revokeObjectURL(img.previewUrl));
     };
   }, []);
 

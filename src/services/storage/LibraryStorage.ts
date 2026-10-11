@@ -42,7 +42,12 @@ export const isAllowedLibraryFile = (file: File): boolean => {
 };
 
 export const initLibraryDB = (): Promise<void> => {
-  dbReadyPromise ??= openLibraryDB();
+  dbReadyPromise ??= openLibraryDB().catch((err: unknown) => {
+    // Do not cache the rejection: a transient failure would otherwise
+    // block every later operation until the page is reloaded.
+    dbReadyPromise = null;
+    throw err;
+  });
   return dbReadyPromise;
 };
 
@@ -113,8 +118,65 @@ export const getAllLibraryFiles = async (): Promise<LibraryFile[]> => {
   });
 };
 
-export const saveLibraryFile = async (entry: LibraryFile): Promise<void> => {
+/**
+ * Insert-or-replace by NAME: any existing file with the same name is
+ * deleted in the SAME transaction. saveLibraryFile alone would create a
+ * second row with a new id (the React state filters the duplicate until
+ * the next reload, the database keeps both forever).
+ */
+export const upsertLibraryFileByName = async (entry: LibraryFile): Promise<void> => {
   await initLibraryDB();
+  if (!db) {throw new Error('Database not initialized');}
+  const database = db;
+
+  if (!validateFileEntry(entry) || entry.name.trim().length === 0 || entry.content.length === 0) {
+    throw new Error('Invalid library file');
+  }
+
+  const sanitized: LibraryFile = {
+    ...entry,
+    name: sanitizeInputLight(entry.name.trim()),
+  };
+
+  return new Promise((resolve, reject) => {
+    try {
+      const transaction = database.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const getAllRequest = store.getAll();
+
+      getAllRequest.onerror = (): void => {
+        logError('Failed to read library for upsert:', getAllRequest.error);
+        reject(getAllRequest.error ?? new Error('Failed to save library file'));
+      };
+
+      getAllRequest.onsuccess = (): void => {
+        try {
+          const existing = Array.isArray(getAllRequest.result)
+            ? getAllRequest.result as Array<{ id?: unknown; name?: unknown }>
+            : [];
+          for (const row of existing) {
+            if (row.name === sanitized.name && row.id !== sanitized.id && typeof row.id === 'string') {
+              store.delete(row.id);
+            }
+          }
+          const putRequest = store.put(sanitized);
+          putRequest.onerror = (): void => {
+            logError('Failed to save library file:', putRequest.error);
+            reject(putRequest.error ?? new Error('Failed to save library file'));
+          };
+          putRequest.onsuccess = (): void => resolve();
+        } catch (error) {
+          reject(error);
+        }
+      };
+    } catch (error) {
+      logError('Error saving library file:', error);
+      reject(error);
+    }
+  });
+};
+
+export const saveLibraryFile = async (entry: LibraryFile): Promise<void> => {  await initLibraryDB();
   if (!db) {throw new Error('Database not initialized');}
   const database = db;
 

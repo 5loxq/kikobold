@@ -57,10 +57,14 @@ export const buildPromptWithDocuments = (message: string, attachments: DocumentA
         // an empty header.
         return null;
       }
-      const text = doc.text.length > limit
+      const truncated = doc.text.length > limit;
+      const text = truncated
         ? `${doc.text.slice(0, limit)}\n[... document truncated ...]`
         : doc.text;
-      budget -= wrapperOverhead + Math.min(limit, text.length);
+      // The truncation marker is part of the prompt: count it against the
+      // budget so the final prompt stays within the declared limit.
+      const markerOverhead = truncated ? '\n[... document truncated ...]'.length : 0;
+      budget -= wrapperOverhead + markerOverhead + Math.min(limit, doc.text.length);
       return `--- Document: ${doc.name} ---\n${text}\n--- End of document ---`;
     })
     .filter((doc): doc is string => doc !== null)

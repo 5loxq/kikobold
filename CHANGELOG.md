@@ -2,6 +2,23 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.25] - 2026-10-11
+
+### Behoben (Voll-Audit: komplette Code-Analyse + Security-Review)
+
+- **Kritisch — Antwort landete im falschen Chat:** Wechselt man während der laufenden Generierung den Chat (oder legt einen neuen an), wurde die Antwort dauerhaft im dann-aktiven Chat gespeichert, die Frage blieb im alten. Der Sendefluss pinnt jetzt die Chat-ID (`addMessage` nimmt die ID an; der Ziel-Chat wird bei Abweichung aus der DB geladen).
+- **Thinking-Tags im Prompt:** Frühere Reasoning-Blöcke (imd/think) wurden roh in die History zurückgegeben — Thinking-Modelle reagieren darauf mit erneuten, abgebrochenen Denkblöcken. Die History wird jetzt pro Nachricht gestrippt.
+- **Vorlesen sprach versteckte Reasoning mit:** TTS bekam den Rohinhalt inkl. der unsichtbaren Tags; jetzt wird nur der angezeigte Text vorgelesen.
+- **Nachrichtenverlust bei Umbenennen/Verschieben:** `renameChat`/`moveChatToFolder` liefen als get/put über zwei Transaktionen — ein paralleler Schreiber (zweiter Tab) verlor dabei Nachrichten. Neues `updateChatMetadata` macht das in einer Transaktion.
+- **Abgestorbene DB-Init blieb für immer gecacht:** Schlug das Öffnen einer IndexedDB einmal fehl (transient), schlugen bis zum Neuladen alle Operationen fehl. Der Fehler wird jetzt nicht mehr gespeichert (Chats, Library, Memory).
+- **Bibliothek: permanente Duplikate** — erneutes Hochladen/Importieren einer Datei mit vorhandenem Namen legte eine zweite Zeile an, die nach dem nächsten Neuladen doppelt erschien. Neues Upsert-by-Name in einer Transaktion.
+- **wllama-Race:** Ein neuer Generierungsstart brach eine laufende wllama-Generierung nicht ab — der alte Stream schrieb weiter in die Anzeige. `cancelWllamaGeneration()` läuft jetzt auch beim Start eines neuen Streams. Außerdem gab `loadWllamaModel` bei parallelem Laden eines anderen Modells dessen Ergebnis zurück (UI zeigte Modell B, geladen war A).
+- **„Alle Daten löschen“ lässt jetzt auch Chat-Ordner weg** (vorher blieben leere Ordner in der Sidebar); der Daten-Export fängt Fehler ab (z. B. „keine Chats“) und zeigt sie an.
+- **Fehlerbanner:** Sendefehler blieben über Chat-Wechsel hinweg stehen — sie werden beim Chat-Wechsel/Neu-Anlegen jetzt gelöscht.
+- **Markdown:** Mehrzeilige Zitate (`> Z1\n> Z2`) wurden ab der zweiten Zeile als Fließtext mit literalen `>` gerendert; Code-Fences mit längerem Closing-Fence fielen aus dem Block-Parsing und zeigten Backticks. Beide Fälle korrekt erkannt.
+- **Kleinere Fixes:** Token-Zähler im nicht-streamenden Pfad nutzt jetzt die usage-Daten statt immer 0; totes setError in loadModel entfernt; Objekt-URLs angehängter Bilder werden beim Tab-Wechsel freigegeben; GuidedTour wird bei abgebrochener Zielsuche als gesehen markiert; Modell-Select resettet bei Löschung des aktiven Modells; Ordner-Umbenennen validiert den Namen wie Anlegen; Truncation-Marker wird aufs Dokument-Budget angerechnet; GPU-Name über `adapter.info` (requestAdapterInfo wurde aus Chrome entfernt); iPadOS wird nicht mehr als macOS erkannt.
+- **Security:** Service Worker cached jetzt nur noch Same-Origin-Assets; `npm audit fix` (18 → 14 Funde, keiner davon aktiv im Browser-Bundle; protobufjs ist transitiv über den ORT-Fork und wird nicht ins Bundle ausgeliefert). Security-Review der Angriffsflächen (XSS/KaTeX, Import/Export, Storage-Keys, SW, externe Zugriffe): keine kritischen oder hohen Findings im Anwendungscode.
+
 ## [4.3.24] - 2026-10-11
 
 ### Behoben

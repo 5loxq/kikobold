@@ -146,6 +146,12 @@ self.addEventListener('message', (event) => {
 
 // Helper functions
 function isStaticAsset(url) {
+    // Same-origin only: without this check, a cross-origin response with a
+    // static-looking path (e.g. a model file from the HuggingFace CDN)
+    // would be cached into the app cache.
+    if (url.origin !== self.location.origin) {
+        return false;
+    }
     const path = url.pathname;
     return STATIC_ASSETS.includes(path) ||
            path.startsWith('/assets/') ||

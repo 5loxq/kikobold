@@ -38,6 +38,7 @@ import { getModelConfig } from '../../services/models/model-registry';
 import * as ChatStorage from '../../services/storage/ChatStorage';
 import { DEFAULT_CHAT_TITLE } from '../../services/storage/ChatStorage';
 import {
+  clearFolders as clearChatFolders,
   createFolder as createChatFolder,
   deleteFolder as deleteChatFolder,
   getFolders,
@@ -48,7 +49,7 @@ import { buildMemoryPromptBlock } from '../../services/storage/MemoryStorage';
 import { isDarkMode as checkDarkMode, setThemeMode } from '../../services/theme';
 import { error as logError } from '../../services/logging';
 import { buildPromptWithDocuments, type DocumentAttachment, type ImageAttachment } from '../../services/attachments';
-import { trimHistoryToCharBudget } from '../../services/llm/text-processing';
+import { stripHiddenPartsText, trimHistoryToCharBudget } from '../../services/llm/text-processing';
 import { localStorageGet, localStorageSet } from '../../services/storage/local-storage';
 import { ttsSpeak } from '../../services/tts';
 
@@ -327,6 +328,9 @@ export const MainLayout: FC = () => {
         throw new Error('No active profile selected');
       }
 
+      // A stale send error belongs to the chat it happened in - do not
+      // carry it across chats.
+      setLocalError(null);
       await createNewChat(activeProfile.id);
       setActiveTab('chat');
     } catch (err) {
@@ -342,6 +346,9 @@ export const MainLayout: FC = () => {
         throw new Error('Invalid chat selected');
       }
 
+      // A stale send error belongs to the chat it happened in - do not
+      // carry it across chats.
+      setLocalError(null);
       await loadChat(selectedChat.id);
       setActiveTab('chat');
     } catch (err) {
@@ -391,8 +398,13 @@ export const MainLayout: FC = () => {
         }
       }
 
+      // Pin the chat this exchange belongs to: the user may switch or
+      // create chats while the response streams in - the answer must land
+      // in the chat the question was asked in, not in the active one.
+      const chatId = chat.id;
+
       // Add user message
-      await addMessage('user', message);
+      await addMessage('user', message, chatId);
 
       // Generate response with language setting and correct system prompt
       // Note: WebLLM uses top_p and max_tokens (snake_case)
@@ -424,10 +436,13 @@ export const MainLayout: FC = () => {
         : systemPrompt;
       // The prompt must fit the model's context window together with the
       // generated answer - drop the oldest history messages if needed.
+      // Hidden reasoning blocks (imd/think tags) are stripped from the
+      // history: they are display metadata, not conversation - fed back,
+      // they make thinking models emit new broken thinking blocks.
       const history = trimHistoryToCharBudget(
         chat.messages.slice(-10).map((m) => ({
           role: m.role === 'assistant' ? ('assistant' as const) : ('user' as const),
-          content: m.content,
+          content: stripHiddenPartsText(m.content),
         })),
         effectiveSystemPrompt,
         promptWithLibrary
@@ -443,7 +458,7 @@ export const MainLayout: FC = () => {
       });
 
       if (result && result.trim().length > 0) {
-        await addMessage('assistant', result);
+        await addMessage('assistant', result, chatId);
 
         // Auto-speak the response (can be disabled in the settings)
         if (settings.autoSpeak) {
@@ -561,7 +576,13 @@ export const MainLayout: FC = () => {
 
   // Data page: full backup of chats + memories + library files
   const handleExportAllData = (): void => {
-    ChatExport.exportChats(chats, memories, libraryFiles, folders);
+    try {
+      ChatExport.exportChats(chats, memories, libraryFiles, folders);
+    } catch (err) {
+      // e.g. "no chats to export": the user must see WHY nothing happened
+      logError('Failed to export data:', err);
+      setLocalError(err instanceof Error ? err.message : 'Failed to export data');
+    }
   };
 
   // Data page: restore a backup file (chats + memories + library). Stay on
@@ -577,6 +598,10 @@ export const MainLayout: FC = () => {
     await ChatStorage.clearAllChats();
     await clearAllMemories();
     await clearAllLibraryFiles();
+    // Chat folders are part of "all data" too (they are in the backup
+    // export as well) - leaving them behind would show empty folders.
+    clearChatFolders();
+    setFolders([]);
     if (activeProfile) {
       await createNewChat(activeProfile.id);
     }

@@ -205,10 +205,20 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     scrollToBottom();
   }, [chat, streamingMessage]);
 
+  // Track the previous active model id: the reset below must only fire on
+  // the TRANSITION to "no active model" (deleted in the settings), not on
+  // the initial render - otherwise it would clear a selection the user
+  // just made while that model is still downloading.
+  const prevActiveModelIdRef = useRef<string | null>(_activeModel?.id ?? null);
   useEffect(() => {
-    if (_activeModel?.id) {
-      setSelectedModelId(_activeModel.id);
+    const currentId = _activeModel?.id;
+    if (currentId) {
+      setSelectedModelId(currentId);
+    } else if (prevActiveModelIdRef.current !== null) {
+      // The active model was removed: stop showing its (now dangling) id.
+      setSelectedModelId('');
     }
+    prevActiveModelIdRef.current = currentId ?? null;
   }, [_activeModel?.id]);
 
   // Keyboard shortcut: Ctrl/Cmd+K opens and closes the chat search

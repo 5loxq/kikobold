@@ -46,7 +46,13 @@ function validateMessage(message: unknown): message is Message {
 }
 
 export const initChatDB = (): Promise<void> => {
-  dbReadyPromise ??= openChatDB();
+  dbReadyPromise ??= openChatDB().catch((err: unknown) => {
+    // Do not cache the rejection: a transient failure (e.g. a concurrent
+    // version change or a blocked private-mode access) would otherwise
+    // block every later operation until the page is reloaded.
+    dbReadyPromise = null;
+    throw err;
+  });
   return dbReadyPromise;
 };
 
@@ -326,6 +332,66 @@ export const updateChatMessages = async (chatId: string, messages: Message[]): P
 
 // Default title for new chats; also used to detect "not yet renamed" chats
 export const DEFAULT_CHAT_TITLE = 'New Chat';
+
+/**
+ * Update mutable metadata (title, folderId) in ONE transaction. Like
+ * updateChatMessages, the read-modify-write must not span two transactions:
+ * a second writer between get and put would lose messages.
+ */
+export const updateChatMetadata = async (
+  chatId: string,
+  patch: { title?: string; folderId?: string | null }
+): Promise<void> => {
+  await initChatDB();
+  if (!db) {throw new Error('Database not initialized');}
+  const database = db;
+
+  if (typeof chatId !== 'string' || chatId.trim().length === 0) {
+    throw new Error('Invalid chat ID');
+  }
+  if (patch.title?.trim().length === 0) {
+    throw new Error('Title must be a non-empty string');
+  }
+
+
+  return new Promise((resolve, reject) => {
+    try {
+      const transaction = database.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const getRequest = store.get(chatId);
+
+      getRequest.onerror = (): void => {
+        logError('Failed to get chat for metadata update:', getRequest.error);
+        reject(getRequest.error ?? new Error('Failed to update chat'));
+      };
+
+      getRequest.onsuccess = (): void => {
+        const chat = getRequest.result;
+        if (!chat || !validateChat(chat)) {
+          reject(new Error('Chat not found'));
+          return;
+        }
+        if (patch.title !== undefined) {
+          chat.title = patch.title.trim();
+        }
+        if (patch.folderId !== undefined) {
+          chat.folderId = patch.folderId;
+        }
+        chat.updatedAt = Date.now();
+
+        const putRequest = store.put(chat);
+        putRequest.onerror = (): void => {
+          logError('Failed to update chat metadata:', putRequest.error);
+          reject(putRequest.error ?? new Error('Failed to update chat'));
+        };
+        putRequest.onsuccess = (): void => resolve();
+      };
+    } catch (error) {
+      logError('Error updating chat metadata:', error);
+      reject(error);
+    }
+  });
+};
 
 export const createChat = (profileId: string, title: string = DEFAULT_CHAT_TITLE): Chat => {
   if (typeof profileId !== 'string' || profileId.trim().length === 0) {

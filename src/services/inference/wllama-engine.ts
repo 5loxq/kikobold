@@ -45,6 +45,8 @@ let activeAbortController: AbortController | null = null;
 // Guard against parallel loads: a second call while a load is running would
 // unload the instance the first call is still initializing.
 let loadPromise: Promise<boolean> | null = null;
+// Which model the in-flight load belongs to (see loadWllamaModel).
+let loadingModelId: string | null = null;
 
 export const isWllamaModelLoaded = (modelId: string): boolean => {
   return wllamaInstance !== null && loadedModelId === modelId;
@@ -115,9 +117,19 @@ export const loadWllamaModel = async (
   if (loadPromise) {
     // Another load is already in flight - do not start a second one (it
     // would unload the instance the first load is initializing into).
-    log('wllama: load already in progress, waiting for it');
-    return loadPromise;
+    // If it is a DIFFERENT model, its result must not be reported as the
+    // requested one: wait for it, then load the requested model after it.
+    if (loadingModelId === modelId) {
+      log('wllama: same load already in progress, waiting for it');
+      return loadPromise;
+    }
+    log(`wllama: other model ${String(loadingModelId)} is loading - waiting, then loading ${modelId}`);
+    await loadPromise.catch((): boolean => false);
+    if (isWllamaModelLoaded(modelId)) {
+      return true;
+    }
   }
+  loadingModelId = modelId;
   loadPromise = (async (): Promise<boolean> => {    // Declared outside the try so the catch block can free the WASM workers
     // and partially downloaded chunks of a failed load.
     let wllama: Wllama | null = null;
@@ -224,6 +236,7 @@ export const loadWllamaModel = async (
     return false;
   } finally {
     loadPromise = null;
+    loadingModelId = null;
   }
   })();
   return loadPromise;

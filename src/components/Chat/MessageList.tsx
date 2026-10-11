@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Message } from '../../types';
 import MarkdownRenderer from './MarkdownRenderer';
 import { splitThinking, ThinkingBlock } from './ThinkingBlock';
+import { stripHiddenPartsText } from '../../services/llm/text-processing';
 
 interface MessageListProps {
   messages: Message[];
@@ -128,7 +129,10 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, searchQuery
           <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={() => onToggleSpeak?.(message.id, message.content)}
+              // Read aloud only what is displayed: the raw content also
+              // carries the hidden reasoning blocks (imd/think tags),
+              // which the bubble does not show - the voice must not read them.
+              onClick={() => onToggleSpeak?.(message.id, stripHiddenPartsText(message.content))}
               className={`text-xs px-2 py-1 rounded transition-colors ${
                 isUser
                   ? 'text-white hover:bg-white/20'

@@ -237,6 +237,10 @@
     "title": "Das ist neu",
     "subtitle": "Seit deinem letzten Besuch hat sich einiges getan:",
     "closeButton": "Alles klar!",
+    "v4325": {
+      "item1": "Stabilitäts-Update aus einem Voll-Audit des gesamten Codes: Antwort landet nie mehr im falschen Chat (Chat-Wechsel während der Generierung), Reasoning-Blöcke bleiben aus Prompt und Vorlesen draußen, Umbenennen/Verschieben verliert keine Nachrichten mehr, Bibliothek ohne Duplikate, Markdown-Fences und mehrzeilige Zitate korrekt.",
+      "item2": "Sicherheits-Review der Angriffsflächen (XSS, Import/Export, Storage, Service Worker, externe Zugriffe): keine kritischen Funde. Service Worker cached nur noch eigene Assets; Abhängigkeiten bereinigt."
+    },
     "v4324": {
       "item1": "Bild-Studio repariert: Das Ergebnis erschien bisher als 3x3-Raster aus Kanal-Slices, weil die planaren NCHW-Daten des VAE-Decoders interleaved gelesen wurden - jetzt kommt das eigentliche Bild heraus.",
       "item2": "Seed-Anzeige und echte Reproduzierbarkeit: Das Studio zeigt den verwendeten Seed an, und das Zwischen-Rauschen des Schedulers ist jetzt geseedet - gleicher Seed + gleicher Prompt = exakt dasselbe Bild."

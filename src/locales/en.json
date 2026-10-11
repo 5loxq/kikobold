@@ -237,6 +237,10 @@
     "title": "What's new",
     "subtitle": "A few things have changed since your last visit:",
     "closeButton": "Got it!",
+    "v4325": {
+      "item1": "Stability update from a full audit of the entire codebase: responses never land in the wrong chat anymore (chat switch during generation), reasoning blocks stay out of the prompt and read-aloud, renaming/moving no longer loses messages, library without duplicates, markdown fences and multi-line quotes render correctly.",
+      "item2": "Security review of the attack surface (XSS, import/export, storage, service worker, external requests): no critical findings. The service worker only caches same-origin assets; dependencies cleaned up."
+    },
     "v4324": {
       "item1": "Image studio fixed: the result previously appeared as a 3x3 grid of channel slices because the VAE decoder's planar NCHW data was read as interleaved - now the actual image comes out.",
       "item2": "Seed display and true reproducibility: the studio shows the seed that was used, and the scheduler's inter-step noise is now seeded - same seed + same prompt = exactly the same image."

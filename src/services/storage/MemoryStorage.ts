@@ -38,7 +38,12 @@ function validateEntry(entry: unknown): entry is MemoryEntry {
 }
 
 export const initMemoryDB = (): Promise<void> => {
-  dbReadyPromise ??= openMemoryDB();
+  dbReadyPromise ??= openMemoryDB().catch((err: unknown) => {
+    // Do not cache the rejection: a transient failure would otherwise
+    // block every later operation until the page is reloaded.
+    dbReadyPromise = null;
+    throw err;
+  });
   return dbReadyPromise;
 };
 

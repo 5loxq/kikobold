@@ -54,12 +54,22 @@ export const createFolder = (name: string): ChatFolder => {
 };
 
 export const renameFolder = (id: string, name: string): void => {
-  saveFolders(getFolders().map((f) => (f.id === id ? { ...f, name } : f)));
+  // Same rule as createFolder: no empty or whitespace-only names.
+  const trimmed = name.trim();
+  if (!trimmed) {
+    throw new Error('Folder name must be a non-empty string');
+  }
+  saveFolders(getFolders().map((f) => (f.id === id ? { ...f, name: trimmed } : f)));
 };
 
 /** Deleting a folder does NOT delete its chats - they become ungrouped. */
 export const deleteFolder = (id: string): void => {
   saveFolders(getFolders().filter((f) => f.id !== id));
+};
+
+/** Delete ALL folders (used by the "delete everything" action in the data page). */
+export const clearFolders = (): void => {
+  saveFolders([]);
 };
 
 export const importFolders = (folders: ChatFolder[]): void => {

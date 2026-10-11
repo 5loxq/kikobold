@@ -116,8 +116,15 @@ const detectOS = (): OSInfo => {
     return { name: 'Windows', version, architecture };
   }
 
-  // macOS
+  // macOS - iPadOS reports "MacIntel" as platform, so the touch check must
+  // run first (a Mac never has touch points, an iPad always has).
   if (platform.includes('Mac')) {
+    const maxTouchPoints = (navigator as Navigator & { maxTouchPoints?: number }).maxTouchPoints ?? 0;
+    if (maxTouchPoints > 1) {
+      const versionMatch = userAgent.match(/OS (\d+_\d+)/);
+      const version = versionMatch ? versionMatch[1].replace('_', '.') : 'Unknown';
+      return { name: 'iPadOS', version, architecture: 'ARM' };
+    }
     const versionMatch = userAgent.match(/Mac OS X (\d+[._]\d+)/);
     const version = versionMatch ? versionMatch[1].replace('_', '.') : 'Unknown';
     return { name: 'macOS', version, architecture: 'x64' };
@@ -161,6 +168,9 @@ interface GPUAdapterInfoStub {
 
 interface GPUAdapterStub {
   name?: string;
+  // requestAdapterInfo() was removed from Chrome; the successor is the
+  // synchronous `adapter.info` property.
+  info?: GPUAdapterInfoStub;
   requestAdapterInfo?: () => Promise<GPUAdapterInfoStub>;
 }
 
@@ -168,12 +178,14 @@ const detectGPU = async (): Promise<GPUInfo> => {
   try {
     // Check if WebGPU is available
     const webgpuAvailable = await checkWebGPUSupport();
-    
+
     if (webgpuAvailable && 'gpu' in navigator) {
       try {
         const adapter = await (navigator as Navigator & { gpu: { requestAdapter: () => Promise<GPUAdapterStub | null> } }).gpu.requestAdapter();
         if (adapter) {
-          const info = await adapter.requestAdapterInfo?.();
+          // Prefer the current `adapter.info` property; fall back to the
+          // removed requestAdapterInfo() for older engines.
+          const info = adapter.info ?? (adapter.requestAdapterInfo ? await adapter.requestAdapterInfo() : undefined);
           return {
             name: info?.device?.description ?? adapter.name ?? 'Unknown GPU',
             vendor: info?.vendor ?? 'Unknown',

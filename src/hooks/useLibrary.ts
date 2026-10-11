@@ -20,7 +20,9 @@ export const useLibrary = (): {
 
   const addLibraryFile = useCallback(async (name: string, content: string): Promise<void> => {
     const entry = LibraryStorage.createLibraryFile(name, content);
-    await LibraryStorage.saveLibraryFile(entry);
+    // Upsert by name: saveLibraryFile alone would leave a duplicate row in
+    // the database (new id) that reappears after the next reload.
+    await LibraryStorage.upsertLibraryFileByName(entry);
     setLibraryFiles((prev) => [...prev.filter((f) => f.name !== entry.name), entry]);
   }, []);
 
@@ -37,7 +39,9 @@ export const useLibrary = (): {
 
   const importLibraryFiles = useCallback(async (files: LibraryStorage.LibraryFile[]): Promise<void> => {
     for (const file of files) {
-      await LibraryStorage.saveLibraryFile(file);
+      // Upsert by name: a backup containing an existing name must replace
+      // it, not create a permanent duplicate with a second id.
+      await LibraryStorage.upsertLibraryFileByName(file);
     }
     const all = await LibraryStorage.getAllLibraryFiles();
     setLibraryFiles(all);
