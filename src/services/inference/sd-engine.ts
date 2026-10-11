@@ -192,11 +192,13 @@ const ensureOrtMemory64Shim = (): void => {
 
   const patched = function (descriptor?: MemoryDescriptorLike): WebAssembly.Memory {
     const desc = descriptor ?? {};
+    // Record at entry, before any branch: if the construct below throws,
+    // the call itself must still be visible in the diagnostics.
+    recordMemory(
+      `Memory ctor called: index=${String(desc.index)}, initial=${String(desc.initial)}, `
+      + `maximum=${String(desc.maximum)}, shared=${String(desc.shared)}`
+    );
     if (desc.index !== 'i64') {
-      recordMemory(
-        `created memory WITHOUT i64 index: initial=${String(desc.initial)}, `
-        + `maximum=${String(desc.maximum)}, shared=${String(desc.shared)}`
-      );
       return Reflect.construct(nativeMemory as unknown as typeof WebAssembly.Memory, [desc]);
     }
     const translated: MemoryDescriptorLike = { address: 'i64' };
@@ -207,14 +209,24 @@ const ensureOrtMemory64Shim = (): void => {
     if (desc.shared !== undefined) {
       translated.shared = desc.shared;
     }
-    const memory = Reflect.construct(nativeMemory as unknown as typeof WebAssembly.Memory, [translated]);
+    let memory: WebAssembly.Memory;
+    try {
+      memory = Reflect.construct(nativeMemory as unknown as typeof WebAssembly.Memory, [translated]);
+    } catch (err) {
+      recordMemory(
+        `translated memory creation FAILED: ${err instanceof Error ? err.message : String(err)}`
+      );
+      throw err;
+    }
     recordMemory(
       `created memory64: initial ${translated.initial} pages `
       + `(${memory.buffer.byteLength} bytes), max ${translated.maximum ?? 'unbounded'}, `
       + `shared=${translated.shared === true}`
     );
     try {
-      const nativeGrow = memory.grow.bind(memory);
+      const nativeGrow = (memory as WebAssembly.Memory & {
+        grow: (delta: number | bigint) => unknown;
+      }).grow.bind(memory);
       memory.grow = (delta: number | bigint): number => {
         const pages = typeof delta === 'bigint' ? delta : BigInt(Math.trunc(delta));
         try {

@@ -2,6 +2,13 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.19] - 2026-10-11
+
+### Geändert
+
+- **Memory-Diagnose protokolliert jetzt jeden Konstruktor-Aufruf**: Der 4.3.18-Bericht zeigte Shim-Installation und env-Zustand, aber keinerlei Memory-Anlage der Glue - obwohl das Wasm lief. Die Diagnose zeichnet jetzt jeden Aufruf des gepatchten Konstruktors *am Funktionseingang* auf (mit vollem Descriptor), bevor irgendeine Verzweigung oder Konstruktion laufen kann; schlägt die übersetzte Anlage fehl, wird der Fehler protokolliert und weitergeworfen. Damit unterscheidet der nächste Bericht sicher: wird der Patch nie aufgerufen (anderer Realm/Binding) oder schlägt die Anlage fehl?
+
+## [4.3.18] - 2026-10-11
 ## [4.3.18] - 2026-10-11
 
 ### Behoben
