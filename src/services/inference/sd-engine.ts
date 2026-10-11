@@ -333,6 +333,17 @@ const ensureOrtMemoryGrowShim = (): void => {
  * translates the draft constructor to the final API. `WebAssembly.Function
  * .type()` (used to re-type an export) is faked - the translated constructor
  * ignores the type descriptor anyway.
+ *
+ * Promising translation detail (verified against the fork's wasm binary):
+ * the draft-built async exports carry a LEADING externref parameter - the
+ * draft promise handle; OrtRun is (externref, i64 x 8) -> i32. The draft
+ * wrapper for {promising:"first"} strips that leading parameter from its
+ * signature (the glue's makeAsyncFunction does `parameters.shift()`), so
+ * JS callers pass only the 8 real arguments. The final promising() wrapper
+ * keeps the export's full signature, so the translation re-injects a
+ * placeholder for the leading externref - without it, the wrapper converts
+ * the (absent) 9th argument and fails with "Cannot convert undefined to a
+ * BigInt" on the first OrtRun call.
  */
 const ensureOrtJspiShim = (): void => {
   const wa = WebAssembly as unknown as {
@@ -356,7 +367,14 @@ const ensureOrtJspiShim = (): void => {
     options?: { suspending?: string; promising?: string }
   ): unknown {
     if (options?.promising === 'first') {
-      return wa.promising?.(fn);
+      const wrapped = wa.promising?.(fn) as unknown as
+        ((...args: unknown[]) => Promise<unknown>) | undefined;
+      if (!wrapped) {
+        throw new Error('WebAssembly.promising unavailable (JSPI shim)');
+      }
+      return function (this: unknown, ...args: unknown[]): unknown {
+        return wrapped.call(this, undefined, ...args);
+      };
     }
     if (options?.suspending === 'first') {
       const suspending = wa.Suspending;
@@ -615,6 +633,50 @@ export const loadImageGenModel = async (
 
       pipeline = loaded;
       log('sd-engine: model loaded');
+
+      // Post-load compatibility patches (each verified with a direct Node
+      // repro against the real pipeline, see scripts/sd-repro/): the fork's
+      // pipeline expects methods its own dependency tree no longer provides.
+      // Without them the first run() dies long after the model loads.
+      //
+      // 1. CLIPTokenizer calls this.prepare_model_inputs(...) - a hook from
+      //    transformers.js v1 that @xenova/transformers 2.x (its base class)
+      //    no longer defines. It was a pass-through there; restore exactly
+      //    that on the tokenizer's prototype.
+      const tokenizer = (loaded as { tokenizer?: object }).tokenizer;
+      const tokenizerProto = tokenizer !== null && tokenizer !== undefined ? Object.getPrototypeOf(tokenizer) : null;
+      if (
+        tokenizerProto !== null &&
+        typeof (tokenizerProto as unknown as Record<string, unknown>)['prepare_model_inputs'] !== 'function'
+      ) {
+        (tokenizerProto as unknown as Record<string, unknown>)['prepare_model_inputs'] =
+          (inputs: unknown): unknown => inputs;
+        log('sd-engine: restored missing prepare_model_inputs hook on the tokenizer');
+      }
+
+      // 2. The LCM pipeline reshapes the guidance embedding via
+      //    Tensor.reshape. @xenova/transformers resolves onnxruntime-common
+      //    to the nested 1.14.0, whose Tensor predates reshape (added in
+      //    later onnxruntime-common). Restore it exactly as
+      //    onnxruntime-common 1.16 implements it.
+      const tensorModule = (await import('@xenova/transformers')) as unknown as {
+        Tensor?: new (type: unknown, data: unknown, dims: number[]) => unknown;
+      };
+      const TensorCtor = tensorModule.Tensor;
+      const tensorProto = TensorCtor !== null && TensorCtor !== undefined
+        ? (TensorCtor.prototype as unknown as Record<string, unknown>)
+        : null;
+      if (tensorProto !== null && typeof tensorProto['reshape'] !== 'function') {
+        tensorProto['reshape'] = function (
+          this: { type: unknown; data: unknown },
+          dims: number[]
+        ): unknown {
+          return new (TensorCtor as new (
+            type: unknown, data: unknown, dims: number[]
+          ) => unknown)(this.type, this.data, dims);
+        };
+        log('sd-engine: restored missing Tensor.reshape method');
+      }
     } catch (err) {
       pipeline = null;
       const detail = err instanceof Error ? err.message : String(err);

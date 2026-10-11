@@ -2,6 +2,16 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.22] - 2026-10-11
+
+### Behoben
+
+- **Bild-Engine: "this.prepare_model_inputs is not a function" behoben — die Pipeline läuft jetzt komplett durch.** Der 4.3.21-Fix wirkte (alle Sessions erstellen sich), der Fehler rückte in die Generierung. Vollständiger Node-Ende-Ende-Test (`scripts/sd-repro/sd-pipeline-e2e.mjs`, Browser-Builds von diffusers.js und ORT gegen die echten Modelle) hat drei weitere Inkompatibilitäten des Forks gefunden und jeweils reproduziert + Fix verifiziert:
+  - **Tokenizer:** Der Fork ruft `this.prepare_model_inputs(...)` auf — ein Hook aus transformers.js v1, den `@xenova/transformers` 2.x nicht mehr definiert. Wiederhergestellt als Pass-Through (wie im Original) auf dem Prototyp des Tokenizers.
+  - **Tensor.reshape:** Die LCM-Pipeline reshape-t das Guidance-Embedding; xenovas Tensor erbt die Methode aus `onnxruntime-common` — aufgelöst wird die verschachtelte 1.14.0, die sie noch nicht hat. Wiederhergestellt exakt wie onnxruntime-common 1.16 sie implementiert. `@xenova/transformers` ist jetzt eine direkte Dependency (exakt 2.17.2, dedupliziert).
+  - **JSPI-Promising:** Der Draft-Wrapper streicht den führenden externref der Async-Exports (im Wasm verifiziert: `OrtRun` ist `(externref, i64 x 8) -> i32`); die finale `WebAssembly.promising()`-API behält ihn. Der Shim injiziert einen Platzhalter, sonst stirbt der erste `OrtRun`-Aufruf an "Cannot convert undefined to a BigInt".
+  - Im Test erzeugt die Pipeline danach ein echtes Bild (256x256, 1 Schritt, CPU-Wasm-EP in 27 s). Phase 1 ohne Patches reproduziert exakt den gemeldeten Fehler.
+
 ## [4.3.21] - 2026-10-11
 
 ### Behoben
