@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.13] - 2026-10-11
+
+### Geändert
+
+- **Fehlermeldungen der Bild-Engine enthalten jetzt die Aufrufstellen**: „Model could not be loaded: offset is out of bounds" nennt keine Ursache - die Meldung zeigt jetzt die obersten Stack-Frames des Fehlers an (z. B. `@ DbCache.retrieveFile <- ...`), sodass die nächste Diagnose die exakte Stelle im Engine-/Glue-Code benennt, statt sie aus Symptomen zu raten. Das Request-Log aus 4.3.11 bleibt erhalten.
+
 ## [4.3.12] - 2026-10-11
 
 ### Behoben

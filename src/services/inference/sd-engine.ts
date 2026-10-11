@@ -110,7 +110,15 @@ const mapProgress = (payload: ProgressPayload, onProgress?: (p: ImageGenProgress
  */
 const engineError = (context: string, err: unknown): Error => {
   const detail = err instanceof Error ? err.message : String(err);
-  const wrapped = new Error(`${context}: ${detail}`);
+  // Include the top stack frames: the studio shows only err.message, and
+  // for errors deep inside the engine/wasm glue the message alone ("offset
+  // is out of bounds") does not name the failing code path.
+  const frames = err instanceof Error && err.stack
+    ? err.stack.split('\n').slice(1, 5).map((line) => line.trim().replace(/^at /, '')).filter(Boolean)
+    : [];
+  const wrapped = new Error(
+    `${context}: ${detail}${frames.length > 0 ? ` @ ${frames.join(' <- ')}` : ''}`
+  );
   warn(`sd-engine: ${wrapped.message}`);
   return wrapped;
 };
