@@ -139,34 +139,92 @@ const ensureOrtAssertShim = (): void => {
 };
 
 /**
- * The ORT fork the engine uses ("web64") is compiled entirely for the
- * WebAssembly memory64 proposal: its glue allocates a shared 16 GiB memory
- * (`index: "i64"`, maximum 262144 pages). Browsers without memory64 reject
- * that with "value 262144 is above the upper bound 65536" - after the whole
- * model download. Probe with the exact same allocation so it fails fast.
- * memory64 is available since Chrome/Edge 133 and Firefox 134; the shared
- * variant additionally requires cross-origin isolation (COOP/COEP).
+ * The ORT fork the engine uses ("web64") is compiled for the WebAssembly
+ * memory64 proposal and allocates a shared 16 GiB memory. Its emscripten
+ * glue however predates the final JS API: it passes the draft property
+ * `index: "i64"` with plain number limits. The final API (Wasm 3.0, shipped
+ * in Chrome 133+) uses `address: "i64"` with BigInt limits - Chrome ignores
+ * the unknown `index` property and rejects the descriptor with
+ * "value 262144 is above the upper bound 65536". The shim below translates
+ * draft descriptors into the final API and patches `grow` to accept plain
+ * numbers (the final API requires BigInt there as well).
  */
-export type ImageGenRuntimeIssue = 'memory64' | 'isolation';
+interface MemoryDescriptorLike {
+  initial?: number | bigint;
+  maximum?: number | bigint;
+  shared?: boolean;
+  address?: 'i64';
+  index?: 'i64';
+}
+
+const ensureOrtMemory64Shim = (): void => {
+  const nativeMemory = WebAssembly.Memory as unknown as
+    ((new (descriptor?: MemoryDescriptorLike) => WebAssembly.Memory
+      & { grow: (delta: number | bigint) => number })
+      & { prototype: WebAssembly.Memory }
+      & Record<string, unknown>);
+  if (nativeMemory['__webguiMemory64Shim']) {
+    return;
+  }
+
+  const patched = function (descriptor?: MemoryDescriptorLike): WebAssembly.Memory {
+    const desc = descriptor ?? {};
+    if (desc.index !== 'i64') {
+      return Reflect.construct(nativeMemory as unknown as typeof WebAssembly.Memory, [desc]);
+    }
+    const translated: MemoryDescriptorLike = { address: 'i64' };
+    translated.initial = typeof desc.initial === 'bigint' ? desc.initial : BigInt(desc.initial ?? 0);
+    if (desc.maximum !== undefined) {
+      translated.maximum = typeof desc.maximum === 'bigint' ? desc.maximum : BigInt(desc.maximum);
+    }
+    if (desc.shared !== undefined) {
+      translated.shared = desc.shared;
+    }
+    const memory = Reflect.construct(nativeMemory as unknown as typeof WebAssembly.Memory, [translated]);
+    try {
+      const nativeGrow = memory.grow.bind(memory);
+      memory.grow = (delta: number | bigint): number => {
+        const pages = typeof delta === 'bigint' ? delta : BigInt(Math.trunc(delta));
+        return Number(nativeGrow(pages));
+      };
+    } catch {
+      // Best effort: the glue only grows on the main thread; if assigning
+      // the own property fails, growth with plain numbers may throw later.
+    }
+    return memory;
+  } as unknown as typeof WebAssembly.Memory;
+  Object.setPrototypeOf(patched, nativeMemory);
+  patched.prototype = nativeMemory.prototype;
+  (patched as unknown as Record<string, unknown>)['__webguiMemory64Shim'] = true;
+  WebAssembly.Memory = patched;
+  log('sd-engine: installed WebAssembly.Memory memory64 translation shim');
+};
+
+/**
+ * Probe the browser with the final memory64 JS API (the same allocation the
+ * shim performs for the engine): memory64 at all, the 16 GiB maximum the
+ * engine's glue requests, and the shared variant (needs cross-origin
+ * isolation). Returns the missing capability or null if the engine can run.
+ */
+export type ImageGenRuntimeIssue = 'memory64' | 'memory-limit' | 'isolation';
+
+const canCreateMemory = (descriptor: MemoryDescriptorLike): boolean => {
+  try {
+    new WebAssembly.Memory(descriptor as unknown as WebAssembly.MemoryDescriptor);
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 export const getImageGenRuntimeIssue = (): ImageGenRuntimeIssue | null => {
-  try {
-    new WebAssembly.Memory({
-      initial: 1,
-      maximum: 262144,
-      index: 'i64',
-    } as WebAssembly.MemoryDescriptor & { index: 'i64' });
-  } catch {
+  if (!canCreateMemory({ initial: 1n, maximum: 2n, address: 'i64' })) {
     return 'memory64';
   }
-  try {
-    new WebAssembly.Memory({
-      initial: 1,
-      maximum: 262144,
-      shared: true,
-      index: 'i64',
-    } as WebAssembly.MemoryDescriptor & { index: 'i64' });
-  } catch {
+  if (!canCreateMemory({ initial: 1n, maximum: 262144n, address: 'i64' })) {
+    return 'memory-limit';
+  }
+  if (!canCreateMemory({ initial: 1n, maximum: 262144n, shared: true, address: 'i64' })) {
     return 'isolation';
   }
   return null;
@@ -182,6 +240,12 @@ const preflight = async (): Promise<void> => {
     throw new Error(
       'This browser does not support WebAssembly memory64 (required for the image engine). '
       + 'Please use Chrome or Edge 133 or newer.'
+    );
+  }
+  if (runtimeIssue === 'memory-limit') {
+    throw new Error(
+      'This browser supports memory64 but rejects the 16 GiB memory reservation '
+      + 'the image engine needs.'
     );
   }
   if (runtimeIssue === 'isolation') {
@@ -237,6 +301,7 @@ export const loadImageGenModel = async (
 
     try {
       ensureOrtAssertShim();
+      ensureOrtMemory64Shim();
       await preflight();
 
       const [{ DiffusionPipeline, setModelCacheDir }, ortModule] = await Promise.all([

@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.9] - 2026-10-11
+
+### Behoben
+
+- **„Dieser Browser unterstützt kein WebAssembly memory64" auf aktuellem Chrome - falsche Diagnose, echte Ursache gefunden**: Der ORT-Fork der Bild-Engine nutzt für die 16-GB-Memory-Anlage noch den *Entwurf* der memory64-JS-API (`index: "i64"` mit Number-Limits). Die finale API (Wasm 3.0, in Chrome seit Version 133) heißt aber `address: "i64"` mit BigInt-Limits - Chrome ignoriert das unbekannte `index`-Property und lehnt die Anlage mit „value 262144 is above the upper bound 65536" ab. Die Bild-Engine war dadurch auf keinem aktuellen Chrome lauffähig. Jetzt übersetzt ein Shim zur Laufzeit die alten Deskriptoren in die finale API (inklusive `grow`, das dort ebenfalls BigInt verlangt; die Glue ruft es mit Number auf). Die Browser-Probe prüft jetzt die echte finale API und unterscheidet drei Ursachen: kein memory64, abgelehnte 16-GB-Reservierung, fehlende Cross-Origin-Isolation - mit je eigener Meldung im Studio.
+
 ## [4.3.8] - 2026-10-11
 
 ### Geändert

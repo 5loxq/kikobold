@@ -201,6 +201,17 @@ export const ImageStudio: React.FC<ImageStudioProps> = ({ onNavigateBack }) => {
           </div>
         )}
 
+        {hasWebGPU && runtimeIssue === 'memory-limit' && (
+          <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-2xl">
+            <p className="text-amber-700 dark:text-amber-400 font-semibold">
+              {t('imagesPage.errorMemoryLimit')}
+            </p>
+            <p className="text-amber-700/80 dark:text-amber-500 text-sm mt-1">
+              {t('imagesPage.errorMemoryLimitHint')}
+            </p>
+          </div>
+        )}
+
         {/* Prompt form */}
         <section className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-800 mb-4">
           <label htmlFor="image-prompt" className="block font-semibold mb-2 text-zinc-800 dark:text-zinc-100">

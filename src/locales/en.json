@@ -239,7 +239,7 @@
     "closeButton": "Got it!",
     "v437": {
       "item1": "Download display for the image model: the image studio now shows loaded MB, total size, speed and estimated remaining time just like the chat models - the bar tracks all model files, not just one file at a time.",
-      "item2": "Image engine fixed: two bugs (\"assert is not defined\" in the minified ONNX Runtime bundle, missing memory64 check) crashed the image model after the 2 GB download.",
+      "item2": "Image engine fixed: several bugs in the ONNX Runtime fork (missing assert, outdated memory64 JS API) crashed the image model after the 2 GB download.",
       "item3": "Clear browser requirement: image generation needs WebAssembly memory64 (Chrome/Edge 133 or newer). The studio now checks this before the download and warns early instead of downloading 2 GB in vain."
     },
     "v430": {
@@ -803,6 +803,8 @@
     "errorMemory64Hint": "The image engine needs memory larger than 4 GB (memory64) - available in Chrome and Edge 133 or newer. Without it the 2 GB download would start in vain. The rest of the app keeps working.",
     "errorIsolation": "This page is not cross-origin isolated.",
     "errorIsolationHint": "The image engine needs shared WebAssembly memory, which requires COOP/COEP headers. The rest of the app keeps working.",
+    "errorMemoryLimit": "This browser does not allow the required 16 GB memory reservation.",
+    "errorMemoryLimitHint": "The image engine reserves up to 16 GB of virtual memory (memory64). Your browser supports memory64 but rejects this size. The rest of the app keeps working.",
     "detectedBrowser": "Detected browser: {{version}}",
     "errorLoadModel": "The image model could not be loaded"
   }

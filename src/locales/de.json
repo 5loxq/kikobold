@@ -239,7 +239,7 @@
     "closeButton": "Alles klar!",
     "v437": {
       "item1": "Download-Anzeige für das Bildmodell: Das Bild-Studio zeigt jetzt wie die Chat-Modelle geladene MB, Gesamtgröße, Tempo und geschätzte Restzeit - der Balken läuft über alle Modell-Dateien, nicht nur pro Datei.",
-      "item2": "Bild-Engine repariert: Zwei Bugs („assert is not defined“ im minifizierten ONNX-Runtime-Bundle, fehlender memory64-Check) ließen das Bildmodell nach dem 2-GB-Download abstürzen.",
+      "item2": "Bild-Engine repariert: Mehrere Bugs im ONNX-Runtime-Fork (fehlendes assert, veraltete memory64-JS-API) ließen das Bildmodell nach dem 2-GB-Download abstürzen.",
       "item3": "Klare Browser-Anforderung: Die Bildgenerierung braucht WebAssembly memory64 (Chrome/Edge ab Version 133). Das Studio prüft das jetzt vor dem Download und warnt früh, statt vergeblich 2 GB herunterzuladen."
     },
     "v430": {
@@ -803,6 +803,8 @@
     "errorMemory64Hint": "Die Bild-Engine braucht Arbeitsspeicher über 4 GB (memory64) - verfügbar in Chrome und Edge ab Version 133. Ohne das würde der 2-GB-Download vergeblich starten. Der Rest der App funktioniert weiterhin.",
     "errorIsolation": "Diese Seite ist nicht cross-origin isoliert.",
     "errorIsolationHint": "Die Bild-Engine braucht geteilten WebAssembly-Speicher, der nur mit COOP/COEP-Headern verfügbar ist. Der Rest der App funktioniert weiterhin.",
+    "errorMemoryLimit": "Dieser Browser erlaubt die nötige 16-GB-Speicherreservierung nicht.",
+    "errorMemoryLimitHint": "Die Bild-Engine reserviert virtuellen Arbeitsspeicher bis 16 GB (memory64). Dein Browser unterstützt memory64, lehnt diese Größe aber ab. Der Rest der App funktioniert weiterhin.",
     "detectedBrowser": "Erkannter Browser: {{version}}",
     "errorLoadModel": "Das Bildmodell konnte nicht geladen werden"
   }
