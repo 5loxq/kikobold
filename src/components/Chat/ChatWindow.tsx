@@ -424,6 +424,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                     }
                   }}
                   className="flex-1 px-4 py-2 border border-zinc-500 dark:bg-zinc-900 dark:text-zinc-100 rounded-xl text-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white shadow-sm"
+                  // Deliberate: the input IS the just-opened rename form -
+                  // the focus belongs here, there is nothing to steal it from.
+                  // eslint-disable-next-line jsx-a11y/no-autofocus
                   autoFocus
                 />
                 <button
@@ -599,6 +602,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('chat.searchPlaceholder')}
+              // Deliberate: Ctrl/Cmd+K opens the search - the focus belongs
+              // here, otherwise the shortcut needs a second Tab to work.
+              // eslint-disable-next-line jsx-a11y/no-autofocus
               autoFocus
               aria-label={t('chat.searchInChat')}
               className="flex-1 max-w-sm px-4 py-2 border border-zinc-500 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 shadow-sm"

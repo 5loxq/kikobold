@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { formatBytes } from '../../services/attachments';
+import { DOC_ACCEPT_ATTRIBUTE, formatBytes } from '../../services/attachments';
 import { isAllowedLibraryFile, type LibraryFile } from '../../services/storage/LibraryStorage';
 
 interface LibraryManagerProps {
@@ -70,7 +70,7 @@ export const LibraryManager: React.FC<LibraryManagerProps> = ({ files, onAddFile
           <input
             ref={fileInputRef}
             type="file"
-            accept=".txt,.md,.json,.csv,.tsv,.log,.xml,.yml,.yaml,.ini,.cfg,.ts,.tsx,.js,.jsx,.py,.java,.c,.cpp,.h,.hpp,.cs,.go,.rs,.rb,.php,.sql,.sh,.css,.html"
+            accept={DOC_ACCEPT_ATTRIBUTE}
             onChange={(e) => void handleFileSelected(e)}
             style={{ display: 'none' }}
           />

@@ -237,6 +237,9 @@
     "title": "What's new",
     "subtitle": "A few things have changed since your last visit:",
     "closeButton": "Got it!",
+    "v4328": {
+      "item1": "Accessibility polish: overlay close areas and clickable images are now real buttons (properly keyboard operable), and the lint runs green with zero warnings."
+    },
     "v4327": {
       "item1": "Leaner and faster: dead inference code removed from the bundle, GPU detection opens only one adapter instead of three, and the sidebar groups chats in a single pass."
     },

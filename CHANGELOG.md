@@ -2,6 +2,23 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.28] - 2026-10-11
+
+### Behoben (Voll-Audit: Security, Bugs, Syntax, Barrierefreiheit)
+- **Barrierefreiheit — Overlay-Backdrops waren keine Tastatur-Ziele:** Das mobile Sidebar-Overlay und der Bildvorschau-Modal schlossen sich per `div` mit `onClick` — für Tastatur- und Screenreader-Nutzer war die „Klick auf den Hintergrund“-Fläche kein bedienbares Element. Beide Backdrops sind jetzt echte `<button>`-Elemente mit `aria-label` (Esc funktioniert weiterhin).
+- **Barrierefreiheit — klickbare Markdown-Bilder:** Ein Bild mit Lightbox-Handler war ein `img` mit `role="button"`/`tabIndex` — ein Semantik-Trick, der Screenreadern ein „Bild als Button“ meldet. Der Klick liegt jetzt auf einem echten `<button>`, der das Bild umschließt.
+- **Token-Zähler im nicht-streamenden wllama-Pfad:** `generate()` zeigte für wllama-Modelle immer 0 Tokens an (kein Usage-Report) — jetzt mit der gleichen ~4-Zeichen-pro-Token-Schätzung wie im WebLLM-Fallback.
+- **Lint-Konfiguration:** `label-has-associated-control` mit `depth: 4` — die Settings-Labels schachteln ihren Text in `label > span > span > {t(...)}`, was die Regel bei Standard-Tiefe 2 nicht sieht und fälschlich als „kein zugänglicher Text“ meldete (axe-core bestätigte: keine echten Verstöße). Non-Null-Assertions in Tests sind bewusst erlaubt (Fixture-Narrowing). Die vier `autoFocus`-Stellen (Rename-/Suchfeld, Ordner-Formulare) sind dokumentierte Ausnahmen — der Fokus gehört auf das gerade geöffnete Feld.
+- **Syntax-Kosmetik:** `};//` in system-info.ts und ein `const //`-Kommentar-Dangling in Sidebar.tsx aufgeräumt.
+
+### Optimiert
+- **`downloadEta` dedupliziert:** Die identische Restzeit-Berechnung stand in MainLayout und ImageStudio — jetzt einmal in `utils/format.ts`.
+- **`accept`-Attribut zentral:** Der Datei-Picker-Filter (`accept=".txt,.md,..."`) war in InputBox und LibraryManager hartkodiert und konnte von der tatsächlichen Allowlist (`ALLOWED_EXTENSIONS`) abweichen — jetzt wird `DOC_ACCEPT_ATTRIBUTE` aus der Allowlist generiert (Single Source of Truth).
+
+### Geprüft (ohne Funde)
+- Security-Review: CSP/.htaccess, KaTeX-Ausgabe, URL-Scheme-Whitelist, Import-/Export-Validierung, Storage-Layer, Service Worker (Same-Origin-Caching) — keine neuen Schwachstellen. `server-zugangsdaten.txt` liegt nicht und lag nie im Git.
+- `npm run lint` (jetzt 0 Warnungen), `npm run type-check`, `npm test` (47 Tests), `npm run check:i18n` und `npm run audit:a11y` (axe-core: 0 Verstöße in Hell- und Dunkel-Modus) — alles grün.
+
 ## [4.3.27] - 2026-10-11
 
 ### Entfernt (toter Code) / Optimiert
@@ -347,8 +364,7 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 - **Fehlermeldungen zweisprachig**: Die Meldungen beim Modell-Laden (CORS, 404, WebGPU, WASM) laufen jetzt über i18next statt hardcoded auf Deutsch.
 - **i18n-Paritäts-Check automatisiert**: Neues Skript `npm run check:i18n` prüft, dass de.json und en.json deckungsgleich sind und jeder im Code benutzte Key existiert; läuft zusätzlich in der CI-Pipeline.
 
-### Behoben (aus dem Code-Review vor dieser Version)
-
+### Behoben (aus dem Code-Review vor dieser Vers
 - **Code-Antworten wurden beim Speichern verstümmelt**: Die Voll-Sanitizing löschte Muster wie „data:", „on x =" oder „javascript:" aus normalem Text - Code-Antworten der Modelle kamen beschädigt aus der Datenbank zurück. Nachrichten werden jetzt wie Gedächtnis und Bibliothek nur von HTML-Tags befreit; Markdown-Links und -Bilder akzeptieren ausschließlich sichere Protokolle (http/https/mailto/relativ).
 - **Codeblöcke mit Leerzeilen wurden zerrissen**: Der Markdown-Renderer zerschnitt Codeblöcke am Absatz-Splitter - sie erschienen als kaputte Absätze mit Backtick-Resten. Der Splitter kennt jetzt Code-Fences.
 - **Fehlender Text im Lade-Hinweis**: „chat.modelLoadingBubble" existierte nicht in den Sprachdateien - im UI wäre der rote Key erschienen.

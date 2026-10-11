@@ -237,6 +237,9 @@
     "title": "Das ist neu",
     "subtitle": "Seit deinem letzten Besuch hat sich einiges getan:",
     "closeButton": "Alles klar!",
+    "v4328": {
+      "item1": "Barrierefreiheit nachgeschärft: Overlay-Schließen-Flächen und klickbare Bilder sind jetzt echte Buttons (auch per Tastatur sauber bedienbar), und der Lint ist mit null Warnungen grün."
+    },
     "v4327": {
       "item1": "Schlanker und schneller: Toter Inference-Code ist aus dem Bundle entfernt, die GPU-Erkennung öffnet nur noch einen Adapter statt drei, und die Sidebar gruppiert die Chats in einem Durchlauf."
     },

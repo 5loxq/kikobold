@@ -67,7 +67,10 @@ export default tseslint.config(
       'jsx-a11y/html-has-lang': 'error',
       'jsx-a11y/iframe-has-title': 'error',
       'jsx-a11y/img-redundant-alt': 'warn',
-      'jsx-a11y/label-has-associated-control': 'warn',
+      // depth 4: the settings-page labels nest the text inside
+      // label > span > span > {t(...)} - the rule's default depth of 2
+      // cannot see it and reports a false "no accessible text".
+      'jsx-a11y/label-has-associated-control': ['warn', { depth: 4 }],
       'jsx-a11y/mouse-events-have-key-events': 'warn',
       'jsx-a11y/click-events-have-key-events': 'warn',
       'jsx-a11y/no-noninteractive-element-interactions': 'warn',
@@ -102,6 +105,9 @@ export default tseslint.config(
     files: ['src/**/*.{test,spec}.{ts,tsx}'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
+      // Tests assert on fixtures they just built; the non-null assertion is
+      // the idiomatic (and readable) way to narrow them.
+      '@typescript-eslint/no-non-null-assertion': 'off',
     },
   },
   {

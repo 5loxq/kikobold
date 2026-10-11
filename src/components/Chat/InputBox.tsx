@@ -8,6 +8,7 @@ import {
   ATTACHMENT_LIMITS,
   createDocumentAttachment,
   createImageAttachment,
+  DOC_ACCEPT_ATTRIBUTE,
   type DocumentAttachment,
   formatBytes,
   type ImageAttachment,
@@ -690,7 +691,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
               ref={fileInputRef}
               type="file"
               multiple
-              accept=".txt,.md,.json,.csv,.tsv,.log,.xml,.yml,.yaml,.ini,.cfg,.ts,.tsx,.js,.jsx,.py,.java,.c,.cpp,.h,.hpp,.cs,.go,.rs,.rb,.php,.sql,.sh,.css,.html"
+              accept={DOC_ACCEPT_ATTRIBUTE}
               onChange={(e) => void handleFileSelect(e)}
               className="hidden"
             />
@@ -788,15 +789,19 @@ export const InputBox: React.FC<InputBoxProps> = ({
       {previewImage && (
         <div
           ref={previewTrapRef}
-          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
           role="dialog"
           aria-label={t('chat.imagePreview')}
-          onClick={() => setPreviewImage(null)}
         >
-          <div
-            className="relative max-w-4xl max-h-full flex flex-col items-center"
-            onClick={(e) => e.stopPropagation()}
-          >
+          {/* Backdrop as a real button: keyboard and screen reader users get
+              a proper close target (Escape works too via the focus trap). */}
+          <button
+            type="button"
+            onClick={() => setPreviewImage(null)}
+            aria-label={t('common.close')}
+            className="absolute inset-0 w-full h-full bg-black/80 cursor-default"
+          />
+          <div className="relative max-w-4xl max-h-full flex flex-col items-center">
             <img
               src={previewImage.previewUrl}
               alt={previewImage.name}

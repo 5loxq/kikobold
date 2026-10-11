@@ -44,8 +44,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { t } = useTranslation();
   const darkMode = useDarkMode();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const // Collapsed folder sections in the chat history
-    [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
+  // Collapsed folder sections in the chat history
+  const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
   // Chat whose "move to folder" popover is open
   const [moveMenuChatId, setMoveMenuChatId] = useState<string | null>(null);
   // Collapsed menu groups
@@ -431,6 +431,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="flex items-center gap-1 px-2 mb-2">
               <span aria-hidden="true">📁</span>
               <input
+                // Deliberate: the input IS the just-opened folder form -
+                // the focus belongs here, there is nothing to steal it from.
+                // eslint-disable-next-line jsx-a11y/no-autofocus
                 autoFocus
                 type="text"
                 value={newFolderName}
@@ -507,6 +510,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <div className="flex-1 flex items-center gap-1 px-2 py-1.5">
                       <span aria-hidden="true">📁</span>
                       <input
+                        // Deliberate: the input IS the just-opened rename
+                        // form - the focus belongs here.
+                        // eslint-disable-next-line jsx-a11y/no-autofocus
                         autoFocus
                         type="text"
                         value={renameValue}

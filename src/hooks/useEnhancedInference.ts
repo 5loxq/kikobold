@@ -392,8 +392,12 @@ export const useEnhancedInference = (
           images: mergedOptions.images,
         });
         const responseText = stripHiddenPartsText(rawText);
+        // wllama reports no usage data: estimate like the WebLLM fallback
+        // (~4 characters per token) instead of always showing 0.
+        const completionTokens = Math.ceil(responseText.length / 4);
+        tokenCountRef.current = completionTokens;
         setResult(responseText);
-        setTokensGenerated(tokenCountRef.current);
+        setTokensGenerated(completionTokens);
         setIsGenerating(false);
         setDuration(Date.now() - startTimeRef.current);
         return { text: responseText, usage: undefined };

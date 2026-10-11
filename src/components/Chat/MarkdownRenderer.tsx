@@ -359,26 +359,28 @@ const Image: React.FC<{ src?: string; alt?: string; onClick?: (src: string) => v
 
   if (!src || !isSafeUrl(src)) {return null;}
 
+  const img = (
+    // onLoad only tracks the load state for the fade-in - it is not an
+    // interaction, the click lives on the wrapping button.
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+    <img
+      src={src}
+      alt={alt ?? ''}
+      onLoad={() => setLoaded(true)}
+      className={`rounded-lg shadow-md transition-all duration-300 ${
+        loaded ? 'opacity-100' : 'opacity-50'
+      }`}
+      style={{ maxWidth: '100%', height: 'auto' }}
+    />
+  );
+
   return (
     <div className="my-4">
-      <img
-        src={src}
-        alt={alt ?? ''}
-        onLoad={() => setLoaded(true)}
-        onClick={handleClick}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            handleClick();
-          }
-        }}
-        role={onClick ? 'button' : undefined}
-        tabIndex={onClick ? 0 : undefined}
-        className={`rounded-lg shadow-md cursor-pointer transition-all duration-300 ${
-          loaded ? 'opacity-100' : 'opacity-50'
-        }`}
-        style={{ maxWidth: '100%', height: 'auto' }}
-      />
+      {/* A real button (not an img with role="button") makes the image a
+          proper keyboard target when it opens the lightbox. */}
+      {onClick
+        ? <button type="button" onClick={handleClick} className="cursor-zoom-in">{img}</button>
+        : img}
       {!loaded && (
         <div className="text-center text-gray-400 text-sm py-2">Loading image...</div>
       )}

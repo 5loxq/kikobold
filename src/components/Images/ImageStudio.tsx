@@ -8,6 +8,7 @@ import {
   isImageGenModelLoaded,
   unloadImageGenModel,
 } from '../../services/inference/sd-engine';
+import { downloadEta } from '../../utils/format';
 
 interface ImageStudioProps {
   /** Return to the previous view (e.g. the chat) */
@@ -28,18 +29,6 @@ interface DownloadStats {
   totalMB: number;
   speedMBps: number;
 }
-
-// Remaining time for the current download, derived from size/speed stats
-// (same formatting as the chat model downloads in MainLayout).
-const downloadEta = (stats: DownloadStats | null): string | null => {
-  if (!stats || stats.speedMBps <= 0 || stats.totalMB <= stats.loadedMB) {
-    return null;
-  }
-  const remainingSec = Math.max(0, (stats.totalMB - stats.loadedMB) / stats.speedMBps);
-  const min = Math.floor(remainingSec / 60);
-  const sec = Math.round(remainingSec % 60);
-  return min > 0 ? `${min} min ${sec} s` : `${sec} s`;
-};
 
 export const ImageStudio: React.FC<ImageStudioProps> = ({ onNavigateBack }) => {
   const { t } = useTranslation();

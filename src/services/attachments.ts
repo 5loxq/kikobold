@@ -15,6 +15,10 @@ export const MAX_TOTAL_DOC_PROMPT_CHARS = 10000;
 // Also used by the library (LibraryStorage) to decide which files it accepts
 export const ALLOWED_EXTENSIONS = ['txt', 'md', 'json', 'csv', 'tsv', 'log', 'xml', 'yml', 'yaml', 'ini', 'cfg', 'ts', 'tsx', 'js', 'jsx', 'py', 'java', 'c', 'cpp', 'h', 'hpp', 'cs', 'go', 'rs', 'rb', 'php', 'sql', 'sh', 'css', 'html'];
 
+/** Value for the accept attribute of document file inputs - derived from the
+ *  allowlist so the picker can never drift from what isAllowedDocument accepts. */
+export const DOC_ACCEPT_ATTRIBUTE = ALLOWED_EXTENSIONS.map((ext) => `.${ext}`).join(',');
+
 export const isAllowedDocument = (file: File): boolean => {
   const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
   return ALLOWED_EXTENSIONS.includes(ext) && file.size <= MAX_FILE_SIZE;

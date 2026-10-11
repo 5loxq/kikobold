@@ -50,22 +50,12 @@ import { isDarkMode as checkDarkMode, setThemeMode } from '../../services/theme'
 import { error as logError } from '../../services/logging';
 import { buildPromptWithDocuments, type DocumentAttachment, type ImageAttachment } from '../../services/attachments';
 import { stripHiddenPartsText, trimHistoryToCharBudget } from '../../services/llm/text-processing';
+import { downloadEta } from '../../utils/format';
 import { localStorageGet, localStorageSet } from '../../services/storage/local-storage';
 import { ttsSpeak } from '../../services/tts';
 
 
 type ActiveTab = 'chat' | 'profiles' | 'memory' | 'library' | 'models' | 'images' | 'data' | 'settings' | 'help' | 'roadmap' | 'wiki' | 'contact' | 'privacy' | 'imprint';
-
-// Remaining time for the current download, derived from size/speed stats
-const downloadEta = (stats: { loadedMB: number; totalMB: number; speedMBps: number } | null): string | null => {
-  if (!stats || stats.speedMBps <= 0 || stats.totalMB <= stats.loadedMB) {
-    return null;
-  }
-  const remainingSec = Math.max(0, (stats.totalMB - stats.loadedMB) / stats.speedMBps);
-  const min = Math.floor(remainingSec / 60);
-  const sec = Math.round(remainingSec % 60);
-  return min > 0 ? `${min} min ${sec} s` : `${sec} s`;
-};
 
 export const MainLayout: FC = () => {
   const { t, i18n } = useTranslation();
@@ -651,14 +641,16 @@ export const MainLayout: FC = () => {
 
       {/* Mobile Sidebar Overlay */}
       {showMobileSidebar && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm lg:hidden z-40"
-          onClick={() => setShowMobileSidebar(false)}
-        >
-          <div
-            className="fixed top-0 left-0 h-screen w-72 bg-zinc-950 shadow-2xl z-50 animate-slide-in"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 lg:hidden z-40">
+          {/* Backdrop as a real button: keyboard and screen reader users get
+              a proper close target (Escape works too, see the effect above). */}
+          <button
+            type="button"
+            onClick={() => setShowMobileSidebar(false)}
+            aria-label={t('common.close')}
+            className="absolute inset-0 w-full h-full bg-black/60 backdrop-blur-sm cursor-default"
+          />
+          <div className="fixed top-0 left-0 h-screen w-72 bg-zinc-950 shadow-2xl z-50 animate-slide-in">
             <div className="flex items-center justify-between px-4 py-4 border-b border-zinc-800">
               <h1 className="text-lg font-semibold text-white">KI Kobold</h1>
               <button
