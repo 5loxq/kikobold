@@ -73,12 +73,12 @@ describe('compareVersions', () => {
 
 describe('getWhatsNewSince', () => {
   it('returns nothing for the current version', () => {
-    expect(getWhatsNewSince('4.3.29')).toHaveLength(0);
+    expect(getWhatsNewSince('4.3.31')).toHaveLength(0);
   });
   it('returns newer entries for an older version', () => {
     const entries = getWhatsNewSince('3.3.0');
     expect(entries.length).toBeGreaterThan(0);
-    expect(entries[0].version).toBe('4.3.29');
+    expect(entries[0].version).toBe('4.3.31');
   });
 });
 

@@ -2,6 +2,11 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.31] - 2026-10-11
+
+### Neu
+- **Roadmap kräftig erweitert:** Von 3 Kategorien mit 8 Punkten auf 10 Kategorien mit 45 Ideen - große Features (Bild-zu-Bild/Inpainting, Dokumente befragen (lokales RAG), Antworten zweier Modelle vergleichen, dauerhaftes Gedächtnis, App-Sperre per WebAuthn, eigene GGUF-Modelle, MCP-Werkzeuge) und kleine (Tastenkürzel, Drag & Drop, Schriftgröße, Sprachausgabe/-eingabe, Stil-Presets, Prompt-Bibliothek). Der veraltete Punkt „Bildgenerierung wird geprüft" ist durch aktuelle Bild-Modell-Pläne ersetzt (das Studio ist ja live).
+
 ## [4.3.30] - 2026-10-11
 
 ### Neu

@@ -12,19 +12,61 @@ export const RoadmapPage: React.FC<RoadmapPageProps> = ({ onNavigateBack }) => {
 
   const categories: Array<{ icon: string; titleKey: string; itemKeys: string[] }> = [
     {
+      icon: '🎨',
+      titleKey: 'roadmap.imagesTitle',
+      itemKeys: [
+        'roadmap.images1', 'roadmap.images2', 'roadmap.images3', 'roadmap.images4',
+        'roadmap.images5', 'roadmap.images6', 'roadmap.images7', 'roadmap.images8',
+      ],
+    },
+    {
+      icon: '💬',
+      titleKey: 'roadmap.chatTitle',
+      itemKeys: [
+        'roadmap.chat1', 'roadmap.chat2', 'roadmap.chat3', 'roadmap.chat4',
+        'roadmap.chat5', 'roadmap.chat6', 'roadmap.chat7', 'roadmap.chat8',
+        'roadmap.chat9',
+      ],
+    },
+    {
+      icon: '📄',
+      titleKey: 'roadmap.docsTitle',
+      itemKeys: ['roadmap.docs1', 'roadmap.docs2', 'roadmap.docs3', 'roadmap.docs4'],
+    },
+    {
       icon: '🛡️',
       titleKey: 'roadmap.stabilityTitle',
-      itemKeys: ['roadmap.stability2'],
+      itemKeys: ['roadmap.stability2', 'roadmap.stability5', 'roadmap.stability6'],
     },
     {
       icon: '📦',
       titleKey: 'roadmap.downloadsTitle',
-      itemKeys: ['roadmap.downloads2', 'roadmap.downloads3', 'roadmap.downloads4'],
+      itemKeys: ['roadmap.downloads2', 'roadmap.downloads3', 'roadmap.downloads4', 'roadmap.downloads5', 'roadmap.downloads6'],
     },
     {
       icon: '💾',
       titleKey: 'roadmap.storageTitle',
-      itemKeys: ['roadmap.storage1', 'roadmap.storage3'],
+      itemKeys: ['roadmap.storage1', 'roadmap.storage3', 'roadmap.storage4'],
+    },
+    {
+      icon: '🔒',
+      titleKey: 'roadmap.privacyTitle',
+      itemKeys: ['roadmap.privacy1', 'roadmap.privacy2', 'roadmap.privacy3', 'roadmap.privacy4'],
+    },
+    {
+      icon: '🧩',
+      titleKey: 'roadmap.extTitle',
+      itemKeys: ['roadmap.ext1', 'roadmap.ext2', 'roadmap.ext3'],
+    },
+    {
+      icon: '⌨️',
+      titleKey: 'roadmap.comfortTitle',
+      itemKeys: ['roadmap.comfort1', 'roadmap.comfort2', 'roadmap.comfort3', 'roadmap.comfort4', 'roadmap.comfort5'],
+    },
+    {
+      icon: '🌍',
+      titleKey: 'roadmap.a11yTitle',
+      itemKeys: ['roadmap.a11y1', 'roadmap.a11y2'],
     },
   ];
 
