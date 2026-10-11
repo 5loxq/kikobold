@@ -237,6 +237,16 @@
     "title": "Das ist neu",
     "subtitle": "Seit deinem letzten Besuch hat sich einiges getan:",
     "closeButton": "Alles klar!",
+    "v436": {
+      "item1": "Download-Anzeige für das Bildmodell: Das Bild-Studio zeigt jetzt wie die Chat-Modelle geladene MB, Gesamtgröße, Tempo und geschätzte Restzeit - der Balken läuft über alle Modell-Dateien, nicht nur pro Datei.",
+      "item2": "Laden des Bildmodells repariert: Ein Bug im minifizierten ONNX-Runtime-Bundle („assert is not defined\") ließ die Engine direkt nach dem 2-GB-Download abstürzen. Ein Fallback behebt das, bevor die Engine startet."
+    },
+    "v430": {
+      "item1": "Bild-Studio (Alpha): Bilder aus Textbeschreibungen direkt im Browser erzeugen - lokal über WebGPU. Das 2-GB-Modell wird beim ersten Mal geladen und danach gecacht.",
+      "item2": "Gemma 4 E2B als neues Chat-Modell.",
+      "item3": "Markdown wird jetzt schon während des Schreibens formatiert - Listen, Überschriften und Code sind direkt lesbar, während die Antwort entsteht.",
+      "item4": "Modell-Auswahl auch auf dem Willkommensbildschirm, Version mit „Was ist neu\"-Dialog in der Sidebar und eine Warnung auf Handys vor sehr großen Modell-Downloads."
+    },
     "v420": {
       "item1": "Menü aufgeräumt: Verwaltung (Profile, Gedächtnis, Bibliothek, Modelle, Daten) und „Hilfe & Rechtliches\" sind jetzt einklappbare Gruppen - die Seitenleiste zeigt das Wesentliche.",
       "item2": "Chat-Verlauf rückt in den Fokus: Er ist jetzt immer sichtbar (nicht mehr nur im Chat-Tab) und bekommt den ganzen Platz unter dem Menü.",

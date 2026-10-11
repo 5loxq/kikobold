@@ -22,6 +22,24 @@ const AlphaBadge: React.FC = () => {
   );
 };
 
+interface DownloadStats {
+  loadedMB: number;
+  totalMB: number;
+  speedMBps: number;
+}
+
+// Remaining time for the current download, derived from size/speed stats
+// (same formatting as the chat model downloads in MainLayout).
+const downloadEta = (stats: DownloadStats | null): string | null => {
+  if (!stats || stats.speedMBps <= 0 || stats.totalMB <= stats.loadedMB) {
+    return null;
+  }
+  const remainingSec = Math.max(0, (stats.totalMB - stats.loadedMB) / stats.speedMBps);
+  const min = Math.floor(remainingSec / 60);
+  const sec = Math.round(remainingSec % 60);
+  return min > 0 ? `${min} min ${sec} s` : `${sec} s`;
+};
+
 export const ImageStudio: React.FC<ImageStudioProps> = ({ onNavigateBack }) => {
   const { t } = useTranslation();
   const [prompt, setPrompt] = useState('');
@@ -33,7 +51,12 @@ export const ImageStudio: React.FC<ImageStudioProps> = ({ onNavigateBack }) => {
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [modelLoaded, setModelLoaded] = useState(isImageGenModelLoaded());
+  const [dlStats, setDlStats] = useState<DownloadStats | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
+  // Aggregation across the model's files: the engine reports per-file
+  // download progress, the UI shows the total like for the chat models.
+  const dlBytesByFile = useRef<Map<string, number>>(new Map());
+  const dlStartTs = useRef<number | null>(null);
 
   const hasWebGPU = typeof navigator !== 'undefined' && !!(navigator as Navigator & { gpu?: unknown }).gpu;
 
@@ -55,13 +78,33 @@ export const ImageStudio: React.FC<ImageStudioProps> = ({ onNavigateBack }) => {
     setError(null);
     setProgress(null);
     setResult(null);
+    setDlStats(null);
+    dlBytesByFile.current.clear();
+    dlStartTs.current = null;
     const parsedSeed = seed.trim().length > 0 ? Number(seed) : undefined;
 
     generateImage(prompt, {
       negativePrompt: negativePrompt.trim().length > 0 ? negativePrompt : undefined,
       steps,
       seed: Number.isFinite(parsedSeed) ? parsedSeed : undefined,
-      onProgress: (p) => setProgress(p),
+      onProgress: (p) => {
+        setProgress(p);
+        if (p.phase === 'downloading' && p.totalBytes && p.totalBytes > 0) {
+          dlBytesByFile.current.set(p.label ?? '_current', p.downloadedBytes ?? 0);
+          let downloaded = 0;
+          for (const bytes of dlBytesByFile.current.values()) {
+            downloaded += bytes;
+          }
+          dlStartTs.current ??= Date.now();
+          const elapsedSec = (Date.now() - dlStartTs.current) / 1000;
+          const loadedMB = downloaded / (1024 * 1024);
+          setDlStats({
+            loadedMB,
+            totalMB: IMAGE_GEN_MODEL.fileSizeMB,
+            speedMBps: elapsedSec > 0 ? loadedMB / elapsedSec : 0,
+          });
+        }
+      },
     })
       .then((dataUrl) => {
         setResult(dataUrl);
@@ -216,9 +259,36 @@ export const ImageStudio: React.FC<ImageStudioProps> = ({ onNavigateBack }) => {
                   <div className="w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
                     <div
                       className="bg-indigo-700 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${Math.max(2, percent ?? 0)}%` }}
+                      style={{
+                        width: `${Math.max(
+                          2,
+                          dlStats
+                            ? (dlStats.loadedMB / Math.max(1, dlStats.totalMB)) * 100
+                            : percent ?? 0
+                        )}%`,
+                      }}
                     />
                   </div>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1.5 tabular-nums">
+                    {dlStats
+                      ? `${Math.round((dlStats.loadedMB / Math.max(1, dlStats.totalMB)) * 100)}% · ${t('chat.downloadStats', {
+                          loaded: Math.round(dlStats.loadedMB),
+                          total: Math.round(dlStats.totalMB),
+                          speed: dlStats.speedMBps.toFixed(1),
+                        })}`
+                      : `${Math.round(percent ?? 0)}%`}
+                  </p>
+                  {((): JSX.Element | null => {
+                    const eta = downloadEta(dlStats);
+                    return eta ? (
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
+                        {t('chat.downloadEta', { time: eta })}
+                      </p>
+                    ) : null;
+                  })()}
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1.5 leading-relaxed">
+                    {t('chat.downloadLocalNote')}
+                  </p>
                 </>
               )}
               {progress.phase === 'encoding' && (

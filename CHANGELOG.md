@@ -2,6 +2,16 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.6] - 2026-10-11
+
+### Behoben
+
+- **„Das Bildmodell konnte nicht geladen werden: ... ReferenceError: assert is not defined"**: Der Fehler trat erst nach dem kompletten 2-GB-Download auf, beim Initialisieren der ONNX-Runtime. Ursache ist ein Build-Bug im minifizierten `ort.webgpu.min.js`-Bundle (das der Browser-Export des Packages liefert): Die eingebaute Emscripten-Glue ruft ein nacktes `assert(...)` auf, das der Minifier nie definiert hat - im unminifizierten Bundle existiert die Funktion. Der nackte Bezeichner wird über die Scope-Kette bis `globalThis` aufgelöst, deshalb installiert die Bild-Engine jetzt vor dem Start einen kleinen Fallback (`globalThis.assert`), falls noch keines existiert. Der pthread-Worker definiert `assert` selbst und ist nicht betroffen.
+
+### Neu
+
+- **Download-Anzeige für das Bildmodell wie bei den Chat-Modellen**: Das Bild-Studio zeigt beim Modell-Download jetzt Gesamtfortschritt über alle Modell-Dateien (nicht nur die jeweils aktuelle Datei), geladene MB von Gesamt-MB, Tempo in MB/s und die geschätzte Restzeit - gleiche Darstellung und Formulierungen wie beim Download der Chat-Modelle. Die Engine reicht dafür die Byte-Zähler des aktuellen Downloads durch; das Studio aggregiert über alle Dateien.
+
 ## [4.3.5] - 2026-10-11
 
 ### Behoben

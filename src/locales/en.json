@@ -237,6 +237,16 @@
     "title": "What's new",
     "subtitle": "A few things have changed since your last visit:",
     "closeButton": "Got it!",
+    "v436": {
+      "item1": "Download display for the image model: the image studio now shows loaded MB, total size, speed and estimated remaining time just like the chat models - the bar tracks all model files, not just one file at a time.",
+      "item2": "Fixed loading the image model: a bug in the minified ONNX Runtime bundle (\"assert is not defined\") crashed the engine right after the 2 GB download. A fallback now fixes this before the engine starts."
+    },
+    "v430": {
+      "item1": "Image studio (alpha): generate images from text descriptions right in the browser - locally via WebGPU. The 2 GB model is downloaded once and cached afterwards.",
+      "item2": "Gemma 4 E2B as a new chat model.",
+      "item3": "Markdown is now formatted live while the answer is written - lists, headings and code are readable as the text streams in.",
+      "item4": "Model selection on the welcome screen as well, the version with a \"What's new\" dialog in the sidebar, and a warning on phones before very large model downloads."
+    },
     "v420": {
       "item1": "Menu cleaned up: Management (profiles, memory, library, models, data) and \"Help & Legal\" are now collapsible groups - the sidebar shows the essentials.",
       "item2": "Chat history takes the spotlight: it is now always visible (no longer only on the chat tab) and gets all the space below the menu.",

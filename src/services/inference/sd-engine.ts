@@ -45,6 +45,10 @@ export interface ImageGenProgress {
   /** 0..100 for downloading, 0..100 across steps for unet */
   progress: number;
   label?: string;
+  /** Bytes of the file currently downloading (phase 'downloading') */
+  downloadedBytes?: number;
+  /** Total size in bytes of the file currently downloading */
+  totalBytes?: number;
 }
 
 export interface ImageGenOptions {
@@ -69,7 +73,13 @@ const mapProgress = (payload: ProgressPayload, onProgress?: (p: ImageGenProgress
     case 'Downloading': {
       const dl = payload.downloadStatus;
       const progress = dl && dl.size > 0 ? (dl.downloaded / dl.size) * 100 : 0;
-      onProgress({ phase: 'downloading', progress, label: dl?.file });
+      onProgress({
+        phase: 'downloading',
+        progress,
+        label: dl?.file,
+        downloadedBytes: dl?.downloaded,
+        totalBytes: dl?.size,
+      });
       break;
     }
     case 'EncodingPrompt':
@@ -103,6 +113,29 @@ const engineError = (context: string, err: unknown): Error => {
   const wrapped = new Error(`${context}: ${detail}`);
   warn(`sd-engine: ${wrapped.message}`);
   return wrapped;
+};
+
+/**
+ * Workaround for a bug in the minified ort.webgpu.min.js bundle that the
+ * package exports for browsers: its inlined emscripten glue calls a bare
+ * assert(...) that the minifier never defined (the unminified bundle has
+ * it), so backend init dies with "ReferenceError: assert is not defined"
+ * right after the model download. The bare identifier resolves through the
+ * scope chain to globalThis, so a global fallback fixes it. The emscripten
+ * glue in the pthread worker file defines assert itself and is unaffected.
+ */
+const ensureOrtAssertShim = (): void => {
+  const g = globalThis as {
+    assert?: (expr: unknown, msg?: string | (() => string)) => void;
+  };
+  if (typeof g.assert !== 'function') {
+    g.assert = (expr, msg): void => {
+      if (!expr) {
+        throw new Error(typeof msg === 'string' ? msg : msg?.() ?? 'assertion failed');
+      }
+    };
+    log('sd-engine: installed globalThis.assert shim for ORT backend init');
+  }
 };
 
 /**
@@ -156,6 +189,7 @@ export const loadImageGenModel = async (
     }) as typeof window.fetch;
 
     try {
+      ensureOrtAssertShim();
       await preflight();
 
       const [{ DiffusionPipeline, setModelCacheDir }, ortModule] = await Promise.all([
