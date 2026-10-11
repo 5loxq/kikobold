@@ -5,6 +5,20 @@ import { fileURLToPath, URL } from 'node:url'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      // The ORT package has two entry points: `exports` -> dist/ort.webgpu.min.js
+      // (JSEP build, WebGPU-capable) and `browser` -> dist/ort-web.min.js
+      // (no JSEP). Depending on the import site, the bundler picked either
+      // one, silently creating TWO ORT instances with separate `env` objects:
+      // the wasmPaths we set in sd-engine.ts only reached one of them, the
+      // image engine fetched its WASM runtime from a relative URL and got the
+      // SPA fallback (HTML) instead. Force every import to the same JSEP build.
+      '@aislamov/onnxruntime-web64': fileURLToPath(
+        new URL('./node_modules/@aislamov/onnxruntime-web64/dist/ort.webgpu.min.js', import.meta.url)
+      ),
+    },
+  },
   server: {
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',

@@ -326,6 +326,40 @@ const preflight = async (): Promise<void> => {
 };
 
 /**
+ * Safety net for the ORT runtime files: at least one ORT copy ends up
+ * fetching its WASM runtime via a RELATIVE url (no /ort/ prefix). The
+ * server's SPA fallback answers that with the index page (HTML, status
+ * 200) and WebAssembly.instantiate dies with "expected magic word
+ * 00 61 73 6d, found 3c 21 64 6f". Rewrite same-origin ort-wasm-* requests
+ * to our self-hosted /ort/ directory, whatever path they were built from.
+ */
+const ensureOrtFetchRewrite = (): void => {
+  const patched = window.fetch as typeof window.fetch & { __webguiOrtRewrite?: boolean };
+  if (patched.__webguiOrtRewrite) {
+    return;
+  }
+  const originalFetch = window.fetch;
+  const rewritten = ((input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const url = typeof input === 'string'
+      ? input
+      : input instanceof URL
+        ? input.href
+        : input?.url ?? '';
+    const match = /^((?:https?:\/\/[^/]+)?\/?)(ort-wasm-[a-z0-9.-]+\.(?:wasm|js))$/
+      .exec(url.split('?')[0]);
+    const sameOrigin = !/^https?:\/\//.test(url) || url.startsWith(self.location.origin);
+    if (match && sameOrigin && !url.includes('/ort/')) {
+      log(`sd-engine: rewrote relative ORT fetch to /ort/${match[2]}`);
+      return originalFetch(`/ort/${match[2]}`, init);
+    }
+    return originalFetch(input, init);
+  }) as typeof window.fetch;
+  (rewritten as typeof window.fetch & { __webguiOrtRewrite?: boolean }).__webguiOrtRewrite = true;
+  window.fetch = rewritten;
+  log('sd-engine: installed ort-wasm fetch rewrite');
+};
+
+/**
  * Load the image generation model (downloads on first use, ~2.2 GB).
  * Safe to call repeatedly; parallel calls share one load. Throws with a
  * descriptive message on failure.
@@ -341,6 +375,17 @@ export const loadImageGenModel = async (
     return;
   }
   loadPromise = (async (): Promise<void> => {
+    // Diagnostics: record the requests made during the load so load errors
+    // can name the exact URL that failed (status + content type) instead
+    // of a downstream symptom like a WASM magic-word mismatch.
+    const requestLog: string[] = [];
+    const record = (entry: string): void => {
+      requestLog.push(entry);
+      if (requestLog.length > 8) {
+        requestLog.shift();
+      }
+    };
+
     // Bypass the browser HTTP cache for the model files: responses from
     // before the no-gzip server fix may still be cached with a compressed
     // Content-Length, which breaks the engine's buffer allocation (and the
@@ -353,16 +398,36 @@ export const loadImageGenModel = async (
         : input instanceof URL
           ? input.href
           : input?.url;
+      const tracked = originalFetch(input, init).then(
+        (response) => {
+          record(`${url} -> ${response.status} ${response.headers.get('content-type') ?? '?'}`);
+          return response;
+        },
+        (err: unknown) => {
+          record(`${url} -> FAILED ${err instanceof Error ? err.message : String(err)}`);
+          throw err;
+        }
+      );
       if (url.includes('/models/sd/') && init?.cache === undefined) {
-        return originalFetch(input, { ...init, cache: 'no-store' });
+        return originalFetch(input, { ...init, cache: 'no-store' }).then(
+          (response) => {
+            record(`${url} -> ${response.status} ${response.headers.get('content-type') ?? '?'}`);
+            return response;
+          },
+          (err: unknown) => {
+            record(`${url} -> FAILED ${err instanceof Error ? err.message : String(err)}`);
+            throw err;
+          }
+        );
       }
-      return originalFetch(input, init);
+      return tracked;
     }) as typeof window.fetch;
 
     try {
       ensureOrtAssertShim();
       ensureOrtMemory64Shim();
       ensureOrtJspiShim();
+      ensureOrtFetchRewrite();
       await preflight();
 
       const [{ DiffusionPipeline, setModelCacheDir }, ortModule] = await Promise.all([
@@ -374,9 +439,18 @@ export const loadImageGenModel = async (
       // Serve the ORT WASM runtime from our own origin (see public/ort).
       const ort = (ortModule as unknown as { default?: Record<string, unknown> }).default
         ?? (ortModule as unknown as Record<string, unknown>);
-      const env = (ort as { env?: { wasm?: { wasmPaths?: string } } }).env;
+      const env = (ort as {
+        env?: { wasm?: { wasmPaths?: string; numThreads?: number } };
+      }).env;
       if (env?.wasm) {
         env.wasm.wasmPaths = '/ort/';
+        // Run the WASM side single-threaded: the pthread worker is spawned
+        // from a blob built inside the ORT bundle and executes the glue in
+        // its own scope - without our assert/JSPI shims, which cannot be
+        // injected there. With numThreads=1 the glue runs entirely on the
+        // main thread where the shims are installed; WebGPU does the heavy
+        // math anyway, so the CPU parallelism loss is negligible.
+        env.wasm.numThreads = 1;
       }
       // Prefer the copy on our own webspace (same origin, no CDN dependency).
       // The engine falls back to HuggingFace when a file is missing there.
@@ -395,7 +469,14 @@ export const loadImageGenModel = async (
       log('sd-engine: model loaded');
     } catch (err) {
       pipeline = null;
-      throw err;
+      const detail = err instanceof Error ? err.message : String(err);
+      // Include the recorded requests so the visible error names the
+      // failing URL instead of a downstream symptom.
+      const withRequests = requestLog.length > 0
+        ? new Error(`${detail} [requests: ${requestLog.join(' | ')}]`)
+        : err;
+      warn(`sd-engine: load failed: ${detail}`);
+      throw withRequests;
     } finally {
       window.fetch = originalFetch;
       loadPromise = null;

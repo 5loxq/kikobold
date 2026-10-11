@@ -2,6 +2,13 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.11] - 2026-10-11
+
+### Behoben
+
+- **„expected magic word 00 61 73 6d, found 3c 21 64 6f" beim Initialisieren der Bild-Engine**: Die ORT-Runtime holte ihre Wasm-Datei über eine *relative* URL (ohne `/ort/`-Prefix) - der Server antwortet auf nicht existierende Pfade mit der SPA-Fallback-Seite (HTML, Status 200), und `WebAssembly.instantiate` bricht mit dem Magic-Word-Fehler ab. Zwei Maßnahmen: (1) Ein Fetch-Sicherheitsnetz biegt jede Same-Origin-`ort-wasm-*`-Anfrage ohne `/ort/`-Prefix auf unser selbst gehostetes `/ort/`-Verzeichnis um - egal welche ORT-Kopie sie auslöst; (2) die Wasm-Seite läuft jetzt bewusst mit `numThreads = 1`: Der pthread-Worker wird von ORT aus einem Blob mit eigener, nicht patchbarer Glue erzeugt (unseren assert-/JSPI-Shims fehlen dort) - ohne Threads läuft die komplette Glue im Hauptthread, wo alle Shims greifen; die Rechenlast trägt ohnehin die WebGPU.
+- **Ladefehler zeigen jetzt die gestellten Requests**: Bei einem Modell-Ladefehler protokolliert die Engine die letzten Requests (URL, Status, Content-Type) und hängt sie der Fehlermeldung an - damit zeigt der nächste Fehler die exakte Ursache statt eines Symptoms weiter unten.
+
 ## [4.3.10] - 2026-10-11
 
 ### Behoben
