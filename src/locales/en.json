@@ -237,6 +237,10 @@
     "title": "What's new",
     "subtitle": "A few things have changed since your last visit:",
     "closeButton": "Got it!",
+    "v4326": {
+      "item1": "Faster app: the chat list (sidebar, data page) no longer loads messages from the database, only metadata - and markdown streaming is computed much more cheaply per token.",
+      "item2": "More robust profile import (invalid values are corrected instead of aborting the import) and cleaned-up security checks without dead code."
+    },
     "v4325": {
       "item1": "Stability update from a full audit of the entire codebase: responses never land in the wrong chat anymore (chat switch during generation), reasoning blocks stay out of the prompt and read-aloud, renaming/moving no longer loses messages, library without duplicates, markdown fences and multi-line quotes render correctly.",
       "item2": "Security review of the attack surface (XSS, import/export, storage, service worker, external requests): no critical findings. The service worker only caches same-origin assets; dependencies cleaned up."

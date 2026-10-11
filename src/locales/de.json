@@ -237,6 +237,10 @@
     "title": "Das ist neu",
     "subtitle": "Seit deinem letzten Besuch hat sich einiges getan:",
     "closeButton": "Alles klar!",
+    "v4326": {
+      "item1": "Schnellere App: Die Chat-Liste (Sidebar, Datenseite) lädt keine Nachrichten mehr aus der Datenbank, nur noch Metadaten - und das Markdown-Streaming wird pro Token deutlich günstiger berechnet.",
+      "item2": "Robusterer Profil-Import (fehlerhafte Werte werden korrigiert statt den Import abzubrechen) und aufgeräumte Sicherheits-Checks ohne toten Code."
+    },
     "v4325": {
       "item1": "Stabilitäts-Update aus einem Voll-Audit des gesamten Codes: Antwort landet nie mehr im falschen Chat (Chat-Wechsel während der Generierung), Reasoning-Blöcke bleiben aus Prompt und Vorlesen draußen, Umbenennen/Verschieben verliert keine Nachrichten mehr, Bibliothek ohne Duplikate, Markdown-Fences und mehrzeilige Zitate korrekt.",
       "item2": "Sicherheits-Review der Angriffsflächen (XSS, Import/Export, Storage, Service Worker, externe Zugriffe): keine kritischen Funde. Service Worker cached nur noch eigene Assets; Abhängigkeiten bereinigt."

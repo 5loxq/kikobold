@@ -2,7 +2,7 @@
  * Type definitions for custom React hooks
  */
 
-import { Chat, InferenceOptions, InferenceResult, LocalModel, Model, Profile } from '.';
+import { Chat, ChatMetadata, InferenceOptions, InferenceResult, LocalModel, Model, Profile } from '.';
 
 // useInference hook return type
 export interface UseInferenceReturn {
@@ -42,7 +42,7 @@ export interface UseModelsReturn {
 // useChat hook return type
 export interface UseChatReturn {
   chat: Chat | null;
-  chats: Chat[];
+  chats: ChatMetadata[];
   loading: boolean;
   loadChats: () => Promise<void>;
   loadChat: (id: string) => Promise<void>;

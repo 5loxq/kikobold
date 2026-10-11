@@ -17,6 +17,13 @@ export interface Chat {
   folderId?: string | null;
 }
 
+/**
+ * Chat without its messages, plus the message count. The sidebar and the
+ * data page only need this - loading every message of every chat into
+ * memory just to render the chat list is wasteful with long histories.
+ */
+export type ChatMetadata = Omit<Chat, 'messages'> & { messageCount: number };
+
 // Chat folder types
 export interface ChatFolder {
   id: string;

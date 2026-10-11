@@ -629,8 +629,10 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
   onImageClick,
   maxCodeBlockHeight,
 }) => {
-  // Split content by double newlines to get paragraphs/blocks
-  const blocks = splitBlocks(content);
+  // Split content by double newlines to get paragraphs/blocks. Memoized:
+  // the streaming bubble re-renders on EVERY chunk, and re-splitting the
+  // whole (growing) text each time is quadratic work over the response.
+  const blocks = useMemo(() => splitBlocks(content), [content]);
 
   return (
     <>

@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Chat, LocalModel, MemoryEntry } from '../../types';
+import { ChatMetadata, LocalModel, MemoryEntry } from '../../types';
 import type { LibraryFile } from '../../services/storage/LibraryStorage';
 import { formatBytes } from '../../services/attachments';
 import { cleanupCaches } from '../../services/offline';
 import { error as logError } from '../../services/logging';
 
 interface DataManagerProps {
-  chats: Chat[];
+  chats: ChatMetadata[];
   memories: MemoryEntry[];
   libraryFiles: LibraryFile[];
   downloadedModels: LocalModel[];
@@ -45,7 +45,7 @@ export const DataManager: React.FC<DataManagerProps> = ({
     });
   }, []);
 
-  const messageCount = chats.reduce((sum, chat) => sum + chat.messages.length, 0);
+  const messageCount = chats.reduce((sum, chat) => sum + chat.messageCount, 0);
 
   const handleFileSelected = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const file = event.target.files?.[0];

@@ -1,4 +1,4 @@
-import { Chat, Message } from '../../types';
+import { Chat, ChatMetadata, Message } from '../../types';
 import { error as logError, warn } from '../logging';
 import { sanitizeInputLight } from '../security';
 
@@ -211,6 +211,50 @@ export const getAllChats = async (): Promise<Chat[]> => {
       };
     } catch (error) {
       logError('Error getting all chats:', error);
+      reject(error);
+    }
+  });
+};
+
+/**
+ * All chats WITHOUT their messages, for list views (sidebar, data page).
+ * getAllChats() materializes every message of every chat in JS memory -
+ * with long histories that dominates the app's memory and startup time,
+ * while the lists only read title/folder/date/count. The cursor walks the
+ * store once and projects exactly those fields.
+ */
+export const getChatMetadatas = async (): Promise<ChatMetadata[]> => {
+  await initChatDB();
+  if (!db) {throw new Error('Database not initialized');}
+  const database = db;
+
+  return new Promise((resolve, reject) => {
+    try {
+      const transaction = database.transaction([STORE_NAME], 'readonly');
+      const request = transaction.objectStore(STORE_NAME).openCursor();
+      const result: ChatMetadata[] = [];
+
+      request.onerror = (): void => {
+        logError('Failed to get chat metadata:', request.error);
+        reject(request.error ?? new Error('Failed to get chat metadata'));
+      };
+
+      request.onsuccess = (): void => {
+        const cursor = request.result;
+        if (cursor) {
+          const value = cursor.value;
+          if (validateChat(value)) {
+            const { messages, ...meta } = value as Chat;
+            result.push({ ...meta, messageCount: messages.length });
+          }
+          cursor.continue();
+        } else {
+          result.sort((a, b) => b.updatedAt - a.updatedAt);
+          resolve(result);
+        }
+      };
+    } catch (error) {
+      logError('Error getting chat metadata:', error);
       reject(error);
     }
   });

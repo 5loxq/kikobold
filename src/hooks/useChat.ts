@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Chat, Message, UseChatReturn } from '../types';
+import { Chat, ChatMetadata, Message, UseChatReturn } from '../types';
 import * as ChatStorage from '../services/storage/ChatStorage';
 import { error as logError } from '../services/logging';
 
 
 export const useChat = (): UseChatReturn => {
   const [chat, setChat] = useState<Chat | null>(null);
-  const [chats, setChats] = useState<Chat[]>([]);
+  // Metadata only (no messages): the sidebar/data page never renders
+  // message content, and materializing every message of every chat here
+  // dominated memory and startup time with long histories.
+  const [chats, setChats] = useState<ChatMetadata[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Always-current chat reference. Async flows (e.g. send message -> stream
@@ -19,9 +22,9 @@ export const useChat = (): UseChatReturn => {
 
   const loadChats = useCallback(async () => {
     try {
-      const allChats = await ChatStorage.getAllChats();
+      const allChats = await ChatStorage.getChatMetadatas();
       if (Array.isArray(allChats)) {
-        setChats(allChats.sort((a, b) => b.updatedAt - a.updatedAt));
+        setChats(allChats);
       }
     } catch (error) {
       logError('Failed to load chats:', error instanceof Error ? error : new Error(String(error)));
@@ -113,10 +116,13 @@ export const useChat = (): UseChatReturn => {
         setChat(updatedChat);
       }
 
-      // Patch the chat list locally instead of re-reading every chat with
-      // all its messages from IndexedDB on every single message.
+      // Patch the chat list locally instead of re-reading every chat from
+      // IndexedDB on every single message. The list stores metadata only -
+      // project the updated chat down to it.
+      const { messages: savedMessages, ...savedMeta } = updatedChat;
+      const updatedMeta: ChatMetadata = { ...savedMeta, messageCount: savedMessages.length };
       setChats(prev => {
-        const next = prev.map(c => (c.id === updatedChat.id ? updatedChat : c));
+        const next = prev.map(c => (c.id === updatedMeta.id ? updatedMeta : c));
         return next.sort((a, b) => b.updatedAt - a.updatedAt);
       });
     } catch (error) {

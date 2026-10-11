@@ -141,16 +141,40 @@ export const useProfiles = (): UseProfilesReturn => {
         typeof p.systemPrompt === 'string'
       );
 
-      // Assign new IDs to imported profiles to avoid conflicts
+      // Normalize the numeric fields to the ranges saveProfile enforces:
+      // a hand-edited or foreign export file with missing/out-of-range
+      // values would otherwise make saveProfile throw and abort the whole
+      // import halfway through (with the already-saved entries stuck in
+      // storage but missing from the state).
+      const now = Date.now();
+      const num = (value: unknown, fallback: number): number =>
+        typeof value === 'number' && Number.isFinite(value) ? value : fallback;
       const newProfiles = validProfiles.map(p => ({
         ...p,
-        id: `profile_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
-        createdAt: Date.now(),
+        id: `profile_${now}_${Math.random().toString(36).slice(2, 11)}`,
+        temperature: Math.min(2, Math.max(0, num(p.temperature, 0.7))),
+        topP: Math.min(1, Math.max(0, num(p.topP, 0.9))),
+        maxTokens: Math.min(2048, Math.max(1, Math.round(num(p.maxTokens, 512)))),
+        createdAt: now,
+        updatedAt: now,
       }));
 
-      newProfiles.forEach(p => ProfileStorage.saveProfile(p));
-      setProfiles([...profiles, ...newProfiles]);
-      return true;
+      // Save one by one: a single failing entry must not abort the rest -
+      // only the entries that actually made it into the storage go into
+      // the state, so the two can never diverge.
+      const savedProfiles: Profile[] = [];
+      for (const p of newProfiles) {
+        try {
+          ProfileStorage.saveProfile(p);
+          savedProfiles.push(p);
+        } catch (err) {
+          logError(`Failed to import profile "${p.name}":`, err);
+        }
+      }
+      if (savedProfiles.length > 0) {
+        setProfiles([...profiles, ...savedProfiles]);
+      }
+      return savedProfiles.length > 0;
     } catch (error) {
       logError('Failed to import profiles:', error);
       return false;

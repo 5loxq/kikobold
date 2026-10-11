@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Chat, ChatFolder } from '../../types';
+import { Chat, ChatFolder, ChatMetadata } from '../../types';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { useDarkMode } from '../../hooks/useDarkMode';
 import { version as appVersion } from '../../../package.json';
@@ -8,9 +8,9 @@ import { version as appVersion } from '../../../package.json';
 type TabId = 'chat' | 'profiles' | 'memory' | 'library' | 'models' | 'images' | 'data' | 'settings' | 'help' | 'roadmap' | 'wiki' | 'contact' | 'privacy' | 'imprint';
 
 interface SidebarProps {
-  chats: Chat[];
+  chats: ChatMetadata[];
   activeChat: Chat | null;
-  onSelectChat: (chat: Chat) => void;
+  onSelectChat: (chat: ChatMetadata) => void;
   onNewChat: () => void;
   onDeleteChat: (chatId: string) => void;
   activeTab: TabId;
@@ -192,10 +192,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'help', label: t('sidebar.groupHelp'), tabs: helpTabs },
   ];
 
-  const chatsInFolder = (folderId: string): Chat[] => chats.filter((c) => c.folderId === folderId);
+  const chatsInFolder = (folderId: string): ChatMetadata[] => chats.filter((c) => c.folderId === folderId);
   const ungroupedChats = chats.filter((c) => !c.folderId || !folders.some((f) => f.id === c.folderId));
 
-  const renderChatRow = (chat: Chat): React.ReactNode => (
+  const renderChatRow = (chat: ChatMetadata): React.ReactNode => (
     <div
       key={chat.id}
       draggable

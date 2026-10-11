@@ -26,7 +26,7 @@ import { applyAccessibilityClasses } from '../../services/accessibility';
 import { useLibrary } from '../../hooks/useLibrary';
 import { type LibraryFile, resolveLibraryReferences } from '../../services/storage/LibraryStorage';
 import * as ChatExport from '../../services/storage/chat-export-import';
-import { Chat, ChatFolder, MemoryEntry } from '../../types';
+import { Chat, ChatFolder, ChatMetadata, MemoryEntry } from '../../types';
 import { version as appVersion } from '../../../package.json';
 import { useChat } from '../../hooks/useChat';
 import { useModels } from '../../hooks/useModels';
@@ -340,7 +340,7 @@ export const MainLayout: FC = () => {
     }
   };
 
-  const handleSelectChat = async (selectedChat: Chat): Promise<void> => {
+  const handleSelectChat = async (selectedChat: ChatMetadata): Promise<void> => {
     try {
       if (!selectedChat?.id) {
         throw new Error('Invalid chat selected');
@@ -575,9 +575,12 @@ export const MainLayout: FC = () => {
   };
 
   // Data page: full backup of chats + memories + library files
-  const handleExportAllData = (): void => {
+  const handleExportAllData = async (): Promise<void> => {
     try {
-      ChatExport.exportChats(chats, memories, libraryFiles, folders);
+      // The chats state is metadata-only (no messages) - the export needs
+      // the full conversations, so read them fresh from the database.
+      const fullChats = await ChatStorage.getAllChats();
+      ChatExport.exportChats(fullChats, memories, libraryFiles, folders);
     } catch (err) {
       // e.g. "no chats to export": the user must see WHY nothing happened
       logError('Failed to export data:', err);

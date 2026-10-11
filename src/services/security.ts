@@ -31,16 +31,8 @@ export const sanitizeInputLight = (input: string): string => {
 };
 
 /**
- * Allowed file types and their MIME types
- */
-const ALLOWED_FILE_TYPES: Record<string, string[]> = {
-  '.json': ['application/json', 'text/plain'],
-  '.txt': ['text/plain'],
-  '.md': ['text/markdown', 'text/plain'],
-};
-
-/**
- * Maximum file sizes by type (in MB)
+ * Maximum file sizes by type (in MB). `maxSizeMB` in validateFileUpload is
+ * the fallback for extensions that are allowed but not listed here.
  */
 const MAX_FILE_SIZES: Record<string, number> = {
   '.json': 10,  // 10MB for JSON files
@@ -61,7 +53,11 @@ const DANGEROUS_EXTENSIONS = [
 
 /**
  * Validate file uploads for security
- * Checks file type, size, extension, and content
+ * Checks the extension (allowlist + blocklist) and the file size. The
+ * browser-reported MIME type is NOT used: it is unreliable across
+ * platforms (often empty or application/octet-stream), while the
+ * extension allowlist is the actual gate - and the importers parse and
+ * structurally validate the content anyway.
  */
 export const validateFileUpload = (
   file: File,
@@ -95,17 +91,6 @@ export const validateFileUpload = (
   const maxSize = MAX_FILE_SIZES[fileExtension] || maxSizeMB;
   if (file.size > maxSize * 1024 * 1024) {
     return { valid: false, error: `File too large. Maximum size: ${maxSize}MB` };
-  }
-
-  // Check file type for known extensions
-  if (fileExtension in ALLOWED_FILE_TYPES) {
-    const allowedTypes = ALLOWED_FILE_TYPES[fileExtension];
-    if (!allowedTypes.includes(file.type)) {
-      // Some browsers may not set the correct MIME type, so we also check by extension
-      if (!fileName.endsWith(fileExtension)) {
-        return { valid: false, error: `Invalid file type for extension: ${fileExtension}` };
-      }
-    }
   }
 
   // Additional check: prevent files with multiple extensions
@@ -155,23 +140,11 @@ export const checkWebGPUSupport = async (): Promise<boolean> => {
 };
 
 /**
- * Check if WASM is supported in the browser
- * Note: Returns true even if instantiateStreaming is not available,
- * as basic WebAssembly is still functional
+ * Check if WebAssembly is supported in the browser. Only the presence of
+ * the global WebAssembly object matters: instantiateStreaming is an
+ * optional convenience that the engines do not require (they fall back
+ * to array-buffer instantiation).
  */
 export const checkWASMSupport = (): boolean => {
-    try {
-        if (typeof WebAssembly === 'undefined') {
-            return false;
-        }
-
-        // Some older browsers don't support streaming but still support basic WASM
-        if (typeof WebAssembly.instantiateStreaming === 'undefined') {
-            return true; // WASM is still supported, just not streaming
-        }
-
-        return true;
-    } catch {
-        return false;
-    }
+    return typeof WebAssembly !== 'undefined';
 };

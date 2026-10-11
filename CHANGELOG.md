@@ -2,6 +2,16 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.26] - 2026-10-11
+
+### Geändert (Umsetzung der zurückgestellten Aufräum-Kandidaten)
+
+- **Sidebar/Daten-Seite laden keine Nachrichten mehr:** Neue `ChatStorage.getChatMetadatas()` (Cursor-Read) liefert die Chat-Liste ohne Nachrichten plus `messageCount` — bisher materialisierte `getAllChats()` jede Nachricht jedes Chats im Speicher, nur um Titel/Datum/Ordner zu rendern. Der Typ `ChatMetadata` ersetzt `Chat` in Sidebar, DataManager und `useChat.chats`; der Daten-Export liest die vollen Chats zur Laufzeit frisch aus der DB.
+- **Markdown-Streaming deutlich günstiger:** `splitBlocks(content)` läuft in `MarkdownContent` jetzt memoized — die Streaming-Bubble rendert pro Token und hat sonst den jeweils kompletten Text neu in Blöcke zerlegt (quadratische Arbeit über die Antwortlänge).
+- **Profile-Import robust:** Fehlende/ungültige `temperature`/`topP`/`maxTokens`/`updatedAt` aus fremden oder hand-editierten Exporten werden normalisiert (Clamps wie `saveProfile` sie erzwingt), statt den Import mitten drin abbrechen zu lassen; gespeichert wird pro Profil mit eigenem try/catch — State und Storage können nicht mehr divergieren, ein kaputtes Profil reißt die anderen nicht mit.
+- **security.ts aufgeräumt:** Der MIME-Typ-Check war tot (`fileName.endsWith(fileExtension)` ist immer true, weil die Extension aus dem Namen abgeleitet wird) — entfernt; der Browser-MIME ist ohnehin plattformabhängig unzuverlässig, die Extension-Allowlist ist das echte Gate und die Importer validieren den Inhalt strukturell. `checkWASMSupport` gab in beiden Zweigen `true` zurück (der `instantiateStreaming`-Zweig war wirkungslos) — auf die eigentliche Aussage reduziert.
+- **Theme-Service-Konsolidierung: bereits erledigt** — die Prüfung zeigt, dass v4.2.1 („Dark-Mode ohne Prop-Drilling") das vollständig umgesetzt hat; keine duplizierte Theme-Logik mehr im Code, alle Konsumenten laufen über `services/theme.ts` bzw. `useDarkMode`.
+
 ## [4.3.25] - 2026-10-11
 
 ### Behoben (Voll-Audit: komplette Code-Analyse + Security-Review)
