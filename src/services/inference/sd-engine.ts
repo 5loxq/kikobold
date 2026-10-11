@@ -201,6 +201,50 @@ const ensureOrtMemory64Shim = (): void => {
 };
 
 /**
+ * The glue also uses the OLD JSPI draft API: `new WebAssembly.Function(type,
+ * fn, {suspending:"first"})` for async imports and `{promising:"first"}` for
+ * async exports. Chrome never shipped `WebAssembly.Function` (JS type
+ * reflection); it ships the final JSPI API instead (Chrome 137+):
+ * `new WebAssembly.Suspending(fn)` and `WebAssembly.promising(fn)`. The shim
+ * translates the draft constructor to the final API. `WebAssembly.Function
+ * .type()` (used to re-type an export) is faked - the translated constructor
+ * ignores the type descriptor anyway.
+ */
+const ensureOrtJspiShim = (): void => {
+  const wa = WebAssembly as unknown as {
+    Function?: unknown;
+    Suspending?: new (fn: unknown) => unknown;
+    promising?: (fn: unknown) => unknown;
+  };
+  if (typeof wa.Function === 'function') {
+    return;
+  }
+  if (typeof wa.Suspending !== 'function' || typeof wa.promising !== 'function') {
+    return;
+  }
+  const shimmed = function (
+    _type: unknown,
+    fn: unknown,
+    options?: { suspending?: string; promising?: string }
+  ): unknown {
+    if (options?.promising === 'first') {
+      return wa.promising?.(fn);
+    }
+    if (options?.suspending === 'first') {
+      const suspending = wa.Suspending;
+      if (suspending) {
+        return new suspending(fn);
+      }
+    }
+    throw new Error('unsupported WebAssembly.Function options (JSPI shim)');
+  } as unknown as Record<string, unknown>;
+  shimmed['type'] = (): { parameters: string[]; results: string[] } =>
+    ({ parameters: ['externref'], results: [] });
+  wa.Function = shimmed;
+  log('sd-engine: installed WebAssembly.Function JSPI translation shim');
+};
+
+/**
  * Probe the browser with the final memory64 JS API (the same allocation the
  * shim performs for the engine): memory64 at all, the 16 GiB maximum the
  * engine's glue requests, and the shared variant (needs cross-origin
@@ -254,6 +298,22 @@ const preflight = async (): Promise<void> => {
       + 'WebAssembly memory (COOP/COEP headers missing).'
     );
   }
+  // The engine's glue needs JSPI for its async kernels: either the old draft
+  // constructor (WebAssembly.Function, never shipped in Chrome) or the final
+  // API our shim translates it into (WebAssembly.Suspending/promising).
+  const waJspi = WebAssembly as unknown as {
+    Function?: unknown;
+    Suspending?: unknown;
+    promising?: unknown;
+  };
+  const hasJspi = typeof waJspi.Suspending === 'function'
+    && typeof waJspi.promising === 'function';
+  if (typeof waJspi.Function !== 'function' && !hasJspi) {
+    throw new Error(
+      'This browser does not support the JSPI API the image engine needs '
+      + '(WebAssembly.Suspending/promising). Please use Chrome or Edge 137 or newer.'
+    );
+  }
   if (!(navigator as Navigator & { gpu?: unknown }).gpu) {
     throw new Error('WebGPU is not available (Chrome or Edge required)');
   }
@@ -302,6 +362,7 @@ export const loadImageGenModel = async (
     try {
       ensureOrtAssertShim();
       ensureOrtMemory64Shim();
+      ensureOrtJspiShim();
       await preflight();
 
       const [{ DiffusionPipeline, setModelCacheDir }, ortModule] = await Promise.all([

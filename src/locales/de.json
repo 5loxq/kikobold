@@ -239,7 +239,7 @@
     "closeButton": "Alles klar!",
     "v437": {
       "item1": "Download-Anzeige für das Bildmodell: Das Bild-Studio zeigt jetzt wie die Chat-Modelle geladene MB, Gesamtgröße, Tempo und geschätzte Restzeit - der Balken läuft über alle Modell-Dateien, nicht nur pro Datei.",
-      "item2": "Bild-Engine repariert: Mehrere Bugs im ONNX-Runtime-Fork (fehlendes assert, veraltete memory64-JS-API) ließen das Bildmodell nach dem 2-GB-Download abstürzen.",
+      "item2": "Bild-Engine repariert: Mehrere Bugs im ONNX-Runtime-Fork (fehlendes assert, veraltete memory64- und JSPI-JS-API) ließen das Bildmodell nach dem 2-GB-Download abstürzen.",
       "item3": "Klare Browser-Anforderung: Die Bildgenerierung braucht WebAssembly memory64 (Chrome/Edge ab Version 133). Das Studio prüft das jetzt vor dem Download und warnt früh, statt vergeblich 2 GB herunterzuladen."
     },
     "v430": {

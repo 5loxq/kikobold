@@ -239,7 +239,7 @@
     "closeButton": "Got it!",
     "v437": {
       "item1": "Download display for the image model: the image studio now shows loaded MB, total size, speed and estimated remaining time just like the chat models - the bar tracks all model files, not just one file at a time.",
-      "item2": "Image engine fixed: several bugs in the ONNX Runtime fork (missing assert, outdated memory64 JS API) crashed the image model after the 2 GB download.",
+      "item2": "Image engine fixed: several bugs in the ONNX Runtime fork (missing assert, outdated memory64 and JSPI JS APIs) crashed the image model after the 2 GB download.",
       "item3": "Clear browser requirement: image generation needs WebAssembly memory64 (Chrome/Edge 133 or newer). The studio now checks this before the download and warns early instead of downloading 2 GB in vain."
     },
     "v430": {

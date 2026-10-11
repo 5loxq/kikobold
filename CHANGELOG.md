@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.10] - 2026-10-11
+
+### Behoben
+
+- **„WebAssembly.Function is not a constructor" beim Initialisieren der Bild-Engine**: Der ORT-Fork nutzt für seine asynchronen Kernel den *alten JSPI-Entwurf* - `new WebAssembly.Function(typ, fn, {suspending:"first"})` für Async-Imports und `{promising:"first"}` für Async-Exports. Chrome hat `WebAssembly.Function` (Typ-Reflektion) nie ausgeliefert; die finale JSPI-API (Chrome ab 137) heißt `WebAssembly.Suspending` / `WebAssembly.promising`. Ein Shim übersetzt die Entwurfs-Aufrufe zur Laufzeit in die finale API - im Hauptthread (sd-engine) und im pthread-Worker (der das Wasm-Modul mit denselben instrumentierten Imports erneut instanziiert; der Shim wird beim Kopieren der Worker-Datei vorangestellt). Der Preflight prüft zusätzlich früh, ob überhaupt eine der beiden APIs verfügbar ist (Chrome/Edge ab 137), bevor der große Download startet.
+
 ## [4.3.9] - 2026-10-11
 
 ### Behoben
