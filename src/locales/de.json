@@ -348,6 +348,9 @@
     },
     "v200": {
       "item1": "Neues Design, kuratierte Modelle (LFM 2.5, Gemma 2, Qwen 2) - Modelle werden direkt von dieser Webseite geladen."
+    },
+    "v4329": {
+      "item1": "Sicherheitsfilter für das Bild-Studio: Prompts mit sexuellen Inhalten oder Bezug zu Minderjährigen werden vor der Generierung gesperrt, und eine automatische Bildanalyse blockiert auffällige Ergebnisse. Details stehen in den Nutzungsregeln im Studio und im Impressum."
     }
   },
   "memory": {
@@ -789,7 +792,9 @@
     "linksText": "Diese Website enthält Links zu externen Websites Dritter (etwa zu Modell-Anbietern wie HuggingFace). Auf deren Inhalte haben wir keinen Einfluss und können daher keine Gewähr für sie übernehmen. Zum Zeitpunkt der Verlinkung waren keine Rechtsverstöße erkennbar.",
     "copyrightTitle": "Urheberrecht",
     "copyrightText": "Die App ist derzeit nicht öffentlich im Git veröffentlicht - der Quellcode liegt in einem privaten Repository. Eine Veröffentlichung unter der MIT-Lizenz ist in Planung. Die eingebundenen KI-Modelle stehen unter den Lizenzen ihrer jeweiligen Anbieter (LiquidAI, Qwen/Alibaba) und werden unverändert aus öffentlichen Quellen ausgeliefert.",
-    "backToChat": "Zurück zum Chat"
+    "backToChat": "Zurück zum Chat",
+    "usageTitle": "Nutzungsbedingungen / Untersagung bestimmter Inhalte",
+    "usageText": "Die Nutzung der KI-Funktionen dieser Website - insbesondere der lokalen Bildgenerierung - ist ausschließlich für rechtmäßige Zwecke gestattet. Pornografische Inhalte, sexuell explizite Inhalte sowie sämtliche Inhalte mit Bezug zu Kindern oder Minderjährigen (einschließlich virtueller bzw. KI-generierter kinderpornografischer Inhalte, § 184b StGB) sind untersagt. Technische Schutzmaßnahmen (automatische Prompt- und Bildprüfung) sollen die Erstellung solcher Inhalte verhindern; ihre Umgehung ist ebenfalls untersagt."
   },
   "imagesPage": {
     "title": "Bild-Studio",
@@ -824,6 +829,15 @@
     "errorMemoryLimit": "Dieser Browser erlaubt die nötige 16-GB-Speicherreservierung nicht.",
     "errorMemoryLimitHint": "Die Bild-Engine reserviert virtuellen Arbeitsspeicher bis 16 GB (memory64). Dein Browser unterstützt memory64, lehnt diese Größe aber ab. Der Rest der App funktioniert weiterhin.",
     "detectedBrowser": "Erkannter Browser: {{version}}",
-    "errorLoadModel": "Das Bildmodell konnte nicht geladen werden"
+    "errorLoadModel": "Das Bildmodell konnte nicht geladen werden",
+    "safetyNoticeTitle": "Nutzungsregeln",
+    "safetyNoticeText": "Dieses Werkzeug erzeugt keine pornografischen und keine sexuell expliziten Inhalte - und grundsätzlich keine Inhalte mit oder über Kinder bzw. Minderjährige. Prompts werden vor der Generierung automatisch geprüft, Ergebnisse werden vor der Anzeige kontrolliert und gesperrt, wenn sie gegen diese Regeln verstoßen. Die Erstellung, Verbreitung oder das Besitzen kinderpornografischer Inhalte - auch virtueller, KI-generierter - ist nach § 184b StGB strafbar und wird hier nicht geduldet.",
+    "safetyBlocked": {
+      "prompt": {
+        "minor": "Dieser Prompt wurde gesperrt: Er verbindet sexuelle Inhalte mit Kindern oder Minderjährigen bzw. benennt sie. Solche Inhalte werden nicht generiert.",
+        "sexual": "Dieser Prompt wurde gesperrt: Pornografische oder sexuell explizite Inhalte werden nicht generiert. Bitte passe deinen Prompt an."
+      },
+      "output": "Das generierte Bild wurde vom Sicherheitsfilter blockiert (automatische Bildanalyse). Bitte passe deinen Prompt an - etwa durch Kleidung, anderen Bildausschnitt oder anderen Bildstil."
+    }
   }
 }

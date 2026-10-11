@@ -8,6 +8,7 @@ import {
   isImageGenModelLoaded,
   unloadImageGenModel,
 } from '../../services/inference/sd-engine';
+import { ImageSafetyError } from '../../services/image-safety';
 import { downloadEta } from '../../utils/format';
 
 interface ImageStudioProps {
@@ -132,6 +133,12 @@ export const ImageStudio: React.FC<ImageStudioProps> = ({ onNavigateBack }) => {
         setModelLoaded(true);
       })
       .catch((err: unknown) => {
+        if (err instanceof ImageSafetyError) {
+          setError(err.source === 'prompt'
+            ? t(`imagesPage.safetyBlocked.prompt.${err.category}`)
+            : t('imagesPage.safetyBlocked.output'));
+          return;
+        }
         const detail = err instanceof Error ? err.message : String(err);
         setError(`${t('imagesPage.errorLoadModel')}: ${detail}`);
       })
@@ -175,6 +182,17 @@ export const ImageStudio: React.FC<ImageStudioProps> = ({ onNavigateBack }) => {
         <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
           {t('imagesPage.intro', { name: IMAGE_GEN_MODEL.name, size: Math.round(IMAGE_GEN_MODEL.fileSizeMB / 1024 * 10) / 10 })}
         </p>
+
+        {/* Usage rules: visible prohibition, also legally relevant for
+            the operator (§ 184b StGB covers virtual CSAM as well). */}
+        <div className="mb-6 p-4 bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-2xl">
+          <p className="text-zinc-700 dark:text-zinc-300 font-semibold">
+            {t('imagesPage.safetyNoticeTitle')}
+          </p>
+          <p className="text-zinc-600 dark:text-zinc-400 text-sm mt-1 leading-relaxed">
+            {t('imagesPage.safetyNoticeText')}
+          </p>
+        </div>
 
         {!hasWebGPU && (
           <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-2xl">

@@ -348,6 +348,9 @@
     },
     "v200": {
       "item1": "New design, curated models (LFM 2.5, Gemma 2, Qwen 2) - models are downloaded directly from this website."
+    },
+    "v4329": {
+      "item1": "Safety filter for the image studio: prompts requesting sexual content or content involving minors are blocked before generation, and an automatic image analysis screens the results. Details are in the usage rules in the studio and in the imprint."
     }
   },
   "memory": {
@@ -789,7 +792,9 @@
     "linksText": "This website contains links to external third-party websites (e.g. model providers such as HuggingFace). We have no influence on their content and therefore cannot guarantee it. No legal violations were apparent at the time of linking.",
     "copyrightTitle": "Copyright",
     "copyrightText": "The app is currently not published publicly on Git - the source code is kept in a private repository. Publication under the MIT license is planned. The integrated AI models are subject to the licenses of their respective providers (LiquidAI, Qwen/Alibaba) and are served unmodified from public sources.",
-    "backToChat": "Back to chat"
+    "backToChat": "Back to chat",
+    "usageTitle": "Terms of use / Prohibited content",
+    "usageText": "The AI features of this website - in particular the local image generation - may only be used for lawful purposes. Pornographic content, sexually explicit content and any content related to children or minors (including virtual or AI-generated child sexual abuse material, § 184b StGB, German law) is prohibited. Technical safeguards (automatic prompt and image screening) are in place to prevent the creation of such content; circumventing them is prohibited as well."
   },
   "imagesPage": {
     "title": "Image Studio",
@@ -824,6 +829,15 @@
     "errorMemoryLimit": "This browser does not allow the required 16 GB memory reservation.",
     "errorMemoryLimitHint": "The image engine reserves up to 16 GB of virtual memory (memory64). Your browser supports memory64 but rejects this size. The rest of the app keeps working.",
     "detectedBrowser": "Detected browser: {{version}}",
-    "errorLoadModel": "The image model could not be loaded"
+    "errorLoadModel": "The image model could not be loaded",
+    "safetyNoticeTitle": "Usage rules",
+    "safetyNoticeText": "This tool does not generate pornographic or sexually explicit content - and generally no content involving children or minors. Prompts are checked automatically before generation, and results are screened before being shown; anything violating these rules is blocked. Creating, distributing or possessing child sexual abuse material - including virtual, AI-generated content - is a criminal offense (§ 184b StGB, German law) and will not be tolerated here.",
+    "safetyBlocked": {
+      "prompt": {
+        "minor": "This prompt was blocked: it combines sexual content with children or minors, or names them. Such content is not generated.",
+        "sexual": "This prompt was blocked: pornographic or sexually explicit content is not generated. Please adjust your prompt."
+      },
+      "output": "The generated image was blocked by the safety filter (automatic image analysis). Please adjust your prompt - e.g. clothing, a different framing or a different style."
+    }
   }
 }

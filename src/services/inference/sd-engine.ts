@@ -14,6 +14,11 @@
 
 import { version as appVersion } from '../../../package.json';
 import { IMAGE_GEN_MODEL } from '../models/model-registry';
+import {
+  checkOutputSafety,
+  checkPromptSafety,
+  ImageSafetyError,
+} from '../image-safety';
 import { log, warn } from '../logging';
 
 // Minimal structural types for the engine (the package ships its own types,
@@ -935,6 +940,13 @@ export const generateImage = async (
   if (typeof prompt !== 'string' || prompt.trim().length === 0) {
     throw new Error('Prompt must be a non-empty string');
   }
+  // Safety filter BEFORE the model load: blocked prompts fail fast
+  // instead of after a potential 2.2 GB download.
+  const verdict = checkPromptSafety(prompt);
+  if (verdict.blocked && verdict.category) {
+    warn(`sd-engine: prompt blocked by safety filter (${verdict.category})`);
+    throw new ImageSafetyError('prompt', verdict.category);
+  }
   await loadImageGenModel(options.onProgress);
   if (!pipeline) {
     throw new Error('The image model could not be loaded');
@@ -972,6 +984,16 @@ export const generateImage = async (
   const image = images[0];
   if (!image) {
     throw new Error('The model did not return an image');
+  }
+  // Output safety check on the raw tensor, before the image is encoded
+  // and shown/downloadable anywhere.
+  const output = checkOutputSafety(image);
+  if (output.blocked) {
+    warn(
+      `sd-engine: output blocked by safety heuristic `
+      + `(skin ratio ${(output.skinRatio * 100).toFixed(1)}%)`
+    );
+    throw new ImageSafetyError('output', 'sexual');
   }
   return { dataUrl: tensorToDataUrl(image), seed: Number(seed) };
 };

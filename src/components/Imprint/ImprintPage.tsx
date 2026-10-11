@@ -89,6 +89,15 @@ export const ImprintPage: React.FC<ImprintPageProps> = ({ onNavigateBack }) => {
           </p>
         </section>
 
+        <section className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-800 mb-4">
+          <h2 className="text-lg font-semibold mb-3 text-zinc-700 dark:text-zinc-200">
+            {t('imprint.usageTitle')}
+          </h2>
+          <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            {t('imprint.usageText')}
+          </p>
+        </section>
+
         {onNavigateBack && (
           <button
             onClick={onNavigateBack}

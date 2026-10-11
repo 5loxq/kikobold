@@ -2,6 +2,14 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.29] - 2026-10-11
+
+### Neu (Sicherheitsfilter für die Bildgenerierung)
+- **Prompt-Filter vor der Generierung:** Prompts mit sexuell expliziten Inhalten oder Bezug zu Kindern/Minderjährigen werden gesperrt, bevor das Modell geladen oder ausgeführt wird (`src/services/image-safety.ts`). Normalisierung faltet Groß-/Kleinschreibung, Umlaute/Diakritika, Leetspeak (`p0rn`) und Trennzeichen-Tricks (`n s f w`); Altersangaben bis 17 Jahre gelten als Minderjährige. Jugendwörter allein („Mädchen mit rotem Luftballon") sperren nicht — erst die Kombination mit sexuellen Begriffen eskaliert zur Kategorie ‚Minderjährige'. Der Negative Prompt wird bewusst NICHT geprüft: Negative Prompts unterdrücken Konzepte, „nsfw" dort ist legitime Sicherheitsnutzung.
+- **Output-Heuristik nach dem VAE-Decode:** Vor der Anzeige/Download wird das Rohtensor auf den Hautfarben-Anteil geprüft (klassische RGB-Skin-Regel nach Peer et al.); ab 55 % Hautanteil wird das Bild gesperrt (Vollbild-Nudität liegt typischerweise bei 60–80 %, legitime Portraits bei 15–45 %). Bewusst konservativ: Teilnudität kann durchrutschen, monochrome hautfarbene Flächen können falsch positiv werden — dokumentierte Heuristik, kein Klassifikator.
+- **Sichtbares Nutzungsverbot:** Hinweisbox mit Nutzungsregeln im Bild-Studio (inkl. § 184b StGB, der auch virtuelle/KI-generierte kinderpornografische Inhalte erfasst) und neue Sektion „Nutzungsbedingungen / Untersagung bestimmter Inhalte" im Impressum.
+- **Ehrliche Einordnung im Code dokumentiert:** Alles läuft client-seitig — ein entschlossener Nutzer kann Filter per Devtools umgehen. Der Filter erhöht die Schwelle, blockiert den beiläufigen Weg und dokumentiert die Betreiber-Position; er ist keine Garantie.
+
 ## [4.3.28] - 2026-10-11
 
 ### Behoben (Voll-Audit: Security, Bugs, Syntax, Barrierefreiheit)
