@@ -237,6 +237,10 @@
     "title": "What's new",
     "subtitle": "A few things have changed since your last visit:",
     "closeButton": "Got it!",
+    "v4324": {
+      "item1": "Image studio fixed: the result previously appeared as a 3x3 grid of channel slices because the VAE decoder's planar NCHW data was read as interleaved - now the actual image comes out.",
+      "item2": "Seed display and true reproducibility: the studio shows the seed that was used, and the scheduler's inter-step noise is now seeded - same seed + same prompt = exactly the same image."
+    },
     "v437": {
       "item1": "Download display for the image model: the image studio now shows loaded MB, total size, speed and estimated remaining time just like the chat models - the bar tracks all model files, not just one file at a time.",
       "item2": "Image engine fixed: several bugs in the ONNX Runtime fork (missing assert, outdated memory64 and JSPI JS APIs) crashed the image model after the 2 GB download.",

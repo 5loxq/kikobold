@@ -8,6 +8,9 @@
  *
  * Run: node scripts/sd-repro/webgpu-repro.mjs [url]
  *   url defaults to https://www.kikobold.net
+ *   REPRO_SEED=<n> fills the seed field (verifies reproducibility: two
+ *   runs with the same seed must produce byte-identical PNGs).
+ *   REPRO_OUT=<path> writes the result PNG there.
  */
 import puppeteer from 'puppeteer-core';
 import fs from 'node:fs';
@@ -129,6 +132,24 @@ for (let i = 0; i < 15; i++) {
 }
 await new Promise((r) => setTimeout(r, 300));
 
+// Optional: fill the seed field (REPRO_SEED) the same React-safe way
+if (process.env.REPRO_SEED) {
+  for (let i = 0; i < 15; i++) {
+    const typed = await retryEvaluate((text) => {
+      const inp = document.querySelector('#image-seed');
+      if (!inp) return false;
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+      setter.call(inp, text);
+      inp.dispatchEvent(new Event('input', { bubbles: true }));
+      return inp.value === text;
+    }, process.env.REPRO_SEED);
+    if (typed) break;
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+  console.log(`seed field set to ${process.env.REPRO_SEED}`);
+  await new Promise((r) => setTimeout(r, 300));
+}
+
 // Diagnostics: why is the generate button (not) clickable?
 const diag = await retryEvaluate(() => {
   const prompt = document.querySelector('#image-prompt');
@@ -216,7 +237,7 @@ while (Date.now() < deadline && !outcome) {
         .sort((a, b) => a.textContent.length - b.textContent.length)[0];
       if (errEl) return { type: 'error', text: (errEl.textContent ?? '').trim().slice(0, 800) };
       const img = document.querySelector('img[src^="data:image/png"]');
-      if (img) return { type: 'image', len: img.src.length };
+      if (img) return { type: 'image', len: img.src.length, w: img.naturalWidth, h: img.naturalHeight, src: img.src };
       const status = (document.body.innerText.match(/Modell wird geladen[^\n]*|Bild wird generiert[^\n]*|Schritt \d+[^\n]*/) ?? [null])[0];
       return status ? { type: 'status', text: status } : null;
     }, null);
@@ -234,7 +255,12 @@ while (Date.now() < deadline && !outcome) {
 }
 
 console.log(`\n=== OUTCOME after ${Math.round((Date.now() - started) / 1000)}s ===`);
-console.log(outcome ? JSON.stringify(outcome, null, 1).slice(0, 800) : 'TIMEOUT');
+console.log(outcome ? JSON.stringify({ ...outcome, src: outcome.src ? `<${outcome.src.length} chars>` : undefined }, null, 1).slice(0, 800) : 'TIMEOUT');
+if (outcome?.type === 'image' && outcome.src) {
+  const b64 = outcome.src.replace(/^data:image\/png;base64,/, '');
+  fs.writeFileSync(process.env.REPRO_OUT ?? '/tmp/webgui-result.png', Buffer.from(b64, 'base64'));
+  console.log(`result image saved: ${process.env.REPRO_OUT ?? '/tmp/webgui-result.png'} (${outcome.w}x${outcome.h})`);
+}
 
 console.log('\n=== console/error log (relevant) ===');
 for (const l of logs) {

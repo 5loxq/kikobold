@@ -2,6 +2,14 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.24] - 2026-10-11
+
+### Behoben
+
+- **Bild-Studio: „9 Bilder auf einem Bild" behoben — Root Cause war die Kanal-Lesung des VAE-Outputs.** Der ONNX-VAE-Decoder liefert NCHW `[1, 3, H, W]` mit **planarer** Datenlage (drei vollständige R/G/B-Ebenen hintereinander); `tensorToDataUrl` las die Daten aber **interleaved** (RGB-Tripel pro Pixel). Dadurch setzte sich jeder Pixel aus drei benachbarten Werten *derselben* Ebene zusammen: Das Bild erschien als 3x3-Raster von Kanal-Slices (und war quasi graustufig, weil R≈G≈B pro Pixel). Pixel-Analyse des Harness-Bildes bestätigte die Struktur (kanalnah gleiche Pixel überall, keine natürliche Farbe). Die Konvertierung liest NCHW jetzt planar (R = `[0..HW)`, G = `[HW..2HW)`, B = `[2HW..3HW)`) und NHWC weiterhin interleaved; zusätzlich prüft sie die Datenlänge gegen die Dims.
+- **Bild-Studio: Seed-Anzeige.** `generateImage` liefert jetzt den verwendeten Seed zurück; das Studio schreibt ihn nach der Generierung ins Seed-Feld und zeigt ihn unter dem Ergebnis an — ein Klick auf „Erneut erzeugen" mit demselben Seed reproduziert das Bild.
+- **Seed-Reproduzierbarkeit: Das Zwischen-Rauschen des Schedulers ist jetzt geseedet.** Der Fork zieht das Rauschen, das `LCMScheduler.step` zwischen den Diffusionsschritten addiert, **ungeseedet** (`randomNormalTensor(dims)` ohne Seed) — derselbe Seed lieferte also trotzdem jedes Mal ein anderes Bild. Post-Load-Patch (wie `prepare_model_inputs`/`Tensor.reshape`): `step` wird durch eine Kopie der Fork-Implementierung ersetzt, deren einzigter Unterschied ein deterministischer RNG (FNV-1a-Hash aus Seed + Schrittindex, mulberry32, Box-Muller) für das Rauschen ist. Gleicher Seed + gleicher Prompt + gleiche Schritte = exakt dasselbe Bild.
+
 ## [4.3.23] - 2026-10-11
 
 ### Behoben

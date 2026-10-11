@@ -237,6 +237,10 @@
     "title": "Das ist neu",
     "subtitle": "Seit deinem letzten Besuch hat sich einiges getan:",
     "closeButton": "Alles klar!",
+    "v4324": {
+      "item1": "Bild-Studio repariert: Das Ergebnis erschien bisher als 3x3-Raster aus Kanal-Slices, weil die planaren NCHW-Daten des VAE-Decoders interleaved gelesen wurden - jetzt kommt das eigentliche Bild heraus.",
+      "item2": "Seed-Anzeige und echte Reproduzierbarkeit: Das Studio zeigt den verwendeten Seed an, und das Zwischen-Rauschen des Schedulers ist jetzt geseedet - gleicher Seed + gleicher Prompt = exakt dasselbe Bild."
+    },
     "v437": {
       "item1": "Download-Anzeige für das Bildmodell: Das Bild-Studio zeigt jetzt wie die Chat-Modelle geladene MB, Gesamtgröße, Tempo und geschätzte Restzeit - der Balken läuft über alle Modell-Dateien, nicht nur pro Datei.",
       "item2": "Bild-Engine repariert: Mehrere Bugs im ONNX-Runtime-Fork (fehlendes assert, veraltete memory64- und JSPI-JS-API) ließen das Bildmodell nach dem 2-GB-Download abstürzen.",

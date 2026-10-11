@@ -61,8 +61,20 @@ export interface ImageGenOptions {
   onProgress?: (progress: ImageGenProgress) => void;
 }
 
+export interface ImageGenResult {
+  /** PNG data URL of the generated image */
+  dataUrl: string;
+  /** The seed the image was generated with (random when not given) */
+  seed: number;
+}
+
 let pipeline: DiffusionPipelineLike | null = null;
 let loadPromise: Promise<void> | null = null;
+// Tensor constructor from @xenova/transformers, captured during the model
+// load (the module is imported there anyway for the Tensor.reshape patch).
+// Needed by the seeded scheduler-noise patch below.
+type TensorConstructor = new (type: string, data: Float32Array, dims: number[]) => object;
+let tensorCtor: TensorConstructor | null = null;
 
 export const isImageGenModelLoaded = (): boolean => pipeline !== null;
 
@@ -542,6 +554,139 @@ const ensureOrtFetchRewrite = (): void => {
 };
 
 /**
+ * Deterministic noise for the scheduler's inter-step noise.
+ *
+ * The fork's LCMScheduler.step() draws the noise it adds between diffusion
+ * steps UNSEEDED (randomNormalTensor(dims) with no seed), so the same seed
+ * still produced a different image on every run - the seed shown in the UI
+ * was a promise the engine did not keep. The patch below replaces step()
+ * with a copy of the fork's implementation whose only difference is that
+ * the noise is drawn from a deterministic RNG seeded with (run seed, step
+ * index). Same seed + same prompt + same steps now reproduce the image.
+ */
+// FNV-1a: stable 32-bit hash of the seed string (seedrandom is internal to
+// the engine package, so the RNG does not need to match its stream - it
+// only needs to be deterministic).
+const hashSeedString = (s: string): number => {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+};
+
+// mulberry32: small deterministic uniform RNG.
+const mulberry32 = (seed: number): (() => number) => {
+  let a = seed >>> 0;
+  return (): number => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+};
+
+// Standard normal noise (Box-Muller), deterministic for (seed, stepIndex).
+const seededNormalTensor = (dims: number[], seed: string, stepIndex: number): object => {
+  const rng = mulberry32(hashSeedString(`${seed}#${stepIndex}`));
+  const n = dims.reduce((a, b) => a * b, 1);
+  const data = new Float32Array(n);
+  for (let i = 0; i < n; i += 2) {
+    const u1 = Math.max(rng(), 1e-12);
+    const u2 = rng();
+    const r = Math.sqrt(-2 * Math.log(u1));
+    data[i] = r * Math.cos(2 * Math.PI * u2);
+    if (i + 1 < n) {
+      data[i + 1] = r * Math.sin(2 * Math.PI * u2);
+    }
+  }
+  return new (tensorCtor as TensorConstructor)('float32', data, dims);
+};
+
+// Structural type of the fork's LCMScheduler (only what the patched step
+// touches).
+interface SchedulerLike {
+  timesteps: { data: Int32Array | number[] };
+  alphasCumprod: Record<number, { data: ArrayLike<number> }>;
+  finalAlphaCumprod: number;
+  config: { prediction_type?: string };
+  getScalingsForBoundaryConditionDiscrete: (timestep: number) => [number, number];
+  step: (
+    modelOutput: TensorLike,
+    timestep: number,
+    timeIndex: number,
+    sample: TensorLike
+  ) => TensorLike[];
+  // Set by generateImage() before each run; read by the patched step.
+  __webguiSeed?: string;
+}
+
+interface TensorLike {
+  dims: number[];
+  mul: (x: number | TensorLike) => TensorLike;
+  div: (x: number) => TensorLike;
+  add: (x: number | TensorLike) => TensorLike;
+  sub: (x: number | TensorLike) => TensorLike;
+}
+
+const installSeededSchedulerStep = (scheduler: object): void => {
+  const proto = Object.getPrototypeOf(scheduler) as Record<string, unknown>;
+  if (proto['__webguiSeededStep'] === true) {
+    return;
+  }
+  proto['step'] = function (
+    this: SchedulerLike,
+    modelOutput: TensorLike,
+    timestep: number,
+    timeIndex: number,
+    sample: TensorLike
+  ): TensorLike[] {
+    // Same math as the fork's LCMScheduler.step (1.0.6), except that the
+    // inter-step noise is deterministic (see comment above).
+    const prevTimeIndex = timeIndex + 1;
+    const prevTimeStep = prevTimeIndex < this.timesteps.data.length
+      ? this.timesteps.data[prevTimeIndex]
+      : timestep;
+
+    const alphaProdT = this.alphasCumprod[timestep].data[0];
+    const alphaProdTPrev = prevTimeStep >= 0
+      ? this.alphasCumprod[prevTimeStep].data[0]
+      : this.finalAlphaCumprod;
+    const betaProdT = 1 - alphaProdT;
+    const betaProdTPrev = 1 - alphaProdTPrev;
+
+    const [cSkip, cOut] = this.getScalingsForBoundaryConditionDiscrete(timestep);
+
+    let predX0: TensorLike;
+    const parametrization = this.config.prediction_type;
+    if (parametrization === 'epsilon') {
+      predX0 = sample.sub(modelOutput.mul(Math.sqrt(betaProdT))).div(Math.sqrt(alphaProdT));
+    } else if (parametrization === 'sample') {
+      predX0 = sample;
+    } else if (parametrization === 'v_prediction') {
+      predX0 = sample.mul(Math.sqrt(alphaProdT)).sub(modelOutput.mul(Math.sqrt(betaProdT)));
+    } else {
+      throw new Error(`Unsupported prediction_type: ${String(parametrization)}`);
+    }
+
+    const denoised = predX0.mul(cOut).add(sample.mul(cSkip));
+    let prevSample = denoised;
+    if (this.timesteps.data.length > 1) {
+      const runSeed = this.__webguiSeed;
+      const noise = runSeed !== undefined
+        ? seededNormalTensor(modelOutput.dims, runSeed, timeIndex) as TensorLike
+        : seededNormalTensor(modelOutput.dims, `random#${timeIndex}`, Date.now()) as TensorLike;
+      prevSample = denoised.mul(Math.sqrt(alphaProdTPrev)).add(noise.mul(Math.sqrt(betaProdTPrev)));
+    }
+    return [prevSample, denoised];
+  };
+  proto['__webguiSeededStep'] = true;
+  log('sd-engine: installed seeded scheduler step (deterministic inter-step noise)');
+};
+
+/**
  * Load the image generation model (downloads on first use, ~2.2 GB).
  * Safe to call repeatedly; parallel calls share one load. Throws with a
  * descriptive message on failure.
@@ -694,6 +839,16 @@ export const loadImageGenModel = async (
         };
         log('sd-engine: restored missing Tensor.reshape method');
       }
+      if (TensorCtor !== null && TensorCtor !== undefined) {
+        tensorCtor = TensorCtor as unknown as TensorConstructor;
+      }
+
+      // 3. The scheduler's inter-step noise is drawn unseeded in the fork,
+      //    which breaks seed reproducibility (see installSeededSchedulerStep).
+      const scheduler = (loaded as { scheduler?: object }).scheduler;
+      if (scheduler !== null && scheduler !== undefined) {
+        installSeededSchedulerStep(scheduler);
+      }
     } catch (err) {
       pipeline = null;
       const detail = err instanceof Error ? err.message : String(err);
@@ -724,12 +879,22 @@ export const loadImageGenModel = async (
 const tensorToDataUrl = (image: { dims: number[]; data: Float32Array }): string => {
   // The ONNX VAE decoder output is either NCHW [1, 3, H, W] or NHWC
   // [1, H, W, 3] depending on the export - detect the layout from dims.
+  // The DATA layout differs accordingly: NCHW is planar (three full R/G/B
+  // planes concatenated), NHWC is interleaved (RGB triplets per pixel).
+  // Reading planar data as interleaved scrambles the image into a 3x3
+  // grid of channel slices - this model exports NCHW, so the planar path
+  // is the one that runs.
   const dims = image.dims;
   const isNchw = dims.length === 4 && dims[1] === 3;
   const height = isNchw ? dims[2] : dims[1];
   const width = isNchw ? dims[3] : dims[2];
-  const channels = 3;
   const pixelCount = width * height;
+  if (image.data.length < pixelCount * 3) {
+    throw new Error(
+      `Unexpected image tensor size: ${image.data.length} elements for `
+      + `${width}x${height} (dims ${dims.join('x')})`
+    );
+  }
 
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -740,14 +905,17 @@ const tensorToDataUrl = (image: { dims: number[]; data: Float32Array }): string 
   }
   const imageData = ctx.createImageData(width, height);
   const out = imageData.data;
+  const data = image.data;
 
   for (let i = 0; i < pixelCount; i++) {
-    const r = Math.round(Math.min(1, Math.max(0, image.data[i * channels])) * 255);
-    const g = Math.round(Math.min(1, Math.max(0, image.data[i * channels + 1])) * 255);
-    const b = Math.round(Math.min(1, Math.max(0, image.data[i * channels + 2])) * 255);
-    out[i * 4] = r;
-    out[i * 4 + 1] = g;
-    out[i * 4 + 2] = b;
+    // Planar: R/G/B are three consecutive slices of length pixelCount.
+    // Interleaved: R/G/B are adjacent triplets.
+    const r = isNchw ? data[i] : data[i * 3];
+    const g = isNchw ? data[pixelCount + i] : data[i * 3 + 1];
+    const b = isNchw ? data[2 * pixelCount + i] : data[i * 3 + 2];
+    out[i * 4] = Math.round(Math.min(1, Math.max(0, r)) * 255);
+    out[i * 4 + 1] = Math.round(Math.min(1, Math.max(0, g)) * 255);
+    out[i * 4 + 2] = Math.round(Math.min(1, Math.max(0, b)) * 255);
     out[i * 4 + 3] = 255;
   }
   ctx.putImageData(imageData, 0, 0);
@@ -755,10 +923,15 @@ const tensorToDataUrl = (image: { dims: number[]; data: Float32Array }): string 
 };
 
 /**
- * Generate an image from a prompt. Returns a PNG data URL.
+ * Generate an image from a prompt. Returns the PNG data URL together with
+ * the seed that produced it (random when no seed was given) - the studio
+ * shows the seed so the image can be reproduced.
  * Loads the model first if necessary (with download progress).
  */
-export const generateImage = async (prompt: string, options: ImageGenOptions = {}): Promise<string> => {
+export const generateImage = async (
+  prompt: string,
+  options: ImageGenOptions = {}
+): Promise<ImageGenResult> => {
   if (typeof prompt !== 'string' || prompt.trim().length === 0) {
     throw new Error('Prompt must be a non-empty string');
   }
@@ -772,6 +945,14 @@ export const generateImage = async (prompt: string, options: ImageGenOptions = {
     Math.min(IMAGE_GEN_MODEL.steps.max, options.steps ?? IMAGE_GEN_MODEL.steps.default)
   );
   const seed = options.seed !== undefined ? String(options.seed) : String(Math.floor(Math.random() * 1e9));
+
+  // Hand the seed to the (patched) scheduler so the inter-step noise is
+  // deterministic too - without this, the same seed would still produce a
+  // different image on every run.
+  const scheduler = (pipeline as { scheduler?: SchedulerLike }).scheduler;
+  if (scheduler !== null && scheduler !== undefined) {
+    scheduler.__webguiSeed = seed;
+  }
 
   const images = await pipeline.run({
     prompt: prompt.trim(),
@@ -792,7 +973,7 @@ export const generateImage = async (prompt: string, options: ImageGenOptions = {
   if (!image) {
     throw new Error('The model did not return an image');
   }
-  return tensorToDataUrl(image);
+  return { dataUrl: tensorToDataUrl(image), seed: Number(seed) };
 };
 
 /** Release the model and its GPU/WASM memory. */

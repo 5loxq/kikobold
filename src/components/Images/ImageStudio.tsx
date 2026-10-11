@@ -50,6 +50,9 @@ export const ImageStudio: React.FC<ImageStudioProps> = ({ onNavigateBack }) => {
   const [isWorking, setIsWorking] = useState(false);
   const [progress, setProgress] = useState<ImageGenProgress | null>(null);
   const [result, setResult] = useState<string | null>(null);
+  // Seed of the last generated image: shown next to the result and written
+  // back into the seed input, so the image can be reproduced with one click.
+  const [usedSeed, setUsedSeed] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [modelLoaded, setModelLoaded] = useState(isImageGenModelLoaded());
   const [dlStats, setDlStats] = useState<DownloadStats | null>(null);
@@ -89,6 +92,7 @@ export const ImageStudio: React.FC<ImageStudioProps> = ({ onNavigateBack }) => {
     setError(null);
     setProgress(null);
     setResult(null);
+    setUsedSeed(null);
     setDlStats(null);
     dlBytesByFile.current.clear();
     dlStartTs.current = null;
@@ -130,8 +134,12 @@ export const ImageStudio: React.FC<ImageStudioProps> = ({ onNavigateBack }) => {
         }
       },
     })
-      .then((dataUrl) => {
+      .then(({ dataUrl, seed }) => {
         setResult(dataUrl);
+        setUsedSeed(seed);
+        // Show the seed that produced this image (also in the input field,
+        // so regenerating with the exact same seed is one click away).
+        setSeed(String(seed));
         setModelLoaded(true);
       })
       .catch((err: unknown) => {
@@ -405,6 +413,11 @@ export const ImageStudio: React.FC<ImageStudioProps> = ({ onNavigateBack }) => {
               alt={prompt}
               className="w-full max-w-md mx-auto rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm"
             />
+            {usedSeed !== null && (
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-3 text-center tabular-nums">
+                {t('imagesPage.seed')}: {usedSeed}
+              </p>
+            )}
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-3 text-center">
               {t('imagesPage.localOnly')}
             </p>
