@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.15] - 2026-10-11
+
+### Geändert
+
+- **Versionskennzeichnung in Fehlermeldungen der Bild-Engine**: Die Diagnose-Anhänge der Ladefehler beginnen jetzt mit der App-Version (`[v4.3.15] [requests: ...] [memory: ...]`). Hintergrund: Ein Fehlerbericht ohne Memory-Diagnose erwies sich als Lauf gegen den alten, noch im Service-Worker-Cache hängenden Stand - mit der Versionskennung ist das auf einen Blick unterscheidbar.
+
 ## [4.3.14] - 2026-10-11
 
 ### Geändert

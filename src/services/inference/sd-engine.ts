@@ -12,6 +12,7 @@
  * into public/ by scripts/copy-ort-wasm.mjs) - no CDN dependency.
  */
 
+import { version as appVersion } from '../../../package.json';
 import { IMAGE_GEN_MODEL } from '../models/model-registry';
 import { log, warn } from '../logging';
 
@@ -521,7 +522,7 @@ export const loadImageGenModel = async (
       // Include the recorded requests and memory operations so the visible
       // error names the failing URL and the heap state instead of a
       // downstream symptom.
-      const parts: string[] = [];
+      const parts: string[] = [`v${appVersion}`];
       if (requestLog.length > 0) {
         parts.push(`requests: ${requestLog.join(' | ')}`);
       }
