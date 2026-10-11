@@ -1,7 +1,7 @@
 {
   "name": "webgpu-local-llm",
   "private": true,
-  "version": "4.3.34",
+  "version": "4.3.35",
   "type": "module",
   "scripts": {
     "dev": "vite",

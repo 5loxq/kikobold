@@ -2,6 +2,13 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.35] - 2026-10-11
+
+### Neu (Mobile-Modell)
+- **LFM 2.5 350M:** Neues kleines WASM-Modell (LiquidAI/LFM2.5-350M-GGUF, Q4_0, 219 MB) für Handys und ältere Geräte — selbstgehostet unter `/models/LFM2.5-350M-Q4_0.gguf`. Das 1,6B-Modell (664 MB) überfordert die RAM-Grenze mobiler Safari-Tabs; die Vorbereitung im Speicher dauert dort sehr lange oder scheitert. Das 350M startet auf Handys in Sekunden.
+- **Mobil-aware Fallback:** `getWasmFallbackModelId` wählt auf Handys jetzt das kleinste GGUF-Modell (350M) statt des empfohlenen 1,6B — WebGPU-Ausfall oder zu wenig RAM landen damit auf dem Modell, das auf dem Handy tatsächlich läuft.
+- **Mobile-Empfehlung:** Modelle-Seite und Mobile-Hinweis empfehlen auf Handys ausdrücklich LFM 2.5 350M (de/en); neue Modellkarte mit Stärken/Schwächen.
+
 ## [4.3.34] - 2026-10-11
 
 ### Behoben (Mobile-Test auf dem iPhone)

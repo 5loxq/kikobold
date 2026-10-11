@@ -22,6 +22,7 @@ const MODELS_INFO: ModelInfo[] = [
   { configId: 'Qwen3-1.7B-q4f16_1-MLC', key: 'qwen17', strengths: 3, weaknesses: 3 },
   { configId: 'Qwen3-0.6B-q4f16_1-MLC', key: 'qwen06', strengths: 3, weaknesses: 3 },
   { configId: 'LFM2.5-VL-1.6B-GGUF', key: 'lfm', strengths: 4, weaknesses: 4 },
+  { configId: 'LFM2.5-350M-GGUF', key: 'lfm350', strengths: 3, weaknesses: 3 },
   { configId: 'Gemma4-E2B-it-GGUF', key: 'gemma4', strengths: 4, weaknesses: 4 },
 ];
 

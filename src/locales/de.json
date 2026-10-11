@@ -624,7 +624,7 @@
   "modelsPage": {
     "title": "Modelle",
     "intro": "Hier findest du alle Modelle, die in KI Kobold verfügbar sind. Jedes Modell läuft komplett lokal in deinem Browser - es wird einmal heruntergeladen und danach auch ohne Internetverbindung ausgeführt. Die Modelle unterscheiden sich in Größe, Tempo und Können.",
-    "mobileNote": "Auf dem Handy: Die WebGPU-Modelle (Qwen) sind für Desktops gebaut - auf dem iPhone lädt die App automatisch das kleinere LFM-Modell, auf Android wirst du vor dem Download gewarnt (und bei wenig RAM ebenfalls automatisch auf LFM ausgewichen). Behalte beim Download Bildschirm und Tab offen, sonst pausiert der Ladevorgang. Die Vorbereitung im Speicher kann auf dem Handy einige Minuten dauern - das ist normal.",
+    "mobileNote": "Auf dem Handy: Nimm LFM 2.5 350M (219 MB) - es ist für Handys gebaut und startet in Sekunden. Die WebGPU-Modelle (Qwen) und das große LFM 1.6B sind für Desktops gebaut; auf dem Handy wird vor dem Download gewarnt bzw. automatisch auf das kleine Modell ausgewichen. Behalte beim Download Bildschirm und Tab offen, sonst pausiert der Ladevorgang.",
     "thinkingHint": "Modelle mit dem 💭-Zeichen denken sichtbar nach: Der Gedankengang erscheint in der Antwort als aufklappbarer Bereich - standardmäßig zugeklappt.",
     "released": "Erschienen",
     "downloadSize": "Download",
@@ -684,6 +684,17 @@
       "w3": "Vergleichsweise kurzer Kontext (8.192 Zeichen)",
       "w4": "Bei sehr anspruchsvollen Aufgaben schwächer",
       "summary": "Der Allrounder für alle Browser: Das einzige Modell, das auch ohne WebGPU läuft - und das einzige mit Bildverständnis."
+    },
+    "lfm350": {
+      "name": "LFM 2.5 350M",
+      "released": "Januar 2026",
+      "s1": "Nur 219 MB - kleinster Download, startet auch auf Handys in Sekunden",
+      "s2": "Läuft in jedem Browser - auch ohne WebGPU, in Firefox und Safari",
+      "s3": "Automatischer Fallback auf Handys, wenn WebGPU fehlt oder der RAM nicht reicht",
+      "w1": "Deutlich geringeres Wissen als die größeren Modelle",
+      "w2": "Kein Thinking, keine Bilder",
+      "w3": "Bei anspruchsvollen Aufgaben schnell am Limit",
+      "summary": "Das Leichtgewicht für Handys und ältere Geräte: klein, schnell startend, in jedem Browser - im Können aber deutlich unter den größeren Modellen."
     },
     "alphaBadge": "Alpha",
     "gemma4": {

@@ -1,4 +1,5 @@
 import { Model, ModelConfig } from '../../types';
+import { isMobileLike } from '../../utils/device';
 
 // Engine type: 'webllm' uses WebGPU MLC models, 'wllama' runs GGUF models on WASM/CPU
 export type EngineType = 'webllm' | 'wllama';
@@ -72,6 +73,26 @@ export const MODEL_CONFIGS: Record<string, EngineModelConfig> = {
       repo: 'LiquidAI/LFM2.5-VL-1.6B-GGUF',
       selfHostedPath: '/models/LFM2.5-VL-1.6B-Q4_0.gguf',
       file: 'LFM2.5-VL-1.6B-Q4_0.gguf',
+    },
+  },
+  'LFM2.5-350M-GGUF': {
+    id: 'LFM2.5-350M-GGUF',
+    name: 'LFM 2.5 350M',
+    modelPath: 'lfm2.5-350m',
+    engine: 'wllama',
+    type: 'chat',
+    description: 'Das Leichtgewicht für Handys und ältere Geräte: kleiner Download (219 MB), startet schnell und läuft in jedem Browser. Für einfache Fragen und kurze Texte - bei anspruchsvollen Aufgaben ist es schnell am Limit.',
+    modelSize: '350M',
+    fileSizeMB: 219,
+    quantized: true,
+    recommended: false,
+    contextLength: 8192,
+    provider: 'gguf-hf',
+    badge: 'fast',
+    gguf: {
+      repo: 'LiquidAI/LFM2.5-350M-GGUF',
+      selfHostedPath: '/models/LFM2.5-350M-Q4_0.gguf',
+      file: 'LFM2.5-350M-Q4_0.gguf',
     },
   },
   'Qwen3.5-2B-q4f16_1-MLC': {
@@ -188,6 +209,16 @@ export const getWasmFallbackModelId = (webllmModelId: string): string | undefine
   );
   if (sameFamily) {
     return sameFamily.id;
+  }
+  // Phones cannot realistically hold the big WASM models in their per-tab
+  // memory budget - the smallest GGUF model is the only safe fallback there.
+  if (isMobileLike()) {
+    const smallest = [...ggufModels].sort(
+      (a, b) => (a.fileSizeMB ?? 0) - (b.fileSizeMB ?? 0)
+    )[0];
+    if (smallest) {
+      return smallest.id;
+    }
   }
   const recommended = ggufModels.find((c) => c.recommended);
   return recommended?.id;

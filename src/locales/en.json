@@ -624,7 +624,7 @@
   "modelsPage": {
     "title": "Models",
     "intro": "Here you find all models available in KI Kobold. Every model runs entirely locally in your browser - it is downloaded once and then works even without an internet connection. The models differ in size, speed and capability.",
-    "mobileNote": "On your phone: The WebGPU models (Qwen) are built for desktops - on the iPhone the app automatically loads the smaller LFM model, on Android you get a warning before the download (and with little RAM it also falls back to LFM automatically). Keep the screen on and the tab open during the download, otherwise the load pauses. Preparing the model in memory can take a few minutes on a phone - that is normal.",
+    "mobileNote": "On your phone: pick LFM 2.5 350M (219 MB) - it is built for phones and starts in seconds. The WebGPU models (Qwen) and the big LFM 1.6B are built for desktops; on a phone you get a warning before downloading, or an automatic fallback to the small model. Keep the screen on and the tab open during the download, otherwise the load pauses.",
     "thinkingHint": "Models marked with 💭 think visibly: their reasoning appears in the answer as a collapsible section - collapsed by default.",
     "released": "Released",
     "downloadSize": "Download",
@@ -684,6 +684,17 @@
       "w3": "Comparatively short context (8,192 characters)",
       "w4": "Weaker on very demanding tasks",
       "summary": "The all-rounder for every browser: the only model that runs without WebGPU - and the only one with image understanding."
+    },
+    "lfm350": {
+      "name": "LFM 2.5 350M",
+      "released": "January 2026",
+      "s1": "Only 219 MB - smallest download, starts in seconds even on phones",
+      "s2": "Runs in any browser - even without WebGPU, in Firefox and Safari",
+      "s3": "Automatic fallback on phones when WebGPU is missing or RAM is too low",
+      "w1": "Noticeably less knowledge than the larger models",
+      "w2": "No thinking, no images",
+      "w3": "Quickly reaches its limits on demanding tasks",
+      "summary": "The lightweight for phones and older devices: small, fast to start, runs in any browser - but clearly below the larger models in capability."
     },
     "alphaBadge": "Alpha",
     "gemma4": {
