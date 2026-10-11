@@ -146,13 +146,25 @@ export const loadWllamaModel = async (
     // phase: wllama goes straight to initializing the model in memory. Report
     // full progress upfront so the UI shows "loading" instead of a misleading
     // "downloading 100%".
+    // The cache is VALIDATED first (same approach as ente's ensu): an
+    // interrupted download (e.g. an aborted attempt) leaves a broken cache
+    // entry, and initializing the model from it hangs or fails. An invalid
+    // entry is purged so the load below downloads a fresh copy.
     try {
-      const { CacheManager } = await import('@wllama/wllama');
-      const cacheManager = new CacheManager();
-      const entries = await cacheManager.list();
-      const isCached = entries.some((entry) => entry.name.endsWith(`_${gguf.file}`));
-      if (isCached) {
-        callbacks?.onProgress?.(1, 'Loading model from browser cache...');
+      const { ModelManager, ModelValidationStatus } = await import('@wllama/wllama');
+      const modelManager = new ModelManager();
+      const models = await modelManager.getModels({ includeInvalid: true });
+      const cached = models.find((m) =>
+        m.files.some((f) => f.name.endsWith(`_${gguf.file}`))
+      );
+      if (cached) {
+        if (cached.validate() !== ModelValidationStatus.VALID) {
+          warn(`wllama: cached ${modelId} is invalid (interrupted download?) - purging and re-downloading`);
+          await cached.remove();
+          callbacks?.onProgress?.(0, 'Downloading model...');
+        } else {
+          callbacks?.onProgress?.(1, 'Loading model from browser cache...');
+        }
       } else {
         callbacks?.onProgress?.(0, 'Downloading model...');
       }

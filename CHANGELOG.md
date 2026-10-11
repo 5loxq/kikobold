@@ -2,6 +2,11 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.37] - 2026-10-11
+
+### Verbessert (Cache-Validierung nach dem Vorbild von ente/ensu)
+- **Korrupter Modell-Cache wird erkannt und beseitigt:** Vor dem Laden wird der wllama-Cache validiert (`ModelManager.validate()`). Ein unterbrochener Download (z. B. abgebrochener Ladeversuch) hinterlässt eine kaputte Cache-Datei, an der die Speicher-Initialisierung hängt oder scheitert — genau das konnte das endlose „Modell wird geladen" auf dem Handy erklären. Ungültige Einträge werden gelöscht und das Modell frisch heruntergeladen. Ensue (ente/ente, web/apps/ensu) validiert seine Modelle auf dieselbe Weise; sein „läuft überall" beruht aber auf dem nativen Tauri-Backend (llama.cpp mit mmap, ohne Tab-RAM-Limit) — im Browser gilt für ensu dieselbe Physik wie für uns.
+
 ## [4.3.36] - 2026-10-11
 
 ### Behoben (Mobile-Drawer, zweite Runde)
