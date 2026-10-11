@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.21] - 2026-10-11
+
+### Behoben
+
+- **Bild-Engine: "offset is out of bounds" beim Session-Aufbau endgültig behoben.** Tiefenanalyse von Bundle und Wasm-Binary plus direkter Node-Repro gegen das echte `ort-wasm-simd.jsep.wasm` (siehe `scripts/sd-repro/`) hat die Ursache gefunden: Das nicht-Threaded-Wasm definiert seinen 16-GiB-Heap *intern* (memory64, 16 MiB initial) - der JS-Konstruktor wird nie aufgerufen, deshalb griff der bisherige Memory-Shim ins Leere. Die Emscripten-Glue des Forks wächst den Heap mit `memory.grow(NUMBER)` - die finale memory64-API (Chrome 133+) verlangt aber einen BigInt. Jedes Grow wirft `TypeError: Cannot convert ... to a BigInt`, die Glue schluckt die Ausnahme, `_malloc` liefert 0, und `createSessionAllocate` starb an `HEAPU8.set(model, 0)` - exakt der gemeldete Fehler. Der Fix übersetzt Number<->BigInt in `WebAssembly.Memory.prototype.grow`, sobald der native Aufruf den Argumenttyp ablehnt (i32-Memories der Chat-Modelle unchanged, da der erste Aufruf nativ gelingt). Im Node-Test reproduziert der Fehler sich exakt und ist mit dem Patch behoben: text_encoder (246 MB) und unet inkl. 1,6 GB External Weights erstellen ihre Sessions erfolgreich. Der JSPI-Shim ersetzt jetzt auch ein natives `WebAssembly.Function` ohne statisches `.type()`; außerdem ist belegt, dass der Webspace byte-identische Dateien liefert (Wasm-Hash und onnx_data-Prüfsummen stimmen mit lokal überein).
+
 ## [4.3.20] - 2026-10-11
 
 ### Geändert

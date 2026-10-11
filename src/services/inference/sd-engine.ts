@@ -149,14 +149,20 @@ const ensureOrtAssertShim = (): void => {
 
 /**
  * The ORT fork the engine uses ("web64") is compiled for the WebAssembly
- * memory64 proposal and allocates a shared 16 GiB memory. Its emscripten
- * glue however predates the final JS API: it passes the draft property
- * `index: "i64"` with plain number limits. The final API (Wasm 3.0, shipped
- * in Chrome 133+) uses `address: "i64"` with BigInt limits - Chrome ignores
- * the unknown `index` property and rejects the descriptor with
- * "value 262144 is above the upper bound 65536". The shim below translates
- * draft descriptors into the final API and patches `grow` to accept plain
- * numbers (the final API requires BigInt there as well).
+ * memory64 proposal. Its emscripten glue however predates the final JS
+ * API: it passes the draft property `index: "i64"` with plain number
+ * limits. The final API (Wasm 3.0, shipped in Chrome 133+) uses
+ * `address: "i64"` with BigInt limits - Chrome ignores the unknown
+ * `index` property and rejects the descriptor with "value 262144 is above
+ * the upper bound 65536". The shim below translates draft descriptors
+ * into the final API.
+ *
+ * Note: on the single-threaded path the wasm defines its 16 GiB heap
+ * INTERNALLY (no JS constructor call - see ensureOrtMemoryGrowShim); the
+ * constructor translation matters for the memories the glue DOES create
+ * in JS, e.g. the dedicated weights memory in fetchModelAndWeights
+ * (initial = maximum = Content-Length pages, shared) that the 1.6 GB
+ * unet weights are streamed into.
  */
 interface MemoryDescriptorLike {
   initial?: number | bigint;
@@ -226,28 +232,10 @@ const ensureOrtMemory64Shim = (): void => {
       + `(${memory.buffer.byteLength} bytes), max ${translated.maximum ?? 'unbounded'}, `
       + `shared=${translated.shared === true}`
     );
-    try {
-      const nativeGrow = (memory as WebAssembly.Memory & {
-        grow: (delta: number | bigint) => unknown;
-      }).grow.bind(memory);
-      memory.grow = (delta: number | bigint): number => {
-        const pages = typeof delta === 'bigint' ? delta : BigInt(Math.trunc(delta));
-        try {
-          const result = nativeGrow(pages);
-          recordMemory(`grow(${pages} pages) ok -> buffer ${memory.buffer.byteLength} bytes`);
-          return Number(result);
-        } catch (err) {
-          recordMemory(
-            `grow(${pages} pages) FAILED: ${err instanceof Error ? err.message : String(err)}`
-          );
-          throw err;
-        }
-      };
-    } catch {
-      // Best effort: the glue only grows on the main thread; if assigning
-      // the own property fails, growth with plain numbers may throw later.
-      recordMemory('could not patch grow() on the created memory');
-    }
+    // Growth is handled globally by the WebAssembly.Memory.prototype.grow
+    // shim (see ensureOrtMemoryGrowShim) - which also covers memories the
+    // glue does not create through this constructor (e.g. the wasm-internal
+    // heap of the non-threaded build).
     return memory;
   } as unknown as typeof WebAssembly.Memory;
   Object.setPrototypeOf(patched, nativeMemory);
@@ -276,6 +264,67 @@ const ensureOrtMemory64Shim = (): void => {
 };
 
 /**
+ * THE fix for "offset is out of bounds" in createSessionAllocate.
+ *
+ * Deep analysis of the fork's bundle + wasm (verified with a direct Node
+ * repro against the real ort-wasm-simd.jsep.wasm, see scripts/sd-repro):
+ * the non-threaded wasm defines its memory INTERNALLY (memory64, 16 MiB
+ * initial, 16 GiB max - no JS constructor involved, which is why the
+ * constructor shim above never fired). The emscripten glue grows that
+ * heap with a plain Number page count:
+ *
+ *   const pages = (target - memory.buffer.byteLength + 65535) / 65536;
+ *   try { memory.grow(pages) } catch {}            // Number!
+ *
+ * The final memory64 JS API (Chrome 133+) requires a BigInt delta, so
+ * every grow throws "TypeError: Cannot convert ... to a BigInt". The glue
+ * swallows the exception, emscripten_resize_heap reports failure, _malloc
+ * returns 0 - and createSessionAllocate does HEAPU8.set(model, 0), which
+ * surfaces as "RangeError: offset is out of bounds @ Uint8Array.set".
+ * The fork was written against the draft API; on current Chrome the heap
+ * can never grow, so every session with a model larger than the 16 MiB
+ * initial heap dies (already the 246 MB text encoder).
+ *
+ * The patch translates Number <-> BigInt when the native grow rejects the
+ * argument type. i32 memories (the chat models' standard ORT) keep their
+ * native behavior: the first, untranslated call succeeds, so the
+ * translation never kicks in. Every translated grow is recorded in the
+ * memory log, so future error reports show the heap actually growing.
+ */
+const ensureOrtMemoryGrowShim = (): void => {
+  const proto = WebAssembly.Memory.prototype as unknown as {
+    grow: ((delta: number) => number) & { __webguiGrowShim?: boolean };
+  };
+  if (proto.grow.__webguiGrowShim) {
+    return;
+  }
+  const nativeGrow = proto.grow;
+  const patched = function (this: WebAssembly.Memory, delta: number): number {
+    try {
+      return nativeGrow.call(this, delta);
+    } catch (err) {
+      if (!(err instanceof TypeError)) {
+        throw err;
+      }
+      // memory64 memories take BigInt deltas, i32 memories take Numbers -
+      // retry with the other type (the failed call changed no state).
+      const translated = typeof delta === 'number' ? BigInt(Math.trunc(delta)) : Number(delta);
+      const before = this.buffer.byteLength;
+      const result = nativeGrow.call(this, translated as unknown as number);
+      recordMemory(
+        `grow(${String(delta)} -> ${String(translated)} pages) ok: `
+        + `heap ${before} -> ${this.buffer.byteLength} bytes`
+      );
+      return result;
+    }
+  } as unknown as typeof proto.grow;
+  (patched as unknown as Record<string, unknown>)['__webguiGrowShim'] = true;
+  proto.grow = patched;
+  recordMemory('memory.grow prototype shim installed');
+  log('sd-engine: installed WebAssembly.Memory.grow Number/BigInt translation shim');
+};
+
+/**
  * The glue also uses the OLD JSPI draft API: `new WebAssembly.Function(type,
  * fn, {suspending:"first"})` for async imports and `{promising:"first"}` for
  * async exports. Chrome never shipped `WebAssembly.Function` (JS type
@@ -287,11 +336,15 @@ const ensureOrtMemory64Shim = (): void => {
  */
 const ensureOrtJspiShim = (): void => {
   const wa = WebAssembly as unknown as {
-    Function?: unknown;
+    Function?: ((...args: unknown[]) => unknown) & { type?: unknown };
     Suspending?: new (fn: unknown) => unknown;
     promising?: (fn: unknown) => unknown;
   };
-  if (typeof wa.Function === 'function') {
+  // Skip only if a compatible API is already present: the shim must also
+  // replace a NATIVE WebAssembly.Function (JS type reflection) - the native
+  // constructor has no third {suspending} argument and no static .type(),
+  // both of which the fork's glue requires.
+  if (typeof wa.Function === 'function' && typeof wa.Function.type === 'function') {
     return;
   }
   if (typeof wa.Suspending !== 'function' || typeof wa.promising !== 'function') {
@@ -312,7 +365,7 @@ const ensureOrtJspiShim = (): void => {
       }
     }
     throw new Error('unsupported WebAssembly.Function options (JSPI shim)');
-  } as unknown as Record<string, unknown>;
+  } as unknown as NonNullable<typeof wa.Function>;
   shimmed['type'] = (): { parameters: string[]; results: string[] } =>
     ({ parameters: ['externref'], results: [] });
   wa.Function = shimmed;
@@ -513,6 +566,7 @@ export const loadImageGenModel = async (
     try {
       ensureOrtAssertShim();
       ensureOrtMemory64Shim();
+      ensureOrtMemoryGrowShim();
       ensureOrtJspiShim();
       ensureOrtFetchRewrite();
       await preflight();
