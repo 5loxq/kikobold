@@ -30,6 +30,7 @@
     "renameFolderPrompt": "New name for the folder:",
     "deleteFolder": "Delete folder",
     "deleteFolderConfirm": "Delete folder \"{{name}}\"? The chats are kept - they will just show up without a folder again.",
+    "deleteChatConfirm": "Delete chat \"{{title}}\"? This cannot be undone.",
     "moveChat": "Move to folder",
     "removeFromFolder": "Remove from folder",
     "emptyFolder": "No chats in this folder",

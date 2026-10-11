@@ -22,12 +22,14 @@ export const useFocusTrap = (
     if (!active) {
       return;
     }
-    const container = containerRef.current;
     const previouslyFocused = document.activeElement instanceof HTMLElement
       ? document.activeElement
       : null;
 
     const getFocusable = (): HTMLElement[] => {
+      // Read the ref on every call: dialog content may render asynchronously
+      // (e.g. after data loads), when the effect has already run.
+      const container = containerRef.current;
       if (!container) {
         return [];
       }
@@ -35,7 +37,10 @@ export const useFocusTrap = (
         container.querySelectorAll<HTMLElement>(
           'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
         )
-      ).filter((el) => el.offsetParent !== null);
+      // offsetParent is null for position:fixed elements (many dialogs are
+      // fixed), so use checkVisibility where available and only fall back
+      // to the offsetParent heuristic.
+      ).filter((el) => (typeof el.checkVisibility === 'function' ? el.checkVisibility() : el.offsetParent !== null));
     };
 
     // Move the focus into the dialog
@@ -59,10 +64,11 @@ export const useFocusTrap = (
       }
       const first = list[0];
       const last = list[list.length - 1];
-      if (e.shiftKey && (document.activeElement === first || !container?.contains(document.activeElement))) {
+      const currentContainer = containerRef.current;
+      if (e.shiftKey && (document.activeElement === first || !currentContainer?.contains(document.activeElement))) {
         e.preventDefault();
         last.focus();
-      } else if (!e.shiftKey && (document.activeElement === last || !container?.contains(document.activeElement))) {
+      } else if (!e.shiftKey && (document.activeElement === last || !currentContainer?.contains(document.activeElement))) {
         e.preventDefault();
         first.focus();
       }

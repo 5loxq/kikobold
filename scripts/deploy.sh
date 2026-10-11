@@ -24,7 +24,11 @@ echo "==> Upload nach www613.your-server.de (Modelle ausgenommen)..."
 # assets). index.html and sw.js are re-uploaded explicitly afterwards:
 # their content changes with every build while their size often stays
 # identical - size comparison alone would skip them.
-lftp -u "rrbitr_1","$PASS" sftp://www613.your-server.de \
-  -e 'mirror -R --delete --ignore-time --exclude .DS_Store --exclude models ./dist .; put -O . ./dist/index.html; put -O . ./dist/sw.js; bye'
+# --env-password: the password travels via the environment, not as a CLI
+# argument (where it would be visible to every local process via ps).
+# cmd:fail-exit: abort on the first failed command - a half-uploaded
+# deploy (new index.html, old assets) must never exit with code 0.
+LFTP_PASSWORD="$PASS" lftp -u rrbitr_1 --env-password sftp://www613.your-server.de \
+  -e 'set cmd:fail-exit true; mirror -R --delete --ignore-time --exclude .DS_Store --exclude models ./dist .; put -O . ./dist/index.html; put -O . ./dist/sw.js; bye'
 
 echo "==> Fertig. Hinweis: kurz im Browser testen (Modell laden, Nachricht senden)."

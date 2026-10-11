@@ -79,7 +79,10 @@ export const useModels = (): UseModelsReturn => {
   const [downloadedModels, setDownloadedModels] = useState<LocalModel[]>(getDownloadedModelsFromStorage());
   const [activeModel, setActiveModel] = useState<LocalModel | null>(null);
 
-  // Load active model on mount
+  // Load active model on mount. Runs exactly once: re-running it whenever
+  // `downloadedModels` changes would read the PREVIOUS active-model ID from
+  // storage and revert a selection the user just made (the save effect runs
+  // after this one).
   useEffect(() => {
     try {
       const activeId = getActiveModelFromStorage();
@@ -92,7 +95,8 @@ export const useModels = (): UseModelsReturn => {
     } catch (error) {
       logError('Failed to load active model:', error);
     }
-  }, [downloadedModels]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // One-time cleanup: free the browser cache of models that were removed
   // from the registry (e.g. Gemma 2 / Qwen 2 after the v3.3.0 model refresh).
@@ -155,17 +159,17 @@ export const useModels = (): UseModelsReturn => {
 
   const selectModel = useCallback(
     (modelId: string) => {
-      let model = downloadedModels.find(m => m.id === modelId);
+      const existing = downloadedModels.find(m => m.id === modelId);
 
       // If model not yet registered as downloaded, create and register it now
-      if (!model) {
+      if (!existing) {
         const modelInfo = availableModels.find(m => m.id === modelId);
         if (modelInfo) {
           const estSize = modelInfo.fileSizeMB 
             ? modelInfo.fileSizeMB * 1024 * 1024 
             : getEstimatedSizeFromModelSize(modelInfo.modelSize);
           
-          model = {
+          const model: LocalModel = {
             id: modelId,
             name: modelInfo.name,
             path: `webllm:${modelId}`,
@@ -173,13 +177,13 @@ export const useModels = (): UseModelsReturn => {
             downloadedAt: Date.now(),
           };
           // Update local state
-          setDownloadedModels(prev => [...prev, model].filter(Boolean) as LocalModel[]);
+          setDownloadedModels(prev => [...prev, model]);
+          setActiveModel(model);
         }
+        return;
       }
 
-      if (model) {
-        setActiveModel(model);
-      }
+      setActiveModel(existing);
     },
     [downloadedModels, availableModels]
   );

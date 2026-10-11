@@ -204,7 +204,7 @@ export const createMemoryEntry = (content: string, field?: string): MemoryEntry 
   const now = Date.now();
   return {
     // Field entries use a deterministic id so re-saving overwrites them
-    id: field ? memoryFieldEntryId(field) : `memory_${now}_${Math.random().toString(36).substr(2, 9)}`,
+    id: field ? memoryFieldEntryId(field) : `memory_${now}_${Math.random().toString(36).slice(2, 11)}`,
     content: content.trim().slice(0, MEMORY_ENTRY_MAX_CHARS),
     ...(field ? { field } : {}),
     createdAt: now,
@@ -231,16 +231,21 @@ export const buildMemoryPromptBlock = (
 
   const lines: string[] = [];
   let total = 0;
-  for (const entry of usable) {
+  // Newest entries are the most relevant: fill from the end of the list
+  // (entries arrive oldest-first) so the limit cuts the OLDEST ones.
+  for (let i = usable.length - 1; i >= 0; i--) {
+    const entry = usable[i];
     const label = entry.field ? fieldLabels[entry.field] : undefined;
     const line = `- ${label ? `${label}: ` : ''}${entry.content.trim()}`;
     if (total + line.length > MEMORY_TOTAL_MAX_CHARS) {
-      warn('Memory limit reached - older entries were cut off for this request');
+      warn('Memory limit reached - oldest entries were cut off for this request');
       break;
     }
     lines.push(line);
     total += line.length;
   }
+  // Restore chronological order for a stable, readable block
+  lines.reverse();
 
   if (lines.length === 0) {
     return null;

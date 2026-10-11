@@ -40,8 +40,35 @@ export const deleteModelCacheFiles = async (model: Model): Promise<void> => {
         }
       }
     } else {
-      const { deleteModelAllInfoInCache } = await import('@mlc-ai/web-llm');
-      await deleteModelAllInfoInCache(model.id, await getCustomAppConfig());
+      const { deleteModelAllInfoInCache, prebuiltAppConfig } = await import('@mlc-ai/web-llm');
+      // The cache is keyed by the URL the model was downloaded from. A load
+      // may have fallen back from the self-hosted copy to HuggingFace, so
+      // try both locations - otherwise the cache survives the "delete".
+      const prebuilt = (prebuiltAppConfig.model_list ?? []).find(
+        (record) => record.model_id === model.id
+      );
+      const baseConfig = await getCustomAppConfig();
+      const candidateUrls = [
+        new URL(`/models/${model.id}`, window.location.origin).href,
+        prebuilt?.model,
+      ].filter((url): url is string => typeof url === 'string' && url.length > 0);
+
+      for (const modelUrl of [...new Set(candidateUrls)]) {
+        try {
+          await deleteModelAllInfoInCache(model.id, {
+            ...baseConfig,
+            model_list: [
+              {
+                model: modelUrl,
+                model_id: model.id,
+                model_lib: prebuilt?.model_lib ?? '',
+              },
+            ],
+          });
+        } catch (err) {
+          warn(`Could not delete cache of model ${model.id} (${modelUrl}):`, err);
+        }
+      }
     }
     log(`Model cache deleted: ${model.id}`);
   } catch (err) {

@@ -17,11 +17,6 @@ export default defineConfig({
     hmr: {
       overlay: true,
     },
-    // Increase timeout for model loading
-    watch: {
-      usePolling: true,
-      interval: 1000,
-    },
   },
   worker: {
     // Configure Vite to build workers with proper format
@@ -47,7 +42,9 @@ export default defineConfig({
         //   if (id.includes('i18n')) return 'i18n';
         // },
       },
-      external: ['@xenova/transformers', /inference-legacy/, /legacy/, /-legacy/],
+      // No `external` entries: broad regexes like /legacy/ would silently
+      // leave matching imports unbundled and crash at runtime. Nothing in
+      // the source imports these packages.
     },
     // Increase chunk size warning limit for large models
     chunkSizeWarningLimit: 2000,

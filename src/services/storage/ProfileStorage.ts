@@ -1,6 +1,6 @@
 import { Profile } from '../../types';
 import { error as logError, warn } from '../logging';
-import { sanitizeInput } from '../security';
+import { sanitizeInputLight } from '../security';
 import { localStorageGet, localStorageSetJson } from './local-storage';
 
 const PROFILE_STORAGE_KEY = 'llm_profiles_v2';
@@ -59,11 +59,14 @@ export const saveProfile = (profile: Profile): void => {
       throw new Error('Invalid profile object');
     }
 
-    // Sanitize profile fields
+    // Sanitize profile fields. Light sanitization (HTML tags only): the full
+    // sanitizer also strips patterns like "data:" and "on...=" which are
+    // perfectly normal words in a system prompt and would silently rewrite
+    // the user's text (see ChatStorage for the same decision).
     const sanitizedProfile = {
       ...profile,
-      name: sanitizeInput(profile.name),
-      systemPrompt: sanitizeInput(profile.systemPrompt),
+      name: sanitizeInputLight(profile.name),
+      systemPrompt: sanitizeInputLight(profile.systemPrompt),
     };
 
     const profiles = getProfiles();
@@ -149,7 +152,7 @@ export const getDefaultProfiles = (): Profile[] => {
 export const createProfile = (name: string, systemPrompt: string): Profile => {
   const now = Date.now();
   return {
-    id: `profile_${now}_${Math.random().toString(36).substr(2, 9)}`,
+    id: `profile_${now}_${Math.random().toString(36).slice(2, 11)}`,
     name,
     systemPrompt,
     temperature: 0.7,

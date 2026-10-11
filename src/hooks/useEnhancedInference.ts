@@ -429,6 +429,7 @@ export const useEnhancedInference = (
         });
         const responseText = stripHiddenPartsText(rawText);
         setResult(responseText);
+        setTokensGenerated(tokenCountRef.current);
         setIsGenerating(false);
         setDuration(Date.now() - startTimeRef.current);
         return { text: responseText, usage: undefined };
@@ -490,13 +491,15 @@ export const useEnhancedInference = (
     options: WebLLMGenerateOptions = {},
     onChunk?: (text: string) => void
   ): Promise<string> => {
+    // Declared outside the try so the finally block can compare against it
+    let newAbortController: AbortController | null = null;
     try {
       // Cancel any existing generation
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
 
-      const newAbortController = new AbortController();
+      newAbortController = new AbortController();
       abortControllerRef.current = newAbortController;
 
       setIsGenerating(true);
@@ -598,6 +601,12 @@ export const useEnhancedInference = (
       }
 
       const visibleText = stripHiddenPartsText(fullText);
+      // Only finalize if this call is still the active generation: an older
+      // call that was aborted by a newer one must not clear the new stream's
+      // state (and must not null the newer AbortController in `finally`).
+      if (abortControllerRef.current !== newAbortController) {
+        return visibleText;
+      }
       setResult(visibleText);
       setTokensGenerated(tokenCountRef.current);
       setDuration(Date.now() - startTimeRef.current);
@@ -613,7 +622,9 @@ export const useEnhancedInference = (
       setIsStreaming(false);
       throw err;
     } finally {
-      abortControllerRef.current = null;
+      if (newAbortController !== null && abortControllerRef.current === newAbortController) {
+        abortControllerRef.current = null;
+      }
     }
   }, [defaultOptions, currentModelId]);
 
@@ -670,10 +681,14 @@ export const useEnhancedInference = (
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
-      // WebLLM engine cleanup
+      // Release GPU/WASM memory: web-llm's unload() waits for pending GPU
+      // work and destroys the device; wllama frees its worker threads.
       if (engineRef.current) {
-        // Current WebLLM doesn't have explicit cleanup, but we nullify the reference
+        void engineRef.current.unload().catch(() => undefined);
         engineRef.current = null;
+      }
+      if (wllamaIsActive()) {
+        void unloadWllamaModel();
       }
     };
   }, []);

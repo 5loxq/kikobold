@@ -40,9 +40,13 @@ const saveFolders = (folders: ChatFolder[]): void => {
 };
 
 export const createFolder = (name: string): ChatFolder => {
+  const trimmed = name.trim();
+  if (!trimmed) {
+    throw new Error('Folder name must be a non-empty string');
+  }
   const folder: ChatFolder = {
     id: `folder-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    name,
+    name: trimmed,
     createdAt: Date.now(),
   };
   saveFolders([...getFolders(), folder]);

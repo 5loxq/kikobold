@@ -30,7 +30,12 @@ const loadKatex = (): Promise<KatexModule> => {
   katexPromise ??= Promise.all([
     import('katex'),
     import('katex/dist/katex.min.css'),
-  ]).then(([katex]) => katex);
+  ]).then(([katex]) => katex).catch((err: unknown) => {
+    // Do not cache the rejection: offline the import fails, but the next
+    // attempt (back online) should be able to retry.
+    katexPromise = null;
+    throw err;
+  });
   return katexPromise;
 };
 
@@ -59,9 +64,14 @@ const MathBlock: React.FC<{ tex: string }> = ({ tex }) => {
 
   useEffect(() => {
     let cancelled = false;
-    void loadKatex().then((katex) => {
+    loadKatex().then((katex) => {
       if (!cancelled) {
         setHtml(renderKatex(katex, tex, true));
+      }
+    }).catch(() => {
+      // KaTeX could not be loaded (e.g. offline): show the raw TeX source
+      if (!cancelled) {
+        setHtml(null);
       }
     });
     return (): void => { cancelled = true; };
@@ -78,9 +88,13 @@ const MathInline: React.FC<{ tex: string }> = ({ tex }) => {
 
   useEffect(() => {
     let cancelled = false;
-    void loadKatex().then((katex) => {
+    loadKatex().then((katex) => {
       if (!cancelled) {
         setHtml(renderKatex(katex, tex, false));
+      }
+    }).catch(() => {
+      if (!cancelled) {
+        setHtml(null);
       }
     });
     return (): void => { cancelled = true; };
@@ -562,6 +576,53 @@ interface MarkdownContentProps {
   maxCodeBlockHeight?: string | number;
 }
 
+interface ParsedListItem {
+  text: string;
+  checked?: boolean;
+}
+
+/**
+ * Parses a block into list items. The list type (ordered vs unordered) is
+ * determined by the first line; every following line with the same marker
+ * becomes another item. Non-marker lines are treated as lazy continuations
+ * of the previous item. Returns null when the block is not a list.
+ */
+export const parseListBlock = (block: string): { ordered: boolean; items: ParsedListItem[] } | null => {
+  const lines = block.split('\n');
+  const first = lines[0].match(/^\s*([-*+]|\d+\.)\s+/);
+  if (!first) {
+    return null;
+  }
+  const ordered = /^\d+\.$/.test(first[1]);
+  const itemRegex = ordered ? /^\s*\d+\.\s+(.*)$/ : /^\s*[-*+]\s+(.*)$/;
+  const taskRegex = ordered
+    ? /^\s*\d+\.\s+\[([ xX])\]\s+(.*)$/
+    : /^\s*[-*+]\s+\[([ xX])\]\s+(.*)$/;
+  const items: ParsedListItem[] = [];
+  for (const line of lines) {
+    const task = line.match(taskRegex);
+    if (task) {
+      items.push({ text: task[2], checked: task[1].toLowerCase() === 'x' });
+      continue;
+    }
+    const item = line.match(itemRegex);
+    if (item) {
+      items.push({ text: item[1] });
+      continue;
+    }
+    if (!line.trim()) {
+      continue;
+    }
+    if (items.length > 0) {
+      // Lazy continuation of the previous item
+      items[items.length - 1].text += `\n${line.trim()}`;
+    } else {
+      return null;
+    }
+  }
+  return items.length > 0 ? { ordered, items } : null;
+};
+
 const MarkdownContent: React.FC<MarkdownContentProps> = ({
   content,
   onLinkClick,
@@ -637,55 +698,23 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
           );
         }
 
-        // Check for unordered list
-        if (block.startsWith('* ') || block.startsWith('- ') || block.startsWith('+ ')) {
+        // Check for lists (unordered, ordered, task). The block is parsed
+        // line by line so multi-line lists render as one list with several
+        // items instead of a single broken item.
+        const list = parseListBlock(block);
+        if (list) {
           return (
-            <List key={index}>
-              <ListItem>
-                <MarkdownContent
-                  content={block.substring(2)}
-                  onLinkClick={onLinkClick}
-                  onImageClick={onImageClick}
-                  maxCodeBlockHeight={maxCodeBlockHeight}
-                />
-              </ListItem>
-            </List>
-          );
-        }
-
-        // Check for ordered list
-        const orderedListMatch = block.match(/^(\d+)\. (.*)$/);
-        if (orderedListMatch) {
-          return (
-            <List key={index} ordered>
-              <ListItem>
-                <MarkdownContent
-                  content={orderedListMatch[2]}
-                  onLinkClick={onLinkClick}
-                  onImageClick={onImageClick}
-                  maxCodeBlockHeight={maxCodeBlockHeight}
-                />
-              </ListItem>
-            </List>
-          );
-        }
-
-        // Check for task list
-        const taskListMatch = block.match(/^(-|\[x\]|\[ \]) (.*)$/);
-        if (taskListMatch) {
-          const [, checkbox, text] = taskListMatch;
-          const checked = checkbox === '[x]';
-          const notChecked = checkbox === '[ ]';
-          return (
-            <List key={index}>
-              <ListItem checked={notChecked ? false : checked}>
-                <MarkdownContent
-                  content={text}
-                  onLinkClick={onLinkClick}
-                  onImageClick={onImageClick}
-                  maxCodeBlockHeight={maxCodeBlockHeight}
-                />
-              </ListItem>
+            <List key={index} ordered={list.ordered}>
+              {list.items.map((item, itemIndex) => (
+                <ListItem key={itemIndex} checked={item.checked}>
+                  <MarkdownContent
+                    content={item.text}
+                    onLinkClick={onLinkClick}
+                    onImageClick={onImageClick}
+                    maxCodeBlockHeight={maxCodeBlockHeight}
+                  />
+                </ListItem>
+              ))}
             </List>
           );
         }
@@ -729,33 +758,39 @@ interface InlineMarkdownProps {
 }
 
 const InlineMarkdown: React.FC<InlineMarkdownProps> = ({ content, onLinkClick }) => {
+  // Extract inline code spans FIRST: their content must never be touched
+  // by the other rules (otherwise `some_var_name` gets italicized inside
+  // the code and the backticks are rendered literally). The spans are
+  // parked behind placeholder tokens and restored at the very end.
+  const codeSpans: string[] = [];
+  let remaining = content.replace(/`([^`]+)`/g, (_: string, code: string) => {
+    codeSpans.push(code);
+    return `\u0000${codeSpans.length - 1}\u0000`;
+  });
+
   // Split by markdown formatting
   const parts: React.ReactNode[] = [];
-  let remaining = content;
 
   // Process bold (**text**)
   remaining = processMarkdown(remaining, parts, /\*\*(.*?)\*\*/g, (text) => (
     <Strong key={parts.length}>{text}</Strong>
   ));
 
-  // Process italic (*text* or _text_)
-  // Group 1 captures the character before the asterisk (so `**` is not
+  // Process italic (*text* or _text_). The underscore variant requires
+  // whitespace/punctuation boundaries so snake_case words stay intact.
+  // Group 1 captures the character before the marker (so `**` is not
   // matched as italic); it is re-emitted as plain text by processMarkdown.
-  remaining = processMarkdown(remaining, parts, /(^|[^*])\*([^*]+)\*|_([^_]+)_/g, (text) => (
+  remaining = processMarkdown(remaining, parts, /(^|[^*])\*([^*]+)\*|(^|[\s(])_([^_]+)_(?=$|[\s).,;:!?])/g, (text) => (
     <Emphasis key={parts.length}>{text}</Emphasis>
-  ), [2, 3], 1);
+  ), [2, 4], [1, 3]);
 
   // Process strikethrough (~~text~~)
   remaining = processMarkdown(remaining, parts, /~~(.*?)~~/g, (text) => (
     <Strikethrough key={parts.length}>{text}</Strikethrough>
   ));
 
-  // Process inline math ($...$ or \(...\)) before inline code
+  // Process inline math ($...$ or \(...\))
   remaining = processMarkdownMath(remaining, parts);
-  // Process inline code (`code`)
-  remaining = processMarkdown(remaining, parts, /`([^`]+)`/g, (text) => (
-    <InlineCode key={parts.length}>{text}</InlineCode>
-  ));
 
   // Process links
   remaining = processMarkdown(remaining, parts, /\[([^\]]+)\]\(([^)]+)\)/g, (text, link) => (
@@ -769,7 +804,32 @@ const InlineMarkdown: React.FC<InlineMarkdownProps> = ({ content, onLinkClick })
     parts.push(remaining);
   }
 
-  return <>{parts}</>;
+  // Restore the extracted code spans in their placeholders
+  const restored: React.ReactNode[] = [];
+  let restoreKey = 0;
+  for (const part of parts) {
+    if (typeof part !== 'string') {
+      restored.push(part);
+      continue;
+    }
+    // The NUL character cannot appear in message text - that is exactly
+    // why it is used as the placeholder sentinel for extracted code spans.
+    // eslint-disable-next-line no-control-regex
+    const pieces = part.split(/\u0000(\d+)\u0000/);
+    for (let i = 0; i < pieces.length; i++) {
+      if (i % 2 === 0) {
+        if (pieces[i]) {
+          restored.push(pieces[i]);
+        }
+      } else {
+        restored.push(
+          <InlineCode key={`code-${restoreKey++}`}>{codeSpans[Number(pieces[i])]}</InlineCode>
+        );
+      }
+    }
+  }
+
+  return <>{restored}</>;
 };
 
 // Helper function to process inline math without breaking other formatting
@@ -800,10 +860,11 @@ function processMarkdown(
   regex: RegExp,
   replacer: (text: string, ...args: string[]) => React.ReactNode,
   contentGroups: number[] = [1, 2, 3],
-  prefixGroup?: number
+  prefixGroup?: number | number[]
 ): string {
   let match: RegExpExecArray | null;
   let lastIndex = 0;
+  const prefixGroups = prefixGroup === undefined ? [] : Array.isArray(prefixGroup) ? prefixGroup : [prefixGroup];
 
   while ((match = regex.exec(content)) !== null) {
     // Add text before the match
@@ -813,8 +874,10 @@ function processMarkdown(
 
     // Patterns with a prefix group (e.g. italic) consume a leading character
     // to anchor the match; re-emit it as plain text so nothing is lost.
-    if (prefixGroup !== undefined && match[prefixGroup]) {
-      parts.push(match[prefixGroup]);
+    for (const group of prefixGroups) {
+      if (match[group]) {
+        parts.push(match[group]);
+      }
     }
 
     // Add the formatted text

@@ -35,6 +35,28 @@ const detectBrowser = (): BrowserInfo => {
     };
   }
 
+  // Opera (UAs contain "Chrome" AND "OPR" - must be checked before Chrome)
+  if (userAgent.includes('Opera') || userAgent.includes('OPR')) {
+    const versionMatch = userAgent.match(/(Opera|OPR)\/(\d+\.\d+)/);
+    return {
+      name: 'Opera',
+      version: versionMatch ? versionMatch[2] : 'Unknown',
+      userAgent,
+    };
+  }
+
+  // Vivaldi (UAs contain "Chrome" AND "Vivaldi" - must be checked before
+  // Chrome). Note: Brave deliberately ships a Chrome-identical UA and cannot
+  // be detected this way - it is reported as Chrome.
+  if (userAgent.includes('Vivaldi')) {
+    const versionMatch = userAgent.match(/Vivaldi\/(\d+\.\d+)/);
+    return {
+      name: 'Vivaldi',
+      version: versionMatch ? versionMatch[1] : 'Unknown',
+      userAgent,
+    };
+  }
+
   // Chrome
   if (userAgent.includes('Chrome')) {
     const versionMatch = userAgent.match(/Chrome\/(\d+\.\d+)/);
@@ -60,36 +82,6 @@ const detectBrowser = (): BrowserInfo => {
     const versionMatch = userAgent.match(/Version\/(\d+\.\d+)/);
     return {
       name: 'Safari',
-      version: versionMatch ? versionMatch[1] : 'Unknown',
-      userAgent,
-    };
-  }
-
-  // Opera
-  if (userAgent.includes('Opera') || userAgent.includes('OPR')) {
-    const versionMatch = userAgent.match(/(Opera|OPR)\/(\d+\.\d+)/);
-    return {
-      name: 'Opera',
-      version: versionMatch ? versionMatch[2] : 'Unknown',
-      userAgent,
-    };
-  }
-
-  // Brave
-  if (userAgent.includes('Brave')) {
-    const versionMatch = userAgent.match(/Brave\/(\d+\.\d+)/);
-    return {
-      name: 'Brave',
-      version: versionMatch ? versionMatch[1] : 'Unknown',
-      userAgent,
-    };
-  }
-
-  // Vivaldi
-  if (userAgent.includes('Vivaldi')) {
-    const versionMatch = userAgent.match(/Vivaldi\/(\d+\.\d+)/);
-    return {
-      name: 'Vivaldi',
       version: versionMatch ? versionMatch[1] : 'Unknown',
       userAgent,
     };
@@ -228,21 +220,26 @@ const detectGPU = async (): Promise<GPUInfo> => {
 
 const detectMemory = async (): Promise<MemoryInfo> => {
   try {
-    // Check if performance.memory is available (only in Chrome)
+    // navigator.deviceMemory reports the real device RAM (capped at 8 GB
+    // by the spec). performance.memory.jsHeapSizeLimit is NOT the device
+    // RAM - it is the JS heap cap (~4 GB in Chrome) and would understate
+    // every desktop; it is only used for the "used" figure.
+    const deviceMemoryGB = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
     const perf = typeof window !== 'undefined' && 'performance' in window
       ? (window.performance as Performance & { memory?: { jsHeapSizeLimit: number; usedJSHeapSize: number } })
       : undefined;
-    if (perf?.memory) {
-      const memory = perf.memory;
-      const totalMB = Math.round(memory.jsHeapSizeLimit / (1024 * 1024));
-      const usedMB = Math.round(memory.usedJSHeapSize / (1024 * 1024));
-      const availableMB = totalMB - usedMB;
+    if (typeof deviceMemoryGB === 'number' && deviceMemoryGB > 0) {
+      const totalMB = Math.round(deviceMemoryGB * 1024);
+      const usedMB = perf?.memory
+        ? Math.round(perf.memory.usedJSHeapSize / (1024 * 1024))
+        : 0;
+      const availableMB = Math.max(0, totalMB - usedMB);
       
       return {
         totalMB,
         availableMB,
         usedMB,
-        usagePercent: Math.round((usedMB / totalMB) * 100),
+        usagePercent: totalMB > 0 ? Math.round((usedMB / totalMB) * 100) : 0,
       };
     }
     
@@ -473,10 +470,13 @@ export const getSystemInfo = async (): Promise<SystemInfo> => {
     };
     
     cachedSystemInfo = systemInfo;
-    infoPromise = null;
     
     return systemInfo;
-  })();
+  })().finally(() => {
+    // Reset even on failure: a rejected promise must not stay cached,
+    // otherwise every later call rejects forever.
+    infoPromise = null;
+  });
   
   return infoPromise;
 };

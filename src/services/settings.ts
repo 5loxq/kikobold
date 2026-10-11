@@ -53,6 +53,8 @@ const DEFAULT_SETTINGS: AppSettings = {
 const isTextScale = (value: unknown): value is TextScale =>
   value === 'small' || value === 'standard' || value === 'large' || value === 'xlarge';
 
+const isBoolean = (value: unknown): value is boolean => typeof value === 'boolean';
+
 export const loadSettings = (): AppSettings => {
   try {
     const raw = localStorageGet(SETTINGS_KEY);
@@ -70,6 +72,16 @@ export const loadSettings = (): AppSettings => {
       speechRate: typeof parsed.speechRate === 'number' && parsed.speechRate >= 0.5 && parsed.speechRate <= 1.5
         ? parsed.speechRate
         : DEFAULT_SETTINGS.speechRate,
+      // Booleans must actually be booleans: a spread alone would accept
+      // "yes"/0/1 from a hand-edited or migrated storage.
+      autoSpeak: isBoolean(parsed.autoSpeak) ? parsed.autoSpeak : DEFAULT_SETTINGS.autoSpeak,
+      memoryEnabled: isBoolean(parsed.memoryEnabled) ? parsed.memoryEnabled : DEFAULT_SETTINGS.memoryEnabled,
+      readableText: isBoolean(parsed.readableText) ? parsed.readableText : DEFAULT_SETTINGS.readableText,
+      reduceMotion: isBoolean(parsed.reduceMotion) ? parsed.reduceMotion : DEFAULT_SETTINGS.reduceMotion,
+      highContrast: isBoolean(parsed.highContrast) ? parsed.highContrast : DEFAULT_SETTINGS.highContrast,
+      readableFont: isBoolean(parsed.readableFont) ? parsed.readableFont : DEFAULT_SETTINGS.readableFont,
+      defaultProfileId: typeof parsed.defaultProfileId === 'string' ? parsed.defaultProfileId : null,
+      defaultModelId: typeof parsed.defaultModelId === 'string' ? parsed.defaultModelId : null,
     };
   } catch {
     return { ...DEFAULT_SETTINGS };

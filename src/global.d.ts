@@ -89,11 +89,7 @@ declare global {
         };
         deviceMemory?: number;
     }
-    
-    interface Window {
-        WebAssembly: typeof WebAssembly;
-    }
-    
+
     interface Process {
         env: Record<string, string>;
         cwd: () => string;

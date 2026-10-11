@@ -208,7 +208,8 @@ export const setCustomizationSettings = (settings: Partial<CustomizationSettings
  * Toggle between dark and light mode
  */
 export const toggleTheme = (): void => {
-  const newMode = currentTheme.mode === 'dark' ? 'light' : 'dark';
+  // From 'system', switch to the opposite of what is currently effective
+  const newMode = isDarkMode() ? 'light' : 'dark';
   setThemeMode(newMode);
 };
 
@@ -245,30 +246,24 @@ const applyTheme = (theme: ThemeSettings): void => {
   // Add theme class
   html.classList.add(actualMode);
   
-  // Set CSS variables for custom colors
-  if (theme.primaryColor) {
-    html.style.setProperty('--color-primary', theme.primaryColor);
-  }
-  if (theme.secondaryColor) {
-    html.style.setProperty('--color-secondary', theme.secondaryColor);
-  }
-  if (theme.accentColor) {
-    html.style.setProperty('--color-accent', theme.accentColor);
-  }
-  if (theme.backgroundColor) {
-    html.style.setProperty('--color-background', theme.backgroundColor);
-  }
-  if (theme.textColor) {
-    html.style.setProperty('--color-text', theme.textColor);
-  }
-  if (theme.borderRadius) {
-    html.style.setProperty('--radius', `${theme.borderRadius}px`);
-  }
-  if (theme.fontFamily) {
-    html.style.setProperty('--font-family', theme.fontFamily);
-  }
-  if (theme.fontSize) {
-    html.style.setProperty('--font-size', `${theme.fontSize}px`);
+  // Set CSS variables for custom colors. Empty values remove a previously
+  // set variable - otherwise a reset would leave the old color active.
+  const colorVars: Array<[string, string | undefined]> = [
+    ['--color-primary', theme.primaryColor],
+    ['--color-secondary', theme.secondaryColor],
+    ['--color-accent', theme.accentColor],
+    ['--color-background', theme.backgroundColor],
+    ['--color-text', theme.textColor],
+    ['--radius', theme.borderRadius !== undefined ? `${theme.borderRadius}px` : undefined],
+    ['--font-family', theme.fontFamily],
+    ['--font-size', theme.fontSize !== undefined ? `${theme.fontSize}px` : undefined],
+  ];
+  for (const [cssVar, value] of colorVars) {
+    if (value) {
+      html.style.setProperty(cssVar, value);
+    } else {
+      html.style.removeProperty(cssVar);
+    }
   }
   
   // Update meta theme-color

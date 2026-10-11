@@ -32,14 +32,20 @@ interface MessageBubbleProps {
 export const escapeRegExp = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const HighlightedText: React.FC<{ text: string; query: string; isUser: boolean }> = ({ text, query, isUser }) => {
-  if (!query.trim()) {return <>{text}</>;}
-  const escaped = escapeRegExp(query.trim());
-  const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
-  if (parts.length === 1) {return <>{text}</>;}
+  const trimmed = query.trim();
+  // Build the split parts once per text/query instead of compiling a new
+  // RegExp on every render of every message bubble.
+  const parts = React.useMemo(() => {
+    if (!trimmed) {return null;}
+    const escaped = escapeRegExp(trimmed);
+    const splitParts = text.split(new RegExp(`(${escaped})`, 'gi'));
+    return splitParts.length === 1 ? null : splitParts;
+  }, [text, trimmed]);
+  if (!trimmed || !parts) {return <>{text}</>;}
   return (
     <>
       {parts.map((part, i) =>
-        part.toLowerCase() === query.trim().toLowerCase() ? (
+        part.toLowerCase() === trimmed.toLowerCase() ? (
           <mark key={i} className={isUser ? 'bg-yellow-300/80 text-gray-900 rounded px-0.5' : 'bg-yellow-200 text-gray-900 rounded px-0.5'}>
             {part}
           </mark>
@@ -61,17 +67,28 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, searchQuery
     [message.timestamp]
   );
 
-  // Use useMemo for the content to prevent re-renders when content hasn't changed
-  const content = React.useMemo(() => message.content, [message.content]);
   // Split a possible thinking block (`` ... ``) from the answer
-  const { thinking, answer } = React.useMemo(() => splitThinking(content), [content]);
+  const { thinking, answer } = React.useMemo(() => splitThinking(message.content), [message.content]);
   const [copied, setCopied] = React.useState(false);
+  const copyTimerRef = React.useRef<number | null>(null);
   const handleCopy = React.useCallback((): void => {
     void navigator.clipboard.writeText(message.content).then(() => {
       setCopied(true);
-      window.setTimeout(() => setCopied(false), 1500);
+      if (copyTimerRef.current !== null) {
+        window.clearTimeout(copyTimerRef.current);
+      }
+      copyTimerRef.current = window.setTimeout(() => setCopied(false), 1500);
+    }).catch(() => {
+      // Clipboard access can fail (e.g. lost focus) - just do nothing.
     });
   }, [message.content]);
+  React.useEffect((): (() => void) => {
+    return () => {
+      if (copyTimerRef.current !== null) {
+        window.clearTimeout(copyTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
@@ -183,6 +200,18 @@ const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, isM
     // Scroll position bookkeeping so prepending older messages does not jump
     const layoutRef = React.useRef({ hiddenCount: 0, scrollHeight: 0 });
 
+    // Grow the visible window with the list: without this, every new
+    // message in a chat longer than one page would unmount the topmost
+    // visible message while the user is reading it.
+    const prevMessageCountRef = React.useRef(messages.length);
+    React.useEffect(() => {
+      const delta = messages.length - prevMessageCountRef.current;
+      prevMessageCountRef.current = messages.length;
+      if (delta > 0) {
+        setVisibleCount((count) => Math.min(count + delta, messages.length));
+      }
+    }, [messages.length]);
+
     const visibleMessages = React.useMemo(
       () => messages.slice(Math.max(0, messages.length - visibleCount)),
       [messages, visibleCount]
@@ -290,7 +319,6 @@ const MessageListInner: React.FC<MessageListProps> = ({ messages, isLoading, isM
 // always arrives as a new array reference - exactly what the shallow check
 // needs. The previous deep comparison saved nothing in practice.
 export const MessageList = React.memo(MessageListInner);
-MessageList.displayName = 'MessageList';
 MessageList.displayName = 'MessageList';
 
 export default MessageList;

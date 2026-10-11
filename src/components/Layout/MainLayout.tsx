@@ -54,6 +54,17 @@ import { ttsSpeak } from '../../services/tts';
 
 type ActiveTab = 'chat' | 'profiles' | 'memory' | 'library' | 'models' | 'data' | 'settings' | 'help' | 'roadmap' | 'wiki' | 'contact' | 'privacy' | 'imprint';
 
+// Remaining time for the current download, derived from size/speed stats
+const downloadEta = (stats: { loadedMB: number; totalMB: number; speedMBps: number } | null): string | null => {
+  if (!stats || stats.speedMBps <= 0 || stats.totalMB <= stats.loadedMB) {
+    return null;
+  }
+  const remainingSec = Math.max(0, (stats.totalMB - stats.loadedMB) / stats.speedMBps);
+  const min = Math.floor(remainingSec / 60);
+  const sec = Math.round(remainingSec % 60);
+  return min > 0 ? `${min} min ${sec} s` : `${sec} s`;
+};
+
 export const MainLayout: FC = () => {
   const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState<ActiveTab>('chat');
@@ -193,17 +204,6 @@ export const MainLayout: FC = () => {
   }, []);
 
   const isModelLoaded = currentModelId === activeModel?.id;
-
-  // Remaining time for the current download, derived from size/speed stats
-  const downloadEta = (stats: { loadedMB: number; totalMB: number; speedMBps: number } | null): string | null => {
-    if (!stats || stats.speedMBps <= 0 || stats.totalMB <= stats.loadedMB) {
-      return null;
-    }
-    const remainingSec = Math.max(0, (stats.totalMB - stats.loadedMB) / stats.speedMBps);
-    const min = Math.floor(remainingSec / 60);
-    const sec = Math.round(remainingSec % 60);
-    return min > 0 ? `${min} min ${sec} s` : `${sec} s`;
-  };
 
   // Refresh inference status when active model changes
   useEffect(() => {
@@ -358,6 +358,11 @@ export const MainLayout: FC = () => {
   };
 
   const handleSendMessage = async (message: string, attachments?: DocumentAttachment[], images?: ImageAttachment[]): Promise<void> => {
+    // Defense in depth: InputBox already blocks this, but a second send
+    // while generating would abort the running stream.
+    if (isGenerating) {
+      return;
+    }
     try {
       if (!chat) {
         throw new Error('No active chat');
@@ -778,7 +783,11 @@ export const MainLayout: FC = () => {
             onSendMessageWithImages={handleSendMessageWithImages}
             onSelectModel={handleModelSelect}
             onSelectProfile={handleSelectProfile}
-            onRenameChat={renameChat}
+            onRenameChat={(id, title) => {
+              // renameChat logs and re-throws DB errors; swallow them here
+              // so a failed rename does not become an unhandled rejection.
+              void renameChat(id, title).catch(() => undefined);
+            }}
             memories={memories}
             library={libraryFiles}
             textScale={settings.textScale}

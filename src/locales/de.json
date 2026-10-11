@@ -30,6 +30,7 @@
     "renameFolderPrompt": "Neuer Name für den Ordner:",
     "deleteFolder": "Ordner löschen",
     "deleteFolderConfirm": "Ordner „{{name}}\" löschen? Die Chats bleiben erhalten - sie werden nur wieder ohne Ordner angezeigt.",
+    "deleteChatConfirm": "Chat \"{{title}}\" wirklich löschen? Dies kann nicht rückgängig gemacht werden.",
     "moveChat": "In Ordner verschieben",
     "removeFromFolder": "Aus Ordner entfernen",
     "emptyFolder": "Keine Chats in diesem Ordner",

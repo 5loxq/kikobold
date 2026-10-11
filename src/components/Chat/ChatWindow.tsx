@@ -108,24 +108,22 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   // flood assistive technology. Only the state transitions are announced.
   const [announcement, setAnnouncement] = useState('');
 
+  // Announce only real state transitions: generation started, and
+  // generation finished with an answer. Keyed off the isGenerating edge
+  // (not the message count) so switching chats does not announce anything.
+  const wasGeneratingRef = useRef(false);
   useEffect(() => {
     if (isGenerating) {
+      wasGeneratingRef.current = true;
       setAnnouncement(t('a11y.generatingStarted'));
+    } else if (wasGeneratingRef.current) {
+      wasGeneratingRef.current = false;
+      const last = chat?.messages[chat.messages.length - 1];
+      if (last?.role === 'assistant') {
+        setAnnouncement(t('a11y.responseReady'));
+      }
     }
-  }, [isGenerating, t]);
-
-  useEffect(() => {
-    if (isGenerating || !chat) {
-      return;
-    }
-    const last = chat.messages[chat.messages.length - 1];
-    if (last?.role === 'assistant') {
-      setAnnouncement(t('a11y.responseReady'));
-    }
-    // Fires when a message is added or generation ends - exactly the
-    // transitions that should be announced.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chat?.messages.length, isGenerating]);
+  }, [isGenerating, chat?.messages, t]);
 
   const normalizedSearch = searchQuery.trim().toLowerCase();
   const visibleMessages = React.useMemo(
@@ -148,9 +146,34 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     });
   };
 
+  // True when the user has not scrolled away from the latest messages.
+  const isNearBottom = (): boolean => {
+    const container = messagesEndRef.current?.closest<HTMLElement>('.messages-scroll');
+    if (!container) {
+      return true;
+    }
+    return container.scrollTop + container.clientHeight >= container.scrollHeight - 80;
+  };
+
+  // Jump to the bottom when switching chats or when the user sends a
+  // message - but while the model is streaming (or just finished), only
+  // follow the output when the user is already near the bottom, so
+  // reading older messages is not interrupted.
+  const prevChatIdRef = useRef<string | null>(null);
   useEffect(() => {
+    const chatId = chat?.id ?? null;
+    const chatChanged = prevChatIdRef.current !== chatId;
+    prevChatIdRef.current = chatId;
+    if (chatChanged) {
+      scrollToBottom();
+      return;
+    }
+    const last = chat?.messages[chat.messages.length - 1];
+    if ((streamingMessage || last?.role === 'assistant') && !isNearBottom()) {
+      return;
+    }
     scrollToBottom();
-  }, [chat?.messages, streamingMessage]);
+  }, [chat, streamingMessage]);
 
   useEffect(() => {
     if (_activeModel?.id) {
@@ -270,6 +293,15 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       () => setSpeakingMessageId(null)
     );
   };
+
+  // Stop read-aloud when switching to another chat: the spoken message is
+  // no longer visible and speakingMessageId would point at a foreign chat.
+  useEffect((): (() => void) => {
+    return () => {
+      ttsStop();
+      setSpeakingMessageId(null);
+    };
+  }, [chat?.id]);
 
   if (!chat) {
     return (

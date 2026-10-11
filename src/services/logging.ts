@@ -54,17 +54,19 @@ export const error = (message: string, ...optionalParams: unknown[]): void => {
   }
 };
 
+// Log level weights - hoisted so shouldLog does not rebuild the object on
+// every single log call.
+const LOG_LEVEL_WEIGHTS: Record<LogLevel, number> = {
+  [LogLevel.DEBUG]: 0,
+  [LogLevel.INFO]: 1,
+  [LogLevel.WARN]: 2,
+  [LogLevel.ERROR]: 3,
+  [LogLevel.NONE]: 4
+};
+
 // Check if a message should be logged based on the current log level
 function shouldLog(level: LogLevel): boolean {
-  const levels: Record<LogLevel, number> = {
-    [LogLevel.DEBUG]: 0,
-    [LogLevel.INFO]: 1,
-    [LogLevel.WARN]: 2,
-    [LogLevel.ERROR]: 3,
-    [LogLevel.NONE]: 4
-  };
-  
-  return levels[level] >= levels[currentLogLevel];
+  return LOG_LEVEL_WEIGHTS[level] >= LOG_LEVEL_WEIGHTS[currentLogLevel];
 }
 
 // Log important events (similar to console.log but with our logging system)

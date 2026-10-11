@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { stripHiddenPartsText, trimHistoryToCharBudget } from '../services/llm/text-processing';
 import { compareVersions, getWhatsNewSince } from '../services/whats-new';
 import { splitThinking } from '../components/Chat/ThinkingBlock';
-import { isSafeUrl, splitBlocks } from '../components/Chat/MarkdownRenderer';
+import { isSafeUrl, parseListBlock, splitBlocks } from '../components/Chat/MarkdownRenderer';
 import { escapeRegExp } from '../components/Chat/MessageList';
 import { detectMention } from '../components/Chat/InputBox';
 import { parseWebLLMSizeText } from '../hooks/useEnhancedInference';
@@ -275,5 +275,41 @@ describe('model-registry', () => {
     const qwen = getModelConfig('Qwen3-1.7B-q4f16_1-MLC');
     expect(qwen?.thinking).toBe(true);
     expect(qwen?.selfHostedPath).toBeDefined();
+  });
+});
+
+// ============================================================================
+// parseListBlock
+// ============================================================================
+
+describe('parseListBlock', () => {
+  it('parses multi-line unordered lists into separate items', () => {
+    const list = parseListBlock('- Erster Punkt\n- Zweiter Punkt\n- Dritter');
+    expect(list).not.toBeNull();
+    expect(list?.ordered).toBe(false);
+    expect(list?.items.map((i) => i.text)).toEqual(['Erster Punkt', 'Zweiter Punkt', 'Dritter']);
+  });
+
+  it('parses multi-line ordered lists', () => {
+    const list = parseListBlock('1. Erstens\n2. Zweitens\n3. Drittens');
+    expect(list?.ordered).toBe(true);
+    expect(list?.items.map((i) => i.text)).toEqual(['Erstens', 'Zweitens', 'Drittens']);
+  });
+
+  it('detects task list items with their checked state', () => {
+    const list = parseListBlock('- [x] erledigt\n- [ ] offen');
+    expect(list?.items[0]).toEqual({ text: 'erledigt', checked: true });
+    expect(list?.items[1]).toEqual({ text: 'offen', checked: false });
+  });
+
+  it('returns null for non-list blocks', () => {
+    expect(parseListBlock('Ganz normaler Absatz')).toBeNull();
+    expect(parseListBlock('*kursiv* am Anfang')).toBeNull();
+  });
+
+  it('treats non-marker lines as continuation of the previous item', () => {
+    const list = parseListBlock('- Punkt\n  eingerückte Fortsetzung');
+    expect(list?.items.length).toBe(1);
+    expect(list?.items[0].text).toContain('Fortsetzung');
   });
 });

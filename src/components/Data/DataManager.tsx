@@ -174,9 +174,16 @@ export const DataManager: React.FC<DataManagerProps> = ({
           <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={() => {
-                cleanupCaches();
-                setCacheStatus('done');
-                window.setTimeout(() => setCacheStatus(null), 3000);
+                void cleanupCaches()
+                  .then(() => {
+                    setCacheStatus('done');
+                    window.setTimeout(() => setCacheStatus(null), 3000);
+                  })
+                  .catch((err: unknown) => {
+                    logError('Cache cleanup failed:', err);
+                    setCacheStatus('error');
+                    window.setTimeout(() => setCacheStatus(null), 3000);
+                  });
               }}
               className="px-4 py-2 text-sm rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
             >
@@ -184,6 +191,9 @@ export const DataManager: React.FC<DataManagerProps> = ({
             </button>
             {cacheStatus === 'done' && (
               <span className="text-sm text-green-600 dark:text-green-400">{t('data.clearCacheDone')}</span>
+            )}
+            {cacheStatus === 'error' && (
+              <span className="text-sm text-red-600 dark:text-red-400">{t('common.error')}</span>
             )}
           </div>
         </section>

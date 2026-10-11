@@ -225,7 +225,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <button
         onClick={(e) => {
           e.stopPropagation();
-          onDeleteChat(chat.id);
+          // A mis-click on this hover-only button must not destroy a chat
+          // irreversibly - ask first, like folders and profiles do.
+          if (window.confirm(t('sidebar.deleteChatConfirm', { title: chat.title }))) {
+            onDeleteChat(chat.id);
+          }
         }}
         className="mr-1.5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-xs text-zinc-500 hover:text-red-400 transition-all p-1.5"
         aria-label={t('common.delete')}

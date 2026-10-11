@@ -9,8 +9,16 @@ const resources = {
   en: { translation: enTranslations },
 };
 
-// Get language preference from localStorage or default to 'de' (German)
-const savedLanguage = localStorageGet('language_preference') ?? 'de';
+// Get language preference from localStorage or default to 'de' (German).
+// Validate the stored value: anything else (stale key, manual edit) would
+// end up as <html lang> and break screen reader pronunciation even though
+// i18next falls back internally.
+const SUPPORTED_LANGUAGES = ['de', 'en'] as const;
+const storedLanguage = localStorageGet('language_preference');
+const savedLanguage: (typeof SUPPORTED_LANGUAGES)[number] =
+  storedLanguage !== null && (SUPPORTED_LANGUAGES as readonly string[]).includes(storedLanguage)
+    ? (storedLanguage as (typeof SUPPORTED_LANGUAGES)[number])
+    : 'de';
 
 i18n
   .use(initReactI18next)

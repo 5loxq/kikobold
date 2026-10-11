@@ -101,6 +101,10 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
 
         {editingProfile && (
           <ProfileEditor
+            // Force a remount when the edit target changes: the editor's
+            // useState initializers only run on mount, so without the key
+            // it would keep showing profile A's values while saving into B.
+            key={editingProfile.id}
             profile={editingProfile}
             onSave={(name, systemPrompt) => {
               onUpdateProfile({

@@ -2,6 +2,35 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.2.2] - 2026-10-11
+
+### Behoben
+
+- **Senden während laufender Generierung blockiert**: Ein zweiter Sende-Vorgang konnte die laufende Antwort abbrechen und die Streaming-Zustände der beiden Generierungen verschränkten sich (Eingabefeld und MainLayout guarden jetzt; der Inference-Hook zerstört zudem nicht mehr den AbortController eines neueren Streams).
+- **Modellwechsel wurde still zurückgesetzt**: Der „Load active model"-Effect lief bei jeder Änderung der Download-Liste neu und setzte die frisch gewählte Modell-ID auf den alten Storage-Wert zurück - läuft jetzt nur noch beim Mount.
+- **Markdown-Listen korrekt gerendert**: Mehrzeilige Aufzählungen und nummerierte Listen wurden als einzelner kaputter Punkt bzw. als Absatz mit literalen Nummern angezeigt; Task-Listen (`- [x]`) waren toter Code. Neuer zeilenweiser Listen-Parser (mit Regressionstests).
+- **Inline-Code nicht mehr von Italic zerstört**: `` `some_var_name` `` wurde innerhalb des Codes kursiv formatiert; Inline-Code wird jetzt zuerst extrahiert, Underscore-Italic benötigt außerdem Wortgrenzen (snake_case bleibt außen vor).
+- **Gedächtnis-Block behält jetzt die NEUEN Einträge**: Bei Überschreitung des Zeichenlimits wurden bisher die ältesten Einträge in den Prompt gebaut und die neuesten (relevantesten) abgeschnitten - die Reihenfolge ist jetzt korrekt.
+- **Profil-Texte nicht mehr verstümmelt**: Der Voll-Sanitizer entfernte Muster wie `data:` und `on...=` aus System-Prompts; Profile nutzen jetzt wie Chats/Gedächtnis/Bibliothek die schonende Variante (nur HTML-Tags).
+- **Race Conditions beim Modell-Laden (wllama)**: Parallele `loadWllamaModel`-Aufrufe killten gegenseitig ihre Instanz; fehlgeschlagene Loads leakten WASM-Worker - beides gefixt (Load-Guard + `exit()` im Fehlerfall).
+- **GPU-Speicher beim Unmount freigegeben**: Der Cleanup des Inference-Hooks nullte nur die Referenz; `engine.unload()` gibt den Grafikspeicher jetzt wirklich her.
+- **Vorlesen stoppt beim Chat-Wechsel** und die Screenreader-Ansage „Antwort bereit" feuert nicht mehr bei jedem Chat-Wechsel (nur noch bei echten Generierungs-Übergängen).
+- **Auto-Scroll folgt dem Stream nur noch am Boden**: Wer beim Streamen nach oben scrollt, um Älteres zu lesen, wird nicht mehr zurückgerissen; eigene Nachrichten und Chat-Wechsel springen weiterhin nach unten.
+- **Lange Chats**: Neue Nachrichten verstecken nicht mehr die oberste sichtbare Nachricht (das sichtbare Fenster wächst mit).
+- **Bild-Anhänge am Limit**: Überzählige Object-URLs werden jetzt revoked (kein Leak mehr), vorhandene Anhänge zählen korrekt ins Limit.
+- **Mikrofon stoppt beim Verlassen**: Die Spracherkennung wird beim Unmount der Eingabebox abgebrochen.
+- **Profil-Editor**: Beim Wechsel des bearbeiteten Profils ohne Neumontierung wurden die Werte von Profil A angezeigt - beim Speichern hätte das B mit A's Texten überschrieben (Remount per `key`).
+- **Chat löschen fragt jetzt nach**: Der ✕-Button in der Sidebar löscht nicht mehr ohne Bestätigung (wie Ordner und Profile).
+- **KaTeX offline**: Ein fehlgeschlagener Lazy-Import wurde dauerhaft gecacht und als unhandled rejection sichtbar - der Fehlschlag wird jetzt abgefangen und ein Retry beim nächsten Bedarf möglich.
+- **Diverse kleinere Fixes**: Dateinamen ohne Punkt erzeugten eine kaputte „Extension"; TTS-onEnd-Race beim Ersetzen einer Ansage; Theme-Reset entfernt gesetzte CSS-Variablen jetzt wirklich; Modell-Cache-Löschung trifft auch den HuggingFace-Fallback; Opera/Vivaldi werden nicht mehr als Chrome erkannt; RAM-Erkennung nutzt `navigator.deviceMemory` statt des JS-Heap-Limits; `isRetryableError` respektiert die konfigurierten Retry-Codes; Settings-Booleans aus dem Storage werden validiert; Offline-Erkennung funktioniert auch ohne Service-Worker; Fokus-Falle greift jetzt auch bei `position: fixed`-Dialogen; Import von Profilen validiert die Einträge; `updateProfile` mutiert nicht mehr das Objekt des Aufrufers.
+
+### Optimiert
+
+- **Streaming-Pfad entlastet**: Nach jeder Nachricht wird nicht mehr die komplette Chat-Liste aus IndexedDB neu geladen (lokaler Patch), Such-Highlighting kompiliert den RegExp nur noch einmal pro Query statt pro Nachricht pro Render.
+- **Deploy-Skript härter**: lftp bricht beim ersten fehlenden Kommando ab (`cmd:fail-exit`) und das SFTP-Passwort läuft über die Umgebung statt über die Prozessliste (`--env-password`).
+- **Vite-Config aufgeräumt**: Tote `external`-Regexes (`/legacy/` - Laufzeit-Falle für künftige Imports) entfernt; `watch.usePolling` (unnötige CPU-Last auf macOS) entfernt.
+- **Kosmetik**: `substr` → `slice`, doppelte `displayName`-Zuweisung, Log-Level-Tabelle als Modul-Konstante, `downloadEta` auf Modulebene, `mobile-web-app-capable`-Meta-Tag ergänzt, gespeicherte Sprache wird vor Anwendung validiert.
+
 ## [4.2.1] - 2026-10-09
 
 ### Intern (keine sichtbaren Änderungen)

@@ -205,7 +205,7 @@ export const createLibraryFile = (name: string, content: string): LibraryFile =>
   }
   const now = Date.now();
   return {
-    id: `libfile_${now}_${Math.random().toString(36).substr(2, 9)}`,
+    id: `libfile_${now}_${Math.random().toString(36).slice(2, 11)}`,
     name: name.trim(),
     content,
     size: content.length,

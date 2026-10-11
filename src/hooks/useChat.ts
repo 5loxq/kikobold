@@ -74,7 +74,7 @@ export const useChat = (): UseChatReturn => {
       }
 
       const newMessage: Message = {
-        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
         role,
         content,
         timestamp: Date.now(),
@@ -94,12 +94,17 @@ export const useChat = (): UseChatReturn => {
       chatRef.current = updatedChat;
       setChat(updatedChat);
 
-      await loadChats();
+      // Patch the chat list locally instead of re-reading every chat with
+      // all its messages from IndexedDB on every single message.
+      setChats(prev => {
+        const next = prev.map(c => (c.id === updatedChat.id ? updatedChat : c));
+        return next.sort((a, b) => b.updatedAt - a.updatedAt);
+      });
     } catch (error) {
       logError('Failed to add message:', error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
-  }, [loadChats]);
+  }, []);
 
   const deleteChat = useCallback(async (id: string) => {
     try {

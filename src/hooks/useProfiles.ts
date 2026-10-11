@@ -48,11 +48,14 @@ export const useProfiles = (): UseProfilesReturn => {
         throw new Error('Invalid profile object');
       }
 
-      profile.updatedAt = Date.now();
-      ProfileStorage.saveProfile(profile);
-      setProfiles(profiles.map(p => (p.id === profile.id ? profile : p)));
-      if (activeProfile?.id === profile.id) {
-        setActiveProfile(profile);
+      // Copy instead of mutating the caller's object: callers may pass an
+      // object straight from state, and mutating it makes the map() below a
+      // reference no-op that React does not render.
+      const updated: Profile = { ...profile, updatedAt: Date.now() };
+      ProfileStorage.saveProfile(updated);
+      setProfiles(profiles.map(p => (p.id === updated.id ? updated : p)));
+      if (activeProfile?.id === updated.id) {
+        setActiveProfile(updated);
       }
     } catch (error) {
       logError('Failed to update profile:', error);
@@ -129,10 +132,19 @@ export const useProfiles = (): UseProfilesReturn => {
         throw new Error('Invalid profiles array in import data');
       }
 
+      // Validate each entry before saving: an import file without the
+      // required fields would otherwise break the app at runtime.
+      const validProfiles = imported.filter((p): p is Profile =>
+        !!p &&
+        typeof p === 'object' &&
+        typeof p.name === 'string' && p.name.trim().length > 0 &&
+        typeof p.systemPrompt === 'string'
+      );
+
       // Assign new IDs to imported profiles to avoid conflicts
-      const newProfiles = imported.map(p => ({
+      const newProfiles = validProfiles.map(p => ({
         ...p,
-        id: `profile_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: `profile_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
         createdAt: Date.now(),
       }));
 

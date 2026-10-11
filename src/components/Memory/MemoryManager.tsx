@@ -214,7 +214,7 @@ export const MemoryManager: React.FC<MemoryManagerProps> = ({
                         ✏️
                       </button>
                       <button
-                        onClick={() => void onDeleteMemory(entry.id)}
+                        onClick={() => void onDeleteMemory(entry.id).catch(() => setError(t('common.error')))}
                         className="p-2 text-sm rounded-lg text-zinc-600 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                         aria-label={t('common.delete')}
                       >

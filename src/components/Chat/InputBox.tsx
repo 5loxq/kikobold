@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { error, log } from '../../services/logging';
 import { sanitizeInputLight } from '../../services/security';
@@ -42,6 +42,7 @@ interface SpeechRecognitionInstance {
   onend: () => void;
   start: () => void;
   stop: () => void;
+  abort: () => void;
 }
 
 interface SpeechRecognitionType {
@@ -249,14 +250,22 @@ export const InputBox: React.FC<InputBoxProps> = ({
     try {
       const accepted: ImageAttachment[] = [];
       for (const file of files) {
-        if (accepted.length >= ATTACHMENT_LIMITS.MAX_ATTACHMENTS) {break;}
+        if (images.length + accepted.length >= ATTACHMENT_LIMITS.MAX_ATTACHMENTS) {break;}
         if (!isAllowedImage(file)) {continue;}
         accepted.push(await createImageAttachment(file));
       }
       if (accepted.length > 0) {
         // Cap the total: existing images plus the new ones must not exceed
-        // the attachment limit.
-        setImages((prev) => [...prev, ...accepted].slice(0, ATTACHMENT_LIMITS.MAX_ATTACHMENTS));
+        // the attachment limit. Revoke the preview URLs of any attachment
+        // dropped by the cap so they do not leak.
+        setImages((prev) => {
+          const combined = [...prev, ...accepted];
+          const kept = combined.slice(0, ATTACHMENT_LIMITS.MAX_ATTACHMENTS);
+          for (const dropped of combined.slice(kept.length)) {
+            URL.revokeObjectURL(dropped.previewUrl);
+          }
+          return kept;
+        });
       }
     } finally {
       setIsAttaching(false);
@@ -382,8 +391,19 @@ export const InputBox: React.FC<InputBoxProps> = ({
     }
   };
 
+  // Stop the microphone when the component unmounts (tab switch): without
+  // this the recognition keeps running and fires setState on a dead component.
+  useEffect((): (() => void) => {
+    return () => {
+      recognitionRef.current?.abort();
+      recognitionRef.current = null;
+    };
+  }, []);
+
   const handleSend = (): void => {
-    if (input.trim() && !isLoading && isModelLoaded) {
+    // Sending while a generation is running would abort it mid-stream and
+    // interleave the two responses - block instead.
+    if (input.trim() && !isLoading && isModelLoaded && !isGenerating) {
       if (images.length > 0 && onSendMessageWithImages) {
         onSendMessageWithImages(input, images);
       } else if (documents.length > 0 && onSendMessageWithDocuments) {
@@ -485,8 +505,8 @@ export const InputBox: React.FC<InputBoxProps> = ({
 
   // Memoize disabled states to prevent unnecessary re-renders
   const isSendDisabled = useMemo(() => {
-    return isLoading || !isModelLoaded || !input.trim();
-  }, [isLoading, isModelLoaded, input]);
+    return isLoading || !isModelLoaded || isGenerating || !input.trim();
+  }, [isLoading, isModelLoaded, isGenerating, input]);
 
   const isVoiceDisabled = useMemo(() => {
     return isLoading || !isModelLoaded;

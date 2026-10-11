@@ -42,7 +42,14 @@ export const InstallPrompt: FC = () => {
 
   const handleInstall = (): void => {
     // The event can only be used once; hide the banner regardless of the
-    // user's choice so they are not asked again on every visit.
+    // user's choice so they are not asked again on every visit. Persist the
+    // dismissal too - a cancelled or failed install dialog would otherwise
+    // resurface the banner on the next visit.
+    try {
+      localStorageSet(DISMISSED_KEY, '1');
+    } catch {
+      // Ignore storage errors - the hint may show again then
+    }
     setDismissed(true);
     void installEvent.prompt().then(() => installEvent.userChoice).then(() => undefined);
   };

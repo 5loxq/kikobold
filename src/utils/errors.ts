@@ -380,21 +380,23 @@ export const createAppError = (
  */
 export const isRetryableError = (error: unknown, retryConfig: RetryConfig = DEFAULT_RETRY_CONFIG): boolean => {
     if (!(error instanceof AppError)) {
-        // For non-AppError, assume it's retryable if it's a network error
+        // For non-AppError, assume it's retryable if it looks like a
+        // transient network problem. "failed" alone is too broad - almost
+        // every error message contains it.
         if (error instanceof Error) {
             const message = error.message.toLowerCase();
             return message.includes('network') || 
                    message.includes('timeout') || 
                    message.includes('connection') ||
-                   message.includes('fetch') ||
-                   message.includes('failed');
+                   message.includes('fetch');
         }
         return false;
     }
 
-    // Check if the error code is in the retryable list
+    // An explicitly configured retryable code is retryable even when the
+    // error object was created without the isRetryable flag (the default).
     if (retryConfig.retryableCodes?.includes(error.code)) {
-        return error.isRetryable;
+        return true;
     }
 
     return error.isRetryable;

@@ -304,7 +304,7 @@ export const createChat = (profileId: string, title: string = DEFAULT_CHAT_TITLE
 
   const now = Date.now();
   return {
-    id: `chat_${now}_${Math.random().toString(36).substr(2, 9)}`,
+    id: `chat_${now}_${Math.random().toString(36).slice(2, 11)}`,
     title: title.trim(),
     messages: [],
     profileId: profileId.trim(),

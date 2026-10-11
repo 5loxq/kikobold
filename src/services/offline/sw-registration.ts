@@ -228,6 +228,10 @@ export const isServiceWorkerSupported = (): boolean => {
  * Initialize offline support
  */
 export const initOfflineSupport = async (): Promise<void> => {
+    // Offline detection must work even when no Service Worker can be
+    // registered (Safari private mode, old browsers) - set it up first,
+    // independently of the registration result.
+    setupOfflineDetection();
     try {
         // Register service worker
         await registerServiceWorker();

@@ -20,13 +20,20 @@ export const ttsSpeak = (
   utterance.rate = rate;
   utterance.pitch = 1.0;
   utterance.volume = 1.0;
+  // Chrome fires onend (not onerror) for the utterance killed by the
+  // cancel() above. Only run the callback if this utterance is still the
+  // active one, so a replaced speech does not clear the new one's state.
   utterance.onend = (): void => {
-    activeUtterance = null;
-    onEnd?.();
+    if (activeUtterance === utterance) {
+      activeUtterance = null;
+      onEnd?.();
+    }
   };
   utterance.onerror = (): void => {
-    activeUtterance = null;
-    onEnd?.();
+    if (activeUtterance === utterance) {
+      activeUtterance = null;
+      onEnd?.();
+    }
   };
   activeUtterance = utterance;
   window.speechSynthesis.speak(utterance);

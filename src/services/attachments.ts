@@ -46,16 +46,26 @@ export const buildPromptWithDocuments = (message: string, attachments: DocumentA
   let budget = MAX_TOTAL_DOC_PROMPT_CHARS;
   const docs = attachments
     .map((doc) => {
-      // Once the budget is used up, the limit clamps to 0 instead of going
-      // negative (a negative slice() would cut text from the end).
-      const limit = Math.max(0, Math.min(MAX_DOC_PROMPT_CHARS, budget));
-      budget -= Math.max(0, Math.min(limit, doc.text.length));
+      // Wrapper overhead (header, end marker, truncation note, joins) counts
+      // against the budget too - otherwise the final prompt overshoots the
+      // limit by the wrapper length of every document.
+      const wrapperOverhead =
+        doc.name.length + '--- Document:  ---\n--- End of document ---'.length + 2;
+      const limit = Math.max(0, Math.min(MAX_DOC_PROMPT_CHARS, budget - wrapperOverhead));
+      if (limit === 0) {
+        // Budget used up: skip the document entirely instead of injecting
+        // an empty header.
+        return null;
+      }
       const text = doc.text.length > limit
         ? `${doc.text.slice(0, limit)}\n[... document truncated ...]`
         : doc.text;
+      budget -= wrapperOverhead + Math.min(limit, text.length);
       return `--- Document: ${doc.name} ---\n${text}\n--- End of document ---`;
     })
+    .filter((doc): doc is string => doc !== null)
     .join('\n\n');
+  if (docs.length === 0) {return message;}
   return `${message}\n\nThe user attached the following documents. Use them as context:\n\n${docs}`;
 };
 

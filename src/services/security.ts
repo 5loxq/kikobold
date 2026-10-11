@@ -163,8 +163,11 @@ export const validateFileUpload = (
     }
   }
 
-  // Check if file extension is allowed
-  const fileExtension = fileName.slice(fileName.lastIndexOf('.'));
+  // Check if file extension is allowed. A name without a dot would make
+  // lastIndexOf return -1 and slice(-1) yield the last character as a
+  // bogus "extension".
+  const dotIndex = fileName.lastIndexOf('.');
+  const fileExtension = dotIndex === -1 ? '' : fileName.slice(dotIndex);
   if (allowedExtensions.length > 0 && !allowedExtensions.includes(fileExtension)) {
     return { valid: false, error: `File extension not allowed: ${fileExtension}` };
   }

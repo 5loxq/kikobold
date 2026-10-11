@@ -31,6 +31,8 @@ export interface WllamaGenerateOptions {
   images?: WllamaImageAttachment[];
 }
 
+// Only a single wllama.wasm build is deployed. It is multi-thread capable and
+// also runs on the single-thread path, so both wllama keys map to that file.
 const WASM_PATHS = {
   default: '/wllama/wllama.wasm',
   'single-thread/wllama.wasm': '/wllama/wllama.wasm',
@@ -40,6 +42,9 @@ const WASM_PATHS = {
 let wllamaInstance: Wllama | null = null;
 let loadedModelId: string | null = null;
 let activeAbortController: AbortController | null = null;
+// Guard against parallel loads: a second call while a load is running would
+// unload the instance the first call is still initializing.
+let loadPromise: Promise<boolean> | null = null;
 
 export const isWllamaModelLoaded = (modelId: string): boolean => {
   return wllamaInstance !== null && loadedModelId === modelId;
@@ -103,17 +108,26 @@ export const loadWllamaModel = async (
   gguf: { repo: string; file: string; mmprojFile?: string; selfHostedPath?: string },
   callbacks?: WllamaLoadCallbacks
 ): Promise<boolean> => {
-  try {
-    if (isWllamaModelLoaded(modelId)) {
-      log(`wllama: model ${modelId} already loaded`);
-      return true;
-    }
-    if (wllamaInstance) {
-      await unloadWllamaModel();
-    }
+  if (isWllamaModelLoaded(modelId)) {
+    log(`wllama: model ${modelId} already loaded`);
+    return true;
+  }
+  if (loadPromise) {
+    // Another load is already in flight - do not start a second one (it
+    // would unload the instance the first load is initializing into).
+    log('wllama: load already in progress, waiting for it');
+    return loadPromise;
+  }
+  loadPromise = (async (): Promise<boolean> => {    // Declared outside the try so the catch block can free the WASM workers
+    // and partially downloaded chunks of a failed load.
+    let wllama: Wllama | null = null;
+    try {
+      if (wllamaInstance) {
+        await unloadWllamaModel();
+      }
 
-    const { Wllama: WllamaClass } = await import('@wllama/wllama');
-    const wllama = new WllamaClass(WASM_PATHS, { allowOffline: true });
+      const { Wllama: WllamaClass } = await import('@wllama/wllama');
+      wllama = new WllamaClass(WASM_PATHS, { allowOffline: true });
 
     // If the model file is already in the browser cache, there is no download
     // phase: wllama goes straight to initializing the model in memory. Report
@@ -198,10 +212,21 @@ export const loadWllamaModel = async (
     return true;
   } catch (err) {
     warn(`wllama: failed to load model ${modelId}: ${err}`);
+    // Free the WASM workers and cached chunks of the failed load, otherwise
+    // every failed attempt (e.g. self-hosted -> HuggingFace fallback) leaks.
+    try {
+      await wllama?.exit();
+    } catch {
+      // Ignore secondary errors during cleanup
+    }
     wllamaInstance = null;
     loadedModelId = null;
     return false;
+  } finally {
+    loadPromise = null;
   }
+  })();
+  return loadPromise;
 };
 
 export const unloadWllamaModel = async (): Promise<void> => {
