@@ -36,7 +36,8 @@
     "emptyFolder": "No chats in this folder",
     "withoutFolder": "Without folder",
     "dropToRemove": "Drop here to remove from the folder",
-    "images": "Images"
+    "images": "Images",
+    "whatsNewHint": "What's new - open the changelog"
   },
   "chat": {
     "welcome": "Welcome to KI Kobold",
@@ -127,7 +128,8 @@
     "removeImage": "Remove image",
     "imagePreview": "Image preview",
     "readAloud": "Read message aloud",
-    "stopSpeaking": "Stop reading aloud"
+    "stopSpeaking": "Stop reading aloud",
+    "downloadConfirmMobileBigModel": "Warning: \"{{name}}\" is a very large model (about {{size}} MB) built for powerful machines (desktop with plenty of RAM). On a phone the download eats mobile data, and the model will run very slowly or not at all (memory). Really continue?"
   },
   "tab": {
     "generating": "AI is thinking…",
@@ -633,7 +635,7 @@
     "gemma4": {
       "name": "Gemma 4 E2B",
       "released": "March 2026",
-      "s1": "Ensu's mobile model - trained by Google for local use",
+      "s1": "Multimodal model by Google - understands text and images",
       "s2": "Understands images (vision) via the bundled mmproj file",
       "s3": "Very good quality for its size (2B effective parameters)",
       "s4": "Official Google QAT model (Apache-2.0 license)",
@@ -641,7 +643,7 @@
       "w2": "Runs on the processor (WASM) - noticeably slower than WebGPU models",
       "w3": "Needs a lot of RAM - not recommended on mobile or weak machines",
       "w4": "Not used as an automatic fallback for other models",
-      "summary": "The largest model on offer: for users with plenty of RAM and patience who want to try Ensu's mobile model. As with Ensu: strong natively on desktop, borderline in the browser."
+      "summary": "The largest model on offer: for users with plenty of RAM and patience. Strong natively on desktop, borderline in the browser - download size and speed are the main limits."
     },
     "imageGen": {
       "title": "Image generation (Alpha)",

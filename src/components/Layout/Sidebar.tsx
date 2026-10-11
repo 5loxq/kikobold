@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Chat, ChatFolder } from '../../types';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { useDarkMode } from '../../hooks/useDarkMode';
+import { version as appVersion } from '../../../package.json';
 
 type TabId = 'chat' | 'profiles' | 'memory' | 'library' | 'models' | 'images' | 'data' | 'settings' | 'help' | 'roadmap' | 'wiki' | 'contact' | 'privacy' | 'imprint';
 
@@ -20,6 +21,8 @@ interface SidebarProps {
   onRenameFolder: (id: string, name: string) => void;
   onDeleteFolder: (id: string) => void;
   onMoveChat: (chatId: string, folderId: string | null) => void;
+  /** Opens the "What's new" dialog (version button in the footer) */
+  onShowWhatsNew?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -36,6 +39,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onRenameFolder,
   onDeleteFolder,
   onMoveChat,
+  onShowWhatsNew,
 }) => {
   const { t } = useTranslation();
   const darkMode = useDarkMode();
@@ -601,19 +605,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       )}
 
-      {/* Footer: theme toggle + language */}
-      <div className="flex-shrink-0 flex items-center gap-1 px-3 py-3 border-t border-zinc-800/60">
-        <button
-          onClick={onToggleTheme}
-          className="p-2 rounded-xl text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
-          title={darkMode ? t('sidebar.switchToLightMode') : t('sidebar.switchToDarkMode')}
-          aria-label={darkMode ? t('sidebar.switchToLightMode') : t('sidebar.switchToDarkMode')}
-        >
-          {darkMode ? '☀️' : '🌙'}
-        </button>
-        <div className="flex-1 min-w-0">
-          <LanguageSwitcher isCollapsed={isCollapsed} />
+      {/* Footer: theme toggle + language, version underneath */}
+      <div className="flex-shrink-0 px-3 py-3 border-t border-zinc-800/60">
+        <div className="flex items-center gap-1">
+          <button
+            onClick={onToggleTheme}
+            className="p-2 rounded-xl text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
+            title={darkMode ? t('sidebar.switchToLightMode') : t('sidebar.switchToDarkMode')}
+            aria-label={darkMode ? t('sidebar.switchToLightMode') : t('sidebar.switchToDarkMode')}
+          >
+            {darkMode ? '☀️' : '🌙'}
+          </button>
+          <div className="flex-1 min-w-0">
+            <LanguageSwitcher isCollapsed={isCollapsed} />
+          </div>
         </div>
+        <button
+          onClick={() => onShowWhatsNew?.()}
+          disabled={!onShowWhatsNew}
+          className="mt-2 w-full text-left text-xs text-zinc-500 hover:text-zinc-300 transition-colors disabled:cursor-default"
+          title={t('sidebar.whatsNewHint')}
+          aria-label={t('sidebar.whatsNewHint')}
+        >
+          v{appVersion}
+        </button>
       </div>
     </div>
   );

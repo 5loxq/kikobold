@@ -56,6 +56,36 @@ interface ChatWindowProps {
   speechRate?: number;
 }
 
+// The model dropdown, shared between the chat header and the welcome
+// screen (no chat open yet) - the model selection must be reachable in
+// both states, otherwise the app looks broken on a fresh visit.
+const ModelSelect: React.FC<{
+  selectedModelId: string;
+  onSelect: (modelId: string) => void;
+  isModelDownloaded?: (modelId: string) => boolean;
+  isLoading: boolean;
+  label: string;
+}> = ({ selectedModelId, onSelect, isModelDownloaded, isLoading, label }) => (
+  <select
+    value={selectedModelId}
+    onChange={(e) => onSelect(e.target.value)}
+    disabled={isLoading}
+    data-tour="model-select"
+    aria-label={label}
+    className="w-full sm:w-auto px-4 py-2 border border-zinc-500 rounded-xl text-sm disabled:bg-zinc-100 dark:disabled:bg-zinc-800 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 shadow-sm"
+  >
+    <option value="">{label}...</option>
+    {MODELS.map((model) => {
+      const isDownloaded = isModelDownloaded?.(model.id) ?? false;
+      return (
+        <option key={model.id} value={model.id}>
+          {isDownloaded ? '✅' : '📥'} {model.name} · {Math.round(model.fileSizeMB ?? 0)} MB{model.provider === 'gguf-hf' ? ' · läuft überall' : ' · WebGPU'}
+        </option>
+      );
+    })}
+  </select>
+);
+
 export const ChatWindow: React.FC<ChatWindowProps> = ({
   chat,
   activeProfile,
@@ -329,6 +359,19 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               <li>{t('chat.step2')}</li>
               <li>{t('chat.step3')}</li>
             </ol>
+            {/* Model selection must be reachable even without an open chat */}
+            <div className="mt-4">
+              <ModelSelect
+                selectedModelId={selectedModelId}
+                onSelect={(modelId) => {
+                  setSelectedModelId(modelId);
+                  onSelectModel(modelId);
+                }}
+                isModelDownloaded={isModelDownloaded}
+                isLoading={isLoading}
+                label={t('chat.selectModel')}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -437,27 +480,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
         {/* Model Selector */}
         <div className="flex gap-3 items-center flex-wrap mt-3">
-          <select
-            value={selectedModelId}
-            onChange={(e) => {
-              setSelectedModelId(e.target.value);
-              onSelectModel(e.target.value);
+          <ModelSelect
+            selectedModelId={selectedModelId}
+            onSelect={(modelId) => {
+              setSelectedModelId(modelId);
+              onSelectModel(modelId);
             }}
-            disabled={isLoading}
-            data-tour="model-select"
-            aria-label={t('chat.selectModel')}
-            className="w-full sm:w-auto px-4 py-2 border border-zinc-500 rounded-xl text-sm disabled:bg-zinc-100 dark:disabled:bg-zinc-800 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 shadow-sm"
-          >
-            <option value="">{t('chat.selectModel')}...</option>
-            {MODELS.map((model) => {
-              const isDownloaded = isModelDownloaded?.(model.id) ?? false;
-              return (
-                <option key={model.id} value={model.id}>
-                  {isDownloaded ? '✅' : '📥'} {model.name} · {Math.round(model.fileSizeMB ?? 0)} MB{model.provider === 'gguf-hf' ? ' · läuft überall' : ' · WebGPU'}
-                </option>
-              );
-            })}
-          </select>
+            isModelDownloaded={isModelDownloaded}
+            isLoading={isLoading}
+            label={t('chat.selectModel')}
+          />
 
           {thinkingAvailable && onToggleThinking && (
             <button

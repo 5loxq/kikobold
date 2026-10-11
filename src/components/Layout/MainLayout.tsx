@@ -472,6 +472,23 @@ export const MainLayout: FC = () => {
       if (!isModelDownloaded(modelId)) {
         const info = getModelInfo(modelId);
         const sizeMB = info?.fileSizeMB ? Math.round(info.fileSizeMB) : 0;
+
+        // Very large models are a poor fit for phones: the download eats
+        // mobile data and WASM inference on a phone is painfully slow or
+        // fails outright on the memory limit. Warn explicitly before the
+        // regular download confirmation.
+        const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+          || (typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches);
+        const isLargeModel = (getModelConfig(modelId)?.fileSizeMB ?? 0) >= 2000;
+        if (isMobileDevice && isLargeModel) {
+          const mobileConfirmed = window.confirm(
+            t('chat.downloadConfirmMobileBigModel', { name: info?.name ?? modelId, size: sizeMB })
+          );
+          if (!mobileConfirmed) {
+            return;
+          }
+        }
+
         const confirmed = window.confirm(
           t('chat.downloadConfirm', { name: info?.name ?? modelId, size: sizeMB })
         );
@@ -600,6 +617,7 @@ export const MainLayout: FC = () => {
           onRenameFolder={handleRenameFolder}
           onDeleteFolder={handleDeleteFolder}
           onMoveChat={handleMoveChat}
+          onShowWhatsNew={handleShowWhatsNew}
         />
       </div>
 
@@ -647,6 +665,7 @@ export const MainLayout: FC = () => {
                 onRenameFolder={handleRenameFolder}
                 onDeleteFolder={handleDeleteFolder}
                 onMoveChat={handleMoveChat}
+                onShowWhatsNew={handleShowWhatsNew}
               />
             </div>
           </div>

@@ -130,7 +130,7 @@ export const MODEL_CONFIGS: Record<string, EngineModelConfig> = {
     modelPath: 'gemma-4-e2b-it',
     engine: 'wllama',
     type: 'chat',
-    description: 'Ensus Mobil-Modell von Google: multimodal (versteht auch Bilder), sehr gute Qualität für seine Größe. Achtung: großer Download (3,3 GB plus ~1 GB Vision-Datei bei Bildnutzung) und läuft auf dem Prozessor - Desktop mit viel RAM empfohlen.',
+    description: 'Multimodales Mittelklasse-Modell von Google (versteht auch Bilder) mit sehr guter Qualität für seine Größe. Achtung: großer Download (3,3 GB plus ~1 GB Vision-Datei bei Bildnutzung) und läuft auf dem Prozessor - Desktop mit viel RAM empfohlen.',
     modelSize: '2B',
     fileSizeMB: 3190,
     quantized: true,

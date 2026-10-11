@@ -2,6 +2,21 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.2] - 2026-10-11
+
+### Behoben
+
+- **Modellauswahl immer sichtbar**: Der Modell-Selector existierte nur im Chat-View mit geöffnetem Chat - ohne geöffneten Chat (frischer Besuch, alle Chats geschlossen) zeigte die Willkommenskarte keine Modellauswahl. Der Dropdown ist jetzt eine eigene Komponente und erscheint auch auf dem Willkommensbildschirm.
+
+### Neu
+
+- **Build-Nummer in der Sidebar**: Unter dem Sprach- und Theme-Umschalter steht jetzt die aktuelle Version (z. B. "v4.3.2"); ein Klick öffnet das "Was ist neu"-Fenster mit dem kompletten Changelog.
+- **Mobile-Warnung vor großen Modell-Downloads**: Auf Handys (erkennbar über User-Agent oder Touch-Pointer) erscheint vor dem Download-Dialog sehr großer Modelle (ab 2 GB, aktuell Gemma 4 E2B) eine zusätzliche deutliche Warnung - mobiler Datenverbrauch, sehr langsames Laufen oder Abbruch wegen Arbeitsspeicher, Empfehlung Desktop.
+
+### Geändert
+
+- **Gemma 4 E2B ohne Ensu-Bezug**: Beschreibung in Registry und Modellseite nennen nur noch die Fakten (multimodal, Qualität, Größe, Ressourcenbedarf), ohne den Vergleich mit Entes App.
+
 ## [4.3.1] - 2026-10-11
 
 ### Behoben

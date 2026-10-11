@@ -36,7 +36,8 @@
     "emptyFolder": "Keine Chats in diesem Ordner",
     "withoutFolder": "Ohne Ordner",
     "dropToRemove": "Hier ablegen, um aus dem Ordner zu entfernen",
-    "images": "Bilder"
+    "images": "Bilder",
+    "whatsNewHint": "Was ist neu - Changelog öffnen"
   },
   "chat": {
     "welcome": "Willkommen bei KI Kobold",
@@ -127,7 +128,8 @@
     "removeImage": "Bild entfernen",
     "imagePreview": "Bildvorschau",
     "readAloud": "Nachricht vorlesen",
-    "stopSpeaking": "Vorlesen stoppen"
+    "stopSpeaking": "Vorlesen stoppen",
+    "downloadConfirmMobileBigModel": "Achtung: \"{{name}}\" ist mit ca. {{size}} MB ein sehr großes Modell und wurde für leistungsstarke Rechner (Desktop mit viel RAM) gebaut. Auf einem Handy verbraucht der Download viel mobiles Datenverkehr, und das Modell läuft dort sehr langsam oder gar nicht (Arbeitsspeicher). Wirklich fortfahren?"
   },
   "tab": {
     "generating": "KI denkt nach…",
@@ -633,7 +635,7 @@
     "gemma4": {
       "name": "Gemma 4 E2B",
       "released": "März 2026",
-      "s1": "Ensus Mobil-Modell - von Google für lokale Nutzung trainiert",
+      "s1": "Multimodales Modell von Google - versteht Text und Bilder",
       "s2": "Versteht Bilder (Vision) über die mitgelieferte mmproj-Datei",
       "s3": "Sehr gute Qualität für seine Größe (2B effektive Parameter)",
       "s4": "Offizielles Google-QAT-Modell (Apache-2.0-Lizenz)",
@@ -641,7 +643,7 @@
       "w2": "Läuft auf dem Prozessor (WASM) - deutlich langsamer als WebGPU-Modelle",
       "w3": "Braucht viel RAM - auf Mobilgeräten und schwachen Rechnern nicht empfohlen",
       "w4": "Kein automatischer Fallback für andere Modelle",
-      "summary": "Das größte Modell im Angebot: für Nutzer mit viel RAM und Geduld, die Ensus Mobil-Modell ausprobieren möchten. Wie bei Ensu gilt: auf dem Desktop nativ stark, im Browser grenzwertig."
+      "summary": "Das größte Modell im Angebot: für Nutzer mit viel RAM und Geduld. Auf dem Desktop nativ stark, im Browser grenzwertig - der Download und die Geschwindigkeit sind die Hauptgrenzen."
     },
     "imageGen": {
       "title": "Bildgenerierung (Alpha)",
