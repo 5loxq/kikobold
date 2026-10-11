@@ -106,6 +106,7 @@
     "preparingSlowHint": "Das dauert länger als üblich - auf Mobilgeräten kann das Vorbereiten im Speicher einige Minuten dauern. Bildschirm anlassen und diesen Tab geöffnet halten.",
     "keepScreenOnHint": "Auf dem Handy: Bildschirm eingeschaltet lassen und diesen Tab geöffnet halten, sonst pausiert der Ladevorgang.",
     "errorPreparingTimeout": "Das Modell konnte nicht im Speicher vorbereitet werden - vermutlich reicht der Arbeitsspeicher deines Geräts nicht aus. Lade die Seite neu und wähle ein kleineres Modell.",
+    "errorPreparingTimeoutIos": "Das Modell kann auf iOS im Browser nicht gestartet werden - die Vorbereitung wird nicht fertig. Das ist eine Plattform-Beschränkung von iOS/WebKit (fehlende WebAssembly-Funktionen), kein Fehler der App. Nutze einen Desktop-Computer oder Chrome auf Android.",
     "downloadStats": "{{loaded}} MB von {{total}} MB · {{speed}} MB/s",
     "privacyNote": "Alle Antworten werden lokal in deinem Browser erzeugt - deine Nachrichten verlassen dein Gerät nicht.",
     "downloadConfirm": "Das Modell \"{{name}}\" muss zuerst heruntergeladen werden (ca. {{size}} MB). Es wird im Browser gecacht und beim nächsten Mal sofort geladen. Jetzt herunterladen?",
@@ -237,7 +238,10 @@
   "browserWarning": {
     "firefoxTitle": "Firefox erkannt: Die KI läuft hier langsamer",
     "firefoxText": "Die KI-Modelle arbeiten in Firefox deutlich langsamer als in Chrome oder Edge - Antworten erscheinen oft nur Wort für Wort. Für volle Geschwindigkeit verwende bitte Chrome oder Edge.",
-    "firefoxReason": "Grund: Firefox unterstützt kein JSPI (JavaScript Promise Integration). Dadurch muss die Engine für WASM-Modelle wie LFM 2.5 einen langsamen Umweg nehmen. Das ist browserbedingt und lässt sich von dieser Seite aus nicht beheben."
+    "firefoxReason": "Grund: Firefox unterstützt kein JSPI (JavaScript Promise Integration). Dadurch muss die Engine für WASM-Modelle wie LFM 2.5 einen langsamen Umweg nehmen. Das ist browserbedingt und lässt sich von dieser Seite aus nicht beheben.",
+    "iosTitle": "iOS erkannt: KI-Modelle laufen hier im Browser nicht",
+    "iosText": "Das Herunterladen und Starten der KI-Modelle funktioniert auf iPhone und iPad im Browser derzeit nicht - die Vorbereitung bleibt ewig stehen. Alle Browser auf iOS (auch Chrome und Firefox) sind betroffen. Nutze bitte einen Desktop-Computer oder Chrome auf Android. Eine native App für iOS ist geplant.",
+    "iosReason": "Grund: Alle Browser auf iOS müssen Apples WebKit-Engine verwenden, und WebKit unterstützt die benötigten WebAssembly-Funktionen (MEMORY64, JSPI) nicht. Das ist eine Plattform-Beschränkung von Apple, die sich von dieser Website aus nicht beheben lässt."
   },
   "whatsNew": {
     "title": "Das ist neu",

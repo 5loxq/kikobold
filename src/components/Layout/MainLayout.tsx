@@ -20,6 +20,7 @@ const LibraryManager = lazy(() => import('../Library/LibraryManager').then(m => 
 const DataManager = lazy(() => import('../Data/DataManager').then(m => ({ default: m.DataManager })));
 const ImageStudio = lazy(() => import('../Images/ImageStudio').then(m => ({ default: m.ImageStudio })));
 import { BrowserWarning } from './BrowserWarning';
+import { IOSWarning } from './IOSWarning';
 import { InstallPrompt } from './InstallPrompt';
 import { type AppSettings, loadSettings, saveSettings } from '../../services/settings';
 import { applyAccessibilityClasses } from '../../services/accessibility';
@@ -752,6 +753,11 @@ export const MainLayout: FC = () => {
 
         {/* Performance warning for Firefox users (dismissible) */}
         <BrowserWarning />
+
+        {/* iOS cannot run the LLM engines in the browser (WebKit lacks the
+            required WebAssembly features) - say so instead of letting the
+            model load hang forever (dismissible) */}
+        <IOSWarning />
 
         {/* PWA install hint for returning visitors (dismissible) */}
         {welcomeDone && <InstallPrompt />}

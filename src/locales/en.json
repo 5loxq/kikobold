@@ -106,6 +106,7 @@
     "preparingSlowHint": "This takes longer than usual - on mobile devices, preparing the model in memory can take several minutes. Keep the screen on and this tab open.",
     "keepScreenOnHint": "On your phone: keep the screen on and this tab open, otherwise the load pauses.",
     "errorPreparingTimeout": "The model could not be prepared in memory - your device probably does not have enough RAM. Reload the page and choose a smaller model.",
+    "errorPreparingTimeoutIos": "The model cannot be started in the browser on iOS - the preparation never finishes. This is an iOS/WebKit platform limitation (missing WebAssembly features), not a bug in the app. Use a desktop computer, or Chrome on Android.",
     "downloadStats": "{{loaded}} MB of {{total}} MB · {{speed}} MB/s",
     "privacyNote": "All responses are generated locally in your browser - your messages never leave your device.",
     "downloadConfirm": "The model \"{{name}}\" must be downloaded first (approx. {{size}} MB). It will be cached in your browser and load instantly next time. Download now?",
@@ -237,7 +238,10 @@
   "browserWarning": {
     "firefoxTitle": "Firefox detected: the AI runs slower here",
     "firefoxText": "The AI models work noticeably slower in Firefox than in Chrome or Edge - answers often appear word by word. Please use Chrome or Edge for full speed.",
-    "firefoxReason": "Reason: Firefox does not support JSPI (JavaScript Promise Integration). Because of that, the engine has to take a slow detour for WASM models like LFM 2.5. This is a browser limitation and cannot be fixed from this website."
+    "firefoxReason": "Reason: Firefox does not support JSPI (JavaScript Promise Integration). Because of that, the engine has to take a slow detour for WASM models like LFM 2.5. This is a browser limitation and cannot be fixed from this website.",
+    "iosTitle": "iOS detected: AI models cannot run in the browser here",
+    "iosText": "Downloading and starting the AI models currently does not work in the browser on iPhone and iPad - the preparation gets stuck forever. All browsers on iOS are affected (including Chrome and Firefox). Please use a desktop computer, or Chrome on Android. A native iOS app is planned.",
+    "iosReason": "Reason: All browsers on iOS must use Apple's WebKit engine, and WebKit lacks the required WebAssembly features (MEMORY64, JSPI). This is an Apple platform limitation that cannot be fixed from this website."
   },
   "whatsNew": {
     "title": "What's new",

@@ -15,7 +15,7 @@ import i18n from '../config/i18n';
 import { handleErrorSilent } from '../utils/errors';
 import { log, warn } from '../services/logging';
 import { stripHiddenPartsText } from '../services/llm/text-processing';
-import { getDeviceMemoryGB, isMobileLike } from '../utils/device';
+import { getDeviceMemoryGB, isIOSDevice, isMobileLike } from '../utils/device';
 import { getEngineType, getModelConfig, getWasmFallbackModelId } from '../services/models/model-registry';
 import { getCustomAppConfig } from '../services/models/webllm-config';
 import { releaseWakeLock, requestWakeLock } from '../services/wake-lock';
@@ -223,7 +223,10 @@ export const useEnhancedInference = (
       ) {
         watchdogFiredRef.current = true;
         warn('Model preparation watchdog triggered - stop waiting for the load');
-        setError(i18n.t('chat.errorPreparingTimeout'));
+        // iOS/WebKit cannot run the WASM engines at all (no MEMORY64/JSPI,
+        // the asyncify compat build never finishes either) - name the
+        // platform limitation instead of a misleading generic hint.
+        setError(i18n.t(isIOSDevice() ? 'chat.errorPreparingTimeoutIos' : 'chat.errorPreparingTimeout'));
         setIsLoading(false);
         setProgress(0);
         setProgressStats(null);

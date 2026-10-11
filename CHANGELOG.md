@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.40] - 2026-10-11
+
+### Neu (iOS-Warnung)
+- **Klare Meldung statt Endlos-Spinner:** Auf iOS-Geräten (alle Browser — auch Chrome/Firefox auf iOS, da alle WebKit nutzen müssen) erscheint jetzt eine verwerfbare Warnung: KI-Modelle lassen sich im Browser auf iOS derzeit nicht starten (WebKit fehlen MEMORY64 und JSPI; auch der Asyncify-Compat-Build wird bei der Initialisierung nicht fertig — auf einem iPhone 13 mit iOS 27.1 verifiziert). Empfehlung: Desktop oder Chrome auf Android; native App geplant. Der Watchdog-Fehler nach dem Timeout nennt auf iOS ebenfalls die Plattform-Beschränkung statt eines generischen Speicherhinweises.
+- **iOS-Erkennung:** `isIOSDevice()` in `src/utils/device.ts` (UA + iPad-Desktop-UA-Touch-Trick).
+
 ## [4.3.39] - 2026-10-11
 
 ### Behoben (Root Cause gefunden: iOS-Deadlock in der Modell-Vorbereitung)
