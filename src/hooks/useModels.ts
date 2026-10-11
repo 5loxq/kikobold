@@ -11,7 +11,8 @@ const STORAGE_KEYS = {
   ACTIVE_MODEL: 'webllm_active_model',
 };
 
-// Helper function to estimate model size from modelSize string
+// Fallback size estimate for registry entries without an explicit
+// fileSizeMB (see selectModel).
 const getEstimatedSizeFromModelSize = (modelSize: string): number => {
   const sizeMap: Record<string, number> = {
     '82M': 120 * 1024 * 1024,    // ~120MB

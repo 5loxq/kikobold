@@ -192,8 +192,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'help', label: t('sidebar.groupHelp'), tabs: helpTabs },
   ];
 
-  const chatsInFolder = (folderId: string): ChatMetadata[] => chats.filter((c) => c.folderId === folderId);
-  const ungroupedChats = chats.filter((c) => !c.folderId || !folders.some((f) => f.id === c.folderId));
+  // Group the chats by folder in ONE pass instead of filtering the full
+  // list once per folder (O(chats + folders) instead of O(chats x folders)
+  // on every render - and this component re-renders on every chat update).
+  const { chatsByFolderId, ungroupedChats } = React.useMemo(() => {
+    const map = new Map<string, ChatMetadata[]>();
+    for (const folder of folders) {
+      map.set(folder.id, []);
+    }
+    const ungrouped: ChatMetadata[] = [];
+    for (const chat of chats) {
+      const bucket = chat.folderId !== undefined && chat.folderId !== null ? map.get(chat.folderId) : undefined;
+      if (bucket) {
+        bucket.push(chat);
+      } else {
+        ungrouped.push(chat);
+      }
+    }
+    return { chatsByFolderId: map, ungroupedChats: ungrouped };
+  }, [chats, folders]);
+  const chatsInFolder = (folderId: string): ChatMetadata[] => chatsByFolderId.get(folderId) ?? [];
 
   const renderChatRow = (chat: ChatMetadata): React.ReactNode => (
     <div

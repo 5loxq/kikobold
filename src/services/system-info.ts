@@ -9,7 +9,7 @@
  */
 
 import { GPUInfo, MemoryInfo, SystemInfo } from '../types/kikobold-types';
-import { checkWASMSupport, checkWebGPUSupport } from './security';
+import { checkWASMSupport } from './security';
 
 // ============================================================================
 // Browser Detection
@@ -172,31 +172,67 @@ interface GPUAdapterStub {
   // synchronous `adapter.info` property.
   info?: GPUAdapterInfoStub;
   requestAdapterInfo?: () => Promise<GPUAdapterInfoStub>;
+  requestDevice: () => Promise<{ destroy: () => void } | null>;
 }
+
+/**
+ * One shared GPU probe for the whole module: detectGPU reads the adapter
+ * info, the feature list only needs "usable". Adapter AND device test run
+ * once and are cached - previously every getSystemInfo() opened up to
+ * three adapters and two devices (checkWebGPUSupport in detectGPU AND
+ * detectFeatures, plus a separate adapter for the GPU name).
+ */
+interface GPUProbe {
+  adapter: GPUAdapterStub | null;
+  /** An adapter exists AND a device could be created from it */
+  deviceOk: boolean;
+}
+
+let gpuProbePromise: Promise<GPUProbe> | null = null;
+const probeGPU = (): Promise<GPUProbe> => {
+  gpuProbePromise ??= (async (): Promise<GPUProbe> => {
+    if (typeof navigator === 'undefined' || !('gpu' in navigator)) {
+      return { adapter: null, deviceOk: false };
+    }
+    try {
+      const adapter = await (navigator as Navigator & { gpu: { requestAdapter: () => Promise<GPUAdapterStub | null> } }).gpu.requestAdapter();
+      if (!adapter) {
+        return { adapter: null, deviceOk: false };
+      }
+      try {
+        const device = await adapter.requestDevice();
+        // Release the device again: it would otherwise live until page reload.
+        device?.destroy();
+        return { adapter, deviceOk: !!device };
+      } catch {
+        return { adapter, deviceOk: false };
+      }
+    } catch {
+      return { adapter: null, deviceOk: false };
+    }
+  })();
+  return gpuProbePromise;
+};
 
 const detectGPU = async (): Promise<GPUInfo> => {
   try {
-    // Check if WebGPU is available
-    const webgpuAvailable = await checkWebGPUSupport();
+    const { adapter, deviceOk } = await probeGPU();
 
-    if (webgpuAvailable && 'gpu' in navigator) {
+    if (adapter && deviceOk) {
       try {
-        const adapter = await (navigator as Navigator & { gpu: { requestAdapter: () => Promise<GPUAdapterStub | null> } }).gpu.requestAdapter();
-        if (adapter) {
-          // Prefer the current `adapter.info` property; fall back to the
-          // removed requestAdapterInfo() for older engines.
-          const info = adapter.info ?? (adapter.requestAdapterInfo ? await adapter.requestAdapterInfo() : undefined);
-          return {
-            name: info?.device?.description ?? adapter.name ?? 'Unknown GPU',
-            vendor: info?.vendor ?? 'Unknown',
-            memoryMB: info?.device?.memory?.totalBytes ? 
-                      Math.round(info.device.memory.totalBytes / (1024 * 1024)) : 0,
-            webgpuSupport: true,
-            canUseForInference: true,
-          };
-        }
+        // Prefer the current `adapter.info` property; fall back to the
+        // removed requestAdapterInfo() for older engines.
+        const info = adapter.info ?? (adapter.requestAdapterInfo ? await adapter.requestAdapterInfo() : undefined);
+        return {
+          name: info?.device?.description ?? adapter.name ?? 'Unknown GPU',
+          vendor: info?.vendor ?? 'Unknown',
+          memoryMB: info?.device?.memory?.totalBytes ? 
+                    Math.round(info.device.memory.totalBytes / (1024 * 1024)) : 0,
+          webgpuSupport: true,
+          canUseForInference: true,
+        };
       } catch {
-        // Fallback for browsers that don't support requestAdapterInfo
+        // Fallback for engines without adapter info access
       }
       
       return {
@@ -343,7 +379,7 @@ interface FeatureInfo {
 }
 
 const detectFeatures = async (): Promise<FeatureInfo> => {
-  const webgpu = await checkWebGPUSupport();
+  const { deviceOk: webgpu } = await probeGPU();
   const wasm = checkWASMSupport();
   
   return {

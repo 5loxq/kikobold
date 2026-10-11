@@ -130,7 +130,7 @@ export const MainLayout: FC = () => {
     progress: modelLoadProgress,
     progressStats: modelLoadStats,
     modelLoadPhase,
-  } = useEnhancedInference({ modelId: activeModel?.id ?? '', autoLoad: false });
+  } = useEnhancedInference();
   const [localError, setLocalError] = useState<string | null>(null);
   const [streamingMessage, setStreamingMessage] = useState<string | null>(null);
   // Welcome page (first visit) and guided tour (shown right after it)

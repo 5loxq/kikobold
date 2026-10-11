@@ -237,6 +237,9 @@
     "title": "What's new",
     "subtitle": "A few things have changed since your last visit:",
     "closeButton": "Got it!",
+    "v4327": {
+      "item1": "Leaner and faster: dead inference code removed from the bundle, GPU detection opens only one adapter instead of three, and the sidebar groups chats in a single pass."
+    },
     "v4326": {
       "item1": "Faster app: the chat list (sidebar, data page) no longer loads messages from the database, only metadata - and markdown streaming is computed much more cheaply per token.",
       "item2": "More robust profile import (invalid values are corrected instead of aborting the import) and cleaned-up security checks without dead code."

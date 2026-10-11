@@ -237,6 +237,9 @@
     "title": "Das ist neu",
     "subtitle": "Seit deinem letzten Besuch hat sich einiges getan:",
     "closeButton": "Alles klar!",
+    "v4327": {
+      "item1": "Schlanker und schneller: Toter Inference-Code ist aus dem Bundle entfernt, die GPU-Erkennung öffnet nur noch einen Adapter statt drei, und die Sidebar gruppiert die Chats in einem Durchlauf."
+    },
     "v4326": {
       "item1": "Schnellere App: Die Chat-Liste (Sidebar, Datenseite) lädt keine Nachrichten mehr aus der Datenbank, nur noch Metadaten - und das Markdown-Streaming wird pro Token deutlich günstiger berechnet.",
       "item2": "Robusterer Profil-Import (fehlerhafte Werte werden korrigiert statt den Import abzubrechen) und aufgeräumte Sicherheits-Checks ohne toten Code."

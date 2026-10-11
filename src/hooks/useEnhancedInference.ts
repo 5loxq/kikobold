@@ -81,14 +81,10 @@ export interface WebLLMGenerateResult {
 }
 
 export interface UseEnhancedInferenceOptions {
-  modelId: string;
   defaultOptions?: WebLLMGenerateOptions;
   engineConfig?: Record<string, unknown>;
   autoRetry?: boolean;
   appConfig?: AppConfig;
-  /** Automatically load `modelId` on mount. Set to false when the caller
-   *  wants to control model loading itself (e.g. ask the user first). */
-  autoLoad?: boolean;
 }
 
 export interface InferenceState {
@@ -130,8 +126,6 @@ export interface EnhancedInferenceReturn extends InferenceState {
   
   // Model management
   loadModel: (modelId: string) => Promise<boolean>;
-  unloadModel: (modelId: string) => Promise<boolean>;
-  preloadModel: (modelId: string, priority?: number) => Promise<void>;
   
   // Status
   refreshStatus: () => void;
@@ -145,13 +139,11 @@ export interface EnhancedInferenceReturn extends InferenceState {
  * Enhanced inference hook using WebLLM for browser-based LLM inference
  */
 export const useEnhancedInference = (
-  options: UseEnhancedInferenceOptions
+  options: UseEnhancedInferenceOptions = {}
 ): EnhancedInferenceReturn => {
   const {
-    modelId,
     defaultOptions = {},
     appConfig: customAppConfig,
-    autoLoad = true,
   } = options;
 
   // State
@@ -366,33 +358,6 @@ export const useEnhancedInference = (
     }
   }, [customAppConfig, setEngine]);
 
-  // Unload model
-  const unloadModel = useCallback(async (modelId: string): Promise<boolean> => {
-    try {
-      if (activeEngineRef.current === 'wllama') {
-        await unloadWllamaModel();
-        setCurrentModelId(null);
-        setEngine(null);
-        setSupportsImageInput(false);
-        return true;
-      }
-      if (engineRef.current && currentModelId === modelId) {
-        // web-llm offers unload(): it waits for the GPU device to finish all
-        // submitted work and destroys itself - graphics memory is actually
-        // released, not just the JS reference dropped.
-        await engineRef.current.unload();
-        engineRef.current = null;
-        setCurrentModelId(null);
-        setEngine(null);
-        setWebgpuAvailable(null);
-        return true;
-      }
-      return false;
-    } catch (err: unknown) {
-      warn('Failed to unload model:', err);
-      return false;
-    }
-  }, [currentModelId, setEngine]);
 
   // Generate text (non-streaming)
   const generate = useCallback(async (
@@ -665,25 +630,6 @@ export const useEnhancedInference = (
     }
   }, []);
 
-  // Preload model (placeholder - WebLLM handles preloading automatically)
-  const preloadModel = useCallback(async (modelId: string, priority?: number): Promise<void> => {
-    // WebLLM doesn't expose a direct preload API in the current version
-    // Preloading is handled automatically when models are used
-    log(`Preload requested for model: ${modelId} (priority: ${priority})`);
-    // For now, we can trigger a background load if needed
-    if (modelId && modelId !== currentModelId) {
-      // Don't actually load yet, just log
-      log(`Model ${modelId} marked for preloading`);
-    }
-  }, [currentModelId]);
-
-  // Auto-load model when modelId changes (unless the caller opts out)
-  useEffect(() => {
-    if (autoLoad && modelId && !currentModelId) {
-      loadModel(modelId);
-    }
-  }, [modelId, currentModelId, loadModel, autoLoad]);
-
   // Cleanup on unmount
   useEffect((): (() => void) => {
     return () => {
@@ -736,82 +682,11 @@ export const useEnhancedInference = (
     
     // Model management
     loadModel,
-    unloadModel,
-    preloadModel,
     activeEngine,
     supportsImageInput,
     
     // Status
     refreshStatus,
-  };
-};
-
-// ============================================================================
-// Specialized Hooks (simplified versions for compatibility)
-// ============================================================================
-
-/**
- * Hook for batch inference operations
- */
-export const useBatchInference = (options: UseEnhancedInferenceOptions): {
-  generateBatch: (prompts: string[], batchOptions?: WebLLMGenerateOptions) => Promise<WebLLMGenerateResult[]>;
-} => {
-  const { generate } = useEnhancedInference(options);
-
-  const generateBatch = useCallback(async (
-    prompts: string[],
-    batchOptions?: WebLLMGenerateOptions
-  ): Promise<WebLLMGenerateResult[]> => {
-    const results: WebLLMGenerateResult[] = [];
-    
-    for (const prompt of prompts) {
-      const result = await generate(prompt, batchOptions);
-      if (result) {
-        results.push(result);
-      }
-    }
-    
-    return results;
-  }, [generate]);
-
-  return { generateBatch };
-};
-
-/**
- * Hook for conversation-based inference with context caching
- */
-export const useConversationInference = (
-  options: UseEnhancedInferenceOptions & {
-    conversationId: string;
-  }
-): EnhancedInferenceReturn => {
-  const baseOptions = options;
-  const { generate, generateStream, ...baseReturn } = useEnhancedInference(baseOptions);
-
-  const generateWithContext = useCallback(async (
-    prompt: string,
-    options?: WebLLMGenerateOptions,
-    messages?: Array<{ role: string; content: string }>
-  ): Promise<WebLLMGenerateResult | null> => {
-    try {
-      // For WebLLM, context is handled via the messages array
-      if (messages && messages.length > 0) {
-        // Prepend context messages to the prompt
-        const contextPrompt = messages.map(m => `${m.role}: ${m.content}`).join('\n');
-        const fullPrompt = `${contextPrompt}\n\nUser: ${prompt}`;
-        return generate(fullPrompt, options);
-      }
-      return generate(prompt, options);
-    } catch (err: unknown) {
-      warn('Failed to generate with context:', err);
-      return null;
-    }
-  }, [generate]);
-
-  return {
-    ...baseReturn,
-    generate: generateWithContext,
-    generateStream,
   };
 };
 

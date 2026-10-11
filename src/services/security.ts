@@ -11,13 +11,6 @@
  */
 
 /**
- * Minimal structural type for the WebGPU adapter probe in checkWebGPUSupport.
- */
-interface WebGPUAdapterLike {
-    requestDevice: () => Promise<{ destroy: () => void } | null>;
-}
-
-/**
  * Lightweight sanitization for stored user text.
  * Only removes HTML tags - everything else (including "data:" or "on x ="
  * in normal sentences) is preserved.
@@ -107,36 +100,6 @@ export const validateFileUpload = (
   }
 
   return { valid: true };
-};
-
-/**
- * Check if WebGPU is supported in the browser
- */
-export const checkWebGPUSupport = async (): Promise<boolean> => {
-    try {
-        if (!('gpu' in navigator)) {
-            return false;
-        }
-
-        const gpu = (navigator as Navigator & {
-            gpu?: { requestAdapter: () => Promise<WebGPUAdapterLike | null> };
-        }).gpu;
-        const adapter = await gpu?.requestAdapter();
-        if (!adapter) {
-            return false;
-        }
-
-        const device = await adapter.requestDevice();
-        const supported = !!device;
-        // Release the device again: this check runs several times per app
-        // start (GPU detection, feature detection) and every requestDevice()
-        // otherwise leaks a GPU device until page reload.
-        device?.destroy();
-
-        return supported;
-    } catch {
-        return false;
-    }
 };
 
 /**

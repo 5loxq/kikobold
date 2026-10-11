@@ -2,6 +2,15 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.27] - 2026-10-11
+
+### Entfernt (toter Code) / Optimiert
+
+- **Toter Inference-Code aus dem Bundle entfernt:** `useBatchInference`/`useConversationInference` (nie importiert), `preloadModel` (reiner Log-Platzhalter), `unloadModel` (nie aufgerufen — das eigentliche Freigeben macht der Unmount-Cleanup), die `autoLoad`/`modelId`-Hook-Optionen (einziger Konsument war der Auto-Load-Effekt, der am einzigen Einsatzort konstant deaktiviert war). Dazu die verwaisten Typen `UseInferenceReturn`, `InferenceOptions`, `InferenceResult`, `ThemeSettings`/`CustomizationSettings`/`ThemeMode`.
+- **GPU-Erkennung: ein Adapter statt drei.** `getSystemInfo()` öffnete bis zu drei Adapter und zwei Devices pro Aufruf (`checkWebGPUSupport` in `detectGPU` UND `detectFeatures`, plus ein separater Adapter für den GPU-Namen). Neuer gecachter `probeGPU()` in system-info teilt Adapter + Device-Test für alle Detektionen; `checkWebGPUSupport` aus security.ts ist damit aufruferfrei und entfernt.
+- **Sidebar: Chats in einem Durchlauf gruppieren** statt die komplette Liste pro Ordner zu filtern (O(chats × Ordner) → O(chats + Ordner) pro Render; die Sidebar rendert bei jeder Chat-Änderung neu).
+- `getEstimatedSizeFromModelSize` (useModels) blieb: Der Audit-Verdacht „ohne Aufrufer" war falsch — es ist der legitime Fallback für Registry-Einträge ohne explizites `fileSizeMB`. Der `visibleMessages`-Memo in ChatWindow war bereits optimal (Filter nur bei aktiver Suche).
+
 ## [4.3.26] - 2026-10-11
 
 ### Geändert (Umsetzung der zurückgestellten Aufräum-Kandidaten)
