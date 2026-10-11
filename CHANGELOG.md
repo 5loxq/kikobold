@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.12] - 2026-10-11
+
+### Behoben
+
+- **„offset is out of bounds" nach dem Laden der ORT-Runtime**: Das Request-Log aus 4.3.11 zeigte die Ursache exakt - die Glue lud `ort-wasm-simd.wasm`, die **Nicht-JSEP**-Variante. Die im Bundle inline liegende Emscripten-Glue hat nämlich ihre eigene, fest verdrahtete `locateFile`-Funktion (scriptDirectory + schlichter Dateiname) und ignoriert das Pfad-Mapping der ORT-Factory komplett - sie forderte die Runtime also immer schon relativ an, und das Fetch-Sicherheitsnetz aus 4.3.11 lieferte ihr die falsche (nicht-JSEP) Datei. Die WebGPU-Glue braucht aber die JSEP-Variante; mit dem falschen Binary läuft sie in „offset is out of bounds". Das Sicherheitsnetz bildet jetzt dasselbe Mapping ab, das die ORT-Factory beabsichtigt hat (`ort-wasm-simd.wasm` → `ort-wasm-simd.jsep.wasm`, ebenso für die Threaded-Variante).
+
 ## [4.3.11] - 2026-10-11
 
 ### Behoben

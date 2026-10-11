@@ -326,13 +326,22 @@ const preflight = async (): Promise<void> => {
 };
 
 /**
- * Safety net for the ORT runtime files: at least one ORT copy ends up
- * fetching its WASM runtime via a RELATIVE url (no /ort/ prefix). The
- * server's SPA fallback answers that with the index page (HTML, status
- * 200) and WebAssembly.instantiate dies with "expected magic word
- * 00 61 73 6d, found 3c 21 64 6f". Rewrite same-origin ort-wasm-* requests
- * to our self-hosted /ort/ directory, whatever path they were built from.
+ * Safety net for the ORT runtime files: the emscripten glue inlined in the
+ * bundle has its own hardcoded `locateFile` (scriptDirectory + plain file
+ * name) and ignores the ORT factory's path mapping - so it fetches e.g.
+ * "ort-wasm-simd.wasm" RELATIVE to the page. The server's SPA fallback
+ * answers that with the index page (HTML, status 200) and WebAssembly
+ * dies with "expected magic word". Worse, the plain name is the NON-JSEP
+ * build while the WebGPU glue needs the JSEP variant (driving the wrong
+ * binary ends in "offset is out of bounds"). Rewrite same-origin
+ * ort-wasm-* requests to the matching JSEP file in /ort/, mirroring the
+ * mapping the ORT factory intended.
  */
+const ORT_JSEP_REWRITE: Record<string, string> = {
+  'ort-wasm-simd.wasm': 'ort-wasm-simd.jsep.wasm',
+  'ort-wasm-simd-threaded.wasm': 'ort-wasm-simd-threaded.jsep.wasm',
+};
+
 const ensureOrtFetchRewrite = (): void => {
   const patched = window.fetch as typeof window.fetch & { __webguiOrtRewrite?: boolean };
   if (patched.__webguiOrtRewrite) {
@@ -349,8 +358,10 @@ const ensureOrtFetchRewrite = (): void => {
       .exec(url.split('?')[0]);
     const sameOrigin = !/^https?:\/\//.test(url) || url.startsWith(self.location.origin);
     if (match && sameOrigin && !url.includes('/ort/')) {
-      log(`sd-engine: rewrote relative ORT fetch to /ort/${match[2]}`);
-      return originalFetch(`/ort/${match[2]}`, init);
+      const file = match[2];
+      const target = ORT_JSEP_REWRITE[file] ?? file;
+      log(`sd-engine: rewrote relative ORT fetch ${file} to /ort/${target}`);
+      return originalFetch(`/ort/${target}`, init);
     }
     return originalFetch(input, init);
   }) as typeof window.fetch;
