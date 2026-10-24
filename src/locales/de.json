@@ -886,7 +886,7 @@
     "backToChat": "Zurück zum Chat",
     "free": {
       "q": "Ist KI Kobold wirklich kostenlos?",
-      "a": "Ja, komplett. Keine Anmeldung, keine Abo-Falle, keine versteckten Kosten. Der Quellcode ist offen (MIT-Lizenz), du kannst alles nachprüfen und selbst betreiben."
+      "a": "Ja, komplett. Keine Anmeldung, keine Abo-Falle, keine versteckten Kosten. Und weil alles lokal läuft, gibt es auch keine Kosten für Server oder Betrieb — die Rechenleistung bringt dein Gerät mit."
     },
     "data": {
       "q": "Kommen meine Nachrichten auf einen Server?",

@@ -886,7 +886,7 @@
     "backToChat": "Back to chat",
     "free": {
       "q": "Is KI Kobold really free?",
-      "a": "Yes, completely. No sign-up, no subscription trap, no hidden costs. The source code is open (MIT license) — you can verify everything and run it yourself."
+      "a": "Yes, completely. No sign-up, no subscription trap, no hidden costs. And since everything runs locally, there are no server or operating costs either — your device provides the computing power."
     },
     "data": {
       "q": "Do my messages end up on a server?",
