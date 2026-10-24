@@ -32,16 +32,16 @@ Live-Demo: **https://kikobold.net**
 
 | Modell | Wofür | Größe | Engine |
 |---|---|---|---|
-| **LFM 2.5 1.6B** (empfohlen) | Allzweckmodell für Alltag, Wissen und Texte — Fragen, Zusammenfassungen, Übersetzungen. Mit Bildverstehen (Vision). Läuft in jedem Browser, auch ohne WebGPU | 664 MB | WASM (wllama) |
-| **LFM 2.5 350M** | Schnellstes Modell, ideal für ältere Geräte und kurze Fragen | 210 MB | WASM (wllama) |
-| **Qwen 3.5 2B** (empfohlen) | Stärkstes Modell: längere Texte, beste Qualität, denkmodus | 1 GB | WebGPU (WebLLM) |
-| **Qwen 3 1.7B** | Mathe- und Logik-Spezialist mit sichtbarem Gedankengang | 939 MB | WebGPU (WebLLM) |
-| **Qwen 3 0.6B** | Kurze Fragen, schnelle Antworten — ideal zum Ausprobieren | 335 MB | WebGPU (WebLLM) |
-| **Gemma 4 E2B** | Kompaktes Allzweckmodell | — | WASM (wllama) |
-| **LCM DreamShaper v7** | Bildgenerierung aus Textbeschreibungen | ~2 GB | ONNX |
+| **[LFM 2.5 1.6B](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B-GGUF)** (empfohlen) | Allzweckmodell für Alltag, Wissen und Texte — Fragen, Zusammenfassungen, Übersetzungen. Mit Bildverstehen (Vision). Läuft in jedem Browser, auch ohne WebGPU | 664 MB | WASM (wllama) |
+| **[LFM 2.5 350M](https://huggingface.co/LiquidAI/LFM2.5-350M-GGUF)** | Schnellstes Modell, ideal für ältere Geräte und kurze Fragen | 210 MB | WASM (wllama) |
+| **[Qwen 3.5 2B](https://huggingface.co/mlc-ai/Qwen3.5-2B-q4f16_1-MLC)** (empfohlen) | Stärkstes Modell: längere Texte, beste Qualität, denkmodus | 1 GB | WebGPU (WebLLM) |
+| **[Qwen 3 1.7B](https://huggingface.co/mlc-ai/Qwen3-1.7B-q4f16_1-MLC)** | Mathe- und Logik-Spezialist mit sichtbarem Gedankengang | 939 MB | WebGPU (WebLLM) |
+| **[Qwen 3 0.6B](https://huggingface.co/mlc-ai/Qwen3-0.6B-q4f16_1-MLC)** | Kurze Fragen, schnelle Antworten — ideal zum Ausprobieren | 335 MB | WebGPU (WebLLM) |
+| **[Gemma 4 E2B](https://huggingface.co/google/gemma-4-E2B-it-qat-q4_0-gguf)** | Kompaktes Allzweckmodell | — | WASM (wllama) |
+| **[LCM DreamShaper v7](https://huggingface.co/aislamov/lcm-dreamshaper-v7-onnx)** | Bildgenerierung aus Textbeschreibungen (im Chat über das 🎨 Bilder-Menü, Alpha; lädt beim ersten Start automatisch) | ~2 GB | ONNX |
 
 - Beim ersten Auswählen wird gefragt, ob der Download starten soll (mit Größenangabe).
-- Der Download läuft vom eigenen Webspace (siehe unten); ist dieser nicht erreichbar, wird automatisch der HuggingFace-CDN genutzt.
+- In der App laufen die Downloads bevorzugt vom eigenen Webspace (siehe unten); ist dieser nicht erreichbar, greift automatisch der HuggingFace-CDN. Die Modell-Links oben führen zu den Original-Quellen auf HuggingFace.
 - Browser ohne WebGPU (Firefox, Safari) nutzen automatisch das WASM-Modell.
 - Nach dem Download cacht der Browser die Modelle (OPFS bzw. Cache Storage) — der nächste Start ist sofort bereit.
 
