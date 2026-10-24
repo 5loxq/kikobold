@@ -22,6 +22,9 @@ es gibt kein Backend, keine Telemetrie, keinen Account.
 | **wllama** | `@wllama/wllama` | GGUF (llama.cpp) | Alle modernen Browser (WASM) | Universeller Fallback, CPU-basiert |
 
 - Browser ohne WebGPU (Firefox, Safari) nutzen automatisch das WASM-Modell.
+- **Bild-Engine (Alpha):** `@aislamov/diffusers.js` mit ONNX-Runtime (WebGPU)
+  — LCM DreamShaper v7, läuft ebenfalls lokal im Browser (eigenes
+  ORT-WASM-Setup, siehe `scripts/copy-ort-wasm.mjs`).
 - In Browsern ohne JSPI (z. B. Firefox) läuft die WASM-Engine deutlich langsamer;
   die App zeigt dafür einen Hinweis und empfiehlt Chrome/Edge. Das ist eine
   Browser-Beschränkung, kein Fehler der App.
@@ -81,8 +84,10 @@ Struktur auf dem Webspace:
 /                       # App (index.html, assets/, sw.js, wllama/, .htaccess)
 /models/
 ├── LFM2.5-VL-1.6B-Q4_0.gguf
-├── Qwen2-0.5B-Instruct-q4f16_1-MLC/
-└── gemma-2-2b-it-q4f16_1-MLC/
+├── LFM2.5-350M-Q4_0.gguf
+├── Qwen3.5-2B-q4f16_1-MLC/
+├── Qwen3-1.7B-q4f16_1-MLC/
+└── Qwen3-0.6B-q4f16_1-MLC/
 ```
 
 - Pfade stehen in `src/services/models/model-registry.ts` (`selfHostedPath`).
@@ -118,7 +123,7 @@ Struktur auf dem Webspace:
 | „Model not found" | Falsche Modell-ID oder URL | Modell-ID in `model-registry.ts` prüfen; bei Self-Hosting URL prüfen |
 | „Failed to load WASM" | HTTPS/CORS-Problem | HTTPS verwenden, CORS-Header prüfen, Browser-Cache leeren |
 | „Network error" | Download schlägt fehl | Verbindung/Firewall prüfen; HF-Fallback greift automatisch |
-| „request exceeds the available context size" | Kontext zu klein | Kontext des WASM-Modells liegt bei 4096 Tokens; Anhänge werden gekürzt, alte Verlaufsnachrichten entfallen zuerst |
+| „request exceeds the available context size" | Kontext zu klein | Kontext des WASM-Modells: 2048 Tokens auf Mobilgeräten, 4096 auf Desktop; Anhänge werden gekürzt, alte Verlaufsnachrichten entfallen zuerst |
 
 Debugging: `setLogLevel("debug")` aus `@mlc-ai/web-llm` aktiviert Engine-Logs;
 im Network-Tab nach `wasm`/`model` filtern, um Modell-Downloads zu prüfen.
