@@ -1,6 +1,6 @@
 # Local LLM Chat
 
-**Version:** 4.3.40 | **Lizenz:** MIT | **Status:** Produktionsreif
+**Version:** 4.3.41 | **Lizenz:** MIT | **Status:** Produktionsreif
 
 Ein datenschutzfreundlicher LLM-Chat, der komplett im Browser läuft. Die Modelle
 werden lokal heruntergeladen, im Browser gecacht und die Inferenz erfolgt
@@ -160,18 +160,31 @@ aktiven Profils.
 
 ## Changelog
 
+Die vollständige Versionshistorie steht in [CHANGELOG.md](CHANGELOG.md). Die wichtigsten Etappen:
+
+### 4.3.41 (2026-10-24)
+- UX-Runde: Empfehlungs-Button auch im leeren Chat, Profil-Auswahl erst nach Modell-Load editierbar, Update-Toast bei neuer Version, Retry-Button bei fehlgeschlagenem Modell-Download, WebGPU-Speed-Hinweis für Firefox/Safari
+- E2E-Smoke-Test (`e2e/`) + GitHub-Actions-Workflow gegen die Live-Site (manuell; Tages-Cron bis 01.11. pausiert)
+- Open-Source-Vorbereitung: MIT-LICENSE, Attribution im README, deploy.sh parametrisiert
+
+### 4.3.36 – 4.3.40 (2026-10-11)
+- **iOS-Support geklärt:** Klare Warnung statt Endlos-Spinner (WebKit fehlen MEMORY64/JSPI); Deadlock in der Modell-Vorbereitung behoben (Single-Thread ohne JSPI, selbst gehosteter wllama-Compat-Build)
+- **Mobile robust:** Fortsetzbarer Modell-Download (HTTP-Range-Resume), Cache-Validierung vor dem Start, Screen-Wake-Lock, kleineres LFM-2.5-350M-Modell für Handys, scrollbarer Mobile-Drawer
+
+### 4.2.x – 4.3.35 (2026-10-09 bis 10-11)
+- SEO-Grundlagen (robots, sitemap, JSON-LD, FAQ-Seite), og:image-Banner, www→apex-Redirect
+- Empfehlungs-Button „Modell für mein Gerät empfehlen“ (WebGPU + RAM-Erkennung)
+- self-hosted Modelle mit HuggingFace-Fallback
+
+### 4.0.0 (2026-10-09)
+- Barrierefreiheit nach WCAG 2.1 AA: Textgröße, Kontraste, Screenreader-Live-Regions, Fokus-Fallen, Tastaturbedienung
+
+### 3.4.0 (2026-10-08)
+- Offline-Banner, Engine-Anzeige (WebGPU/WASM), Vitest-Testsuite, Service-Worker-Versionierung
+
 ### 2.0.0
-- Komplettes UI-Redesign: Light/Dark-Mode mit Umschalter (persistiert, folgt sonst dem System), Glas-Header, zentrierte Chat-Spalte, moderne Eingabe-Kapsel
-- 3 kuratierte Modelle (LFM 2.5 1.6B, Gemma 2 2B, Qwen 2 0.5B) mit Zweck-Beschreibungen statt Modell-Wüste
-- Self-Hosting der Modelle auf dem eigenen Webspace inkl. HuggingFace-Fallback
-- Download-Anzeige mit Größe („340 MB von 600 MB") und Geschwindigkeit
-- Bestätigungsdialog vor dem ersten Modell-Download (mit Größenangabe)
-- Deutsche Standard-Profile (Standard/Kreativ/Präzise); System-Prompts werden jetzt tatsächlich an die Modelle übergeben
-- Behoben: Nachrichten verschwanden nach der Antwort (Stale-Closure in useChat)
-- Behoben: unlesbare Antworten im Dark-Mode (weiße Blase + heller Text)
-- Behoben: weiße Seite nach Deploys (Service Worker cached jetzt Network-First und nie HTML als Asset)
-- Behoben: falsche WebLLM-Modell-ID für Gemma (Case-Sensitive)
-- Entfernt: Fake-Download-Seite „Modelle" (Auswahl läuft über das Chat-Dropdown, Verwaltung in den Einstellungen)
+- Komplettes UI-Redesign: Light/Dark-Mode, Glas-Header, zentrierte Chat-Spalte
+- Kuratierte Modelle mit Zweck-Beschreibungen, Download-Anzeige mit Geschwindigkeit, deutsche Profile
 
 ### 1.x
 - Basis-App mit WebLLM + wllama, Profilen, Chats, Export, Offline-Support

@@ -2,6 +2,19 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.41] - 2026-10-24
+
+### Neu (UX-Runde, alle per echtem Browser-Test verifiziert)
+- **Empfehlungs-Button im leeren Chat:** „✨ Modell für mein Gerät empfehlen“ steht jetzt auch auf dem Willkommens-Screen direkt unter der Modell-Auswahl (vorher nur auf der Modelle-Seite); die Empfehlungs-Logik ist in die Modell-Registry gezogen (`getRecommendedModelId()`) und wird von beiden Stellen geteilt.
+- **Profil-Auswahl gesperrt bis Modell lädt:** Der Antwortstil-Select ist deaktiviert, solange kein Modell geladen ist (Tooltip erklärt warum) — vorher konnte man ihn vor dem Modell-Load sinnlos umstellen.
+- **Update-Toast:** Der Service Worker rollt Deployments sofort aus, aber lange offene Tabs merkten nichts. Jetzt prüft ein Toast (initial + alle 30 min) auf einen wartenden Service Worker und bietet „Neu laden“ an (skipWaiting + Reload; Chats liegen in IndexedDB und bleiben erhalten).
+- **Download-Retry:** Fehlschlagene Modell-Downloads zeigen einen 🔄-„Erneut versuchen“-Button direkt neben der Fehlermeldung (Chat-Header und Willkommens-Screen).
+- **WebGPU-Speed-Hinweis:** Browser ohne WebGPU (Firefox/Safari) sehen unter dem Warn-Banner einen dezenten Tipp, dass Chrome/Edge deutlich schneller läuft.
+
+### Infrastruktur
+- **E2E-Smoke-Test im Repo:** `e2e/e2e-test.mjs` (Playwright, Headless-Chromium) testet App-Boot, Onboarding, alle Seiten, Empfehlungs-Button, FAQ, Modell-Download + echten Chat mit Antwort-Prüfung. GitHub-Actions-Workflow `.github/workflows/e2e.yml` (manuell auslösbar; Tages-Cron bis 01.11.2026 pausiert — Actions-Kontingent).
+- **Open-Source-Vorbereitung:** MIT-`LICENSE` ergänzt, `package.json` mit `author`/`license`, README-Lizenz-Notiz (Entwicklung mit KI-Unterstützung: Mistral Vibe, GLM), Open-Source-Claims in Website/FAQ wiederhergestellt (Revert), `deploy.sh` mit parametrisiertem Host/User (`DEPLOY_HOST`/`DEPLOY_USER`).
+
 ## [4.3.40] - 2026-10-11
 
 ### Neu (iOS-Warnung)
