@@ -14,6 +14,7 @@ const ModelsPage = lazy(() => import('../Models/ModelsPage').then(m => ({ defaul
 const MemoryManager = lazy(() => import('../Memory/MemoryManager').then(m => ({ default: m.MemoryManager })));
 const ContactPage = lazy(() => import('../Contact/ContactPage').then(m => ({ default: m.ContactPage })));
 const PrivacyPage = lazy(() => import('../Privacy/PrivacyPage').then(m => ({ default: m.PrivacyPage })));
+const FaqPage = lazy(() => import('../Faq/FaqPage').then(m => ({ default: m.FaqPage })));
 const ImprintPage = lazy(() => import('../Imprint/ImprintPage').then(m => ({ default: m.ImprintPage })));
 const SettingsPage = lazy(() => import('../Settings/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const LibraryManager = lazy(() => import('../Library/LibraryManager').then(m => ({ default: m.LibraryManager })));
@@ -57,7 +58,7 @@ import { localStorageGet, localStorageSet } from '../../services/storage/local-s
 import { ttsSpeak } from '../../services/tts';
 
 
-type ActiveTab = 'chat' | 'profiles' | 'memory' | 'library' | 'models' | 'images' | 'data' | 'settings' | 'help' | 'roadmap' | 'wiki' | 'contact' | 'privacy' | 'imprint';
+type ActiveTab = 'chat' | 'profiles' | 'memory' | 'library' | 'models' | 'images' | 'data' | 'settings' | 'help' | 'roadmap' | 'wiki' | 'faq' | 'contact' | 'privacy' | 'imprint';
 
 export const MainLayout: FC = () => {
   const { t, i18n } = useTranslation();
@@ -996,6 +997,12 @@ export const MainLayout: FC = () => {
         {activeTab === 'contact' && (
           <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
             <ContactPage onNavigateBack={() => setActiveTab('chat')} />
+          </Suspense>
+        )}
+
+        {activeTab === 'faq' && (
+          <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
+            <FaqPage onNavigateBack={() => setActiveTab('chat')} />
           </Suspense>
         )}
 

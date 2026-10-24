@@ -5,7 +5,7 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 import { useDarkMode } from '../../hooks/useDarkMode';
 import { version as appVersion } from '../../../package.json';
 
-type TabId = 'chat' | 'profiles' | 'memory' | 'library' | 'models' | 'images' | 'data' | 'settings' | 'help' | 'roadmap' | 'wiki' | 'contact' | 'privacy' | 'imprint';
+type TabId = 'chat' | 'profiles' | 'memory' | 'library' | 'models' | 'images' | 'data' | 'settings' | 'help' | 'roadmap' | 'wiki' | 'faq' | 'contact' | 'privacy' | 'imprint';
 
 interface SidebarProps {
   chats: ChatMetadata[];
@@ -186,6 +186,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Help + legal pages are grouped (and collapsed by default)
   const helpTabs: Array<{ id: TabId; icon: string; label: string }> = [
     { id: 'help', icon: '❓', label: t('sidebar.help') },
+    { id: 'faq', icon: '🤔', label: t('sidebar.faq') },
     { id: 'roadmap', icon: '🗺️', label: t('sidebar.roadmap') },
     { id: 'wiki', icon: '📖', label: t('sidebar.wiki') },
     { id: 'contact', icon: '✉️', label: t('sidebar.contact') },

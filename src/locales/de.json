@@ -37,7 +37,8 @@
     "withoutFolder": "Ohne Ordner",
     "dropToRemove": "Hier ablegen, um aus dem Ordner zu entfernen",
     "images": "Bilder (Alpha)",
-    "whatsNewHint": "Was ist neu - Changelog öffnen"
+    "whatsNewHint": "Was ist neu - Changelog öffnen",
+    "faq": "FAQ"
   },
   "chat": {
     "welcome": "Willkommen bei KI Kobold",
@@ -878,5 +879,38 @@
       "output": "Das generierte Bild wurde vom Sicherheitsfilter blockiert (automatische Bildanalyse). Bitte passe deinen Prompt an - etwa durch Kleidung, anderen Bildausschnitt oder anderen Bildstil."
     },
     "safetyDisclaimer": "Hinweis zur Verantwortung: Die Bildgenerierung läuft vollständig lokal in deinem Browser. Wir als Betreiber haben keinen Zugriff auf die erzeugten Bilder - wir können sie weder einsehen noch speichern noch nachträglich löschen und haben keine Kontrolle darüber, was dein Gerät generiert. Die Verantwortung für die erzeugten Bilder und deren Nutzung liegt ausschließlich bei dir. Für rechtswidrige Inhalte, die trotz der eingebauten Schutzfilter entstehen, haftet der Verursacher - nicht der Betreiber dieser Website."
+  },
+  "faq": {
+    "title": "Häufige Fragen",
+    "subtitle": "Die wichtigsten Antworten auf einen Blick — kurz und ehrlich.",
+    "backToChat": "Zurück zum Chat",
+    "free": {
+      "q": "Ist KI Kobold wirklich kostenlos?",
+      "a": "Ja, komplett. Keine Anmeldung, keine Abo-Falle, keine versteckten Kosten. Der Quellcode ist offen (MIT-Lizenz), du kannst alles nachprüfen und selbst betreiben."
+    },
+    "data": {
+      "q": "Kommen meine Nachrichten auf einen Server?",
+      "a": "Nein. Die Sprachmodelle laufen direkt in deinem Browser — die Berechnung findet auf deinem Gerät statt, nicht in einer Cloud. Deine Chats bleiben lokal im Browser-Speicher deines Geräts. Es gibt keine Konten und keine Analyse deines Verhaltens."
+    },
+    "models": {
+      "q": "Welches Modell ist das richtige für mich?",
+      "a": "Am einfachsten: Auf der Modell-Seite den Button „Modell für mein Gerät empfehlen“ nutzen — er wählt automatisch passend zu deinem Browser und Gerät. Wenn du selbst stöbern willst: LFM 2.5 1.6B ist der Allrounder, Qwen 3.5 2B das stärkste Modell, LFM 2.5 350M das schnellste für ältere Geräte."
+    },
+    "browsers": {
+      "q": "Welcher Browser ist am besten geeignet?",
+      "a": "Chrome oder Edge sind am schnellsten (WebGPU-Beschleunigung). Safari und Firefox funktionieren auch — sie nutzen automatisch den etwas langsameren Standard-Modus. Auf dem Smartphone empfehlen wir die kleineren Modelle."
+    },
+    "offline": {
+      "q": "Funktioniert KI Kobold auch ohne Internet?",
+      "a": "Ja, nach dem ersten Modell-Download läuft alles offline — du kannst die Seite als App installieren (PWA) und bist komplett unabhängig vom Netz. Nur der Modell-Download selbst braucht einmalig eine Verbindung."
+    },
+    "images": {
+      "q": "Kann KI Kobold auch Bilder erzeugen?",
+      "a": "Ja! Im Bild-Studio kannst du aus Textbeschreibungen Bilder generieren — ebenfalls komplett lokal auf deinem Gerät (aktuell als frühe Testversion)."
+    },
+    "export": {
+      "q": "Kann ich meine Chats sichern oder mitnehmen?",
+      "a": "Ja. Über die Einstellungen kannst du Chats exportieren und importieren — deine Daten gehören dir und du kannst sie jederzeit auf ein anderes Gerät umziehen."
+    }
   }
 }

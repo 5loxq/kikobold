@@ -37,7 +37,8 @@
     "withoutFolder": "Without folder",
     "dropToRemove": "Drop here to remove from the folder",
     "images": "Images (Alpha)",
-    "whatsNewHint": "What's new - open the changelog"
+    "whatsNewHint": "What's new - open the changelog",
+    "faq": "FAQ"
   },
   "chat": {
     "welcome": "Welcome to KI Kobold",
@@ -878,5 +879,38 @@
       "output": "The generated image was blocked by the safety filter (automatic image analysis). Please adjust your prompt - e.g. clothing, a different framing or a different style."
     },
     "safetyDisclaimer": "Responsibility notice: Image generation runs entirely locally in your browser. As operators we have no access to the generated images - we cannot view, store or delete them, and we have no control over what your device generates. Responsibility for the generated images and their use lies solely with you. For illegal content created despite the built-in safety filters, the creator is liable - not the operator of this website."
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "subtitle": "The most important answers at a glance — short and honest.",
+    "backToChat": "Back to chat",
+    "free": {
+      "q": "Is KI Kobold really free?",
+      "a": "Yes, completely. No sign-up, no subscription trap, no hidden costs. The source code is open (MIT license) — you can verify everything and run it yourself."
+    },
+    "data": {
+      "q": "Do my messages end up on a server?",
+      "a": "No. The language models run directly in your browser — computation happens on your device, not in the cloud. Your chats stay in your browser's local storage. There are no accounts and no behaviour tracking."
+    },
+    "models": {
+      "q": "Which model is right for me?",
+      "a": "Easiest way: use the “Recommend a model for my device” button on the models page — it picks automatically based on your browser and device. If you prefer browsing yourself: LFM 2.5 1.6B is the all-rounder, Qwen 3.5 2B the strongest model, LFM 2.5 350M the fastest for older devices."
+    },
+    "browsers": {
+      "q": "Which browser works best?",
+      "a": "Chrome or Edge are fastest (WebGPU acceleration). Safari and Firefox work too — they automatically use the slightly slower standard mode. On phones we recommend the smaller models."
+    },
+    "offline": {
+      "q": "Does KI Kobold work without internet?",
+      "a": "Yes — after the initial model download, everything runs offline. You can install the page as an app (PWA) and be completely independent of the network. Only the model download itself needs a connection once."
+    },
+    "images": {
+      "q": "Can KI Kobold generate images too?",
+      "a": "Yes! In the Image Studio you can generate images from text descriptions — also completely locally on your device (currently an early preview)."
+    },
+    "export": {
+      "q": "Can I back up or move my chats?",
+      "a": "Yes. You can export and import chats in the settings — your data belongs to you, and you can move it to another device at any time."
+    }
   }
 }
