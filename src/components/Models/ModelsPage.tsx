@@ -1,11 +1,13 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { type EngineModelConfig, getModelConfig, IMAGE_GEN_MODEL } from '../../services/models/model-registry';
-import { isMobileLike } from '../../utils/device';
+import { getDeviceMemoryGB, isMobileLike } from '../../utils/device';
 
 interface ModelsPageProps {
   /** Return to the previous view (e.g. the chat) */
   onNavigateBack?: () => void;
+  /** Select (and if needed download) a model, then return to the chat */
+  onSelectModel?: (modelId: string) => void;
 }
 
 interface ModelInfo {
@@ -141,11 +143,44 @@ const ModelCard: React.FC<{ info: ModelInfo }> = ({ info }) => {
   );
 };
 
-export const ModelsPage: React.FC<ModelsPageProps> = ({ onNavigateBack }) => {
+/**
+ * Ermittelt das passendste Modell für dieses Gerät:
+ * - WebGPU verfügbar? Dann MLC-Modelle (schnell), sonst WASM (wllama).
+ * - Gerätespeicher (wenn gemeldet) entscheidet zwischen groß/klein.
+ * - Mobile Geräte bekommen die kleinere Variante (WASM ist dort langsam,
+ *   der Speicher pro Tab begrenzt).
+ * Fallback immer: LFM2.5-350M (läuft überall).
+ */
+export const getRecommendedModelId = (): string => {
+  const hasWebGPU = typeof navigator !== 'undefined' && 'gpu' in navigator;
+  const memGB = getDeviceMemoryGB();
+  const mobile = isMobileLike();
+
+  if (hasWebGPU) {
+    // Desktop-Browser mit WebGPU: stärkstes Modell, wenn genug RAM gemeldet
+    if (!mobile && (memGB === undefined || memGB >= 8)) {
+      return 'Qwen3.5-2B-q4f16_1-MLC';
+    }
+    return 'Qwen3-0.6B-q4f16_1-MLC';
+  }
+  // WASM-Pfad (Firefox/Safari/iOS)
+  if (mobile) {
+    return 'LFM2.5-350M-GGUF';
+  }
+  return 'LFM2.5-VL-1.6B-GGUF';
+};
+
+export const ModelsPage: React.FC<ModelsPageProps> = ({ onNavigateBack, onSelectModel }) => {
   const { t } = useTranslation();
   // Phones/tablets: WASM inference is slow and the per-tab memory limit is
   // small, so the model choice matters more there than on desktops.
   const isMobile = isMobileLike();
+
+  const handleRecommendation = () => {
+    const modelId = getRecommendedModelId();
+    onSelectModel?.(modelId);
+    onNavigateBack?.();
+  };
 
   return (
     <div className="flex-1 overflow-auto">
@@ -159,6 +194,14 @@ export const ModelsPage: React.FC<ModelsPageProps> = ({ onNavigateBack }) => {
           <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
             {t('modelsPage.intro')}
           </p>
+          {onSelectModel && (
+            <button
+              onClick={handleRecommendation}
+              className="mt-4 w-full sm:w-auto px-6 py-3 bg-violet-600 text-white rounded-xl font-semibold hover:bg-violet-500 transition-colors shadow-sm"
+            >
+              ✨ {t('modelsPage.recommendButton')}
+            </button>
+          )}
           <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed border-l-4 border-indigo-300 dark:border-indigo-800 pl-3 mt-3">
             💡 {t('modelsPage.thinkingHint')}
           </p>

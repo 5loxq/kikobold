@@ -1,6 +1,6 @@
 # Local LLM Chat
 
-**Version:** 4.2.0 | **Lizenz:** MIT | **Status:** Produktionsreif
+**Version:** 4.3.40 | **Lizenz:** MIT | **Status:** Produktionsreif
 
 Ein datenschutzfreundlicher LLM-Chat, der komplett im Browser läuft. Die Modelle
 werden lokal heruntergeladen, im Browser gecacht und die Inferenz erfolgt
@@ -16,7 +16,7 @@ Live-Demo: **https://kikobold.net**
 | Funktion | Beschreibung |
 |---|---|
 | **100 % lokal** | Inferenz im Browser (WebGPU oder WASM), keine Datenübertragung an Dritte |
-| **3 kuratierte Modelle** | Klare Auswahl statt Modell-Wüste, mit Empfehlung und Zweck-Beschreibung |
+| **6 kuratierte Modelle** | Klare Auswahl statt Modell-Wüste, mit Empfehlung und Zweck-Beschreibung + Bildgenerierung (LCM DreamShaper) |
 | **Self-Hosting** | Modelle liegen auf dem eigenen Webspace, mit automatischem HuggingFace-Fallback |
 | **Download-Anzeige** | Fortschritt in Prozent, Geladene/Gesamtgröße („340 MB von 600 MB") und Geschwindigkeit |
 | **Light/Dark-Mode** | Umschalter in der Sidebar, folgt standardmäßig dem System, Auswahl wird gespeichert |
@@ -32,10 +32,13 @@ Live-Demo: **https://kikobold.net**
 
 | Modell | Wofür | Größe | Engine |
 |---|---|---|---|
-| **LFM 2.5 1.6B** (empfohlen) | Allzweckmodell für Alltag, Wissen und Texte — Fragen, Zusammenfassungen, Übersetzungen. Läuft in jedem Browser, auch ohne WebGPU | 664 MB | WASM (wllama) |
+| **LFM 2.5 1.6B** (empfohlen) | Allzweckmodell für Alltag, Wissen und Texte — Fragen, Zusammenfassungen, Übersetzungen. Mit Bildverstehen (Vision). Läuft in jedem Browser, auch ohne WebGPU | 664 MB | WASM (wllama) |
+| **LFM 2.5 350M** | Schnellstes Modell, ideal für ältere Geräte und kurze Fragen | 210 MB | WASM (wllama) |
 | **Qwen 3.5 2B** (empfohlen) | Stärkstes Modell: längere Texte, beste Qualität, denkmodus | 1 GB | WebGPU (WebLLM) |
 | **Qwen 3 1.7B** | Mathe- und Logik-Spezialist mit sichtbarem Gedankengang | 939 MB | WebGPU (WebLLM) |
 | **Qwen 3 0.6B** | Kurze Fragen, schnelle Antworten — ideal zum Ausprobieren | 335 MB | WebGPU (WebLLM) |
+| **Gemma 4 E2B** | Kompaktes Allzweckmodell | — | WASM (wllama) |
+| **LCM DreamShaper v7** | Bildgenerierung aus Textbeschreibungen | ~2 GB | ONNX |
 
 - Beim ersten Auswählen wird gefragt, ob der Download starten soll (mit Größenangabe).
 - Der Download läuft vom eigenen Webspace (siehe unten); ist dieser nicht erreichbar, wird automatisch der HuggingFace-CDN genutzt.

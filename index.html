@@ -7,6 +7,13 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="KI Kobold - KI direkt im Browser ausprobieren. Kostenlos, ohne Anmeldung, alles bleibt lokal auf deinem Gerät." />
+    <meta property="og:title" content="KI Kobold — KI-Chat komplett offline im Browser" />
+    <meta property="og:description" content="Kostenlos, ohne Anmeldung: Sprachmodelle laufen direkt auf deinem Gerät. Kein Konto, keine Cloud, keine Datenübertragung. Open Source." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://kikobold.net/" />
+    <meta property="og:image" content="https://kikobold.net/icon-512.png" />
+    <meta property="og:locale" content="de_DE" />
+    <meta name="twitter:card" content="summary" />
     <meta name="theme-color" content="#18181b" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -15,6 +22,21 @@
     <title>KI Kobold</title>
   </head>
   <body>
+    <noscript>
+      <div style="max-width: 46rem; margin: 3rem auto; padding: 0 1.25rem; font-family: system-ui, sans-serif; color: #e4e4e7; background: #18181b;">
+        <h1 style="font-size: 1.8rem;">KI Kobold — KI-Chat komplett offline im Browser</h1>
+        <p><strong>Kostenlos, ohne Anmeldung, ohne Cloud:</strong> KI Kobold lädt kleine Sprachmodelle direkt auf dein Gerät — die Inferenz läuft 100 % lokal im Browser. Keine Nachricht verlässt deinen Rechner, es gibt kein Konto und keine Telemetrie.</p>
+        <ul>
+          <li><strong>6 kuratierte Modelle</strong> (LFM 2.5, Qwen 3, Gemma) — von 210 MB bis 1 GB, mit Empfehlung für dein Gerät</li>
+          <li><strong>Bildgenerierung</strong> mit LCM DreamShaper</li>
+          <li><strong>Offline-fähig:</strong> nach dem Modell-Download funktioniert alles ohne Internet (PWA)</li>
+          <li><strong>Barrierefreiheit:</strong> Textgröße, hoher Kontrast, Lesbarkeits-Modus, Screenreader-Unterstützung</li>
+          <li><strong>Datenschutz:</strong> Open Source (MIT), Chats bleiben lokal in deinem Browser</li>
+        </ul>
+        <p>Bitte <strong>JavaScript aktivieren</strong>, um die App zu nutzen — Chrome oder Edge bieten die schnellste Geschwindigkeit (WebGPU). Safari und Firefox nutzen automatisch den langsameren WASM-Modus.</p>
+        <p><a href="https://github.com/5loxq/webgui" style="color:#a78bfa;">Quellcode auf GitHub</a></p>
+      </div>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

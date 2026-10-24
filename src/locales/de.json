@@ -717,7 +717,8 @@
     "imageGen": {
       "title": "Bildgenerierung (Alpha)",
       "text": "Neben den Chat-Modellen gibt es ein Bildmodell: {{name}} erzeugt aus einer Textbeschreibung ein Bild - ebenfalls vollständig lokal im Browser (WebGPU, ca. {{size}} GB beim ersten Laden). Erreichbar im Menü unter \"Bilder\"."
-    }
+    },
+    "recommendButton": "✨ Modell für mein Gerät empfehlen"
   },
   "settings": {
     "title": "Einstellungen",

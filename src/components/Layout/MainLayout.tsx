@@ -968,7 +968,10 @@ export const MainLayout: FC = () => {
 
         {activeTab === 'models' && (
           <Suspense fallback={<div className='flex-1 p-8 text-gray-400'>{t('common.loading')}</div>}>
-            <ModelsPage onNavigateBack={() => setActiveTab('chat')} />
+            <ModelsPage
+              onNavigateBack={() => setActiveTab('chat')}
+              onSelectModel={(modelId) => selectModel(modelId)}
+            />
           </Suspense>
         )}
 

@@ -717,7 +717,8 @@
     "imageGen": {
       "title": "Image generation (Alpha)",
       "text": "Besides the chat models there is one image model: {{name}} turns a text prompt into an image - also fully locally in the browser (WebGPU, about {{size}} GB on first load). Find it in the menu under \"Images\"."
-    }
+    },
+    "recommendButton": "✨ Recommend a model for my device"
   },
   "settings": {
     "title": "Settings",
