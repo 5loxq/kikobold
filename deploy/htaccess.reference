@@ -1,0 +1,84 @@
+# Required for multi-threaded WASM (SharedArrayBuffer) used by wllama.
+# Without these headers the app still works, but wllama falls back to
+# single-threaded inference (slower).
+<IfModule mod_headers.c>
+  Header always set Cross-Origin-Opener-Policy "same-origin"
+  Header always set Cross-Origin-Embedder-Policy "require-corp"
+  # Our resources may only be embedded by our own origin (blocks other
+  # sites from hotlinking app files and limits Spectre-style leaks).
+  Header always set Cross-Origin-Resource-Policy "same-origin"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "DENY"
+  # Force HTTPS for a full year, including all subdomains. The domain has
+  # a wildcard certificate and redirects HTTP to HTTPS, so this is safe.
+  # (HSTS "preload" deliberately NOT set: it requires submission to
+  # hstspreload.org and is hard to undo - add it only if the domain stays
+  # dedicated to this site.)
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  # Legacy protection: do not allow Flash/PDF cross-domain policies
+  Header always set X-Permitted-Cross-Domain-Policies "none"
+  # Isolate the origin into its own agent cluster (process isolation)
+  Header always set Origin-Agent-Cluster "?1"
+  # Upgrade http:// navigations to this origin to https:// (session-scoped
+  # complement to HSTS; the CSP directive covers subresource requests)
+  Header always set Upgrade-Insecure-Requests "1"
+
+  # Camera is not used; the microphone is (voice input in the chat field).
+  Header always set Permissions-Policy "camera=(), microphone=(self), geolocation=()"
+
+  # Content-Security-Policy: everything the app needs, nothing more.
+  # - script-src: own scripts + WASM ('wasm-unsafe-eval'; 'unsafe-eval' only
+  #   for older Safari, which needs it to instantiate WebAssembly)
+  # - style-src 'unsafe-inline': React inline styles and KaTeX output
+  # - img-src blob:/data:: preview images of attachments
+  # - connect-src: HuggingFace CDN + GitHub (model_lib WASM) for the model
+  #   fallback download when the self-hosted copy is unavailable
+  # - worker-src blob:: wllama/WebLLM create workers from blob URLs
+  # - upgrade-insecure-requests: http:// links (e.g. in chat messages)
+  #   are automatically upgraded to https://
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://raw.githubusercontent.com blob: data:; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
+
+  # The service worker must always be revalidated so new deployments are
+  # picked up immediately instead of being served from the HTTP cache.
+  <FilesMatch "sw\.js$">
+    Header always set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+</IfModule>
+
+# Correct MIME type for WebAssembly files
+<IfModule mod_mime.c>
+  AddType application/wasm .wasm
+</IfModule>
+
+# Canonical host: redirect kikobold.net (apex) to https://www.kikobold.net
+# to avoid duplicate content. Placed BEFORE the SPA fallback.
+<IfModule mod_rewrite.c>
+  RewriteCond %{HTTP_HOST} ^kikobold\.net$ [NC]
+  RewriteRule ^(.*)$ https://www.kikobold.net/$1 [R=301,L]
+</IfModule>
+
+# SPA fallback: let the app handle all routes
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# Long-term caching for hashed build assets
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/wasm "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+# Compression
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/wasm application/json image/svg+xml
+</IfModule>
