@@ -186,4 +186,6 @@ Muss alles grün sein vor dem Commit.
 
 ## Lizenz
 
-MIT
+MIT — siehe [LICENSE](LICENSE).
+
+Entwickelt von **5loxq** mit Unterstützung von KI-Agenten (Mistral Vibe, GLM).

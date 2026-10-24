@@ -55,5 +55,7 @@
   },
   "engines": {
     "node": ">=20.19.0"
-  }
+  },
+  "author": "5loxq",
+  "license": "MIT"
 }
