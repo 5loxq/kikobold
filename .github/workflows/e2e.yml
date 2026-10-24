@@ -11,9 +11,10 @@ on:
         description: 'Skip the heavy model download test'
         required: false
         default: 'false'
-  schedule:
-    # Daily 04:00 UTC — catches regressions on the live site early
-    - cron: '0 4 * * *'
+  # schedule:
+  #   # Daily 04:00 UTC — DEAKTIVIERT bis 01.11.2026 (Actions-Kontingent erschöpft).
+  #   # Re-Aktivierung: die beiden Zeilen unten ent-kommentieren.
+  #   - cron: '0 4 * * *'
 
 jobs:
   e2e:
