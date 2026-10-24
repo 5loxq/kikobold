@@ -137,7 +137,10 @@
     "readAloud": "Read message aloud",
     "stopSpeaking": "Stop reading aloud",
     "downloadConfirmMobileBigModel": "Warning: \"{{name}}\" is a very large model (about {{size}} MB) built for powerful machines (desktop with plenty of RAM). On a phone the download eats mobile data, and the model will run very slowly or not at all (memory). Really continue?",
-    "downloadConfirmMobileWebgpu": "Warning: \"{{name}}\" (about {{size}} MB) is a WebGPU model built for desktop graphics cards. On a phone it often does not run at all (memory) or only very slowly. The smaller LFM model is the better choice for a phone. Really continue?"
+    "downloadConfirmMobileWebgpu": "Warning: \"{{name}}\" (about {{size}} MB) is a WebGPU model built for desktop graphics cards. On a phone it often does not run at all (memory) or only very slowly. The smaller LFM model is the better choice for a phone. Really continue?",
+    "selectModelFirst": "Pick a model first – the response style becomes editable then.",
+    "retryLoad": "Retry",
+    "webgpuSpeedHint": "Tip: KI Kobold runs much faster in Chrome or Edge (WebGPU acceleration). Everything works here too, though."
   },
   "tab": {
     "generating": "AI is thinking…",
@@ -912,5 +915,9 @@
       "q": "Can I back up or move my chats?",
       "a": "Yes. You can export and import chats in the settings — your data belongs to you, and you can move it to another device at any time."
     }
+  },
+  "update": {
+    "available": "New version available",
+    "reload": "Reload"
   }
 }

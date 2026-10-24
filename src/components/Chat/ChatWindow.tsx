@@ -7,7 +7,7 @@ import { ChatExportImport } from './chat-export-import';
 import { FileDropWarning } from './FileDropWarning';
 import { ShortcutsDialog } from './ShortcutsDialog';
 import type { LibraryFile } from '../../services/storage/LibraryStorage';
-import { getModelConfig, MODELS } from '../../services/models/model-registry';
+import { getModelConfig, getRecommendedModelId, MODELS } from '../../services/models/model-registry';
 import { supportsWllamaJspi } from '../../services/inference/wllama-engine';
 import { TEXT_SCALES } from '../../services/accessibility';
 import type { TextScale } from '../../services/settings';
@@ -381,6 +381,30 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 isLoading={isLoading}
                 label={t('chat.selectModel')}
               />
+              {/* One-click setup: pick the best model for this device */}
+              <button
+                onClick={() => {
+                  const modelId = getRecommendedModelId();
+                  setSelectedModelId(modelId);
+                  onSelectModel(modelId);
+                }}
+                disabled={isLoading}
+                data-tour="recommend-button"
+                className="mt-3 w-full sm:w-auto px-6 py-2.5 bg-violet-600 text-white rounded-xl font-semibold hover:bg-violet-500 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                ✨ {t('modelsPage.recommendButton')}
+              </button>
+              {error && !isLoading && selectedModelId && (
+                <p className="mt-3 text-sm text-red-600 dark:text-red-400 font-medium">
+                  ❌ {error}{" "}
+                  <button
+                    onClick={() => onSelectModel(selectedModelId)}
+                    className="ml-1 px-2.5 py-0.5 border border-red-300 dark:border-red-800 rounded-lg text-xs hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                  >
+                    🔄 {t('chat.retryLoad')}
+                  </button>
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -400,6 +424,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           <p className="text-amber-700 dark:text-amber-400 text-sm font-medium flex items-center gap-2">
             <span className="text-lg">⚠️</span>
             {t('chat.webgpuNotSupported')} - {t('chat.webgpuRequiredBrowsers')}
+          </p>
+          <p className="text-amber-600 dark:text-amber-500 text-xs mt-1 pl-7">
+            💡 {t('chat.webgpuSpeedHint')}
           </p>
         </div>
       )}
@@ -471,6 +498,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 <select
                   value={activeProfile.id}
                   onChange={(e) => onSelectProfile?.(e.target.value)}
+                  disabled={!isModelLoaded || isLoading}
+                  title={!isModelLoaded && !isLoading ? t('chat.selectModelFirst') : undefined}
                   data-tour="profile-select"
                   aria-label={t('profiles.activeProfile')}
                   className="max-w-full px-3 py-1.5 border border-zinc-500 rounded-lg text-sm text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -587,6 +616,14 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               {error && !isLoading && (
                 <span className="text-sm text-red-600 dark:text-red-400 font-medium flex items-center gap-1">
                   ❌ {error}
+                  {selectedModelId && (
+                    <button
+                      onClick={() => onSelectModel(selectedModelId)}
+                      className="ml-2 px-2.5 py-0.5 border border-red-300 dark:border-red-800 rounded-lg text-xs hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                    >
+                      🔄 {t('chat.retryLoad')}
+                    </button>
+                  )}
                 </span>
               )}
             </>

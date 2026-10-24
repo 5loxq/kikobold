@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { type EngineModelConfig, getModelConfig, IMAGE_GEN_MODEL } from '../../services/models/model-registry';
-import { getDeviceMemoryGB, isMobileLike } from '../../utils/device';
+import { type EngineModelConfig, getModelConfig, getRecommendedModelId, IMAGE_GEN_MODEL } from '../../services/models/model-registry';
+import { isMobileLike } from '../../utils/device';
 
 interface ModelsPageProps {
   /** Return to the previous view (e.g. the chat) */
@@ -143,32 +143,6 @@ const ModelCard: React.FC<{ info: ModelInfo }> = ({ info }) => {
   );
 };
 
-/**
- * Ermittelt das passendste Modell für dieses Gerät:
- * - WebGPU verfügbar? Dann MLC-Modelle (schnell), sonst WASM (wllama).
- * - Gerätespeicher (wenn gemeldet) entscheidet zwischen groß/klein.
- * - Mobile Geräte bekommen die kleinere Variante (WASM ist dort langsam,
- *   der Speicher pro Tab begrenzt).
- * Fallback immer: LFM2.5-350M (läuft überall).
- */
-export const getRecommendedModelId = (): string => {
-  const hasWebGPU = typeof navigator !== 'undefined' && 'gpu' in navigator;
-  const memGB = getDeviceMemoryGB();
-  const mobile = isMobileLike();
-
-  if (hasWebGPU) {
-    // Desktop-Browser mit WebGPU: stärkstes Modell, wenn genug RAM gemeldet
-    if (!mobile && (memGB === undefined || memGB >= 8)) {
-      return 'Qwen3.5-2B-q4f16_1-MLC';
-    }
-    return 'Qwen3-0.6B-q4f16_1-MLC';
-  }
-  // WASM-Pfad (Firefox/Safari/iOS)
-  if (mobile) {
-    return 'LFM2.5-350M-GGUF';
-  }
-  return 'LFM2.5-VL-1.6B-GGUF';
-};
 
 export const ModelsPage: React.FC<ModelsPageProps> = ({ onNavigateBack, onSelectModel }) => {
   const { t } = useTranslation();
@@ -176,7 +150,7 @@ export const ModelsPage: React.FC<ModelsPageProps> = ({ onNavigateBack, onSelect
   // small, so the model choice matters more there than on desktops.
   const isMobile = isMobileLike();
 
-  const handleRecommendation = () => {
+  const handleRecommendation = (): void => {
     const modelId = getRecommendedModelId();
     onSelectModel?.(modelId);
     onNavigateBack?.();

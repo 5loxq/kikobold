@@ -231,3 +231,27 @@ export const getModelById = (id: string): Model | undefined => {
 export const getRecommendedModels = (): Model[] => {
   return MODELS.filter(m => m.recommended);
 };
+
+/**
+ * Device-based model recommendation, shared by the Models page button and
+ * the empty-chat quick pick. Rules (mirrors the Models page docs):
+ * - Desktop with WebGPU + enough RAM: strongest model (Qwen 3.5 2B)
+ * - WebGPU but small/mobile: small Qwen (0.6B)
+ * - WASM path (Firefox/Safari/iOS): mobile → LFM2.5-350M, desktop → LFM2.5-VL-1.6B
+ */
+export const getRecommendedModelId = (): string => {
+  const hasWebGPU = typeof navigator !== 'undefined' && 'gpu' in navigator;
+  const memGB = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
+  const mobile = isMobileLike();
+
+  if (hasWebGPU) {
+    if (!mobile && (typeof memGB !== 'number' || memGB >= 8)) {
+      return 'Qwen3.5-2B-q4f16_1-MLC';
+    }
+    return 'Qwen3-0.6B-q4f16_1-MLC';
+  }
+  if (mobile) {
+    return 'LFM2.5-350M-GGUF';
+  }
+  return 'LFM2.5-VL-1.6B-GGUF';
+};

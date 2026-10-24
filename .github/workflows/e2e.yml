@@ -1,0 +1,51 @@
+name: E2E Smoke Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'URL to test (default: production)'
+        required: false
+        default: 'https://www.kikobold.net'
+      skip_model_test:
+        description: 'Skip the heavy model download test'
+        required: false
+        default: 'false'
+  schedule:
+    # Daily 04:00 UTC — catches regressions on the live site early
+    - cron: '0 4 * * *'
+
+jobs:
+  e2e:
+    name: E2E (live site)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright-core install chromium-headless-shell
+
+      - name: Run E2E smoke test
+        run: node e2e/e2e-test.mjs
+        env:
+          BASE_URL: ${{ inputs.base_url || 'https://www.kikobold.net' }}
+          SKIP_MODEL_TEST: ${{ inputs.skip_model_test == 'true' && '1' || '' }}
+
+      - name: Upload failure screenshot (if any)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure
+          path: |
+            /tmp/e2e-*.png
+          if-no-files-found: ignore

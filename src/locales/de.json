@@ -137,7 +137,10 @@
     "readAloud": "Nachricht vorlesen",
     "stopSpeaking": "Vorlesen stoppen",
     "downloadConfirmMobileBigModel": "Achtung: \"{{name}}\" ist mit ca. {{size}} MB ein sehr großes Modell und wurde für leistungsstarke Rechner (Desktop mit viel RAM) gebaut. Auf einem Handy verbraucht der Download viel mobiles Datenverkehr, und das Modell läuft dort sehr langsam oder gar nicht (Arbeitsspeicher). Wirklich fortfahren?",
-    "downloadConfirmMobileWebgpu": "Achtung: \"{{name}}\" (ca. {{size}} MB) ist ein WebGPU-Modell und wurde für Desktop-Grafikkarten gebaut. Auf dem Handy läuft es oft gar nicht (Arbeitsspeicher) oder nur sehr langsam. Für das Handy ist das kleinere LFM-Modell die bessere Wahl. Wirklich fortfahren?"
+    "downloadConfirmMobileWebgpu": "Achtung: \"{{name}}\" (ca. {{size}} MB) ist ein WebGPU-Modell und wurde für Desktop-Grafikkarten gebaut. Auf dem Handy läuft es oft gar nicht (Arbeitsspeicher) oder nur sehr langsam. Für das Handy ist das kleinere LFM-Modell die bessere Wahl. Wirklich fortfahren?",
+    "selectModelFirst": "Erst ein Modell auswählen – dann lässt sich der Antwortstil ändern.",
+    "retryLoad": "Erneut versuchen",
+    "webgpuSpeedHint": "Tipp: In Chrome oder Edge läuft KI Kobold deutlich schneller (WebGPU-Beschleunigung). Alles funktioniert aber auch hier."
   },
   "tab": {
     "generating": "KI denkt nach…",
@@ -912,5 +915,9 @@
       "q": "Kann ich meine Chats sichern oder mitnehmen?",
       "a": "Ja. Über die Einstellungen kannst du Chats exportieren und importieren — deine Daten gehören dir und du kannst sie jederzeit auf ein anderes Gerät umziehen."
     }
+  },
+  "update": {
+    "available": "Neue Version verfügbar",
+    "reload": "Neu laden"
   }
 }
