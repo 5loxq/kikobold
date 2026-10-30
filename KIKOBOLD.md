@@ -113,6 +113,23 @@ Struktur auf dem Webspace:
 - Strukturvalidierung und Bereinigung beim Speichern (Chats, Import, Bibliothek);
   XSS-Schutz über Sanitizer.
 - Sichere Wrapper für localStorage/sessionStorage mit Validierung.
+- **Markdown-Renderer (Chat-Antworten):**
+  - Code-Blöcke über `Highlight` (prism-react-renderer v2) mit Render-Prop —
+    **niemals** `Prism` als Komponente casten (Namespace-Objekt, crasht zur
+    Laufzeit; war Ursache des P0-Crash in 4.3.41).
+  - Bilder nur `data:image/`, `blob:` und same-origin (`isSafeImageUrl`);
+    fremde `https:`-Bilder wären Tracking-Pixel bei Selfhosting ohne CSP.
+  - Links: `isSafeUrl` erlaubt `http(s):`, `mailto:`, Pfad- und Anker-URLs —
+    protocol-relative `//host` ist explizit ausgeschlossen.
+- **CSP-Hinweis:** `script-src 'unsafe-eval'` ist bewusst nötig — onnxruntime-web
+  (Text- UND Bild-Engine) ruft `eval()` direkt auf. Nicht entfernen, siehe
+  Kommentar in `public/.htaccess`.
+- **Soft-404-Konvention:** Der SPA-Fallback greift nur für endungslose Pfade;
+  Pfade mit Dateiendung müssen 404 liefern (`.htaccess` + `404.html`). Neue
+  statische Dateien mit Endung landen in `public/` und sind damit ausgeschlossen.
+- **`protobufjs` Override:** `^7.4.0` in `package.json` (transitiv via
+  onnx-proto/onnxruntime-web; 6.x hat offene OSV-Advisories). Bei
+  onnxruntime-Updates prüfen, ob der Override noch nötig/kompatibel ist.
 
 ## 8. Fehlerbehebung
 

@@ -2,6 +2,25 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.42] - 2026-10-30
+
+### Behoben (P0 — Funktionsausfall)
+- **Code-Block-Crash:** Jede Modellantwort mit einem ```-Block riss die komplette Oberfläche mit (ErrorBoundary-Abfang in `main.tsx`). Ursache: `Prism` aus `prism-react-renderer` ist ein Namespace-Objekt, keine Komponente — der Cast `as unknown as React.ComponentType` verdeckte den Typfehler, und `customStyle` stammt aus der API von `react-syntax-highlighter`, die es hier nicht gibt. Neu: `Highlight` mit echter Render-Prop-API (`tokens`/`getLineProps`/`getTokenProps`), Theme-Objekte als `PrismTheme` typisiert.
+
+### Sicherheit (P1)
+- **Markdown-Bilder auf same-origin beschränkt:** Die `Image`-Komponente erlaubt nur noch `data:image/`, `blob:` und same-origin URLs — fremde `https:`-Bilder in Chat-Antworten waren bislang Tracking-Pixel (die CSP fing sie auf kikobold.net ab, aber Selfhosting-Instanzen ohne `.htaccess` hätten sie geladen).
+- **Protocol-relative URLs abgewiesen:** `isSafeUrl('//evil.example/x')` gab vorher `true` (kein XSS, aber der Filter verspricht „nur sichere Schemes“ und ließ fremde Hosts durch). `//`-Präfixe werden jetzt vor der Scheme-Prüfung ausgeschlossen.
+
+### Härtung (P2)
+- **Soft-404 gefixt:** Der SPA-Catch-all rewritet nur noch Pfade ohne Dateiendung auf `index.html`; fehlende Dateien (z. B. `/favicon.ico`-Tippfehler, fehlende Assets) liefern jetzt echtes 404 statt der HTML-Shell mit HTTP 200. `ErrorDocument 404 /404.html` ergänzt (eigene 404-Seite im Brand-Stil).
+- **`/favicon.ico` ist jetzt ein echtes ICO** (PNG-in-ICO-Container aus `icon-192.png`, 16/32/48/64 px Einträge) — vorher lieferte der Pfad die 4-kB-HTML-Shell.
+- **`/.well-known/security.txt` ergänzt** (Contact + Expires, ein Jahr gültig).
+- **`protobufjs` per npm-Override auf ^7.4.0** (installiert: 7.6.6): 6.11.6 kam transitiv über `onnx-proto` (onnxruntime-web) und trägt vier offene OSV-Advisories (2× Code-Injection, 2× DoS). Build und Tests laufen mit 7.x unverändert.
+- **CSP-`unsafe-eval` dokumentiert:** Die Direktive muss bleiben — `onnxruntime-web` und `@aislamov/onnxruntime-web64` rufen `eval()` direkt auf (Build-Warnung mit Byte-Offset bestätigt es). Ohne die Direktive läuft keine Inferenz. Kommentar in der `.htaccess` verhindert versehentliches „Aufräumen“.
+
+### Verifiziert
+- Lint + Type-Check + 79 Tests grün; Build 2,5 s. Live: neuer Build-Hash ausgeliefert, Code-Blöcke rendern, Soft-404-Checks (`/gibtsnicht.png` → 404, `/gibtsnicht` → 200 SPA), `favicon.ico` mit `image/vnd.microsoft.icon`, `security.txt` 200, Apex→www-301 intakt.
+
 ## [4.3.41] - 2026-10-24
 
 ### Neu (UX-Runde, alle per echtem Browser-Test verifiziert)
