@@ -16,7 +16,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Prism } from 'prism-react-renderer';
+import { Highlight, type PrismTheme } from 'prism-react-renderer';
 import { error as logError } from '../../services/logging';
 import { useDarkMode } from '../../hooks/useDarkMode';
 
@@ -56,7 +56,27 @@ const renderKatex = (katex: KatexModule, tex: string, displayMode: boolean): str
 // Everything else (javascript:, vbscript:, data:, ...) is dropped so
 // markdown in a message can never turn into a script URL.
 const SAFE_URL = /^(https?:\/\/|mailto:|\/|#)/i;
-export const isSafeUrl = (url: string): boolean => SAFE_URL.test(url.trim());
+export const isSafeUrl = (url: string): boolean => {
+  const u = url.trim();
+  // Protocol-relative URLs (//evil.example) must not pass: they resolve to
+  // a foreign origin and would leak referrer/link context to third parties.
+  if (u.startsWith('//')) {return false;}
+  return SAFE_URL.test(u);
+};
+
+// Images are stricter than links: only inline data, blob and same-origin
+// sources are allowed. Remote https images would turn every chat message
+// into a potential tracking pixel (self-hosted installs have no CSP).
+export const isSafeImageUrl = (url: string): boolean => {
+  const u = url.trim();
+  if (/^data:image\//i.test(u) || /^blob:/i.test(u)) {return true;}
+  if (u.startsWith('/') && !u.startsWith('//')) {return true;}
+  try {
+    return new URL(u, window.location.origin).origin === window.location.origin;
+  } catch {
+    return false;
+  }
+};
 
 const MathBlock: React.FC<{ tex: string }> = ({ tex }) => {
   // undefined = still loading, null = rendering failed, string = HTML
@@ -106,13 +126,9 @@ const MathInline: React.FC<{ tex: string }> = ({ tex }) => {
   return <span className="math-inline" dangerouslySetInnerHTML={{ __html: html }} />;
 };
 
-// Type assertion for SyntaxHighlighter to work around type issues
-const SyntaxHighlighter = Prism as unknown as React.ComponentType<{
-  language: string;
-  style: Record<string, unknown>;
-  customStyle?: React.CSSProperties;
-  children: React.ReactNode;
-}>;
+// Type assertion removed: Highlight from prism-react-renderer v2 is used with
+// its real render-prop API below (the old Prism-as-component cast crashed the
+// whole app at runtime — Prism is a namespace object, not a component).
 
 // Supported programming languages for syntax highlighting
 const SUPPORTED_LANGUAGES = [
@@ -128,8 +144,9 @@ const SUPPORTED_LANGUAGES = [
   'text', 'plaintext',
 ];
 
-// Default theme for syntax highlighting
-const DARK_THEME = {
+// Default theme for syntax highlighting (typed as PrismTheme so fontStyle
+// literals widen to the CSSProperties string and TS keeps the contract)
+const DARK_THEME: PrismTheme = {
   plain: {
     color: '#e2e8f0',
     backgroundColor: '#2d3748',
@@ -205,7 +222,7 @@ const DARK_THEME = {
   ],
 };
 
-const LIGHT_THEME = {
+const LIGHT_THEME: PrismTheme = {
   plain: {
     color: '#374151',
     backgroundColor: '#f8fafc',
@@ -357,7 +374,7 @@ const Image: React.FC<{ src?: string; alt?: string; onClick?: (src: string) => v
     }
   }, [src, onClick]);
 
-  if (!src || !isSafeUrl(src)) {return null;}
+  if (!src || !isSafeImageUrl(src)) {return null;}
 
   const img = (
     // onLoad only tracks the load state for the fade-in - it is not an
@@ -482,19 +499,39 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language, value, maxHeight }) => 
         className="overflow-auto rounded-lg shadow-sm"
         style={{ maxHeight: maxHeight ?? '400px' }}
       >
-        <SyntaxHighlighter
-          language={detectedLanguage}
-          style={theme}
-          customStyle={{
-            margin: 0,
-            padding: '1rem',
-            fontSize: '0.875rem',
-            lineHeight: '1.5',
-            borderRadius: '0.5rem',
-          }}
+        {/* 'text'/'plaintext' are no real Prism grammars — markup renders
+            them as unstyled plain text, which is exactly what we want. */}
+        <Highlight
+          theme={theme}
+          code={value}
+          language={
+            detectedLanguage === 'text' || detectedLanguage === 'plaintext'
+              ? 'markup'
+              : detectedLanguage
+          }
         >
-          {value}
-        </SyntaxHighlighter>
+          {({ className, style, tokens, getLineProps, getTokenProps }) => (
+            <pre
+              className={className}
+              style={{
+                ...style,
+                margin: 0,
+                padding: '1rem',
+                fontSize: '0.875rem',
+                lineHeight: '1.5',
+                borderRadius: '0.5rem',
+              }}
+            >
+              {tokens.map((line, i) => (
+                <div key={i} {...getLineProps({ line })}>
+                  {line.map((token, key) => (
+                    <span key={key} {...getTokenProps({ token })} />
+                  ))}
+                </div>
+              ))}
+            </pre>
+          )}
+        </Highlight>
       </div>
     </div>
   );

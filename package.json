@@ -57,5 +57,8 @@
     "node": ">=20.19.0"
   },
   "author": "5loxq",
-  "license": "MIT"
+  "license": "MIT",
+  "overrides": {
+    "protobufjs": "^7.4.0"
+  }
 }

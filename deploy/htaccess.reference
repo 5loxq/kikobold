@@ -38,6 +38,9 @@
   # - upgrade-insecure-requests: http:// links (e.g. in chat messages)
   #   are automatically upgraded to https://
   Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://raw.githubusercontent.com blob: data:; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
+# 'unsafe-eval' in script-src is REQUIRED: onnxruntime-web and
+# @aislamov/onnxruntime-web64 call eval() directly (build warns with byte
+# offsets). Removing it breaks model inference. Do not "clean this up".
 
   # The service worker must always be revalidated so new deployments are
   # picked up immediately instead of being served from the HTTP cache.
@@ -54,17 +57,24 @@
 # Canonical host: redirect kikobold.net (apex) to https://www.kikobold.net
 # to avoid duplicate content. Placed BEFORE the SPA fallback.
 <IfModule mod_rewrite.c>
+  RewriteEngine On
   RewriteCond %{HTTP_HOST} ^kikobold\.net$ [NC]
   RewriteRule ^(.*)$ https://www.kikobold.net/$1 [R=301,L]
 </IfModule>
 
-# SPA fallback: let the app handle all routes
+# SPA fallback: let the app handle all routes.
+# Real files/dirs are served as-is; everything else gets the app shell —
+# but only for extension-less paths. Paths that look like files
+# (favicon.ico, missing assets) must 404 instead of returning the SPA
+# shell as HTTP 200 (soft-404, breaks crawlers and security scanners).
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_URI} !\.([A-Za-z0-9]+)$
   RewriteRule ^ index.html [L]
+  ErrorDocument 404 /404.html
 </IfModule>
 
 # Long-term caching for hashed build assets
