@@ -374,7 +374,16 @@ const Image: React.FC<{ src?: string; alt?: string; onClick?: (src: string) => v
     }
   }, [src, onClick]);
 
-  if (!src || !isSafeImageUrl(src)) {return null;}
+  // Blocked sources render a visible placeholder instead of a silent gap:
+  // the user should understand why nothing appeared (Alt-Text preserved).
+  if (!src) {return null;}
+  if (!isSafeImageUrl(src)) {
+    return (
+      <div className="my-4 px-3 py-2 text-xs rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700" role="note">
+        [Externes Bild blockiert{alt ? `: ${alt}` : ''}]
+      </div>
+    );
+  }
 
   const img = (
     // onLoad only tracks the load state for the fade-in - it is not an

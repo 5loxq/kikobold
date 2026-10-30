@@ -78,6 +78,21 @@ function validateMessage(message: unknown): boolean {
   );
 }
 
+// Upper bound for a single imported message (characters). A 5 MB backup could
+// otherwise contain one message that blocks rendering for everyone.
+const MAX_IMPORT_MESSAGE_CHARS = 100_000;
+const IMPORT_TRUNCATION_NOTICE = '\n\n[… Nachricht beim Import gekürzt: über 100.000 Zeichen …]';
+
+// Clamps oversized message contents instead of dropping them: the chat keeps
+// its history, the truncated part is marked with a visible notice.
+function clampMessageContent(message: Message): Message {
+  if (message.content.length <= MAX_IMPORT_MESSAGE_CHARS) {return message;}
+  return {
+    ...message,
+    content: message.content.slice(0, MAX_IMPORT_MESSAGE_CHARS) + IMPORT_TRUNCATION_NOTICE,
+  };
+}
+
 /**
  * Export chats (and optionally memory entries / library files) as JSON file
  */
@@ -183,7 +198,7 @@ export const importChats = (file: File): Promise<ChatImportResult> => {
           warn(`Import file version ${data.version} may not be fully compatible`);
         }
 
-        // Validate each chat and its messages
+        // Validate each chat and its messages, clamping oversized contents
         const validChats = data.chats.filter((chat: unknown) => {
           if (!validateChat(chat)) {
             warn(`Invalid chat skipped during import: ${(chat as Chat).id || 'unknown'}`);
@@ -192,7 +207,10 @@ export const importChats = (file: File): Promise<ChatImportResult> => {
 
           // Validate all messages in the chat
           return chat.messages.every(message => validateMessage(message));
-        });
+        }).map((chat: Chat) => ({
+          ...chat,
+          messages: chat.messages.map(clampMessageContent),
+        }));
 
         if (validChats.length === 0) {
           reject(new Error('No valid chats found in import file'));

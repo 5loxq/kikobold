@@ -74,8 +74,10 @@
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteCond %{REQUEST_URI} !\.([A-Za-z0-9]+)$
   RewriteRule ^ index.html [L]
-  ErrorDocument 404 /404.html
 </IfModule>
+
+# Outside the rewrite block: applies even where mod_rewrite is missing.
+ErrorDocument 404 /404.html
 
 # Long-term caching for hashed build assets
 <IfModule mod_expires.c>

@@ -2,6 +2,15 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.43] - 2026-10-30
+
+### Behoben (Security-Feedback-Runde)
+- **security.txt ohne Klarnamen-Adresse:** Contact zeigt jetzt auf den Alias (`kikobold.kepmu@8alias.com`) statt auf die private Adresse — security.txt wird von Scannern automatisch eingesammelt und unterlief sonst die Alias-Strategie. `Preferred-Languages: de, en` ergänzt.
+- **Import: Obergrenze für einzelne Nachrichten** (100.000 Zeichen): Größere Inhalte werden beim Import abgeschnitten, mit sichtbarem Hinweis in der Nachricht — ein riesiges Backup kann den Chat nicht mehr blockieren.
+- **Blockierte Bilder zeigen einen Hinweis** statt einer stillen Lücke: `[Externes Bild blockiert: <Alt-Text>]` erklärt, warum nichts gerendert wurde.
+- **`ErrorDocument 404` aus dem `mod_rewrite`-Block verschoben:** greift jetzt auch ohne mod_rewrite (rein polizeilich — bei Hetzner läuft mod_rewrite immer).
+- `engines`-Feld bereits auf `>=20.19.0` (Hinweis aus dem Test bezog sich auf einen älteren Stand; kein Fix nötig).
+
 ## [4.3.42] - 2026-10-30
 
 ### Behoben (P0 — Funktionsausfall)
