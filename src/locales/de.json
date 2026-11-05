@@ -938,6 +938,10 @@
     "export": {
       "q": "Kann ich meine Chats sichern oder mitnehmen?",
       "a": "Ja. Über die Einstellungen kannst du Chats exportieren und importieren — deine Daten gehören dir und du kannst sie jederzeit auf ein anderes Gerät umziehen."
+    },
+    "voice": {
+      "q": "Wo läuft die Spracherkennung bei der Spracheingabe?",
+      "a": "Die Spracheingabe nutzt die Spracherkennung deines Browsers (Web-Speech-API) – und die läuft nicht lokal: Chrome sendet das Audio an Google-Server, Edge an Microsoft-Server, Safari nutzt Apples Diktat-Infrastruktur (teils auf dem Gerät, teils über Apple-Server). Die Verbindung geht dabei direkt vom Browser an den Hersteller – kikobold.net hat keinen Server, der dein Audio sieht oder weiterleitet. Alle anderen Funktionen (Chat-Modelle, Bildgenerierung, Speicherung) laufen vollständig lokal auf deinem Gerät. Deshalb erscheint vor der ersten Nutzung ein Privatsphäre-Hinweis, den du bestätigen musst. Firefox unterstützt die Spracheingabe gar nicht."
     }
   },
   "update": {

@@ -938,6 +938,10 @@
     "export": {
       "q": "Can I back up or move my chats?",
       "a": "Yes. You can export and import chats in the settings — your data belongs to you, and you can move it to another device at any time."
+    },
+    "voice": {
+      "q": "Where does the voice input speech recognition run?",
+      "a": "Voice input uses your browser's speech recognition (Web Speech API) – and that does not run locally: Chrome sends the audio to Google servers, Edge to Microsoft servers, and Safari uses Apple's dictation infrastructure (partly on-device, partly via Apple servers). The connection goes directly from your browser to the vendor – kikobold.net has no server that ever sees or forwards your audio. All other features (chat models, image generation, storage) run fully locally on your device. That is why a privacy notice appears before first use that you have to confirm. Firefox does not support voice input at all."
     }
   },
   "update": {

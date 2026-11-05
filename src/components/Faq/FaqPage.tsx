@@ -18,6 +18,7 @@ export const FaqPage: React.FC<FaqPageProps> = ({ onNavigateBack }) => {
   const items: Array<{ key: string }> = [
     { key: 'free' },
     { key: 'data' },
+    { key: 'voice' },
     { key: 'models' },
     { key: 'browsers' },
     { key: 'offline' },
