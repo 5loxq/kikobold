@@ -2,7 +2,7 @@
  * Type definitions for custom React hooks
  */
 
-import { Chat, ChatMetadata, LocalModel, Model, Profile } from '.';
+import { Chat, ChatMetadata, LocalModel, MessageStats, Model, Profile } from '.';
 
 // useModels hook return type
 export interface UseModelsReturn {
@@ -24,7 +24,7 @@ export interface UseChatReturn {
   loading: boolean;
   loadChats: () => Promise<void>;
   loadChat: (id: string) => Promise<void>;
-  addMessage: (role: 'user' | 'assistant', content: string, chatId?: string) => Promise<void>;
+  addMessage: (role: 'user' | 'assistant', content: string, chatId?: string, stats?: MessageStats) => Promise<void>;
   deleteChat: (id: string) => Promise<void>;
   renameChat: (id: string, newTitle: string) => Promise<void>;
   createNewChat: (profileId: string, title?: string) => Promise<Chat>;

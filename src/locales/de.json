@@ -140,7 +140,18 @@
     "downloadConfirmMobileWebgpu": "Achtung: \"{{name}}\" (ca. {{size}} MB) ist ein WebGPU-Modell und wurde für Desktop-Grafikkarten gebaut. Auf dem Handy läuft es oft gar nicht (Arbeitsspeicher) oder nur sehr langsam. Für das Handy ist das kleinere LFM-Modell die bessere Wahl. Wirklich fortfahren?",
     "selectModelFirst": "Erst ein Modell auswählen – dann lässt sich der Antwortstil ändern.",
     "retryLoad": "Erneut versuchen",
-    "webgpuSpeedHint": "Tipp: In Chrome oder Edge läuft KI Kobold deutlich schneller (WebGPU-Beschleunigung). Alles funktioniert aber auch hier."
+    "webgpuSpeedHint": "Tipp: In Chrome oder Edge läuft KI Kobold deutlich schneller (WebGPU-Beschleunigung). Alles funktioniert aber auch hier.",
+    "statsLine": "{{tokens}} Token · {{tps}} Token/s · {{seconds}} s",
+    "statsHint": "Generierungs-Statistik dieser Antwort",
+    "summarize": "Zusammenfassen",
+    "summarizeHint": "Chat mit dem geladenen Modell zusammenfassen",
+    "summarySystemPrompt": "Du bist ein Assistent, der Gespräche kompakt zusammenfasst. Gib die wichtigsten Punkte als kurze, stichpunktartige Übersicht wieder. Bleibe beim Inhalt des Gesprächs, ohne neue Informationen hinzuzufügen.",
+    "summaryPrompt": "Fasse den folgenden Gesprächsverlauf kompakt zusammen:\n\n{{transcript}}",
+    "summaryUser": "Nutzer",
+    "summaryAssistant": "Assistent",
+    "exportMarkdown": "Chat als Markdown-Datei herunterladen",
+    "exportMarkdownShort": "Markdown",
+    "voicePrivacyWarning": "Hinweis zur Privatsphäre: Die Spracheingabe nutzt die Spracherkennung deines Browsers. Dabei werden Audiodaten zur Erkennung an Server des Browser-Herstellers (z. B. Google) gesendet – die Erkennung läuft nicht lokal auf deinem Gerät. Alle anderen Funktionen dieser App bleiben vollständig lokal. Spracheingabe trotzdem verwenden?"
   },
   "tab": {
     "generating": "KI denkt nach…",
@@ -368,6 +379,13 @@
     },
     "v4331": {
       "item1": "Die Roadmap ist kräftig gewachsen: 10 Kategorien mit 45 Ideen - von Bild-zu-Bild und Dokumente-Befragen über App-Sperre bis zu Tastenkürzeln. Schau vorbei und stöbere!"
+    },
+    "v4344": {
+      "item1": "Live-Statistik: Jede Antwort zeigt Token, Geschwindigkeit und Dauer an.",
+      "item2": "Chat-Zusammenfassung: Den gesamten Verlauf mit einem Klick vom geladenen Modell zusammenfassen lassen.",
+      "item3": "Chat als Markdown-Datei herunterladen – neben dem bestehenden JSON-Backup.",
+      "item4": "Diagnose-Bericht in der Hilfe: kopierbare System- und Protokoll-Infos für Support-Anfragen.",
+      "item5": "Spracheingabe zeigt vor der ersten Nutzung jetzt einen Privatsphäre-Hinweis (die Browser-Spracherkennung läuft nicht lokal)."
     }
   },
   "memory": {
@@ -519,7 +537,13 @@
     "tourWhatsNewText": "Du hast die Einführung übersprungen oder willst sie noch einmal sehen? Hier kannst du sie jederzeit erneut starten. Außerdem kannst du hier alle Neuigkeiten der letzten Versionen nachlesen.",
     "replayTourButton": "Einführung erneut starten",
     "showWhatsNewButton": "Alle Neuigkeiten ansehen",
-    "closeHelp": "Zurück zum Chat"
+    "closeHelp": "Zurück zum Chat",
+    "diagnosisTitle": "Diagnose-Bericht",
+    "diagnosisText": "Erstellt einen kopierbaren Bericht mit App-Version, Browser-, Geräte- und Speicher-Informationen sowie den letzten Protokoll-Einträgen der App (ohne Chat-Inhalte). Hilfreich bei Support-Anfragen – die Daten bleiben auf deinem Gerät.",
+    "diagnosisGenerate": "Bericht erstellen",
+    "diagnosisCopy": "Bericht kopieren",
+    "diagnosisCopied": "Kopiert!",
+    "diagnosisClose": "Ausblenden"
   },
   "roadmap": {
     "title": "Roadmap",

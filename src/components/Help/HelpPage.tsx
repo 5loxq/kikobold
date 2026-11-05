@@ -1,5 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { version as appVersion } from '../../../package.json';
+import { getRecentLogEntries } from '../../services/logging';
 
 interface HelpPageProps {
   /** Return to the previous view (e.g. the chat). window.close() only works
@@ -13,6 +15,55 @@ interface HelpPageProps {
 
 export const HelpPage: React.FC<HelpPageProps> = ({ onNavigateBack, onRestartTour, onShowWhatsNew }) => {
   const { t } = useTranslation();
+  // Diagnostic report (v4.3.44): system info + recent log entries as a
+  // copyable text block. Generated on demand - nothing is collected in
+  // the background, and chat content never enters the report.
+  const [diagnosticReport, setDiagnosticReport] = React.useState<string | null>(null);
+  const [diagnosticCopied, setDiagnosticCopied] = React.useState(false);
+
+  const buildDiagnosticReport = async (): Promise<void> => {
+    const lines: string[] = [`KI Kobold v${appVersion}`];
+    lines.push(`Generated: ${new Date().toISOString()}`);
+    try {
+      const { getSystemSummary } = await import('../../services/system-info');
+      const summary = await getSystemSummary();
+      lines.push(`Browser: ${summary.browser}`);
+      lines.push(`OS: ${summary.os}`);
+      lines.push(`GPU: ${summary.gpu}`);
+      lines.push(`Memory: ${summary.memory}`);
+      lines.push(`WebGPU: ${summary.webgpu ? 'yes' : 'no'}`);
+      lines.push(`WASM: ${summary.wasm ? 'yes' : 'no'}`);
+      lines.push(`Storage: ${summary.storage}`);
+    } catch (err) {
+      lines.push(`System info unavailable: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    lines.push('');
+    lines.push('Recent log entries (oldest first, no chat content):');
+    const entries = getRecentLogEntries();
+    if (entries.length === 0) {
+      lines.push('(none)');
+    } else {
+      for (const entry of entries) {
+        lines.push(
+          `[${new Date(entry.timestamp).toISOString()}] ${entry.level.toUpperCase()}: ${entry.message}`
+        );
+      }
+    }
+    setDiagnosticReport(lines.join('\n'));
+  };
+
+  const copyDiagnosticReport = (): void => {
+    if (!diagnosticReport) {
+      return;
+    }
+    void navigator.clipboard.writeText(diagnosticReport).then(() => {
+      setDiagnosticCopied(true);
+      setTimeout(() => setDiagnosticCopied(false), 2000);
+    }).catch(() => {
+      // Clipboard access can fail (e.g. lost focus) - the textarea below
+      // still allows manual copying.
+    });
+  };
 
   const canItems = [t('help.modelsCan1'), t('help.modelsCan2'), t('help.modelsCan3')];
   const cannotItems = [
@@ -280,6 +331,48 @@ export const HelpPage: React.FC<HelpPageProps> = ({ onNavigateBack, onRestartTou
               </button>
             )}
           </div>
+        </section>
+
+        {/* Diagnostic report */}
+        <section className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-800 mb-4">
+          <h2 className="text-xl font-semibold mb-3 text-zinc-700 dark:text-zinc-200">
+            🩺 {t('help.diagnosisTitle')}
+          </h2>
+          <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
+            {t('help.diagnosisText')}
+          </p>
+          {diagnosticReport === null ? (
+            <button
+              onClick={() => void buildDiagnosticReport()}
+              className="px-4 py-2 text-sm rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+            >
+              {t('help.diagnosisGenerate')}
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <textarea
+                readOnly
+                value={diagnosticReport}
+                aria-label={t('help.diagnosisTitle')}
+                className="w-full h-56 px-3 py-2 text-xs font-mono rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 text-zinc-700 dark:text-zinc-300 resize-y"
+                onFocus={(e) => e.currentTarget.select()}
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={copyDiagnosticReport}
+                  className="px-4 py-2 text-sm font-semibold rounded-xl bg-indigo-700 text-white hover:opacity-90 transition-opacity"
+                >
+                  {diagnosticCopied ? t('help.diagnosisCopied') : t('help.diagnosisCopy')}
+                </button>
+                <button
+                  onClick={() => setDiagnosticReport(null)}
+                  className="px-4 py-2 text-sm rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                >
+                  {t('help.diagnosisClose')}
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Footer */}

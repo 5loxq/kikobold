@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Chat, ChatMetadata, Message, UseChatReturn } from '../types';
+import { Chat, ChatMetadata, Message, MessageStats, UseChatReturn } from '../types';
 import * as ChatStorage from '../services/storage/ChatStorage';
 import { error as logError } from '../services/logging';
 
@@ -61,7 +61,7 @@ export const useChat = (): UseChatReturn => {
     }
   }, []);
 
-  const addMessage = useCallback(async (role: 'user' | 'assistant', content: string, chatId?: string) => {
+  const addMessage = useCallback(async (role: 'user' | 'assistant', content: string, chatId?: string, stats?: MessageStats) => {
     try {
       const currentChat = chatRef.current;
       // The message belongs to the chat the user was in when the send
@@ -86,6 +86,10 @@ export const useChat = (): UseChatReturn => {
         role,
         content,
         timestamp: Date.now(),
+        // Generation statistics (assistant answers since v4.3.44); extra
+        // fields survive the IndexedDB round-trip, older messages simply
+        // have none.
+        ...(stats ? { stats } : {}),
       };
 
       // The in-memory chat is the source of truth only while it is the

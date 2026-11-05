@@ -121,11 +121,22 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({ message, searchQuery
           )}
         </div>
         <div className="flex items-center justify-between mt-2">
-          <p className={`text-xs ${
-            isUser ? 'text-white' : 'text-zinc-600 dark:text-zinc-400'
-          }`}>
-            {timeStr}
-          </p>
+          <div className={`flex items-center gap-2 text-xs ${isUser ? 'text-white' : 'text-zinc-600 dark:text-zinc-400'}`}>
+            <p>{timeStr}</p>
+            {/* Generation statistics of this answer (messages since v4.3.44) */}
+            {!isUser && message.stats && (
+              <span
+                className="opacity-70 tabular-nums"
+                title={t('chat.statsHint')}
+              >
+                {t('chat.statsLine', {
+                  tokens: message.stats.tokens,
+                  tps: message.stats.tokensPerSecond.toFixed(1),
+                  seconds: (message.stats.durationMs / 1000).toFixed(1),
+                })}
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-1">
             <button
               type="button"

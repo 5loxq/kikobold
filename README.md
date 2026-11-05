@@ -1,6 +1,6 @@
 # Local LLM Chat
 
-**Version:** 4.3.41 | **Lizenz:** MIT | **Status:** Produktionsreif
+**Version:** 4.3.44 | **Lizenz:** MIT | **Status:** Produktionsreif
 
 Ein datenschutzfreundlicher LLM-Chat, der komplett im Browser läuft. Die Modelle
 werden lokal heruntergeladen, im Browser gecacht und die Inferenz erfolgt
@@ -161,6 +161,15 @@ aktiven Profils.
 ## Changelog
 
 Die vollständige Versionshistorie steht in [CHANGELOG.md](CHANGELOG.md). Die wichtigsten Etappen:
+
+### 4.3.44 (2026-11-03)
+- Quick-Win-Runde: Live-Statistik pro Antwort (Token · Token/s · Dauer, mit der Nachricht persistiert), Chat-Zusammenfassung per geladenem Modell, Chat-Download als Markdown-Datei, Diagnose-Bericht in der Hilfe (Systeminfo + Log-Ring-Puffer, ohne Chat-Inhalte)
+- Privatsphäre-Hinweis vor der ersten Spracheingabe (Browser-Spracherkennung läuft nicht lokal)
+- Markdown-Renderer: gemischte Inline-Formatierung (`*kursiv* vor **fett**`) und Inline-Links ohne href gefixt
+
+### 4.3.42 – 4.3.43 (2026-10-30)
+- Security-Feedback-Runde: security.txt auf Alias-Adresse, Import-Obergrenze pro Nachricht, blockierte Markdown-Bilder mit sichtbarem Hinweis
+- Code-Block-Crash im Markdown-Renderer behoben (Prism-Namespace statt Komponente), Markdown-Bilder auf same-origin beschränkt, Soft-404 gefixt, protobufjs-Override gegen OSV-Advisories
 
 ### 4.3.41 (2026-10-24)
 - UX-Runde: Empfehlungs-Button auch im leeren Chat, Profil-Auswahl erst nach Modell-Load editierbar, Update-Toast bei neuer Version, Retry-Button bei fehlgeschlagenem Modell-Download, WebGPU-Speed-Hinweis für Firefox/Safari

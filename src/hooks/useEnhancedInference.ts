@@ -19,6 +19,7 @@ import { getDeviceMemoryGB, isIOSDevice, isMobileLike } from '../utils/device';
 import { getEngineType, getModelConfig, getWasmFallbackModelId } from '../services/models/model-registry';
 import { getCustomAppConfig } from '../services/models/webllm-config';
 import { releaseWakeLock, requestWakeLock } from '../services/wake-lock';
+import type { MessageStats } from '../types';
 import {
   cancelWllamaGeneration,
   type DownloadStats,
@@ -139,9 +140,11 @@ export interface EnhancedInferenceReturn extends InferenceState {
   
   // Model management
   loadModel: (modelId: string) => Promise<boolean>;
-  
+
   // Status
   refreshStatus: () => void;
+  /** Statistics of the last completed generation (for the message metadata) */
+  getLastGenerationStats: () => MessageStats | null;
 }
 
 // ============================================================================
@@ -242,6 +245,11 @@ export const useEnhancedInference = (
   const abortControllerRef = useRef<AbortController | null>(null);
   const startTimeRef = useRef<number>(0);
   const tokenCountRef = useRef<number>(0);
+  // Statistics of the last COMPLETED generation. Kept in a ref (not state):
+  // callers read it right after `await generateStream(...)` resolves, and a
+  // state value would still hold the previous render's value there.
+  const lastStatsRef = useRef<MessageStats | null>(null);
+  const getLastGenerationStats = useCallback((): MessageStats | null => lastStatsRef.current, []);
 
   // Load model using WebLLM
   const loadModel = useCallback(async (modelId: string): Promise<boolean> => {
@@ -490,10 +498,16 @@ export const useEnhancedInference = (
         // (~4 characters per token) instead of always showing 0.
         const completionTokens = Math.ceil(responseText.length / 4);
         tokenCountRef.current = completionTokens;
+        const durationMs = Date.now() - startTimeRef.current;
+        lastStatsRef.current = {
+          tokens: completionTokens,
+          tokensPerSecond: durationMs > 0 ? (completionTokens * 1000) / durationMs : 0,
+          durationMs,
+        };
         setResult(responseText);
         setTokensGenerated(completionTokens);
         setIsGenerating(false);
-        setDuration(Date.now() - startTimeRef.current);
+        setDuration(durationMs);
         return { text: responseText, usage: undefined };
       }
 
@@ -528,16 +542,22 @@ export const useEnhancedInference = (
       }
       const completion = reply;
       const responseText = completion.choices[0]?.message?.content ?? '';
-      // The non-streaming path never goes through the onChunk counter -
-      // take the token count from the usage report (with a rough
-      // character-based estimate as the fallback).
+      // The non-streaming path never goes through the onChunk counter - take
+      // the token count from the usage report (with a rough character-based
+      // estimate as the fallback).
       const completionTokens = completion.usage?.completion_tokens
         ?? Math.ceil(responseText.length / 4);
       tokenCountRef.current = completionTokens;
+      const durationMs = Date.now() - startTimeRef.current;
+      lastStatsRef.current = {
+        tokens: completionTokens,
+        tokensPerSecond: durationMs > 0 ? (completionTokens * 1000) / durationMs : 0,
+        durationMs,
+      };
 
       setResult(responseText);
       setTokensGenerated(completionTokens);
-      setDuration(Date.now() - startTimeRef.current);
+      setDuration(durationMs);
       setIsGenerating(false);
 
       return {
@@ -683,9 +703,15 @@ export const useEnhancedInference = (
       if (abortControllerRef.current !== newAbortController) {
         return visibleText;
       }
+      const durationMs = Date.now() - startTimeRef.current;
+      lastStatsRef.current = {
+        tokens: tokenCountRef.current,
+        tokensPerSecond: durationMs > 0 ? (tokenCountRef.current * 1000) / durationMs : 0,
+        durationMs,
+      };
       setResult(visibleText);
       setTokensGenerated(tokenCountRef.current);
-      setDuration(Date.now() - startTimeRef.current);
+      setDuration(durationMs);
       setIsGenerating(false);
       setIsStreaming(false);
       
@@ -792,6 +818,9 @@ export const useEnhancedInference = (
     
     // Status
     refreshStatus,
+
+    // Last generation stats
+    getLastGenerationStats,
   };
 };
 

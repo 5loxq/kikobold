@@ -124,6 +124,7 @@ export const MainLayout: FC = () => {
     progressStats: modelLoadStats,
     modelLoadPhase,
     loadElapsedSec,
+    getLastGenerationStats,
   } = useEnhancedInference();
   // Phones/tablets: the load overlay shows an extra hint because mobile
   // browsers suspend the page when the screen locks or the tab is hidden.
@@ -455,7 +456,10 @@ export const MainLayout: FC = () => {
       });
 
       if (result && result.trim().length > 0) {
-        await addMessage('assistant', result, chatId);
+        // Statistics of the generation that just finished (tokens, speed,
+        // duration) travel with the message so they survive reloads.
+        const stats = getLastGenerationStats();
+        await addMessage('assistant', result, chatId, stats ?? undefined);
 
         // Auto-speak the response (can be disabled in the settings)
         if (settings.autoSpeak) {
@@ -472,6 +476,51 @@ export const MainLayout: FC = () => {
 
   const speakResponse = (text: string): void => {
     ttsSpeak(text, i18n.language === 'de' ? 'de-DE' : 'en-US', settings.speechRate);
+  };
+
+  // Summarize the current chat with the loaded model (no extra download):
+  // the conversation is rendered into the prompt, the answer lands as a
+  // normal assistant message at the end of the chat.
+  const handleSummarizeChat = async (): Promise<void> => {
+    if (isGenerating || isLoading || !chat || chat.messages.length === 0 || !activeModel) {
+      return;
+    }
+    try {
+      setLocalError(null);
+      const chatId = chat.id;
+      // The transcript must fit the model's context together with the
+      // answer - reuse the shared character budget (oldest messages drop
+      // first). Hidden reasoning blocks are stripped: they are display
+      // metadata, not conversation.
+      const kept = trimHistoryToCharBudget(
+        chat.messages.map((m) => ({
+          role: m.role === 'assistant' ? ('assistant' as const) : ('user' as const),
+          content: stripHiddenPartsText(m.content),
+        })),
+        t('chat.summarySystemPrompt'),
+      );
+      if (kept.length === 0) {
+        throw new Error('Chat has no usable messages');
+      }
+      const transcript = kept
+        .map((m) => `${m.role === 'user' ? t('chat.summaryUser') : t('chat.summaryAssistant')}: ${m.content}`)
+        .join('\n\n');
+      setStreamingMessage('start');
+      const result = await generateStream(t('chat.summaryPrompt', { transcript }), {
+        temperature: 0.3,
+        max_tokens: 512,
+        systemPrompt: t('chat.summarySystemPrompt'),
+      });
+      if (result && result.trim().length > 0) {
+        const stats = getLastGenerationStats();
+        await addMessage('assistant', result, chatId, stats ?? undefined);
+      }
+    } catch (err) {
+      logError('Failed to summarize chat:', err);
+      setLocalError(err instanceof Error ? err.message : 'Failed to summarize chat');
+    } finally {
+      setStreamingMessage(null);
+    }
   };
 
   const handleModelSelect = async (modelId: string): Promise<void> => {
@@ -876,6 +925,7 @@ export const MainLayout: FC = () => {
             onToggleThinking={handleToggleThinking}
             activeEngine={activeEngine}
             onSendMessage={handleSendMessage}
+            onSummarizeChat={handleSummarizeChat}
             onSendMessageWithDocuments={handleSendMessageWithDocuments}
             supportsImageInput={supportsImageInput}
             onSendMessageWithImages={handleSendMessageWithImages}

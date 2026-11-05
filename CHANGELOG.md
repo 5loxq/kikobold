@@ -2,6 +2,19 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [4.3.44] - 2026-11-03
+
+### Neu (Quick-Win-Runde aus der Ideensammlung)
+- **Live-Statistik pro Antwort:** Assistenten-Nachrichten zeigen jetzt Token-Anzahl, Geschwindigkeit (Token/s) und Dauer unter der Antwort. Die Werte werden bei der Generierung erfasst, mit der Nachricht in IndexedDB persistiert und überstehen Reloads (ältere Nachrichten bleiben ohne Anzeige).
+- **Chat-Zusammenfassung:** Button „Zusammenfassen" im Chat-Header — der gesamte Verlauf (innerhalb des Zeichen-Budgets, älteste Nachrichten zuerst gekürzt) wird vom bereits geladenen Modell kompakt zusammengefasst; das Ergebnis landet als normale Assistenten-Nachricht im Chat. Kein Extra-Download, kein zweites Modell.
+- **Chat als Markdown-Datei:** Neben dem JSON-Backup und dem Clipboard-Share gibt es jetzt einen direkten .md-Download (Dateiname aus dem Chat-Titel + Datum).
+- **Diagnose-Bericht in der Hilfe:** Kopierbarer Bericht aus App-Version, Browser/OS/GPU/RAM/Speicher (system-info) und den letzten 50 Log-Einträgen (neuer Ring-Puffer in `services/logging.ts`). Bewusst ohne Chat-Inhalte; wird nur auf Klick erzeugt, nichts wird je übertragen.
+- **Privatsphäre-Hinweis zur Spracheingabe:** Vor der ersten Nutzung bestätigt der Nutzer einen deutlichen Hinweis, dass die Browser-Spracherkennung (Web Speech API) Audiodaten an Server des Browser-Herstellers sendet — die einzige Funktion der App, die nicht lokal läuft. Einmalige Bestätigung, danach Hinweis im Tooltip-Kontext nicht mehr nötig.
+
+### Behoben
+- **Markdown-Renderer — gemischte Inline-Formatierung:** Text vor einem fett-markierten Abschnitt wurde von den späteren Formatierungs-Durchläufen (kursiv, durchgestrichen, Mathe, Links) nie erreicht — `*kursiv* vor **fett**` zeigte die Asterisken literal. Die Durchläufe arbeiten jetzt auf einer Segment-Liste, sodass jedes Format jeden Textabschnitt erreicht.
+- **Markdown-Renderer — Inline-Links ohne href:** Der Replacer erhielt den Link-Text als URL-Argument; `isSafeUrl()` lehnte ab und der Anker wurde ohne `href` gerendert (nicht klickbar). Inline-Links in Absätzen funktionieren jetzt.
+
 ## [4.3.43] - 2026-10-30
 
 ### Behoben (Security-Feedback-Runde)

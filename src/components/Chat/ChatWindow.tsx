@@ -41,6 +41,8 @@ interface ChatWindowProps {
   /** Which engine runs the active model ('webllm' = WebGPU, 'wllama' = WASM) */
   activeEngine?: 'webllm' | 'wllama' | null;
   onSendMessage: (message: string) => void;
+  /** Summarize the current chat with the loaded model (no extra download) */
+  onSummarizeChat?: () => void;
   onSendMessageWithDocuments?: (message: string, attachments: import('../../services/attachments').DocumentAttachment[]) => void;
   supportsImageInput?: boolean;
   onSendMessageWithImages?: (message: string, images: import('../../services/attachments').ImageAttachment[]) => void;
@@ -107,6 +109,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   onToggleThinking,
   activeEngine = null,
   onSendMessage,
+  onSummarizeChat,
   onSendMessageWithDocuments,
   supportsImageInput = false,
   onSendMessageWithImages,
@@ -661,11 +664,31 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         )}
         {/* Export/Import Section */}
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800/60">
-          <ChatExportImport
-            chat={chat}
-            memories={memories}
-            library={library}
-          />
+          <div className="flex items-center gap-2">
+            <ChatExportImport
+              chat={chat}
+              memories={memories}
+              library={library}
+            />
+            {/* Summarize the chat with the loaded model - only relevant
+                with messages, disabled while the model is busy */}
+            {onSummarizeChat && chat.messages.length > 0 && (
+              <button
+                type="button"
+                onClick={onSummarizeChat}
+                disabled={isGenerating || isLoading || !isModelLoaded}
+                title={t('chat.summarizeHint')}
+                aria-label={t('chat.summarize')}
+                className={`px-2.5 sm:px-3 py-2 text-sm rounded font-medium transition-colors whitespace-nowrap ${
+                  isGenerating || isLoading || !isModelLoaded
+                    ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed'
+                    : 'bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-950/70'
+                }`}
+              >
+                📝 <span className="hidden sm:inline">{t('chat.summarize')}</span>
+              </button>
+            )}
+          </div>
           <div className="flex items-center gap-1">
             {/* Quick text size control - same four levels as the settings */}
             {onTextScaleChange && (

@@ -39,6 +39,11 @@ export const ChatExportImport: React.FC<ChatExportImportProps> = ({
     }
   };
 
+  const handleDownloadMarkdown = (): void => {
+    if (!chat) {return;}
+    ChatExport.exportChatAsMarkdownFile(chat);
+  };
+
   return (
     <div className="flex gap-2" data-tour="export-import">
       {/* Export Current Chat */}
@@ -53,6 +58,21 @@ export const ChatExportImport: React.FC<ChatExportImportProps> = ({
         }`}
       >
         ⬇️ <span className="hidden sm:inline">{t('chat.exportChat')}</span>
+      </button>
+
+      {/* Download Current Chat as Markdown file */}
+      <button
+        onClick={handleDownloadMarkdown}
+        disabled={!chat}
+        title={chat ? t('chat.exportMarkdown') : t('chat.noChat')}
+        aria-label={t('chat.exportMarkdown')}
+        className={`px-2.5 sm:px-3 py-2 text-sm rounded font-medium transition-colors whitespace-nowrap ${
+          !chat
+            ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed'
+            : 'bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 hover:bg-sky-200 dark:hover:bg-sky-950/70'
+        }`}
+      >
+        📄 <span className="hidden sm:inline">{t('chat.exportMarkdownShort')}</span>
       </button>
 
       {/* Share Current Chat as Markdown */}

@@ -140,7 +140,18 @@
     "downloadConfirmMobileWebgpu": "Warning: \"{{name}}\" (about {{size}} MB) is a WebGPU model built for desktop graphics cards. On a phone it often does not run at all (memory) or only very slowly. The smaller LFM model is the better choice for a phone. Really continue?",
     "selectModelFirst": "Pick a model first – the response style becomes editable then.",
     "retryLoad": "Retry",
-    "webgpuSpeedHint": "Tip: KI Kobold runs much faster in Chrome or Edge (WebGPU acceleration). Everything works here too, though."
+    "webgpuSpeedHint": "Tip: KI Kobold runs much faster in Chrome or Edge (WebGPU acceleration). Everything works here too, though.",
+    "statsLine": "{{tokens}} tokens · {{tps}} tok/s · {{seconds}}s",
+    "statsHint": "Generation statistics of this answer",
+    "summarize": "Summarize",
+    "summarizeHint": "Summarize the chat with the loaded model",
+    "summarySystemPrompt": "You are an assistant that summarizes conversations compactly. Give the key points as a short, bullet-style overview. Stick to the content of the conversation without adding new information.",
+    "summaryPrompt": "Summarize the following conversation compactly:\n\n{{transcript}}",
+    "summaryUser": "User",
+    "summaryAssistant": "Assistant",
+    "exportMarkdown": "Download chat as a Markdown file",
+    "exportMarkdownShort": "Markdown",
+    "voicePrivacyWarning": "Privacy notice: Voice input uses your browser's speech recognition. Audio is sent to the browser vendor's servers (e.g. Google) for recognition – it does not run locally on your device. All other features of this app remain fully local. Use voice input anyway?"
   },
   "tab": {
     "generating": "AI is thinking…",
@@ -368,6 +379,13 @@
     },
     "v4331": {
       "item1": "The roadmap has grown a lot: 10 categories with 45 ideas - from image-to-image and asking your documents to an app lock and keyboard shortcuts. Take a look and browse!"
+    },
+    "v4344": {
+      "item1": "Live statistics: every answer shows tokens, speed and duration.",
+      "item2": "Chat summary: summarize the whole conversation with the loaded model in one click.",
+      "item3": "Download a chat as a Markdown file – next to the existing JSON backup.",
+      "item4": "Diagnostic report in the help section: copyable system and log info for support requests.",
+      "item5": "Voice input now shows a privacy notice before first use (browser speech recognition does not run locally)."
     }
   },
   "memory": {
@@ -519,7 +537,13 @@
     "tourWhatsNewText": "Did you skip the introduction or want to see it again? Here you can restart it at any time. You can also review all changes from the last versions.",
     "replayTourButton": "Restart the introduction",
     "showWhatsNewButton": "Show all what's new",
-    "closeHelp": "Back to Chat"
+    "closeHelp": "Back to Chat",
+    "diagnosisTitle": "Diagnostic report",
+    "diagnosisText": "Creates a copyable report with app version, browser, device and storage information plus the app's recent log entries (no chat content). Useful for support requests – the data stays on your device.",
+    "diagnosisGenerate": "Generate report",
+    "diagnosisCopy": "Copy report",
+    "diagnosisCopied": "Copied!",
+    "diagnosisClose": "Hide"
   },
   "roadmap": {
     "title": "Roadmap",

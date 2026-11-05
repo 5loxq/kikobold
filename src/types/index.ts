@@ -1,9 +1,22 @@
 // Message types
+
+/** Generation statistics of an assistant message (absent on older messages) */
+export interface MessageStats {
+  /** Number of generated tokens (stream chunks or usage report) */
+  tokens: number;
+  /** Tokens per second over the whole generation */
+  tokensPerSecond: number;
+  /** Wall-clock duration of the generation in milliseconds */
+  durationMs: number;
+}
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+  /** How the answer was generated (assistant messages since v4.3.44) */
+  stats?: MessageStats;
 }
 
 export interface Chat {

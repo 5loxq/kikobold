@@ -320,3 +320,27 @@ export const shareChatToClipboard = async (chat: Chat): Promise<void> => {
     throw new Error('Clipboard copy not supported in this browser');
   }
 };
+
+/**
+ * Download a single chat as a Markdown file (.md) - the small brother of
+ * the JSON backup: human-readable everywhere, no import needed. Same
+ * content as the clipboard share (buildChatMarkdown).
+ */
+export const exportChatAsMarkdownFile = (chat: Chat): void => {
+  const markdown = buildChatMarkdown(chat);
+  const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  // File name from the chat title: keep letters/digits/punctuation, cap
+  // the length - everything else becomes a dash.
+  const safeTitle = chat.title
+    .replace(/[^\p{L}\p{N}._-]+/gu, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60) || 'chat';
+  link.href = url;
+  link.download = `${safeTitle}-${new Date().toISOString().split('T')[0]}.md`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};

@@ -26,9 +26,49 @@ export const getLogLevel = (): LogLevel => {
   return currentLogLevel;
 };
 
+// ---------------------------------------------------------------------------
+// Ring buffer for the diagnostic report (help page): keeps the most recent
+// log entries in memory so a support request can name what actually
+// happened. Deliberately small, never persisted, never transmitted - and
+// it contains no chat content (only the log messages the app itself writes).
+// ---------------------------------------------------------------------------
+
+export interface LogEntry {
+  level: LogLevel;
+  message: string;
+  timestamp: number;
+}
+
+const RING_BUFFER_SIZE = 50;
+const logBuffer: LogEntry[] = [];
+
+const formatParam = (value: unknown): string => {
+  if (typeof value === 'string') {
+    return value;
+  }
+  try {
+    return JSON.stringify(value) ?? String(value);
+  } catch {
+    // Circular structure or BigInt - the plain string form is enough
+    return String(value);
+  }
+};
+
+const recordEntry = (level: LogLevel, message: string, params: unknown[]): void => {
+  const suffix = params.length > 0 ? ` ${params.map(formatParam).join(' ')}` : '';
+  logBuffer.push({ level, message: `${message}${suffix}`.slice(0, 300), timestamp: Date.now() });
+  if (logBuffer.length > RING_BUFFER_SIZE) {
+    logBuffer.shift();
+  }
+};
+
+/** Most recent log entries, oldest first (for the diagnostic report). */
+export const getRecentLogEntries = (): LogEntry[] => [...logBuffer];
+
 // Log a debug message
 export const debug = (message: string, ...optionalParams: unknown[]): void => {
   if (shouldLog(LogLevel.DEBUG)) {
+    recordEntry(LogLevel.DEBUG, message, optionalParams);
     console.debug(`[DEBUG] ${message}`, ...optionalParams); // eslint-disable-line no-console
   }
 };
@@ -36,6 +76,7 @@ export const debug = (message: string, ...optionalParams: unknown[]): void => {
 // Log an info message
 export const info = (message: string, ...optionalParams: unknown[]): void => {
   if (shouldLog(LogLevel.INFO)) {
+    recordEntry(LogLevel.INFO, message, optionalParams);
     console.info(`[INFO] ${message}`, ...optionalParams);
   }
 };
@@ -43,6 +84,7 @@ export const info = (message: string, ...optionalParams: unknown[]): void => {
 // Log a warning message
 export const warn = (message: string, ...optionalParams: unknown[]): void => {
   if (shouldLog(LogLevel.WARN)) {
+    recordEntry(LogLevel.WARN, message, optionalParams);
     console.warn(`[WARN] ${message}`, ...optionalParams);
   }
 };
@@ -50,6 +92,7 @@ export const warn = (message: string, ...optionalParams: unknown[]): void => {
 // Log an error message
 export const error = (message: string, ...optionalParams: unknown[]): void => {
   if (shouldLog(LogLevel.ERROR)) {
+    recordEntry(LogLevel.ERROR, message, optionalParams);
     console.error(`[ERROR] ${message}`, ...optionalParams);
   }
 };

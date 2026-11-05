@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import { error, log } from '../../services/logging';
 import { sanitizeInputLight } from '../../services/security';
+import { localStorageGet, localStorageSet } from '../../services/storage/local-storage';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { type LibraryFile } from '../../services/storage/LibraryStorage';
 import {
@@ -307,6 +308,20 @@ export const InputBox: React.FC<InputBoxProps> = ({
       if (!SpeechRecognition) {
         alert(t('chat.speechRecognitionNotSupported'));
         return;
+      }
+
+      // Privacy notice (one-time, before the first use): browser speech
+      // recognition is NOT local - Chrome/Edge send the audio to the
+      // browser vendor's servers for recognition. This app runs fully
+      // locally otherwise; the voice input is the one exception and must
+      // say so before the microphone is ever opened.
+      const PRIVACY_ACK_KEY = 'webgui_voice_privacy_ack_v1';
+      if (localStorageGet(PRIVACY_ACK_KEY) !== '1') {
+        const confirmed = window.confirm(t('chat.voicePrivacyWarning'));
+        if (!confirmed) {
+          return;
+        }
+        localStorageSet(PRIVACY_ACK_KEY, '1');
       }
 
       // Check for microphone permission
