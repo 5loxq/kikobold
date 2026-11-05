@@ -64,6 +64,9 @@ server-zugangsdaten.txt
 # Lokale Ideensammlung (nur lokal, nicht committen)
 VERBESSERUNGS-IDEEN.md
 
+# Lokale Planungsdatei (nur lokal, nicht committen)
+NAECHSTER-PLAN.md
+
 # Modelle (zu gross fuer Git, liegen lokal in public/models und auf dem Server)
 public/models/
 
