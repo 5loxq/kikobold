@@ -825,53 +825,59 @@ const InlineMarkdown: React.FC<InlineMarkdownProps> = ({ content, onLinkClick })
   // the code and the backticks are rendered literally). The spans are
   // parked behind placeholder tokens and restored at the very end.
   const codeSpans: string[] = [];
-  let remaining = content.replace(/`([^`]+)`/g, (_: string, code: string) => {
+  const withPlaceholders = content.replace(/`([^`]+)`/g, (_: string, code: string) => {
     codeSpans.push(code);
     return `\u0000${codeSpans.length - 1}\u0000`;
   });
 
-  // Split by markdown formatting
-  const parts: React.ReactNode[] = [];
+  // Every pass runs over a list of segments: rendered nodes pass through
+  // untouched, plain strings get the pattern applied. Processing one single
+  // string per pass instead would finalize the text BEFORE each match of an
+  // earlier pass - later passes never saw it, so mixed formatting in one
+  // paragraph ("*em* before **bold**", links before bold) kept its literal
+  // markers.
+  let segments: React.ReactNode[] = [withPlaceholders];
 
   // Process bold (**text**)
-  remaining = processMarkdown(remaining, parts, /\*\*(.*?)\*\*/g, (text) => (
-    <Strong key={parts.length}>{text}</Strong>
+  segments = runInlinePass(segments, /\*\*(.*?)\*\*/g, (text) => (
+    <Strong>{text}</Strong>
   ));
 
   // Process italic (*text* or _text_). The underscore variant requires
   // whitespace/punctuation boundaries so snake_case words stay intact.
   // Group 1 captures the character before the marker (so `**` is not
-  // matched as italic); it is re-emitted as plain text by processMarkdown.
-  remaining = processMarkdown(remaining, parts, /(^|[^*])\*([^*]+)\*|(^|[\s(])_([^_]+)_(?=$|[\s).,;:!?])/g, (text) => (
-    <Emphasis key={parts.length}>{text}</Emphasis>
+  // matched as italic); it is re-emitted as plain text by runInlinePass.
+  segments = runInlinePass(segments, /(^|[^*])\*([^*]+)\*|(^|[\s(])_([^_]+)_(?=$|[\s).,;:!?])/g, (text) => (
+    <Emphasis>{text}</Emphasis>
   ), [2, 4], [1, 3]);
 
   // Process strikethrough (~~text~~)
-  remaining = processMarkdown(remaining, parts, /~~(.*?)~~/g, (text) => (
-    <Strikethrough key={parts.length}>{text}</Strikethrough>
+  segments = runInlinePass(segments, /~~(.*?)~~/g, (text) => (
+    <Strikethrough>{text}</Strikethrough>
   ));
 
   // Process inline math ($...$ or \(...\))
-  remaining = processMarkdownMath(remaining, parts);
+  segments = runMathPass(segments);
 
-  // Process links
-  remaining = processMarkdown(remaining, parts, /\[([^\]]+)\]\(([^)]+)\)/g, (text, link) => (
-    <Link key={parts.length} href={link} onClick={onLinkClick}>
+  // Process links. The replacer receives the extracted label as `text`,
+  // then ALL capture groups - for this pattern group 2 is the URL. (The
+  // old call passed the label again as the second argument, so the URL
+  // never reached the anchor and inline links rendered without href.)
+  segments = runInlinePass(segments, /\[([^\]]+)\]\(([^)]+)\)/g, (text, _label, link) => (
+    <Link href={link} onClick={onLinkClick}>
       {text}
     </Link>
   ));
 
-  // Add remaining text
-  if (remaining) {
-    parts.push(remaining);
-  }
-
-  // Restore the extracted code spans in their placeholders
+  // Restore the extracted code spans in their placeholders. This is also
+  // where every element gets its key: the nodes come out of several
+  // passes, so only this loop sees the final flat list and can assign
+  // unique keys.
   const restored: React.ReactNode[] = [];
   let restoreKey = 0;
-  for (const part of parts) {
+  for (const part of segments) {
     if (typeof part !== 'string') {
-      restored.push(part);
+      restored.push(React.isValidElement(part) ? React.cloneElement(part, { key: `n${restoreKey++}` }) : part);
       continue;
     }
     // The NUL character cannot appear in message text - that is exactly
@@ -894,64 +900,80 @@ const InlineMarkdown: React.FC<InlineMarkdownProps> = ({ content, onLinkClick })
   return <>{restored}</>;
 };
 
-// Helper function to process inline math without breaking other formatting
-function processMarkdownMath(
-  content: string,
-  parts: React.ReactNode[]
-): string {
-  const regex = /(^|[^\w$\\])\$([^$\n]+?)\$(?=$|[^\w$\\])|\\\(([\s\S]*?)\\\)/g;
-  let lastIndex = 0;
-  let match;
-  while ((match = regex.exec(content)) !== null) {
-    const leading = match[1] ?? '';
-    const mathStart = match.index + leading.length;
-    if (mathStart > lastIndex) {
-      parts.push(content.substring(lastIndex, mathStart));
-    }
-    const tex = (match[2] ?? match[3] ?? '').trim();
-    parts.push(<MathInline key={`math-${match.index}`} tex={tex} />);
-    lastIndex = match.index + match[0].length;
-  }
-  return content.substring(lastIndex);
-}
-
-// Helper function to process markdown patterns
-function processMarkdown(
-  content: string,
-  parts: React.ReactNode[],
+// One inline-formatting pass over a segment list. The regex is applied to
+// every plain-string segment; already-rendered nodes pass through
+// untouched. Patterns with a prefix group (e.g. italic) consume a leading
+// character to anchor the match; it is re-emitted as plain text so nothing
+// is lost.
+function runInlinePass(
+  segments: React.ReactNode[],
   regex: RegExp,
   replacer: (text: string, ...args: string[]) => React.ReactNode,
   contentGroups: number[] = [1, 2, 3],
   prefixGroup?: number | number[]
-): string {
-  let match: RegExpExecArray | null;
-  let lastIndex = 0;
+): React.ReactNode[] {
   const prefixGroups = prefixGroup === undefined ? [] : Array.isArray(prefixGroup) ? prefixGroup : [prefixGroup];
+  const out: React.ReactNode[] = [];
 
-  while ((match = regex.exec(content)) !== null) {
-    // Add text before the match
-    if (match.index > lastIndex) {
-      parts.push(content.substring(lastIndex, match.index));
+  for (const segment of segments) {
+    if (typeof segment !== 'string') {
+      out.push(segment);
+      continue;
     }
-
-    // Patterns with a prefix group (e.g. italic) consume a leading character
-    // to anchor the match; re-emit it as plain text so nothing is lost.
-    for (const group of prefixGroups) {
-      if (match[group]) {
-        parts.push(match[group]);
+    regex.lastIndex = 0;
+    let match: RegExpExecArray | null;
+    let lastIndex = 0;
+    while ((match = regex.exec(segment)) !== null) {
+      // Add text before the match
+      if (match.index > lastIndex) {
+        out.push(segment.substring(lastIndex, match.index));
       }
+
+      for (const group of prefixGroups) {
+        if (match[group]) {
+          out.push(match[group]);
+        }
+      }
+
+      // Add the formatted text. Elements are keyed centrally in the
+      // restore loop below - a per-pass counter would collide across
+      // passes (the same index is reached in every pass).
+      const text = contentGroups.map((g) => match?.[g] ?? '').find(Boolean) ?? '';
+      out.push(replacer(text, ...match.slice(1)));
+
+      lastIndex = match.index + match[0].length;
+      regex.lastIndex = lastIndex;
     }
-
-    // Add the formatted text
-    const text = contentGroups.map((g) => match?.[g] ?? '').find(Boolean) ?? '';
-    parts.push(replacer(text, ...match.slice(1)));
-
-    lastIndex = match.index + match[0].length;
-    regex.lastIndex = lastIndex;
+    out.push(segment.substring(lastIndex));
   }
+  return out;
+}
 
-  // Return remaining text
-  return content.substring(lastIndex);
+// Inline math pass over a segment list (see runInlinePass)
+function runMathPass(segments: React.ReactNode[]): React.ReactNode[] {
+  const regex = /(^|[^\w$\\])\$([^$\n]+?)\$(?=$|[^\w$\\])|\\\(([\s\S]*?)\\\)/g;
+  const out: React.ReactNode[] = [];
+  for (const segment of segments) {
+    if (typeof segment !== 'string') {
+      out.push(segment);
+      continue;
+    }
+    regex.lastIndex = 0;
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+    while ((match = regex.exec(segment)) !== null) {
+      const leading = match[1] ?? '';
+      const mathStart = match.index + leading.length;
+      if (mathStart > lastIndex) {
+        out.push(segment.substring(lastIndex, mathStart));
+      }
+      const tex = (match[2] ?? match[3] ?? '').trim();
+      out.push(<MathInline tex={tex} />);
+      lastIndex = match.index + match[0].length;
+    }
+    out.push(segment.substring(lastIndex));
+  }
+  return out;
 }
 
 export default React.memo(MarkdownRenderer);

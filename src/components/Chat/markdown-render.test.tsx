@@ -65,4 +65,25 @@ describe('MarkdownRenderer rendering', () => {
     expect(html).toContain('>Erstens<');
     expect(html).toContain('>Punkt b<');
   });
+
+  it('renders mixed inline formatting regardless of order', () => {
+    // Italic BEFORE bold in the same paragraph: the italic pass must still
+    // see the text (it used to be finalized as plain text by the bold pass).
+    const html = renderToHtml('Vor *kursiv* und **fett** im selben Absatz.');
+    expect(html).toContain('<em');
+    expect(html).toContain('>kursiv<');
+    expect(html).toContain('<strong');
+    expect(html).toContain('>fett<');
+    expect(html).not.toContain('*kursiv*');
+    expect(html).not.toContain('**');
+  });
+
+  it('renders links that appear before bold text', () => {
+    const html = renderToHtml('Siehe [Doku](https://example.com) und **Wichtig**.');
+    expect(html).toContain('<a ');
+    expect(html).toContain('href="https://example.com"');
+    expect(html).toContain('>Doku<');
+    expect(html).toContain('<strong');
+    expect(html).not.toContain('[Doku]');
+  });
 });
